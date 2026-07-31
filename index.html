@@ -2665,7 +2665,12 @@
         return;
       }
       if(at){ at.classList.add('gone'); setTimeout(()=>at.classList.add('hidden'),300); }
+      
       if(j.status==='need_phone'){
+        showView('authPage');                                           // ← LINE 1 ADD
+        if(at){ at.classList.add('gone'); setTimeout(()=>at.classList.add('hidden'),300); }  // ← LINE 2 ADD
+        const nameInput = document.getElementById('authName');          // ← LINE 3 ADD
+        if(nameInput && j.name) nameInput.value = j.name;               // ← LINE 4 ADD
         document.getElementById('googlePhoneBox').classList.remove('hidden');
         document.getElementById('authPhone').focus();
         showToast('📱 '+t('phoneFirstHint'),'warning');
