@@ -3276,28 +3276,51 @@
 
   // ═══════ WHATSAPP ═══════
   function waForDate(dateStr, addr){
-    const items=cart.filter(it=>it.deliveryDate===dateStr).sort(mealSort);
-    let msg=`🍱 *NEW TIFFIN ORDER*\n━━━━━━━━━━━━━━\n`;
-    msg+=`📅 *Delivery:* ${items[0].deliveryLabel} (${items[0].day})\n`;
-    msg+=`👤 *Name:* ${addr.name}\n📱 *Phone:* ${addr.phone} ✓\n`;
-    msg+=`📍 *Address:* ${addr.society}, ${CFG.township}, Flat ${addr.flatNo}\n━━━━━━━━━━━━━━\n`;
-    let tot=0;
-    items.forEach(it=>{ const lt=unitPrice(it)*it.qty; tot+=lt; msg+=`${MEAL_META[it.meal].emoji} *${mealTitle(it.meal)} × ${it.qty}* — ₹${lt}\n`; const dsc=cartLineDesc(it); if(dsc)msg+=`   • ${dsc}\n`; });
-    if(addr.note) msg+=`📝 *Note:* ${addr.note}\n`;
-    // Delivery fee + discount bhi jodo — pehle sirf items ka subtotal jaata tha
-    const fee=deliveryFee();
-    tot+=fee;
-    msg+=`━━━━━━━━━━━━━━\n🛵 *${t('deliveryLbl')}:* ₹${fee}\n`;
-    // Coupon sirf sabse pehli date par lagta hai (server bhi wahi karta hai)
-    const firstDate=[...new Set(cart.map(x=>x.deliveryDate))].sort()[0];
-    if(appliedPromo && dateStr===firstDate){
-      const dsc=promoDiscountNow();
-      tot=Math.max(0,tot-dsc);
-      msg+=`🎟️ *${appliedPromo.code}:* −₹${dsc}\n`;
+  const items = cart.filter(it => it.deliveryDate === dateStr).sort(mealSort);
+  // Order date – just the short label (no redundant weekday)
+  let msg = 'Order: ' + items[0].deliveryLabel + '\n';
+  // Address: society and flat only (township removed)
+  msg += addr.society + ', Flat ' + addr.flatNo + '\n';
+  
+  let tot = 0;
+  items.forEach(it => {
+    const lt = unitPrice(it) * it.qty;
+    tot += lt;
+    const v = it.variantName || it.tiffinType || '';
+    // Meal line: "Dinner × 1 (Mini)- Rajma, Plain"
+    let line = mealTitle(it.meal) + ' × ' + it.qty;
+    if (v) line += ' (' + v + ')';
+    // Meal items: sabzi + roti type
+    let mealDesc = '';
+    if (it.sabzi) mealDesc += it.sabzi;
+    // Roti type (skip for breakfast)
+    if (it.meal !== 'breakfast') {
+      if (mealDesc) mealDesc += ', ';
+      mealDesc += it.butterRoti ? 'Butter' : 'Plain';
     }
-    msg+=`💰 *Total: ₹${tot}*\n💳 *Payment:* ${addr.payment==='COD'?'Cash on Delivery':'UPI on Delivery'}`;
-    return msg;
-  }
+    // Extra add-ons (keep if present)
+    const extras = [];
+    if (it.extraRoti) extras.push('+' + it.extraRoti + ' Roti');
+    if (it.dahi) extras.push('Dahi');
+    if (it.extraSabzi) extras.push('Extra Sabzi');
+    if (extras.length) {
+      if (mealDesc) mealDesc += ', ';
+      mealDesc += extras.join(', ');
+    }
+    if (mealDesc) line += '- ' + mealDesc;
+    // Price
+    line += ' · ₹' + lt;
+    msg += line + '\n';
+  });
+
+  // Total (always COD)
+  const fee = deliveryFee();
+  tot += fee;
+  msg += 'Total: ₹' + tot + ' - COD\n';
+  // Customer name and phone at the end
+  msg += addr.name + ' · ' + addr.phone;
+  return msg;
+}
 
   // ═══════ PLACE ORDER (cart → per-date orders) ═══════
   function placeOrder(){
