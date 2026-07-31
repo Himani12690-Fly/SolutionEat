@@ -424,7 +424,7 @@ function provisionVendorSheet(sheetId) {
     'Dinner Roti','Dinner Addons','Note','Payment','Total','Status','Delivery Date',
     'Breakfast Time','Lunch Time','Dinner Time','Lunch Tiffin','Dinner Tiffin',
     'PaymentStatus','Promo','DeliveryType','Meal Status']);
-  mk(USERS_SHEET,  ['Phone','Name','Email','Created','Last Login','Status']);
+  mk(USERS_SHEET,  ['Phone','Name','Email','Created','Last Login','Status','PasswordHash','Salt','ResetToken','ResetExpires']);
   mk(SESS_SHEET,   ['Token','Phone','Email','Created','Expires']);
   mk(AUDIT_SHEET,  ['Time','Phone','Action','Details']);
   mk('PromoUses',  ['Code','Phone','Date','OrderRow','Discount']);
@@ -804,6 +804,10 @@ function doPost(e) {
     if (action === 'demologin')    return json(demoLogin());
     if (action === 'askai')        return json(askAI(p));
     if (action === 'googlelogin')  return json(googleLogin(p));
+    if (action === 'emailsignup')  return json(emailSignup(p));
+    if (action === 'emaillogin')   return json(emailLogin(p));
+    if (action === 'forgotpassword') return json(forgotPassword(p));
+    if (action === 'resetpassword')  return json(resetPassword(p));
     if (action === 'logout')      return json(logoutUser(p));
     if (action === 'cancelorder') return json(cancelOrderAuthed(p));
     if (action === 'savesub')     return json(saveSubAuthed(p));
@@ -995,7 +999,7 @@ function sheetWithHeaders(name, headers, ssOverride) {
   }
   return sh;
 }
-function usersSheet()   { return sheetWithHeaders(USERS_SHEET, ['Phone','Name','Email','Created','Last Login','Status']); }
+function usersSheet()   { return sheetWithHeaders(USERS_SHEET, ['Phone','Name','Email','Created','Last Login','Status','PasswordHash','Salt','ResetToken','ResetExpires']); }
 function sessionsSheet(){ return sheetWithHeaders(SESS_SHEET,  ['Token','Phone','Email','Created','Expires']); }
 function auditSheet()   { return sheetWithHeaders(AUDIT_SHEET, ['Time','Phone','Action','Details']); }
 function pushTokensSheet(){ return sheetWithHeaders(PUSH_SHEET, ['Phone','Token','Created']); }
@@ -1090,13 +1094,165 @@ function googleLogin(p) {
   }
 }
 
-// hashPassword() — shared by admin auth (checkAuth()/checkSuperAuth() below use
-// it too), kept even though customer email/password login (which also used to
-// use it) has been removed — Google Sign-In is now the only customer login path.
+// ═══════════ EMAIL + PASSWORD SIGN-IN ═══════════
 function hashPassword(password, salt) {
   const raw = String(password) + ':' + salt + ':' + PASSWORD_PEPPER;
   const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, raw, Utilities.Charset.UTF_8);
   return bytes.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+}
+function validEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e || '').trim()); }
+
+// { email, password, phone, name } — new account via email/password
+function emailSignup(p) {
+  const email = String(p.email || '').trim().toLowerCase();
+  const password = String(p.password || '');
+  const phone = cleanPhone(p.phone);
+  if (!validEmail(email)) return { status:'error', code:'bad_email', message:'Please enter a valid email address.' };
+  if (password.length < 6) return { status:'error', code:'pw_short', message:'Password must be at least 6 characters.' };
+  if (!validPhone(phone)) return { status:'error', code:'bad_phone', message:'Please enter a valid 10-digit mobile number.' };
+
+  const lock = LockService.getScriptLock();
+  let gotLock=false; try { gotLock = lock.tryLock(20000); } catch (e) {}
+  if (!gotLock) return { status:'error', code:'busy', message:'Server is busy right now — please try again.' };
+  try {
+    const uSh = usersSheet();
+    if (findRowByEmail(uSh, email) !== -1) return { status:'error', code:'email_exists', message:'An account with this email already exists — please sign in.' };
+    if (findRowByPhone(uSh, phone) !== -1) return { status:'error', code:'phone_taken', message:'This mobile number is already linked to another account.' };
+
+    const name = String(p.name || '').trim() || email.split('@')[0];
+    const salt = Utilities.getUuid();
+    const hash = hashPassword(password, salt);
+    // ⚠️ Apostrophe zaroori — baaki har jagah aise hi likha jaata hai. Bina iske
+    // Sheets phone ko NUMBER bana deti hai aur format mismatch ho jaata hai.
+    uSh.appendRow(["'" + phone, safeCell(name), email, new Date(), new Date(), 'Active', hash, salt, '', '']);
+    bumpUsersVer();
+    audit('EMAIL_SIGNUP', phone, email);
+
+    const token = Utilities.getUuid();
+    sessionsSheet().appendRow([token, "'" + phone, email, new Date(), new Date(Date.now() + SESSION_DAYS * 86400000)]);
+    return { status:'success', token: token, name: name, phone: phone };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
+
+// ── Customer login brute-force throttle: per-EMAIL, 5 galat try = 15 min lock ──
+// (Admin ka checkAuth() alag/global hai — ye customer accounts ke liye hai.)
+// ⚠️ Key me CURRENT_VENDOR_ID zaroori hai (adminFailKey() jaisa hi) — warna ek
+// email jo DO alag vendors ke paas customer account rakhta hai, Vendor A pe 5
+// galat try karne se Vendor B se bhi 15 min ke liye lock ho jaata — cross-tenant
+// bleed, jaisa admin lockout me pehle mila tha.
+function loginFailKey(email) { return 'loginFails_' + CURRENT_VENDOR_ID + '_' + email; }
+function loginLocked(email) {
+  const c = CacheService.getScriptCache();
+  return Number(c.get(loginFailKey(email)) || 0) >= 5;
+}
+function loginFail(email) {
+  const c = CacheService.getScriptCache();
+  const n = Number(c.get(loginFailKey(email)) || 0) + 1;
+  c.put(loginFailKey(email), String(n), 900);
+}
+function loginPass(email) { CacheService.getScriptCache().remove(loginFailKey(email)); }
+
+// { email, password } — existing account
+function emailLogin(p) {
+  const email = String(p.email || '').trim().toLowerCase();
+  const password = String(p.password || '');
+  if (!validEmail(email) || !password) return { status:'error', code:'need_creds', message:'Please enter your email and password.' };
+  if (loginLocked(email)) return { status:'error', code:'too_many_tries', message:'Too many failed attempts. Please try again in 15 minutes.' };
+
+  const lock = LockService.getScriptLock();
+  let gotLock=false; try { gotLock = lock.tryLock(20000); } catch (e) {}
+  if (!gotLock) return { status:'error', code:'busy', message:'Server is busy right now — please try again.' };
+  try {
+    const uSh = usersSheet();
+    const row = findRowByEmail(uSh, email);
+    if (row === -1) { loginFail(email); return { status:'error', code:'no_account', message:'No account found with this email.' }; }
+    if (uSh.getRange(row, 6).getValue() === 'Blocked') return { status:'error', code:'blocked', message:'Your account is blocked. Support: 70434 91481' };
+
+    const storedHash = uSh.getRange(row, 7).getValue();
+    const salt = uSh.getRange(row, 8).getValue();
+    if (!storedHash || !salt) return { status:'error', code:'use_google', message:'This account uses Google Sign-In — please use "Sign in with Google".' };
+    if (hashPassword(password, salt) !== storedHash) { loginFail(email); return { status:'error', code:'wrong_pw', message:'Incorrect password.' }; }
+    loginPass(email);
+
+    const phone = cleanPhone(uSh.getRange(row, 1).getValue());
+    const name = String(uSh.getRange(row, 2).getValue() || '');
+    uSh.getRange(row, 5).setValue(new Date());
+    audit('EMAIL_LOGIN', phone, email);
+
+    const token = Utilities.getUuid();
+    sessionsSheet().appendRow([token, "'" + phone, email, new Date(), new Date(Date.now() + SESSION_DAYS * 86400000)]);
+    return { status:'success', token: token, name: name, phone: phone };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
+}
+
+// { email, origin } — emails a reset link to the account, if one exists.
+// Always returns success (never reveals whether the email is registered).
+function forgotPassword(p) {
+  const email = String(p.email || '').trim().toLowerCase();
+  const origin = String(p.origin || '').replace(/\/$/, '');
+  if (!validEmail(email)) return { status:'error', code:'bad_email', message:'Please enter a valid email address.' };
+  try {
+    const uSh = usersSheet();
+    const row = findRowByEmail(uSh, email);
+    if (row !== -1 && uSh.getRange(row, 7).getValue()) { // only if it's a password account
+      const token = Utilities.getUuid();
+      uSh.getRange(row, 9).setValue(token);
+      uSh.getRange(row, 10).setValue(new Date(Date.now() + 30 * 60000)); // 30 min
+      let base = (origin || 'https://flying-birds-nest.netlify.app').replace(/\/+$/, '');
+      const link = base + (/\.html$/i.test(base) ? '' : '/') + '?reset=' + token;
+      MailApp.sendEmail({
+        to: email,
+        subject: 'Nest & Nosh — Reset your password',
+        name: 'Nest & Nosh',
+        body: 'Password reset link (30 min valid): ' + link,
+        htmlBody: 'We received a request to reset your password.<br><br>' +
+          '<a href="' + link + '" style="background:#6366f1;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;">Reset Password</a><br><br>' +
+          'Or copy this link: ' + link + '<br><br>' +
+          'This link is valid for 30 minutes. If you did not request this, please ignore this email.'
+      });
+      audit('PASSWORD_RESET_REQUESTED', cleanPhone(uSh.getRange(row, 1).getValue()), email);
+    }
+  } catch (e) { audit('RESET_EMAIL_FAIL', '', String(e).slice(0, 180)); }
+  return { status:'success', code:'reset_sent', message:'If this email is registered, a reset link has been sent.' };
+}
+
+// ⚠️ EK BAAR editor se Run karein → Google "Allow" maangega (mail permission).
+// Bina iske password-reset emails silently fail hoti hain.
+function sendTestEmail() {
+  MailApp.sendEmail({ to: currentVendor().notifyEmail, subject: '🍱 FBT — mail test', htmlBody: 'Mail permission OK ✅ Ab reset emails jayengi.' });
+}
+
+// { token, password }
+function resetPassword(p) {
+  const token = String(p.token || '').trim();
+  const password = String(p.password || '');
+  if (!token) return { status:'error', code:'reset_bad', message:'This reset link is invalid.' };
+  if (password.length < 6) return { status:'error', code:'pw_short', message:'Password must be at least 6 characters.' };
+  const uSh = usersSheet();
+  const last = uSh.getLastRow();
+  if (last < 2) return { status:'error', code:'reset_bad', message:'This reset link is invalid.' };
+  const vals = uSh.getRange(2, 9, last - 1, 2).getValues(); // ResetToken, ResetExpires
+  for (let i = 0; i < vals.length; i++) {
+    if (String(vals[i][0]) === token) {
+      const row = i + 2;
+      const expires = vals[i][1];
+      if (!(expires instanceof Date) || new Date() > expires) return { status:'error', code:'reset_expired', message:'This reset link has expired — please request a new one.' };
+      const salt = Utilities.getUuid();
+      uSh.getRange(row, 7).setValue(hashPassword(password, salt));
+      uSh.getRange(row, 8).setValue(salt);
+      uSh.getRange(row, 9).setValue('');
+      uSh.getRange(row, 10).setValue('');
+      const phoneForSessions = cleanPhone(uSh.getRange(row, 1).getValue());
+      invalidateAllSessions(phoneForSessions);   // chori hua session bhi ab dead
+      audit('PASSWORD_RESET_DONE', phoneForSessions, '');
+      return { status:'success' };
+    }
+  }
+  return { status:'error', code:'reset_bad', message:'This reset link is invalid or has expired.' };
 }
 
 // ═══════════ SESSION ═══════════
@@ -1171,6 +1327,19 @@ function getSessionUncached(token) {
     }
   }
   return null;
+}
+
+// Password reset / account-compromise ke baad saare purane sessions (chura
+// hua token bhi) turant dead kar deta hai — user ko dobara login karna hoga.
+function invalidateAllSessions(phone) {
+  if (!phone) return;
+  const sh = sessionsSheet();
+  const last = sh.getLastRow();
+  if (last < 2) return;
+  const vals = sh.getRange(2, 1, last - 1, 2).getValues();
+  for (let i = vals.length - 1; i >= 0; i--) {
+    if (cleanPhone(vals[i][1]) === phone) sh.deleteRow(i + 2);
+  }
 }
 
 function logoutUser(p) {
