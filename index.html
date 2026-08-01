@@ -47,6 +47,15 @@
 
   <!-- Externalized CSS -->
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
+    .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
+    @keyframes tiffinPop{0%{transform:scale(0) rotate(-15deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
+    @keyframes tiffinBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+    .wa-icon-wrap{text-align:center;margin-top:10px;}
+    .wa-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:#25D366;box-shadow:0 2px 8px rgba(0,0,0,.18);}
+    .wa-icon-btn svg{width:23px;height:23px;fill:#fff;}
+  </style>
   <script src="theme.js" defer></script>
 </head>
 <body>
@@ -58,6 +67,7 @@
   <symbol id="ic-orders" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1.2"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16.5h6"/></symbol>
   <symbol id="ic-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
   <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 16.5V11"/><path d="M12 7.6h.01"/></symbol>
+  <symbol id="ic-whatsapp" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4c1.4.8 3.1 1.3 4.8 1.3 5.5 0 10-4.5 10-10S17.5 2 12 2z"/><path fill="#fff" stroke="none" d="M9 8.4c.2-.4.5-.4.7-.4h.6c.2 0 .4 0 .6.4.3.6.8 1.8.8 1.9s0 .3-.1.4c-.2.3-.3.4-.5.6-.2.2-.4.3-.2.6.5.8 1 1.5 1.7 2 .4.3.6.2.8 0 .2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.3.1 1.7.8 2 1 .3.1.4.2.5.4.1.2.1.9-.3 1.7-.4.8-1.9 1.5-2.6 1.6-.6.1-1.3.2-4-.9-3.3-1.3-5.3-4.5-5.5-4.8-.2-.3-1.3-1.7-1.3-3.2s.8-2.2 1.1-2.6z"/></symbol>
 </svg>
 <div id="bootLoader"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Loading"></div><div class="bl-spin"></div><div class="bl-t">Loading…</div></div>
 <script>
@@ -346,35 +356,46 @@
   </div>
 
 
-  <!-- ══════ ABOUT + CONTACT (merged) ══════ -->
+  <!-- ══════ ABOUT (kitchen info card — Zomato-style, only real vendor data) ══════ -->
   <div id="aboutView" class="hidden">
-    <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
-      <h1 style="font-size:20px;" data-i="aboutTitle"></h1>
-      <p class="tagline" style="margin:0;" data-i="aboutSub"></p>
+    <div class="hero" style="padding:16px;">
+      <button class="back-btn" onclick="navTo('profile')" aria-label="Back" style="border:none;background:none;font-size:22px;font-weight:900;color:var(--ink);cursor:pointer;padding:4px 8px;margin:0;">←</button>
     </div>
-    <div class="about-slides" id="aboutSlides"></div>
-    <div class="policy-card" id="policyBox"></div>
-    <div class="about-hint" data-i="aboutSwipe"></div>
-    <div class="about-contact">
-      <div class="ac-title" data-i="aboutContact"></div>
-      <div class="ac-btns">
-        <a class="ac-btn ac-call" id="acCall" href="tel:+917043491481">📞 Call<br><span class="ac-num" style="font-size:11.5px;font-weight:700;opacity:0.9;">70434 91481</span></a>
-        <a class="ac-btn ac-wa" id="acWa" href="https://wa.me/917043491481" target="_blank">💬 WhatsApp<br><span class="ac-num" style="font-size:11.5px;font-weight:700;opacity:0.9;">70434 91481</span></a>
+    <div class="section" style="padding-top:0;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <img class="brand-ic vbrand-logo" style="width:52px;height:52px;border-radius:14px;flex:none;" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="">
+        <div>
+          <div class="vbrand-name" style="font-size:21px;font-weight:900;line-height:1.15;"></div>
+          <div id="abTagline" style="font-size:12.5px;color:var(--muted);font-weight:700;margin-top:2px;"></div>
+        </div>
       </div>
+      <div id="abAddr" class="cust-row" style="padding:8px 0;"></div>
+      <div style="display:flex;gap:10px;margin:10px 0 4px;">
+        <a class="ac-btn ac-call" id="acCall" href="tel:+917043491481" style="flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;">📞</a>
+        <a class="ac-btn" id="abDirBtn" target="_blank" style="flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--card);border:1.5px solid var(--line);">🧭</a>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">
+      <div id="abHours" class="cust-row" style="padding:8px 0;"></div>
+      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">
+      <div class="cust-row" style="padding:8px 0;"><span>🛵 <span data-i="abDeliveryOnly"></span></span></div>
+      <div id="abLegalBox"></div>
     </div>
-    <div class="section" style="padding-top:6px;">
-      <div class="section-title" data-i="contactInfoTitle"></div>
-      <div class="cust-row"><span>📍 <span data-i="contactAddrLbl"></span></span><span style="font-weight:800;text-align:right;" id="ctAddr"></span></div>
-      <div class="cust-row"><span>🏘️ <span data-i="contactAreaLbl"></span></span><span style="font-weight:800;" id="ctArea"></span></div>
-      <div class="cust-row"><span>🕐 <span data-i="contactHoursLbl"></span></span><span style="font-weight:800;text-align:right;">🌅 7–10 AM · ☀️ 12–2 PM · 🌙 7–9 PM</span></div>
+    <div class="section" id="abPolicySection">
+      <div class="section-title" data-i="policyTitle" style="cursor:pointer;" onclick="toggleAboutPolicy()"></div>
+      <div id="abPolicyBody" class="policy-b hidden"></div>
+    </div>
+    <div style="padding:16px;">
+      <button class="new-order" style="background:var(--accent);color:#fff;font-weight:800;" onclick="showHomePage()" data-i="abBackToMenu"></button>
     </div>
   </div>
 
   <!-- ══════ BOTTOM NAVIGATION (customer screens) ══════ -->
+  <!-- Nav me ab Home / Orders / Profile hai. Cart ab seedha nav me nahi — Profile ke
+       Quick Links se khulta hai (Setup review ke baad). Subscribe aur Ask AI bhi
+       wahi se khulte hain — un pages pe Profile hi highlighted rahega. -->
   <div class="bottom-nav hidden" id="bottomNav">
     <button class="bn-item" id="bn-land" onclick="navTo('land')"><svg class="ic bn-ic"><use href="#ic-home"/></svg><span class="bn-lbl" data-i="navHomeShort"></span></button>
-    <button class="bn-item" id="bn-cart" onclick="navTo('cart')"><svg class="ic bn-ic"><use href="#ic-cart"/></svg><span class="bn-badge zero" id="bnCartBadge">0</span><span class="bn-lbl" data-i="navCartShort"></span></button>
+    <button class="bn-item" id="bn-orders" onclick="navTo('orders')"><svg class="ic bn-ic"><use href="#ic-orders"/></svg><span class="bn-lbl" data-i="navOrdersShort"></span></button>
     <button class="bn-item" id="bn-profile" onclick="navTo('profile')"><span class="bn-av" id="bnAvatar">?</span><span class="bn-lbl" data-i="navProfileShort"></span></button>
   </div>
 
@@ -453,16 +474,16 @@
     </div>
 
     <div class="section success-card hidden" id="successCard">
-      <div class="big" style="font-size:38px;">✅</div>
+      <div class="tiffin-anim" aria-hidden="true">🍱</div>
       <h2 data-i="successTitle"></h2>
       <p id="successMsg" style="margin-bottom:14px;"></p>
       <div id="couponWarnBox" class="coupon-warn hidden"></div>
       <div id="upiPayBox" class="upi-pay-box hidden"></div>
-      <div class="success-note" data-i="successConfirmNote"></div>
-      
-      <button class="new-order" style="background:var(--card);color:var(--accent-dark);border:1.5px solid var(--accent);margin-top:8px;" onclick="showOrdersPage()" data-i="trackOrderBtn"></button>
-      <button class="new-order" style="background:none;color:var(--muted);border:none;font-weight:700;font-size:13px;margin-top:6px;padding:8px;" onclick="resetAll()" data-i="newOrder"></button>
-      <a class="wa-fallback" id="waFallback" target="_blank" data-i="waFallback"></a>
+
+      <button class="new-order" style="margin-top:8px;" onclick="resetAll()" data-i="okayBtn"></button>
+      <div class="wa-icon-wrap">
+        <a class="wa-icon-btn" id="waFallback" target="_blank" aria-label="Share on WhatsApp" title="Share on WhatsApp"><svg class="ic"><use href="#ic-whatsapp"/></svg></a>
+      </div>
     </div>
 
 
@@ -499,6 +520,7 @@
         <button class="add-cart-btn" style="margin-top:12px;" onclick="savePfAddr()" data-i="pfSave"></button>
       </div>
       <div class="lp-sec-t" data-i="pfQuick"></div>
+      <div class="pf-row" onclick="navTo('cart')"><span class="ic-tile tile-teal"><svg class="ic"><use href="#ic-cart"/></svg></span><span data-i="navCart"></span><span class="bn-badge zero" id="pfCartBadge" style="position:static;margin-left:6px;">0</span><i>›</i></div>
       <div class="pf-row" onclick="showOrdersPage()"><span class="ic-tile tile-blue"><svg class="ic"><use href="#ic-orders"/></svg></span><span data-i="myOrders"></span><i>›</i></div>
       <div class="pf-row" onclick="showSubPage()"><span class="ic-tile tile-orange"><svg class="ic"><use href="#ic-repeat"/></svg></span><span data-i="navSub"></span><i>›</i></div>
       <div class="pf-row" onclick="browseKitchens()"><span class="ic-tile tile-red"><svg class="ic"><use href="#ic-menu"/></svg></span><span>Browse Kitchens</span><i>›</i></div>
@@ -709,6 +731,14 @@
         <div class="section-title" style="margin-top:20px;">🏛️ FSSAI Registration No.</div>
         <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Footer mein customers ko dikhega — trust ke liye. Khaali chhodo to nahi dikhega.</div>
         <input type="text" class="search-box" id="cfg-fssai" placeholder="e.g. 20724XXXXXXXXXX">
+
+        <div class="section-title" style="margin-top:20px;">📜 Legal Name <span style="font-size:11px;color:var(--muted);font-weight:600;">(optional)</span></div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Registered business name — About page pe dikhega. Khaali chhodo to nahi dikhega.</div>
+        <input type="text" class="search-box" id="cfg-legalName" placeholder="e.g. Nutnbolt Business Solution Private Limited">
+
+        <div class="section-title" style="margin-top:20px;">🧾 GST Number <span style="font-size:11px;color:var(--muted);font-weight:600;">(optional)</span></div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Khaali chhodo to nahi dikhega.</div>
+        <input type="text" class="search-box" id="cfg-gstNumber" placeholder="e.g. 24XXXXXXXXXX1ZY">
 
           </div>
         </div>
@@ -1202,7 +1232,7 @@
       fullName:'👤 Full Name', verifiedMobile:'📱 Mobile Number (verified ✓)', payMethod:'💰 Payment Method',
       payCOD:'💵 Cash on Delivery', payCODsub:'Pay cash when you receive your tiffin', payUPI:'💳 Pay Online (UPI)', payUPIsub:'QR code appears right after you place the order', codNote:'Cash on Delivery — please pay when your tiffin arrives.',
       errSociety:'Please select your society.', errFlat:'Please enter your block and flat number, e.g. D-706.',
-      placeOrder:'📤 Place Order', successTitle:'Order Confirmed', promoHave:'Have a coupon? Enter code', promoApply:'Apply', promoApplied:'applied', discountLbl:'Discount', promoFirstDateNote:'(applies to the first delivery date)', promoEditNote:'Discounted orders cannot be edited — please cancel and place a new order.', promoUseAtCheckout:'Tap a code in your cart to apply', promoNewTag:'new customers', policyTitle:'Cancellation & Refund Policy', policyBody:'• Orders can be cancelled until 10:00 PM on the night before delivery. Orders placed after this window can be cancelled within 30 minutes of placing them. Orders cannot be edited — please cancel and place a fresh order instead.<br>• If you paid online via UPI and your order is cancelled — by you within the allowed window, or by us for any reason — the full amount is refunded to the same UPI account within 24 hours.<br>• Orders placed with a discount coupon cannot be edited; please cancel and place a fresh order instead.<br>• Any issue with your meal? WhatsApp us a photo within 2 hours of delivery — we will arrange a replacement or a full refund.<br>• Support: 📞 +91 70434 91481 (WhatsApp available).', waFallback:'Share order details on WhatsApp (optional) →', newOrder:'Place Another Order', trackOrderBtn:'Track Your Order', successConfirmNote:'Your order has been confirmed. You can view and track it anytime in the My Orders section.',
+      placeOrder:'📤 Place Order', successTitle:'Order Confirmed', promoHave:'Have a coupon? Enter code', promoApply:'Apply', promoApplied:'applied', discountLbl:'Discount', promoFirstDateNote:'(applies to the first delivery date)', promoEditNote:'Discounted orders cannot be edited — please cancel and place a new order.', promoUseAtCheckout:'Tap a code in your cart to apply', promoNewTag:'new customers', policyTitle:'Cancellation & Refund Policy', abDeliveryOnly:'This is a delivery-only kitchen', abBackToMenu:'Go back to menu', policyBody:'• Orders can be cancelled until 10:00 PM on the night before delivery. Orders placed after this window can be cancelled within 30 minutes of placing them. Orders cannot be edited — please cancel and place a fresh order instead.<br>• If you paid online via UPI and your order is cancelled — by you within the allowed window, or by us for any reason — the full amount is refunded to the same UPI account within 24 hours.<br>• Orders placed with a discount coupon cannot be edited; please cancel and place a fresh order instead.<br>• Any issue with your meal? WhatsApp us a photo within 2 hours of delivery — we will arrange a replacement or a full refund.<br>• Support: 📞 +91 70434 91481 (WhatsApp available).', waFallback:'Share order details on WhatsApp (optional) →', newOrder:'Place Another Order', trackOrderBtn:'Track Your Order', okayBtn:'Okay', successConfirmNote:'Your order has been confirmed. You can view and track it anytime in the My Orders section.',
       addToCart:'🛒 Add to Cart', addedShort:'added to cart', addToCart2:'ADD', payNowUpi:'PAY ONLINE', payRefLbl:'Payment reference', srv_dup_date:'You already have an order for this date.', srv_qty_limit:'You can order 1 tiffin per meal per day. For larger quantities, please contact the kitchen.', srv_cancel_window:'The cancellation window for this order has closed.', srv_already_cancelled:'This order is already cancelled.', srv_cancel_delivered:'A delivered order cannot be cancelled.', srv_not_yours:'This order does not belong to your account.', srv_no_meal:'Your order is empty — please select at least one meal.', srv_office_off:'Office delivery is not available right now.', srv_home_off:'Home delivery is not available right now.', srv_company_req:'Please select your company from the list.', srv_empid_req:'Employee ID is required.', srv_blocked:'Your account is blocked. Support: 70434 91481', srv_wrong_pw:'Incorrect password.', srv_no_account:'No account found with this email.', srv_email_exists:'An account with this email already exists — please sign in.', srv_phone_taken:'This mobile number is already linked to another account.', srv_use_google:'This account uses Google Sign-In — please use "Sign in with Google".', srv_reset_sent:'If this email is registered, a reset link has been sent.', srv_reset_bad:'This reset link is invalid or has expired.', srv_reset_expired:'This reset link has expired — please request a new one.', scanToPay:'Scan the QR with any UPI app', copyId:'COPY', pleaseWait:'Please wait…', cancelWindowOver:'The cancellation window for this order has closed. For any help, please contact the kitchen.', limitTitle:'One Tiffin Per Meal', limitBody:'Each customer can order 1 breakfast, 1 lunch and 1 dinner per day. For a larger quantity, please connect with our kitchen — we will be happy to arrange it.', limitCta:'Connect to Kitchen', limitClose:'Got it', subtotalLbl:'Subtotal', deliveryLbl:'Delivery', infoStripText:'Order timings — Breakfast: by 10 PM previous night · Lunch: by 9 AM · Dinner: by 3 PM', subPushLine:'Order daily? Set up a subscription', qaTitle:'Help', qaOnline:'● Online', qaPh:'Type your question…', qaGreet:'Namaste! 🙏 Ask me about the menu, prices or delivery timings.', qaSug1:'Today\'s menu', qaSug2:'Delivery time', qaSug3:'Where do you deliver?', qaOffTopic:'Sorry, I can only help with questions about this kitchen food 🍱 Ask me about the menu, prices, delivery or your order!', qaLimit:'You have used your 10 questions for today 🙏 Please try again tomorrow — or call us directly for help.', qaErr:'Could not reach the assistant. Please try again, or call us for help.', reorderBtn:'Reorder', alreadyOrderedT:'You have already ordered {meal} for this date.', alreadyOrderedBtn:'View my order', reorderDone:'Items added to your cart', reorderNoSlot:'These meals are not available in the next 3 days', lpTagline:'Fresh, home-style meals — cooked daily, delivered to home & office.', lpOrderNow:'Order Now', priceFrom:'Meals from ₹{p}', lpTodays:'Today&#39;s Meals', lpOpen:'Open', lpClosed:'Closed', lpWhy:'Why this kitchen', lpU1t:'Fresh Daily Batches', lpU1s:'Cooked in small batches every day — never stored or frozen.', lpU2t:'Home-Style Ingredients', lpU2s:'Freshly ground masalas — no packet mixes, no shortcuts.', lpU3t:'Safe, Hygienic Packaging', lpU3s:'Certified food-grade containers for every single meal.', lpSubT:'Daily Tiffin Subscription', lpSubS:'Set once — your tiffin arrives every day automatically.', lpHow:'How It Works', lpH1:'Pick your meal & customise it', lpH2:'Choose delivery date & time slot', lpH3:'Pay online or at delivery', pubLogin:'Login', pubBack:'← Back', dtypeQ:'Where should we deliver?', modeTitle:'Where would you like your tiffin?', modeSub:'Choose once — you can change it any time.', modeChange:'Change', dtHome:'Home', dtHomeSub:'Society / Flat', dtOffice:'Office', dtOfficeSub:'Company / Employee', companyLbl:'Select Your Company', companyHint:'Company not listed? Contact the kitchen — we will add it.', empIdLbl:'Employee ID', errCompany:'Please select your company', errEmpId:'Please enter your Employee ID', pubCta:'See Menu & Order', pubCutoffLine:'Lunch closes at <b>9:00 AM</b> · Dinner at <b>3:00 PM</b>', pubHookQ:'Can healthy food really be cooked in <em>20 minutes</em>?', pubHookA:'It can\'t. Food that fast was <b>cooked long before you ordered</b> — reheated, and rushed.', cmpUs:'Our Kitchen', cmpThem:'Delivery Apps', cmpU1:'Freshly ground masala', cmpT1:'Bulk packet masala', cmpU2:'Fresh oil, every day', cmpT2:'Oil reused all day', cmpU3:'Limited orders daily', cmpT3:'Unlimited, mass-cooked', cmpU4:'Same cook, same taste', cmpT4:'A new kitchen each time', cmpU5:'Fixed price, no extras', cmpT5:'Surge + platform fees', cmpU6:'Light, everyday food', cmpT6:'Heavy restaurant food', cmpU7:'A kitchen you can visit', cmpT7:'A kitchen you\'ll never see', cmpQualT:'Quality, not quantity.', cmpQualS:'We cap how many tiffins we cook each day — so every one gets the time it deserves.', cmpChip:'🍱 Limited orders daily — always fresh', lpPosT:'This Is Not a Quick-Delivery App', lpPosS:'It is your everyday kitchen — planned, fresh and always on time.', lpPos1:'Delivery in fixed time slots — no 10-minute race, no rush.', lpPos2:'Light, nourishing home-style food — not heavy restaurant fare.', lpPos3:'Simple fixed prices — no surge, no hidden or platform charges.', lpPos4:'One trusted kitchen every day — the same care in every tiffin.', navMenuShort:'Menu', navProfileShort:'Profile', pfTitle:'My Profile', pfAddr:'Saved Delivery Address', pfFlatLbl:'Flat / Block No.', pfSave:'Save Address', addrSaved:'Address saved', pfQuick:'Quick Links', pfLang:'Language', payWithUpiBtn:'Pay Now', orScan:'or scan the QR code', upiPayNote:'🔒 Secure payment via UPI. Amount is pre-filled — just approve in your UPI app.', copied:'UPI ID copied', updateCart:'✓ Update in Cart', addedToCart:'added to cart', customizable:'customizable', customizeBtn:'Customize', chooseSize:'Choose Size', sizeRequired:'Required · Select any 1 option', addOns:'Add-ons', dahiShort:'Dahi', extraSabziShort:'Extra Sabzi', freshCookedDesc:'Prepared fresh in small daily batches — never stored, never frozen.', selectSabzi:'Select sabzi', rotiType:'Roti type', plain:'Plain', butter:'Butter', deliveryTime:'⏰ Delivery Time', tiffinType:'🍱 Choose Your Tiffin', miniTiffin:'Mini Tiffin', fullTiffin:'Full Tiffin',
       extraRoti:'Extra Roti', addDahi:'Add Curd', extraSabzi:'Extra Sabzi portion', howMany:'How many tiffins?', unitPrice:'Unit price',
       perTiffin:'/ tiffin', specialInstr:'📝 Special instructions (optional)', notePh:'e.g. Less spicy, no onion...',
@@ -1258,7 +1288,7 @@
       fullName:'👤 Pura Naam', verifiedMobile:'📱 Mobile Number (verified ✓)', payMethod:'💰 Payment Method',
       payCOD:'💵 Cash on Delivery', payCODsub:'Tiffin milne par cash dein', payUPI:'💳 Pay Online (UPI)', payUPIsub:'Order place karte hi QR code milega', codNote:'Cash on Delivery — tiffin milne par payment karein.',
       errSociety:'Apni society select karein.', errFlat:'Apna block aur flat number daalein, e.g. D-706.',
-      placeOrder:'📤 Place Order', successTitle:'Order Confirm Ho Gaya', promoHave:'Coupon code hai? Yahan daalein', promoApply:'Apply', promoApplied:'apply ho gaya', discountLbl:'Discount', promoFirstDateNote:'(pehli delivery date par lagta hai)', promoEditNote:'Discount wale orders edit nahi ho sakte — cancel karke naya order karein.', promoUseAtCheckout:'Cart me code par tap karke apply karein', promoNewTag:'naye customers', policyTitle:'Cancellation & Refund Policy', policyBody:'• Order delivery se ek raat pehle 10:00 PM tak cancel ho sakta hai. Uske baad place kiye gaye orders, place karne ke 30 minute ke andar cancel ho sakte hain. Order edit nahi ho sakta — cancel karke naya order place karein.<br>• Agar aapne UPI se online payment kiya hai aur order cancel hota hai — chahe aapne allowed window me kiya ho ya humne kisi wajah se — poora amount 24 ghante ke andar usi UPI account me refund kar diya jaata hai.<br>• Coupon discount wale orders edit nahi ho sakte; kripya cancel karke naya order place karein.<br>• Khaane me koi bhi problem ho? Delivery ke 2 ghante ke andar photo ke saath WhatsApp karein — hum replacement ya poora refund arrange karenge.<br>• Support: 📞 +91 70434 91481 (WhatsApp par available).', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subSaved:'Subscription successfully save ho gaya.', waFallback:'Order details WhatsApp par share karein (optional) →', newOrder:'Naya Order Place Karein', trackOrderBtn:'Order Track Karein', successConfirmNote:'Aapka order confirm ho chuka hai. Aap ise kabhi bhi My Orders section mein dekh aur track kar sakte hain.',
+      placeOrder:'📤 Place Order', successTitle:'Order Confirm Ho Gaya', promoHave:'Coupon code hai? Yahan daalein', promoApply:'Apply', promoApplied:'apply ho gaya', discountLbl:'Discount', promoFirstDateNote:'(pehli delivery date par lagta hai)', promoEditNote:'Discount wale orders edit nahi ho sakte — cancel karke naya order karein.', promoUseAtCheckout:'Cart me code par tap karke apply karein', promoNewTag:'naye customers', policyTitle:'Cancellation & Refund Policy', abDeliveryOnly:'Ye ek delivery-only kitchen hai', abBackToMenu:'Menu par wapas jaayein', policyBody:'• Order delivery se ek raat pehle 10:00 PM tak cancel ho sakta hai. Uske baad place kiye gaye orders, place karne ke 30 minute ke andar cancel ho sakte hain. Order edit nahi ho sakta — cancel karke naya order place karein.<br>• Agar aapne UPI se online payment kiya hai aur order cancel hota hai — chahe aapne allowed window me kiya ho ya humne kisi wajah se — poora amount 24 ghante ke andar usi UPI account me refund kar diya jaata hai.<br>• Coupon discount wale orders edit nahi ho sakte; kripya cancel karke naya order place karein.<br>• Khaane me koi bhi problem ho? Delivery ke 2 ghante ke andar photo ke saath WhatsApp karein — hum replacement ya poora refund arrange karenge.<br>• Support: 📞 +91 70434 91481 (WhatsApp par available).', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subSaved:'Subscription successfully save ho gaya.', waFallback:'Order details WhatsApp par share karein (optional) →', newOrder:'Naya Order Place Karein', trackOrderBtn:'Order Track Karein', okayBtn:'Okay', successConfirmNote:'Aapka order confirm ho chuka hai. Aap ise kabhi bhi My Orders section mein dekh aur track kar sakte hain.',
       addToCart:'🛒 Cart mein daalein', addedShort:'cart mein add hua', addToCart2:'ADD', payNowUpi:'ONLINE PAYMENT', payRefLbl:'Payment reference', srv_dup_date:'Is date ka order pehle se hai.', srv_qty_limit:'Ek din me har meal ka sirf 1 tiffin. Zyada ke liye kitchen se sampark karein.', srv_cancel_window:'Is order ka cancellation window band ho chuka hai.', srv_already_cancelled:'Ye order pehle se cancelled hai.', srv_cancel_delivered:'Delivered order cancel nahi ho sakta.', srv_not_yours:'Ye order aapke account ka nahi hai.', srv_no_meal:'Order khali hai — kam se kam ek meal chunein.', srv_office_off:'Office delivery abhi available nahi hai.', srv_home_off:'Home delivery abhi available nahi hai.', srv_company_req:'Kripya list me se apni company chunein.', srv_empid_req:'Employee ID zaroori hai.', srv_blocked:'Aapka account block hai. Support: 70434 91481', srv_wrong_pw:'Password galat hai.', srv_no_account:'Is email se koi account nahi mila.', srv_email_exists:'Is email se account pehle se hai — sign in karein.', srv_phone_taken:'Ye mobile number doosre account se juda hai.', srv_use_google:'Ye account Google Sign-In ka hai — "Sign in with Google" use karein.', srv_reset_sent:'Agar ye email registered hai, reset link bhej diya gaya hai.', srv_reset_bad:'Ye reset link invalid ya expire ho chuka hai.', srv_reset_expired:'Reset link expire ho gaya — naya request karein.', scanToPay:'Kisi bhi UPI app se QR scan karein', copyId:'COPY', pleaseWait:'Ek moment…', cancelWindowOver:'Is order ka cancellation window band ho chuka hai. Kisi bhi madad ke liye kitchen se sampark karein.', limitTitle:'Ek Meal Ka Ek Tiffin', limitBody:'Har customer ek din me 1 breakfast, 1 lunch aur 1 dinner order kar sakta hai. Zyada quantity ke liye kripya kitchen se sampark karein — hum khushi se arrange kar denge.', limitCta:'Kitchen Se Sampark Karein', limitClose:'Theek hai', subtotalLbl:'Subtotal', deliveryLbl:'Delivery', infoStripText:'Order timing — Breakfast: ek raat pehle 10 PM tak · Lunch: 9 AM tak · Dinner: 3 PM tak', subPushLine:'Roz order karte hain? Subscription set karein', qaTitle:'Help', qaOnline:'● Online', qaPh:'Sawaal likhiye…', qaGreet:'Namaste! 🙏 Menu, prices ya delivery timing — kuch bhi poochiye.', qaSug1:'Aaj ka menu', qaSug2:'Delivery time', qaSug3:'Kaha deliver karte ho?', qaOffTopic:'Sorry, main sirf is kitchen ke khaane se related sawaalon mein help kar sakti hoon 🍱 Menu, prices, delivery ya order ke baare mein poochiye!', qaLimit:'Aaj ke liye aapke 10 sawaal ho gaye 🙏 Kal phir se pooch sakte hain — ya turant help ke liye humein call kar lijiye.', qaErr:'Assistant se baat nahi ho paayi. Dobara try karein, ya humein call kar lijiye.', reorderBtn:'Reorder', alreadyOrderedT:'Is date ka {meal} aap already order kar chuke hain.', alreadyOrderedBtn:'Mera order dekhein', reorderDone:'Items aapke cart mein add ho gaye', reorderNoSlot:'Ye meals agle 3 din available nahi hain', lpTagline:'Roz taaza, ghar jaisa khana — seedha aapke doorstep tak.', lpOrderNow:'Order Karein', priceFrom:'₹{p} se meals', lpTodays:'Aaj ke Meals', lpOpen:'Open', lpClosed:'Band', lpWhy:'is kitchen Hi Kyun', lpU1t:'Roz Taaze Batches', lpU1s:'Har din chhote batches mein banta hai — kabhi store ya frozen nahi.', lpU2t:'Ghar Jaise Ingredients', lpU2s:'Taaze pise masale — koi packet mix nahi.', lpU3t:'Safe, Hygienic Packaging', lpU3s:'Har meal certified food-grade container mein.', lpSubT:'Daily Tiffin Subscription', lpSubS:'Ek baar set karein — tiffin roz apne aap aayega.', lpHow:'Kaise Kaam Karta Hai', lpH1:'Meal chunein aur customise karein', lpH2:'Delivery date aur time slot chunein', lpH3:'Online ya delivery par pay karein', pubLogin:'Login', pubBack:'← Wapas', dtypeQ:'Delivery kahan chahiye?', modeTitle:'Tiffin kahan chahiye?', modeSub:'Ek baar chunein — kabhi bhi badal sakte hain.', modeChange:'Badlein', dtHome:'Home', dtHomeSub:'Society / Flat', dtOffice:'Office', dtOfficeSub:'Company / Employee', companyLbl:'Apni Company Chunein', companyHint:'Company list me nahi? Kitchen se sampark karein — hum add kar denge.', empIdLbl:'Employee ID', errCompany:'Kripya apni company chunein', errEmpId:'Kripya Employee ID daalein', pubCta:'Menu Dekhein & Order Karein', pubCutoffLine:'Lunch band <b>9:00 AM</b> · Dinner <b>3:00 PM</b>', pubHookQ:'Kya healthy khana sach me <em>20-minute delivery</em> me ban sakta hai?', pubHookA:'Nahi ban sakta. Itni jaldi aane wala khana <b>aapke order se pehle hi bana hota hai</b> — dobara garam karke bheja jaata hai.', cmpUs:'Hamara Kitchen', cmpThem:'Delivery Apps', cmpU1:'Ghar pe pise taaze masale', cmpT1:'Bulk packet masala', cmpU2:'Roz naya tel', cmpT2:'Wahi tel din bhar', cmpU3:'Roz limited orders', cmpT3:'Unlimited, bulk cooking', cmpU4:'Wahi cook, wahi swaad', cmpT4:'Har baar alag kitchen', cmpU5:'Fixed daam, koi extra nahi', cmpT5:'Surge + platform fees', cmpU6:'Halka, roz ka khana', cmpT6:'Bhaari restaurant food', cmpU7:'Kitchen jo aap dekh sakte hain', cmpT7:'Kitchen jo kabhi nahi dikhega', cmpQualT:'Quality, quantity nahi.', cmpQualS:'Hum roz ke orders limited rakhte hain — taaki har tiffin ko poora time mile.', cmpChip:'🍱 Roz limited orders — hamesha taaza', lpPosT:'Ye Fatafat-Delivery App Nahi Hai', lpPosS:'Ye aapka roz ka kitchen hai — planned, taaza aur hamesha time par.', lpPos1:'Fixed time slots par delivery — 10-minute wali race nahi.', lpPos2:'Halka, poshan-bhara ghar jaisa khana — restaurant ka bhaari tel-masala nahi.', lpPos3:'Seedhe fixed daam — na surge, na hidden ya platform charges.', lpPos4:'Roz ek hi bharosemand kitchen — har tiffin mein wahi apnapan.', navMenuShort:'Menu', navProfileShort:'Profile', pfTitle:'Meri Profile', pfAddr:'Saved Delivery Address', pfFlatLbl:'Flat / Block No.', pfSave:'Address Save Karein', addrSaved:'Address save ho gaya', pfQuick:'Quick Links', pfLang:'Language', payWithUpiBtn:'Payment Karein', orScan:'ya QR code scan karein', upiPayNote:'🔒 UPI se secure payment. Amount pehle se bhara hai — bas apne UPI app mein approve karein.', copied:'UPI ID copy ho gayi', updateCart:'✓ Cart update karein', addedToCart:'cart mein add hua', customizable:'customizable', customizeBtn:'Customize karein', chooseSize:'Size Chunein', sizeRequired:'Zaroori · Koi 1 chunein', addOns:'Add-ons', dahiShort:'Dahi', extraSabziShort:'Extra Sabzi', freshCookedDesc:'Roz chhote batches mein taaza banta hai — kabhi store ya frozen nahi.', selectSabzi:'Sabzi chunein', rotiType:'Roti type', plain:'Plain', butter:'Butter', deliveryTime:'⏰ Delivery Time', tiffinType:'🍱 Apna Tiffin Chunein', miniTiffin:'Mini Tiffin', fullTiffin:'Full Tiffin',
       extraRoti:'Extra Roti', addDahi:'Dahi add karein', extraSabzi:'Extra Sabzi', howMany:'Kitne tiffin?', unitPrice:'Unit price',
       perTiffin:'/ tiffin', specialInstr:'📝 Special instructions (optional)', notePh:'e.g. Kam mirchi, no onion...',
@@ -1292,7 +1322,7 @@
       fullName:'👤 पूरा नाम', verifiedMobile:'📱 मोबाइल नंबर (वेरिफ़ाइड ✓)', payMethod:'💰 भुगतान का तरीका',
       payCOD:'💵 कैश ऑन डिलीवरी', payCODsub:'टिफ़िन मिलने पर कैश दें', payUPI:'💳 ऑनलाइन पेमेंट (UPI)', payUPIsub:'ऑर्डर करते ही QR कोड मिलेगा', codNote:'कैश ऑन डिलीवरी — टिफ़िन मिलने पर भुगतान करें।',
       errSociety:'अपनी सोसायटी चुनें।', errFlat:'कृपया ब्लॉक और फ़्लैट नंबर डालें, जैसे D-706।',
-      placeOrder:'📤 ऑर्डर करें', successTitle:'ऑर्डर कन्फर्म हो गया', promoHave:'कूपन कोड है? यहाँ डालें', promoApply:'लगाएँ', promoApplied:'लागू हुआ', discountLbl:'छूट', promoFirstDateNote:'(पहली डिलीवरी तारीख़ पर लागू)', promoEditNote:'छूट वाले ऑर्डर एडिट नहीं हो सकते — कैंसल करके नया ऑर्डर करें।', promoUseAtCheckout:'कार्ट में कोड पर टैप करके लागू करें', promoNewTag:'नए ग्राहक', policyTitle:'कैंसलेशन और रिफ़ंड नीति', policyBody:'• ऑर्डर डिलीवरी से एक रात पहले 10:00 PM तक कैंसल किया जा सकता है। इसके बाद किए गए ऑर्डर, ऑर्डर करने के 30 मिनट के भीतर कैंसल किए जा सकते हैं। ऑर्डर एडिट नहीं हो सकता — कृपया कैंसल करके नया ऑर्डर करें।<br>• यदि आपने UPI से ऑनलाइन भुगतान किया है और ऑर्डर कैंसल होता है — चाहे आपने अनुमत समय में किया हो या हमने किसी कारण से — पूरी राशि 24 घंटे के भीतर उसी UPI खाते में रिफ़ंड कर दी जाती है।<br>• कूपन छूट वाले ऑर्डर एडिट नहीं हो सकते; कृपया कैंसल करके नया ऑर्डर करें।<br>• खाने में कोई समस्या हो? डिलीवरी के 2 घंटे के भीतर फ़ोटो के साथ WhatsApp करें — हम रिप्लेसमेंट या पूरा रिफ़ंड देंगे।<br>• सहायता: 📞 +91 70434 91481 (WhatsApp उपलब्ध)।', waFallback:'ऑर्डर WhatsApp पर साझा करें (optional) →', newOrder:'नया ऑर्डर करें', trackOrderBtn:'ऑर्डर ट्रैक करें', successConfirmNote:'आपका ऑर्डर कन्फर्म हो चुका है। आप इसे कभी भी My Orders सेक्शन में देख और ट्रैक कर सकते हैं।',
+      placeOrder:'📤 ऑर्डर करें', successTitle:'ऑर्डर कन्फर्म हो गया', promoHave:'कूपन कोड है? यहाँ डालें', promoApply:'लगाएँ', promoApplied:'लागू हुआ', discountLbl:'छूट', promoFirstDateNote:'(पहली डिलीवरी तारीख़ पर लागू)', promoEditNote:'छूट वाले ऑर्डर एडिट नहीं हो सकते — कैंसल करके नया ऑर्डर करें।', promoUseAtCheckout:'कार्ट में कोड पर टैप करके लागू करें', promoNewTag:'नए ग्राहक', policyTitle:'कैंसलेशन और रिफ़ंड नीति', abDeliveryOnly:'यह एक डिलीवरी-ओनली किचन है', abBackToMenu:'मेनू पर वापस जाएँ', policyBody:'• ऑर्डर डिलीवरी से एक रात पहले 10:00 PM तक कैंसल किया जा सकता है। इसके बाद किए गए ऑर्डर, ऑर्डर करने के 30 मिनट के भीतर कैंसल किए जा सकते हैं। ऑर्डर एडिट नहीं हो सकता — कृपया कैंसल करके नया ऑर्डर करें।<br>• यदि आपने UPI से ऑनलाइन भुगतान किया है और ऑर्डर कैंसल होता है — चाहे आपने अनुमत समय में किया हो या हमने किसी कारण से — पूरी राशि 24 घंटे के भीतर उसी UPI खाते में रिफ़ंड कर दी जाती है।<br>• कूपन छूट वाले ऑर्डर एडिट नहीं हो सकते; कृपया कैंसल करके नया ऑर्डर करें।<br>• खाने में कोई समस्या हो? डिलीवरी के 2 घंटे के भीतर फ़ोटो के साथ WhatsApp करें — हम रिप्लेसमेंट या पूरा रिफ़ंड देंगे।<br>• सहायता: 📞 +91 70434 91481 (WhatsApp उपलब्ध)।', waFallback:'ऑर्डर WhatsApp पर साझा करें (optional) →', newOrder:'नया ऑर्डर करें', trackOrderBtn:'ऑर्डर ट्रैक करें', okayBtn:'ठीक है', successConfirmNote:'आपका ऑर्डर कन्फर्म हो चुका है। आप इसे कभी भी My Orders सेक्शन में देख और ट्रैक कर सकते हैं।',
       addToCart:'🛒 कार्ट में जोड़ें', addedShort:'कार्ट में जुड़ा', addToCart2:'जोड़ें', payNowUpi:'ऑनलाइन भुगतान', payRefLbl:'पेमेंट रेफ़रेंस', srv_dup_date:'इस तारीख़ का ऑर्डर पहले से है।', srv_qty_limit:'एक दिन में हर मील का सिर्फ़ 1 टिफ़िन। ज़्यादा के लिए किचन से संपर्क करें।', srv_cancel_window:'इस ऑर्डर की कैंसलेशन विंडो बंद हो चुकी है।', srv_already_cancelled:'यह ऑर्डर पहले से कैंसल है।', srv_cancel_delivered:'डिलीवर हुआ ऑर्डर कैंसल नहीं हो सकता।', srv_not_yours:'यह ऑर्डर आपके अकाउंट का नहीं है।', srv_no_meal:'ऑर्डर खाली है — कम से कम एक मील चुनें।', srv_office_off:'ऑफ़िस डिलीवरी अभी उपलब्ध नहीं है।', srv_home_off:'होम डिलीवरी अभी उपलब्ध नहीं है।', srv_company_req:'कृपया लिस्ट से अपनी कंपनी चुनें।', srv_empid_req:'एम्प्लॉई ID ज़रूरी है।', srv_blocked:'आपका अकाउंट ब्लॉक है। सपोर्ट: 70434 91481', srv_wrong_pw:'पासवर्ड ग़लत है।', srv_no_account:'इस ईमेल से कोई अकाउंट नहीं मिला।', srv_email_exists:'इस ईमेल से अकाउंट पहले से है — साइन इन करें।', srv_phone_taken:'यह मोबाइल नंबर दूसरे अकाउंट से जुड़ा है।', srv_use_google:'यह अकाउंट Google Sign-In का है — "Sign in with Google" चुनें।', srv_reset_sent:'अगर यह ईमेल रजिस्टर्ड है, रीसेट लिंक भेज दिया गया है।', srv_reset_bad:'यह रीसेट लिंक अमान्य या समाप्त है।', srv_reset_expired:'रीसेट लिंक समाप्त हो गया — नया अनुरोध करें।', scanToPay:'किसी भी UPI ऐप से QR स्कैन करें', copyId:'कॉपी', pleaseWait:'एक क्षण…', cancelWindowOver:'इस ऑर्डर का कैंसलेशन विंडो बंद हो चुका है। किसी भी मदद के लिए किचन से संपर्क करें।', limitTitle:'एक मील का एक टिफ़िन', limitBody:'हर ग्राहक एक दिन में 1 नाश्ता, 1 लंच और 1 डिनर ऑर्डर कर सकता है। ज़्यादा मात्रा के लिए कृपया किचन से संपर्क करें — हम खुशी से व्यवस्था कर देंगे।', limitCta:'किचन से संपर्क करें', limitClose:'ठीक है', subtotalLbl:'सबटोटल', deliveryLbl:'डिलीवरी', infoStripText:'ऑर्डर समय — नाश्ता: एक रात पहले 10 PM तक · लंच: 9 AM तक · डिनर: 3 PM तक', subPushLine:'रोज़ ऑर्डर करते हैं? सब्सक्रिप्शन सेट करें', qaTitle:'सहायता', qaOnline:'● ऑनलाइन', qaPh:'अपना सवाल लिखें…', qaGreet:'नमस्ते! 🙏 मेन्यू, दाम या डिलीवरी समय — कुछ भी पूछिए।', qaSug1:'आज का मेन्यू', qaSug2:'डिलीवरी समय', qaSug3:'कहाँ डिलीवर करते हैं?', qaOffTopic:'क्षमा करें, मैं सिर्फ़ इस किचन के खाने से जुड़े सवालों में मदद कर सकती हूँ 🍱 मेन्यू, दाम, डिलीवरी या ऑर्डर के बारे में पूछिए!', qaLimit:'आज के लिए आपके 10 सवाल हो गए 🙏 कल फिर पूछ सकते हैं — या तुरंत मदद के लिए हमें कॉल करें।', qaErr:'असिस्टेंट से संपर्क नहीं हो पाया। दोबारा कोशिश करें, या हमें कॉल करें।', reorderBtn:'फिर ऑर्डर करें', alreadyOrderedT:'इस तारीख़ का {meal} आप पहले ही ऑर्डर कर चुके हैं।', alreadyOrderedBtn:'मेरा ऑर्डर देखें', reorderDone:'आइटम आपके कार्ट में जुड़ गए', reorderNoSlot:'ये मील अगले 3 दिन उपलब्ध नहीं हैं', lpTagline:'रोज़ ताज़ा, घर जैसा खाना — सीधे आपके doorstep तक।', lpOrderNow:'ऑर्डर करें', priceFrom:'₹{p} से भोजन', lpTodays:'आज के मील', lpOpen:'उपलब्ध', lpClosed:'बंद', lpWhy:'इस किचन ही क्यों', lpU1t:'रोज़ ताज़े बैच', lpU1s:'हर दिन छोटे बैच में बनता है — कभी स्टोर या फ़्रोज़न नहीं।', lpU2t:'घर जैसी सामग्री', lpU2s:'ताज़े पिसे मसाले — कोई पैकेट मिक्स नहीं।', lpU3t:'सुरक्षित पैकेजिंग', lpU3s:'हर मील सर्टिफ़ाइड फ़ूड-ग्रेड कंटेनर में।', lpSubT:'डेली टिफ़िन सब्सक्रिप्शन', lpSubS:'एक बार सेट करें — टिफ़िन रोज़ अपने आप आएगा।', lpHow:'कैसे काम करता है', lpH1:'मील चुनें और कस्टमाइज़ करें', lpH2:'डिलीवरी की तारीख़ और समय चुनें', lpH3:'ऑनलाइन या डिलीवरी पर भुगतान करें', pubLogin:'लॉगिन', pubBack:'← वापस', dtypeQ:'डिलीवरी कहाँ चाहिए?', modeTitle:'टिफ़िन कहाँ चाहिए?', modeSub:'एक बार चुनें — कभी भी बदल सकते हैं।', modeChange:'बदलें', dtHome:'घर', dtHomeSub:'सोसाइटी / फ़्लैट', dtOffice:'ऑफ़िस', dtOfficeSub:'कंपनी / एम्प्लॉई', companyLbl:'अपनी कंपनी चुनें', companyHint:'कंपनी लिस्ट में नहीं? किचन से संपर्क करें — हम जोड़ देंगे।', empIdLbl:'एम्प्लॉई ID', errCompany:'कृपया अपनी कंपनी चुनें', errEmpId:'कृपया एम्प्लॉई ID डालें', pubCta:'मेन्यू देखें और ऑर्डर करें', pubCutoffLine:'लंच बंद <b>9:00 AM</b> · डिनर <b>3:00 PM</b>', pubHookQ:'क्या हेल्दी खाना सच में <em>20-मिनट डिलीवरी</em> में बन सकता है?', pubHookA:'नहीं बन सकता। इतनी जल्दी आने वाला खाना <b>आपके ऑर्डर से पहले ही बना होता है</b> — दोबारा गरम करके भेजा जाता है।', cmpUs:'हमारा किचन', cmpThem:'डिलीवरी ऐप्स', cmpU1:'घर पर पिसे ताज़े मसाले', cmpT1:'बल्क पैकेट मसाला', cmpU2:'रोज़ नया तेल', cmpT2:'वही तेल दिन भर', cmpU3:'रोज़ सीमित ऑर्डर', cmpT3:'अनलिमिटेड, बल्क कुकिंग', cmpU4:'वही रसोइया, वही स्वाद', cmpT4:'हर बार अलग किचन', cmpU5:'फ़िक्स्ड दाम, कोई एक्स्ट्रा नहीं', cmpT5:'सर्ज + प्लेटफ़ॉर्म फ़ीस', cmpU6:'हल्का, रोज़ का खाना', cmpT6:'भारी रेस्टोरेंट फ़ूड', cmpU7:'किचन जो आप देख सकते हैं', cmpT7:'किचन जो कभी नहीं दिखेगा', cmpQualT:'क्वालिटी, क्वांटिटी नहीं।', cmpQualS:'हम रोज़ के ऑर्डर सीमित रखते हैं — ताकि हर टिफ़िन को पूरा समय मिले।', cmpChip:'🍱 रोज़ सीमित ऑर्डर — हमेशा ताज़ा', lpPosT:'यह फटाफट-डिलीवरी ऐप नहीं है', lpPosS:'यह आपका रोज़ का किचन है — planned, ताज़ा और हमेशा समय पर।', lpPos1:'Fixed time slots पर डिलीवरी — 10-मिनट वाली रेस नहीं।', lpPos2:'हल्का, पोषण-भरा घर जैसा खाना — रेस्टोरेंट का भारी तेल-मसाला नहीं।', lpPos3:'सीधे fixed दाम — ना surge, ना hidden या platform charges।', lpPos4:'रोज़ एक ही भरोसेमंद किचन — हर टिफ़िन में वही अपनापन।', navMenuShort:'मेनू', navProfileShort:'प्रोफ़ाइल', pfTitle:'मेरी प्रोफ़ाइल', pfAddr:'सेव किया गया पता', pfFlatLbl:'फ़्लैट / ब्लॉक नं.', pfSave:'पता सेव करें', addrSaved:'पता सेव हो गया', pfQuick:'क्विक लिंक', pfLang:'भाषा', payWithUpiBtn:'भुगतान करें', orScan:'या QR कोड स्कैन करें', upiPayNote:'🔒 UPI से सुरक्षित भुगतान। राशि पहले से भरी है — बस अपने UPI ऐप में अप्रूव करें।', copied:'UPI ID कॉपी हो गई', updateCart:'✓ कार्ट अपडेट करें', addedToCart:'कार्ट में जुड़ा', customizable:'कस्टमाइज़ेबल', customizeBtn:'कस्टमाइज़ करें', chooseSize:'साइज़ चुनें', sizeRequired:'ज़रूरी · कोई 1 चुनें', addOns:'ऐड-ऑन', dahiShort:'दही', extraSabziShort:'एक्स्ट्रा सब्ज़ी', freshCookedDesc:'रोज़ छोटे बैच में ताज़ा बनता है — कभी स्टोर या फ़्रोज़न नहीं।', selectSabzi:'सब्ज़ी चुनें', rotiType:'रोटी टाइप', plain:'प्लेन', butter:'बटर', deliveryTime:'⏰ डिलीवरी समय', tiffinType:'🍱 अपना टिफ़िन चुनें', miniTiffin:'मिनी टिफ़िन', fullTiffin:'फ़ुल टिफ़िन',
       extraRoti:'एक्स्ट्रा रोटी', addDahi:'दही जोड़ें', extraSabzi:'एक्स्ट्रा सब्ज़ी', howMany:'कितने टिफ़िन?', unitPrice:'यूनिट प्राइस',
       perTiffin:'/ टिफ़िन', specialInstr:'📝 विशेष निर्देश (वैकल्पिक)', notePh:'जैसे कम मिर्च, बिना प्याज़...',
@@ -1326,7 +1356,7 @@
       fullName:'👤 પૂરું નામ', verifiedMobile:'📱 મોબાઇલ નંબર (વેરિફાઇડ ✓)', payMethod:'💰 ચુકવણી પદ્ધતિ',
       payCOD:'💵 કેશ ઓન ડિલિવરી', payCODsub:'ટિફિન મળે ત્યારે કેશ આપો', payUPI:'💳 ઓનલાઇન ચુકવણી (UPI)', payUPIsub:'ઓર્ડર કરતાં જ QR કોડ મળશે', codNote:'કેશ ઓન ડિલિવરી — ટિફિન મળે ત્યારે ચૂકવો.',
       errSociety:'તમારી સોસાયટી પસંદ કરો.', errFlat:'કૃપા કરીને બ્લોક અને ફ્લેટ નંબર દાખલ કરો, દા.ત. D-706.',
-      placeOrder:'📤 ઓર્ડર કરો', successTitle:'ઓર્ડર કન્ફર્મ થયો', promoHave:'કૂપન કોડ છે? અહીં દાખલ કરો', promoApply:'લાગુ કરો', promoApplied:'લાગુ થયો', discountLbl:'ડિસ્કાઉન્ટ', promoFirstDateNote:'(પ્રથમ ડિલિવરી તારીખ પર લાગુ)', promoEditNote:'ડિસ્કાઉન્ટવાળા ઓર્ડર એડિટ થઈ શકતા નથી — કૅન્સલ કરીને નવો ઓર્ડર કરો.', promoUseAtCheckout:'કાર્ટમાં કોડ પર ટૅપ કરીને લાગુ કરો', promoNewTag:'નવા ગ્રાહકો', policyTitle:'કૅન્સલેશન અને રિફંડ નીતિ', policyBody:'• ઓર્ડર ડિલિવરીની આગલી રાત્રે 10:00 PM સુધી કૅન્સલ થઈ શકે છે. તે પછી કરેલા ઓર્ડર, ઓર્ડર કર્યાની 30 મિનિટમાં કૅન્સલ થઈ શકે છે. ઓર્ડર એડિટ થઈ શકતો નથી — કૅન્સલ કરીને નવો ઓર્ડર કરો.<br>• જો તમે UPI થી ઓનલાઇન ચુકવણી કરી હોય અને ઓર્ડર કૅન્સલ થાય — ભલે તમે માન્ય સમયમાં કર્યો હોય કે અમે કોઈ કારણસર — પૂરી રકમ 24 કલાકમાં એ જ UPI ખાતામાં રિફંડ થાય છે.<br>• કૂપન ડિસ્કાઉન્ટવાળા ઓર્ડર એડિટ થઈ શકતા નથી; કૃપા કરીને કૅન્સલ કરીને નવો ઓર્ડર કરો.<br>• ભોજનમાં કોઈ સમસ્યા? ડિલિવરીના 2 કલાકમાં ફોટા સાથે WhatsApp કરો — અમે રિપ્લેસમેન્ટ કે પૂરો રિફંડ આપીશું.<br>• સપોર્ટ: 📞 +91 70434 91481 (WhatsApp ઉપલબ્ધ).', waFallback:'ઓર્ડર WhatsApp પર શેર કરો (optional) →', newOrder:'નવો ઓર્ડર કરો', trackOrderBtn:'ઓર્ડર ટ્રૅક કરો', successConfirmNote:'તમારો ઓર્ડર કન્ફર્મ થઈ ગયો છે. તમે તેને ગમે ત્યારે My Orders સેક્શનમાં જોઈ અને ટ્રૅક કરી શકો છો.',
+      placeOrder:'📤 ઓર્ડર કરો', successTitle:'ઓર્ડર કન્ફર્મ થયો', promoHave:'કૂપન કોડ છે? અહીં દાખલ કરો', promoApply:'લાગુ કરો', promoApplied:'લાગુ થયો', discountLbl:'ડિસ્કાઉન્ટ', promoFirstDateNote:'(પ્રથમ ડિલિવરી તારીખ પર લાગુ)', promoEditNote:'ડિસ્કાઉન્ટવાળા ઓર્ડર એડિટ થઈ શકતા નથી — કૅન્સલ કરીને નવો ઓર્ડર કરો.', promoUseAtCheckout:'કાર્ટમાં કોડ પર ટૅપ કરીને લાગુ કરો', promoNewTag:'નવા ગ્રાહકો', policyTitle:'કૅન્સલેશન અને રિફંડ નીતિ', abDeliveryOnly:'આ એક ડિલિવરી-ઓન્લી કિચન છે', abBackToMenu:'મેનૂ પર પાછા જાઓ', policyBody:'• ઓર્ડર ડિલિવરીની આગલી રાત્રે 10:00 PM સુધી કૅન્સલ થઈ શકે છે. તે પછી કરેલા ઓર્ડર, ઓર્ડર કર્યાની 30 મિનિટમાં કૅન્સલ થઈ શકે છે. ઓર્ડર એડિટ થઈ શકતો નથી — કૅન્સલ કરીને નવો ઓર્ડર કરો.<br>• જો તમે UPI થી ઓનલાઇન ચુકવણી કરી હોય અને ઓર્ડર કૅન્સલ થાય — ભલે તમે માન્ય સમયમાં કર્યો હોય કે અમે કોઈ કારણસર — પૂરી રકમ 24 કલાકમાં એ જ UPI ખાતામાં રિફંડ થાય છે.<br>• કૂપન ડિસ્કાઉન્ટવાળા ઓર્ડર એડિટ થઈ શકતા નથી; કૃપા કરીને કૅન્સલ કરીને નવો ઓર્ડર કરો.<br>• ભોજનમાં કોઈ સમસ્યા? ડિલિવરીના 2 કલાકમાં ફોટા સાથે WhatsApp કરો — અમે રિપ્લેસમેન્ટ કે પૂરો રિફંડ આપીશું.<br>• સપોર્ટ: 📞 +91 70434 91481 (WhatsApp ઉપલબ્ધ).', waFallback:'ઓર્ડર WhatsApp પર શેર કરો (optional) →', newOrder:'નવો ઓર્ડર કરો', trackOrderBtn:'ઓર્ડર ટ્રૅક કરો', okayBtn:'બરાબર', successConfirmNote:'તમારો ઓર્ડર કન્ફર્મ થઈ ગયો છે. તમે તેને ગમે ત્યારે My Orders સેક્શનમાં જોઈ અને ટ્રૅક કરી શકો છો.',
       addToCart:'🛒 કાર્ટમાં ઉમેરો', addedShort:'કાર્ટમાં ઉમેરાયું', addToCart2:'ઉમેરો', payNowUpi:'ઓનલાઇન ચુકવણી', payRefLbl:'પેમેન્ટ રેફરન્સ', srv_dup_date:'આ તારીખનો ઓર્ડર પહેલેથી છે.', srv_qty_limit:'એક દિવસમાં દરેક મીલનું માત્ર 1 ટિફિન. વધુ માટે કિચનનો સંપર્ક કરો.', srv_cancel_window:'આ ઓર્ડરની કેન્સલેશન વિન્ડો બંધ થઈ ગઈ છે.', srv_already_cancelled:'આ ઓર્ડર પહેલેથી કૅન્સલ છે.', srv_cancel_delivered:'ડિલિવર થયેલો ઓર્ડર કૅન્સલ થઈ શકે નહીં.', srv_not_yours:'આ ઓર્ડર તમારા એકાઉન્ટનો નથી.', srv_no_meal:'ઓર્ડર ખાલી છે — ઓછામાં ઓછું એક મીલ પસંદ કરો.', srv_office_off:'ઓફિસ ડિલિવરી હમણાં ઉપલબ્ધ નથી.', srv_home_off:'હોમ ડિલિવરી હમણાં ઉપલબ્ધ નથી.', srv_company_req:'કૃપા કરીને લિસ્ટમાંથી તમારી કંપની પસંદ કરો.', srv_empid_req:'એમ્પ્લોયી ID જરૂરી છે.', srv_blocked:'તમારું એકાઉન્ટ બ્લોક છે. સપોર્ટ: 70434 91481', srv_wrong_pw:'પાસવર્ડ ખોટો છે.', srv_no_account:'આ ઇમેઇલથી કોઈ એકાઉન્ટ મળ્યું નથી.', srv_email_exists:'આ ઇમેઇલથી એકાઉન્ટ પહેલેથી છે — સાઇન ઇન કરો.', srv_phone_taken:'આ મોબાઇલ નંબર બીજા એકાઉન્ટ સાથે જોડાયેલો છે.', srv_use_google:'આ એકાઉન્ટ Google Sign-In નું છે — "Sign in with Google" વાપરો.', srv_reset_sent:'જો આ ઇમેઇલ રજિસ્ટર્ડ છે, તો રીસેટ લિંક મોકલી છે.', srv_reset_bad:'આ રીસેટ લિંક અમાન્ય અથવા સમાપ્ત છે.', srv_reset_expired:'રીસેટ લિંક સમાપ્ત થઈ — નવી વિનંતી કરો.', scanToPay:'કોઈપણ UPI એપથી QR સ્કૅન કરો', copyId:'કૉપિ', pleaseWait:'એક ક્ષણ…', cancelWindowOver:'આ ઓર્ડરની કેન્સલેશન વિન્ડો બંધ થઈ ગઈ છે. કોઈપણ મદદ માટે કિચનનો સંપર્ક કરો.', limitTitle:'એક મીલનું એક ટિફિન', limitBody:'દરેક ગ્રાહક એક દિવસમાં 1 નાસ્તો, 1 લંચ અને 1 ડિનર ઓર્ડર કરી શકે છે. વધુ જથ્થા માટે કૃપા કરીને કિચનનો સંપર્ક કરો — અમે ખુશીથી ગોઠવી આપીશું.', limitCta:'કિચનનો સંપર્ક કરો', limitClose:'સમજાયું', subtotalLbl:'સબટોટલ', deliveryLbl:'ડિલિવરી', infoStripText:'ઓર્ડર સમય — નાસ્તો: આગલી રાત્રે 10 PM સુધી · લંચ: 9 AM સુધી · ડિનર: 3 PM સુધી', subPushLine:'રોજ ઓર્ડર કરો છો? સબ્સ્ક્રિપ્શન સેટ કરો', qaTitle:'મદદ', qaOnline:'● ઓનલાઇન', qaPh:'તમારો પ્રશ્ન લખો…', qaGreet:'નમસ્તે! 🙏 મેનૂ, ભાવ કે ડિલિવરી સમય — કંઈ પણ પૂછો.', qaSug1:'આજનું મેનૂ', qaSug2:'ડિલિવરી સમય', qaSug3:'ક્યાં ડિલિવર કરો છો?', qaOffTopic:'માફ કરશો, હું ફક્ત આ કिचन ના ભોજન સંબંધિત પ્રશ્નોમાં મદદ કરી શકું છું 🍱 મેનૂ, ભાવ, ડિલિવરી કે ઓર્ડર વિશે પૂછો!', qaLimit:'આજ માટે તમારા 10 પ્રશ્નો થઈ ગયા 🙏 કાલે ફરી પૂછી શકો છો — અથવા તરત મદદ માટે અમને કૉલ કરો.', qaErr:'આસિસ્ટન્ટ સાથે સંપર્ક ન થઈ શક્યો. ફરી પ્રયાસ કરો, અથવા અમને કૉલ કરો.', reorderBtn:'ફરી ઓર્ડર કરો', alreadyOrderedT:'આ તારીખનું {meal} તમે પહેલેથી ઓર્ડર કરી ચૂક્યા છો.', alreadyOrderedBtn:'મારો ઓર્ડર જુઓ', reorderDone:'આઇટમ તમારા કાર્ટમાં ઉમેરાયા', reorderNoSlot:'આ મીલ આગામી 3 દિવસ ઉપલબ્ધ નથી', lpTagline:'રોજ તાજું, ઘર જેવું ભોજન — સીધું તમારા ડોરસ્ટેપ સુધી.', lpOrderNow:'ઓર્ડર કરો', priceFrom:'₹{p} થી ભોજન', lpTodays:'આજના મીલ', lpOpen:'ઉપલબ્ધ', lpClosed:'બંધ', lpWhy:'આ કिचन જ કેમ', lpU1t:'રોજ તાજા બેચ', lpU1s:'દરરોજ નાના બેચમાં બને છે — ક્યારેય સ્ટોર કે ફ્રોઝન નહીં.', lpU2t:'ઘર જેવી સામગ્રી', lpU2s:'તાજા દળેલા મસાલા — કોઈ પેકેટ મિક્સ નહીં.', lpU3t:'સુરક્ષિત પેકેજિંગ', lpU3s:'દરેક મીલ સર્ટિફાઇડ ફૂડ-ગ્રેડ કન્ટેનરમાં.', lpSubT:'ડેઇલી ટિફિન સબ્સ્ક્રિપ્શન', lpSubS:'એક વાર સેટ કરો — ટિફિન રોજ આપોઆપ આવશે.', lpHow:'કેવી રીતે કામ કરે છે', lpH1:'મીલ પસંદ કરો અને કસ્ટમાઇઝ કરો', lpH2:'ડિલિવરી તારીખ અને સમય પસંદ કરો', lpH3:'ઓનલાઇન અથવા ડિલિવરી પર ચૂકવો', pubLogin:'લૉગિન', pubBack:'← પાછા', dtypeQ:'ડિલિવરી ક્યાં જોઈએ?', modeTitle:'ટિફિન ક્યાં જોઈએ?', modeSub:'એક વાર પસંદ કરો — ગમે ત્યારે બદલી શકો છો.', modeChange:'બદલો', dtHome:'ઘર', dtHomeSub:'સોસાયટી / ફ્લેટ', dtOffice:'ઓફિસ', dtOfficeSub:'કંપની / એમ્પ્લોયી', companyLbl:'તમારી કંપની પસંદ કરો', companyHint:'કંપની લિસ્ટમાં નથી? કિચનનો સંપર્ક કરો — અમે ઉમેરી દઈશું.', empIdLbl:'એમ્પ્લોયી ID', errCompany:'કૃપા કરીને તમારી કંપની પસંદ કરો', errEmpId:'કૃપા કરીને એમ્પ્લોયી ID દાખલ કરો', pubCta:'મેનૂ જુઓ અને ઓર્ડર કરો', pubCutoffLine:'લંચ બંધ <b>9:00 AM</b> · ડિનર <b>3:00 PM</b>', pubHookQ:'શું હેલ્ધી ભોજન ખરેખર <em>20-મિનિટ ડિલિવરી</em>માં બની શકે?', pubHookA:'ના બની શકે. આટલું ઝડપી આવતું ભોજન <b>તમારા ઓર્ડર પહેલાં જ બનેલું હોય છે</b> — ફરી ગરમ કરીને મોકલાય છે.', cmpUs:'અમારું કિચન', cmpThem:'ડિલિવરી એપ્સ', cmpU1:'ઘરે દળેલા તાજા મસાલા', cmpT1:'બલ્ક પેકેટ મસાલા', cmpU2:'રોજ નવું તેલ', cmpT2:'એ જ તેલ આખો દિવસ', cmpU3:'રોજ મર્યાદિત ઓર્ડર', cmpT3:'અનલિમિટેડ, બલ્ક કુકિંગ', cmpU4:'એ જ રસોઇયો, એ જ સ્વાદ', cmpT4:'દર વખતે અલગ કિચન', cmpU5:'ફિક્સ ભાવ, કોઈ એક્સ્ટ્રા નહીં', cmpT5:'સર્જ + પ્લેટફોર્મ ફી', cmpU6:'હલકું, રોજનું ભોજન', cmpT6:'ભારે રેસ્ટોરન્ટ ફૂડ', cmpU7:'કિચન જે તમે જોઈ શકો', cmpT7:'કિચન જે ક્યારેય નહીં દેખાય', cmpQualT:'ક્વોલિટી, ક્વોન્ટિટી નહીં.', cmpQualS:'અમે રોજના ઓર્ડર મર્યાદિત રાખીએ છીએ — જેથી દરેક ટિફિનને પૂરો સમય મળે.', cmpChip:'🍱 રોજ મર્યાદિત ઓર્ડર — હંમેશા તાજું', lpPosT:'આ ફટાફટ-ડિલિવરી એપ નથી', lpPosS:'આ તમારું રોજનું કિચન છે — planned, તાજું અને હંમેશા સમયસર.', lpPos1:'Fixed time slots પર ડિલિવરી — 10-મિનિટવાળી રેસ નહીં.', lpPos2:'હલકું, પોષણભર્યું ઘર જેવું ભોજન — રેસ્ટોરન્ટનું ભારે તેલ-મસાલા નહીં.', lpPos3:'સીધા fixed ભાવ — ના surge, ના hidden કે platform charges.', lpPos4:'રોજ એક જ ભરોસાપાત્ર કિચન — દરેક ટિફિનમાં એ જ અપનાપણ.', navMenuShort:'મેનૂ', navProfileShort:'પ્રોફાઇલ', pfTitle:'મારી પ્રોફાઇલ', pfAddr:'સેવ કરેલું સરનામું', pfFlatLbl:'ફ્લેટ / બ્લોક નં.', pfSave:'સરનામું સેવ કરો', addrSaved:'સરનામું સેવ થયું', pfQuick:'ક્વિક લિંક', pfLang:'ભાષા', payWithUpiBtn:'ચુકવણી કરો', orScan:'અથવા QR કોડ સ્કૅન કરો', upiPayNote:'🔒 UPI થી સુરક્ષિત ચુકવણી. રકમ પહેલેથી ભરેલી છે — બસ તમારી UPI એપમાં અપ્રૂવ કરો.', copied:'UPI ID કૉપિ થઈ', updateCart:'✓ કાર્ટ અપડેટ કરો', addedToCart:'કાર્ટમાં ઉમેરાયું', customizable:'કસ્ટમાઇઝેબલ', customizeBtn:'કસ્ટમાઇઝ કરો', chooseSize:'સાઇઝ પસંદ કરો', sizeRequired:'જરૂરી · કોઈ 1 પસંદ કરો', addOns:'એડ-ઓન', dahiShort:'દહીં', extraSabziShort:'એક્સ્ટ્રા શાક', freshCookedDesc:'રોજ નાના બેચમાં તાજું બને છે — ક્યારેય સ્ટોર કે ફ્રોઝન નહીં.', selectSabzi:'શાક પસંદ કરો', rotiType:'રોટી પ્રકાર', plain:'પ્લેન', butter:'બટર', deliveryTime:'⏰ ડિલિવરી સમય', tiffinType:'🍱 તમારું ટિફિન પસંદ કરો', miniTiffin:'મિની ટિફિન', fullTiffin:'ફુલ ટિફિન',
       extraRoti:'એક્સ્ટ્રા રોટી', addDahi:'દહીં ઉમેરો', extraSabzi:'એક્સ્ટ્રા શાક', howMany:'કેટલા ટિફિન?', unitPrice:'યુનિટ ભાવ',
       perTiffin:'/ ટિફિન', specialInstr:'📝 ખાસ સૂચનાઓ (વૈકલ્પિક)', notePh:'દા.ત. ઓછું તીખું, ડુંગળી વગર...',
@@ -1377,22 +1407,68 @@
       { icon:'⏱️', title:'સાચું તાજું ભોજન સમય લે છે', body:'સારું ભોજન બનવામાં સમય લાગે છે — બસ એટલી જ વાત છે. અમે થોડો વધુ સમય લઈએ છીએ, જેથી એ જ ભોજન મોકલીએ જે અમે પોતે ખાઈએ.' }
     ]
   };
-  function renderAbout(){
-    const box=document.getElementById('aboutSlides'); if(!box)return;
-    const slides=ABOUT[LANG]||ABOUT.en;
-    box.innerHTML=slides.map((s,i)=>`<div class="about-slide" style="background:${ABOUT_BG[i%ABOUT_BG.length]}">
-      <div class="as-icon">${s.icon}</div><h3>${s.title}</h3><p>${s.body}</p>
-    </div>`).join('');
-    const ca=document.getElementById('ctAddr'); if(ca) ca.innerHTML=(CFG.township?(esc(CFG.township)+',<br>'):'')+'Ahmedabad';
-    const pp=document.getElementById('pubPrice');
-    if(pp){ const all=Object.values(CFG.variants||{}).flat().map(v=>Number(v.price)).filter(n=>n>0);
-      pp.textContent = all.length ? ('🍱 ' + t('priceFrom').replace('{p}', Math.min(...all))) : ''; }
-    const cr=document.getElementById('ctArea');
-    if(cr){ const soc=(CFG.societies||[]); const co=(CFG.companies||[]).map(x=>x.name);
-      cr.textContent=[...soc,...co].join(' · ') + ' · +nearby offices'; }
-    const pb=document.getElementById('policyBox');
-    if(pb) pb.innerHTML=`<div class="policy-t">📄 ${t('policyTitle')}</div><div class="policy-b">${t('policyBody')}</div>`;
+  // About page — sirf wahi info dikhate hain jo humare paas actually hai (CFG /
+  // VENDOR_BRAND se). Koi bhi field khaali ho to uska row/section hide ho jaata hai.
+  function aboutOpenStatus(){
+    const mts=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false);
+    if(!mts.length) return '';
+    const now=new Date(); const curMin=now.getHours()*60+now.getMinutes();
+    let openMt=null, nextMt=null, nextDiff=Infinity;
+    mts.forEach(mt=>{
+      const s=hhmmToMins(mt.windowStart), e=hhmmToMins(mt.windowEnd);
+      if(s===null||e===null) return;
+      if(e>s && curMin>=s && curMin<e){ if(!openMt || e>hhmmToMins(openMt.windowEnd)) openMt=mt; }
+      else { let diff=s-curMin; if(diff<0) diff+=1440; if(diff<nextDiff){ nextDiff=diff; nextMt=mt; } }
+    });
+    const fmt=(mins)=>{ const h=Math.floor(mins/60)%24, m=mins%60; const ap=h>=12?'pm':'am'; let hh=h%12; if(hh===0)hh=12; return hh+(m?':'+String(m).padStart(2,'0'):'')+' '+ap; };
+    if(openMt) return `<span style="color:var(--ok);font-weight:800;">${t('abOpenNow')||'Open now'}</span> · ${(t('abCloses')||'Closes')} ${fmt(hhmmToMins(openMt.windowEnd))}`;
+    if(nextMt) return `<span style="color:var(--danger);font-weight:800;">${t('abClosedNow')||'Closed now'}</span> · ${(t('abOpensAt')||'Opens')} ${fmt(hhmmToMins(nextMt.windowStart))}`;
+    return '';
   }
+  function renderAbout(){
+    // Tagline — real serving windows honi zaroori, fake cuisine tags nahi.
+    const tag=document.getElementById('abTagline');
+    if(tag){
+      const all=Object.values(CFG.variants||{}).flat().map(v=>Number(v.price)).filter(n=>n>0);
+      const priceTxt = all.length ? ('₹'+Math.min(...all)+' '+((t('priceFrom')||'').replace('Meals from ₹{p}','').trim()||'onwards')) : '';
+      tag.textContent = ['🍱 Home Tiffin Service', priceTxt].filter(Boolean).join(' · ');
+    }
+    // Address — township + societies (jo bhi bhara hai), kuch na ho to poora row hide.
+    const ab=document.getElementById('abAddr');
+    if(ab){
+      const parts=[CFG.township].filter(Boolean);
+      const soc=(CFG.societies||[]).slice(0,4).join(', ');
+      if(soc) parts.push(soc+((CFG.societies||[]).length>4?' + more':''));
+      ab.innerHTML = parts.length ? ('📍 <span style="font-weight:700;">'+esc(parts.join(' · '))+'</span>') : '';
+      ab.classList.toggle('hidden', !parts.length);
+    }
+    // Directions button — koi lat/long store nahi karte, isliye township/society naam se
+    // Google Maps search kholte hain (exact pin nahi, par admin ki di hui location text se).
+    const dir=document.getElementById('abDirBtn');
+    if(dir){
+      const q=[CFG.township, (CFG.societies||[])[0]].filter(Boolean).join(' ');
+      if(q){ dir.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q); dir.classList.remove('hidden'); }
+      else dir.classList.add('hidden');
+    }
+    const hrs=document.getElementById('abHours');
+    if(hrs){
+      const status=aboutOpenStatus();
+      const windows=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false).map(mt=>mt.emoji+' '+mt.windowStart+'–'+mt.windowEnd).join(' · ');
+      hrs.innerHTML = status ? ('🕐 '+status+(windows?('<div style="font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:700;">'+esc(windows)+'</div>'):'')) : '';
+    }
+    // Legal info — Legal Name / GST / FSSAI, sirf jo bhara hai wahi dikhega.
+    const lb=document.getElementById('abLegalBox');
+    if(lb){
+      let rows='';
+      if(CFG.legalName) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">Legal Name</span><span style="font-weight:800;text-align:right;">${esc(CFG.legalName)}</span></div>`;
+      if(CFG.gstNumber) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">GST Number</span><span style="font-weight:800;text-align:right;">${esc(CFG.gstNumber)}</span></div>`;
+      if(CFG.fssai) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">FSSAI Lic No</span><span style="font-weight:800;text-align:right;">${esc(CFG.fssai)}</span></div>`;
+      lb.innerHTML = rows ? ('<hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">'+rows) : '';
+    }
+    const pb=document.getElementById('abPolicyBody'); if(pb) pb.innerHTML=t('policyBody');
+  }
+  function toggleAboutPolicy(){ const b=document.getElementById('abPolicyBody'); if(b) b.classList.toggle('hidden'); }
+
 
   // ═══════ THEME (Light / Dark / System) ═══════
   function applyTheme(mode){
@@ -1956,6 +2032,7 @@
     saveCart();
     const n=cart.reduce((s,it)=>s+it.qty,0);
     const bnb=document.getElementById('bnCartBadge'); if(bnb){ bnb.textContent=n; bnb.classList.toggle('zero',n===0); }
+    const pfb=document.getElementById('pfCartBadge'); if(pfb){ pfb.textContent=n; pfb.classList.toggle('zero',n===0); }
     const mb=document.getElementById('miniBar'); if(mb) mb.style.display=n===0?'none':'flex';
     // Bar dikhe to content ke neeche jagah chhodo — warna last card bar ke peeche dab jaata hai
     const hb=document.querySelector('#homeView .h1-body');
@@ -2084,7 +2161,7 @@
   // koi item highlight nahi hoga, lekin navigation hamesha available rahegi.
   // Nav me sirf Home / Cart / Profile hai. Orders, Subscribe aur Ask AI Profile ke
   // Quick Links se khulte hai — un pages pe Profile hi highlighted rahega.
-  const BN_SCREENS={ homeView:'land', page1:'land', cartView:'cart', ordersView:'profile', profileView:'profile', subView:'profile', aboutView:'profile', qaView:'profile' };
+  const BN_SCREENS={ homeView:'land', page1:'land', cartView:'profile', ordersView:'orders', profileView:'profile', subView:'profile', aboutView:'profile', qaView:'profile' };
   function updateBottomNav(viewId){
     const bn=document.getElementById('bottomNav'); if(!bn)return;
     const show=Object.keys(BN_SCREENS).indexOf(viewId)>=0 && isLoggedIn();
@@ -2092,7 +2169,7 @@
     const cont=document.querySelector('.container'); if(cont) cont.classList.toggle('has-bottom-nav', show);
     if(show){
       const active=BN_SCREENS[viewId];
-      ['land','cart','profile'].forEach(k=>{ const el=document.getElementById('bn-'+k); if(el) el.classList.toggle('active', k===active); });
+      ['land','orders','profile'].forEach(k=>{ const el=document.getElementById('bn-'+k); if(el) el.classList.toggle('active', k===active); });
     }
   }
   function navTo(where){
@@ -3120,7 +3197,9 @@
 
     // Variant block — render every variant for this meal. Skip if only one.
     const sizeBox=document.getElementById('shSizeBlock');
-    const vs=variantsFor(m);
+    let vs=variantsFor(m);
+    if(CFG.addonsEnabled && CFG.addonsEnabled.tiffinMini===false) vs=vs.filter(v=>v.id!=='mini');
+    if(b.tiffinType==='mini' && !vs.find(v=>v.id==='mini') && vs[0]) b.tiffinType=vs[0].id;   // admin ne Mini band kar diya jabki customer ne wahi select kar rakha tha
     if(vs.length<=1){ sizeBox.innerHTML=''; }
     else {
       sizeBox.innerHTML=`<div class="sh-block">
@@ -3140,20 +3219,29 @@
 
     if(m!=='breakfast'){
       const opts=d[m].sabziOptions.map(o=>`<option value="${o}" ${b.sabzi===o?'selected':''}>${o}</option>`).join('');
+      // Admin-disabled add-ons customer ko dikhte hi nahi — sirf UI hide nahi,
+      // backend computeTotal() bhi inhe alag se ignore karta hai (defense in depth).
+      const AE=CFG.addonsEnabled||{};
+      const plainOn=AE.extraRotiPlain!==false, butterOn=AE.extraRotiButter!==false;
+      const rotiOn=plainOn||butterOn;
+      const extraRotiOn=rotiOn;   // "+ Extra Roti" ke liye kam se kam ek roti type on hona chahiye
+      const dahiOn=AE.dahi!==false, sabziOn=AE.extraSabzi!==false;
+      if(rotiOn && !plainOn && !b.butterRoti) b.butterRoti=true;   // Plain OFF ho aur abhi Plain selected hai to Butter pe shift karo
+      if(rotiOn && !butterOn && b.butterRoti) b.butterRoti=false;
       inner+=`<div class="sh-block">
         <div class="sh-lbl">${t('selectSabzi')} <span style="color:var(--danger)">*</span></div>
         <select class="sh-select" onchange="shSet('sabzi',this.value)"><option value="">—</option>${opts}</select>
-        <div class="sh-lbl">${t('rotiType')}</div>
+        ${rotiOn?`<div class="sh-lbl">${t('rotiType')}</div>
         <div class="sh-chips">
-          <div class="sh-chip ${!b.butterRoti?'on':''}" onclick="shSetRoti(false)">${t('plain')}</div>
-          <div class="sh-chip ${b.butterRoti?'on':''}" onclick="shSetRoti(true)">${t('butter')} +₹${CFG.prices.extraRotiButter-CFG.prices.extraRotiPlain}</div>
-        </div>
-        <div class="sh-lbl">${t('addOns')}</div>
+          ${plainOn?`<div class="sh-chip ${!b.butterRoti?'on':''}" onclick="shSetRoti(false)">${t('plain')}</div>`:''}
+          ${butterOn?`<div class="sh-chip ${b.butterRoti?'on':''}" onclick="shSetRoti(true)">${t('butter')} +₹${CFG.prices.extraRotiButter-CFG.prices.extraRotiPlain}</div>`:''}
+        </div>`:''}
+        ${(extraRotiOn||dahiOn||sabziOn)?`<div class="sh-lbl">${t('addOns')}</div>
         <div class="sh-addons-row">
-          <div class="sh-chip ${b.extraRoti>0?'on':''}" onclick="shToggleExtraRoti()">+ ${t('extraRoti')}${b.extraRoti>0?(' ('+b.extraRoti+')'):''}</div>
-          <div class="sh-chip ${b.dahi?'on':''}" onclick="shSet('dahi',!${b.dahi})">+ ${t('dahiShort')} ₹${CFG.prices.dahi}</div>
-          <div class="sh-chip ${b.extraSabzi?'on':''}" onclick="shSet('extraSabzi',!${b.extraSabzi})">+ ${t('extraSabziShort')} ₹${CFG.prices.extraSabzi}</div>
-        </div>
+          ${extraRotiOn?`<div class="sh-chip ${b.extraRoti>0?'on':''}" onclick="shToggleExtraRoti()">+ ${t('extraRoti')}${b.extraRoti>0?(' ('+b.extraRoti+')'):''}</div>`:''}
+          ${dahiOn?`<div class="sh-chip ${b.dahi?'on':''}" onclick="shSet('dahi',!${b.dahi})">+ ${t('dahiShort')} ₹${CFG.prices.dahi}</div>`:''}
+          ${sabziOn?`<div class="sh-chip ${b.extraSabzi?'on':''}" onclick="shSet('extraSabzi',!${b.extraSabzi})">+ ${t('extraSabziShort')} ₹${CFG.prices.extraSabzi}</div>`:''}
+        </div>`:''}
       </div>`;
     }
     custBox.innerHTML=inner;
@@ -3295,9 +3383,10 @@
     </div>`;
     });
     const pd=promoDiscountNow();
-    html+=`<div class="promo-box">${appliedPromo
+    const hasPromos = CFG.promos && CFG.promos.length;
+    html+= hasPromos ? `<div class="promo-box">${appliedPromo
       ?`<div class="promo-applied"><span>🎟️ ${appliedPromo.code} <b>−₹${pd}</b>${feeDates()>1?`<small>${t('promoFirstDateNote')}</small>`:''}</span><span class="pr-x" onclick="removePromo()">✕</span></div>`
-      :`${(CFG.promos&&CFG.promos.length)?`<div class="promo-chips">${CFG.promos.map(pp=>`<span class="promo-chip" onclick="pickPromo('${pp.code}')">🎟️ ${pp.code} · ${pp.label}${pp.firstOnly?' · 🆕':''}</span>`).join('')}</div>`:''}<div class="promo-input"><input id="promoCode" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>`;
+      :`<div class="promo-chips">${CFG.promos.map(pp=>`<span class="promo-chip" onclick="pickPromo('${pp.code}')">🎟️ ${pp.code} · ${pp.label}${pp.firstOnly?' · 🆕':''}</span>`).join('')}</div><div class="promo-input"><input id="promoCode" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>` : '';
     html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${feeDates()>1?(' × '+feeDates()):''}</span><span>₹${deliveryFeeTotal()}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
     box.innerHTML=html;
     if(cbt) cbt.textContent='₹'+cartTotalDisplay();
@@ -3495,8 +3584,8 @@
           const waEl=document.getElementById('waFallback'); waEl.href=waURL;
           // Auto-open ON → seedha app kholo (interstitial skip). Fallback link phir bhi
           // dikhta rahega, taaki app install na ho ya kuch atke to manual raasta rahe.
-          if(CFG.whatsappAuto!==false){ openWhatsApp(vendorWhatsapp(), waText); waEl.className='wa-fallback'; }
-          else { waEl.className='wa-fallback wa-btn'; }   // auto-open OFF → prominent button
+          if(CFG.whatsappAuto!==false){ openWhatsApp(vendorWhatsapp(), waText); }
+          waEl.className='wa-icon-btn';   // icon button hamesha same dikhta hai, auto-open ho ya na ho
         });
         stepP('successMsg', () => {
           let m=(LANG==='en')?`Your ${ok} order${ok>1?'s have':' has'} been placed successfully.`:`Aapke ${ok} order successfully place ho gaye hain.`;
@@ -5478,7 +5567,10 @@
     // "undefined" ban jaata, aur saveConfig() ka parseInt("undefined") NaN deta —
     // poora Setup save silently "Enter valid prices" bol ke reject ho jaata, chahe
     // admin ne kuch bhi galat na kiya ho. capacity yahan already defensive tha.
-    document.getElementById('priceEditor').innerHTML=Object.keys(PRICE_LABELS).map(k=>`<div class="price-row"><label>${PRICE_LABELS[k]}</label><div class="inp">₹<input type="number" id="pr-${k}" value="${(CFG.prices&&CFG.prices[k]!=null)?CFG.prices[k]:0}" min="0" max="2000"></div></div>`).join('');
+    document.getElementById('priceEditor').innerHTML=Object.keys(PRICE_LABELS).map(k=>{
+      const on=!(CFG.addonsEnabled && CFG.addonsEnabled[k]===false);
+      return `<div class="price-row"><label>${PRICE_LABELS[k]}</label><div class="inp">₹<input type="number" id="pr-${k}" value="${(CFG.prices&&CFG.prices[k]!=null)?CFG.prices[k]:0}" min="0" max="2000"></div><label class="cfg-chk" style="margin:0 0 0 8px;white-space:nowrap;"><input type="checkbox" id="pren-${k}" ${on?'checked':''}> ON</label></div>`;
+    }).join('');
     document.getElementById('cfg-township').value=CFG.township;
     document.getElementById('cfg-societies').value=CFG.societies.join('\n');
     const ce=document.getElementById('cfg-companies');
@@ -5492,6 +5584,8 @@
     const uid=document.getElementById('cfg-upiId'); if(uid)uid.value=CFG.upiId||'';
     const unm=document.getElementById('cfg-upiName'); if(unm)unm.value=CFG.upiName||'';
     const ufs=document.getElementById('cfg-fssai'); if(ufs)ufs.value=CFG.fssai||'';
+    const uln=document.getElementById('cfg-legalName'); if(uln)uln.value=CFG.legalName||'';
+    const ugn=document.getElementById('cfg-gstNumber'); if(ugn)ugn.value=CFG.gstNumber||'';
     workingClosedDates=(CFG.closedDates||[]).slice();
     renderClosedDatesList();
     const tc=document.getElementById('cfg-tempClosed'); if(tc) tc.checked=(CFG.tempClosed===true);
@@ -5515,8 +5609,8 @@
   }
   function removeClosedDate(d){ workingClosedDates=workingClosedDates.filter(x=>x!==d); renderClosedDatesList(); }
   function saveConfig(){
-    const prices={}; let bad=false;
-    Object.keys(PRICE_LABELS).forEach(k=>{ const v=parseInt(document.getElementById('pr-'+k).value,10); if(isNaN(v)||v<0){bad=true;} prices[k]=v; });
+    const prices={}; const addonsEnabled={}; let bad=false;
+    Object.keys(PRICE_LABELS).forEach(k=>{ const v=parseInt(document.getElementById('pr-'+k).value,10); if(isNaN(v)||v<0){bad=true;} prices[k]=v; const enEl=document.getElementById('pren-'+k); addonsEnabled[k]=enEl?enEl.checked:true; });
     if(bad){ cfgFail('meals','⚠️ Enter valid add-on prices.'); return; }
     // Meal types: har meal ka title zaroori hai, aur windowStart/windowEnd/cutoff
     // valid "HH:MM" hone chahiye — warna availability/time-slot logic crash karegi.
@@ -5542,8 +5636,8 @@
     if(officeEnabled&&!companies.length){ cfgFail('delivery','⚠️ Add at least one company for office delivery.'); return; }
     const tempClosed=document.getElementById('cfg-tempClosed')?document.getElementById('cfg-tempClosed').checked:false;
     const tempClosedMsg=document.getElementById('cfg-tempClosedMsg')?document.getElementById('cfg-tempClosedMsg').value.trim():'';
-    const cfg={ prices, mealTypes, township, societies, deliveryNear:CFG.deliveryNear, deliveryFar:CFG.deliveryFar, farSocieties:CFG.farSocieties, closedDates:workingClosedDates, tempClosed:tempClosed, tempClosedMsg:tempClosedMsg, companies:companies, homeEnabled:homeEnabled, officeEnabled:officeEnabled, whatsappAuto:(document.getElementById('cfg-whatsappAuto')?document.getElementById('cfg-whatsappAuto').checked:true),
-      upiId:(document.getElementById('cfg-upiId')?document.getElementById('cfg-upiId').value.trim():CFG.upiId), upiName:(document.getElementById('cfg-upiName')?document.getElementById('cfg-upiName').value.trim():CFG.upiName), fssai:(document.getElementById('cfg-fssai')?document.getElementById('cfg-fssai').value.trim():CFG.fssai) };
+    const cfg={ prices, addonsEnabled, mealTypes, township, societies, deliveryNear:CFG.deliveryNear, deliveryFar:CFG.deliveryFar, farSocieties:CFG.farSocieties, closedDates:workingClosedDates, tempClosed:tempClosed, tempClosedMsg:tempClosedMsg, companies:companies, homeEnabled:homeEnabled, officeEnabled:officeEnabled, whatsappAuto:(document.getElementById('cfg-whatsappAuto')?document.getElementById('cfg-whatsappAuto').checked:true),
+      upiId:(document.getElementById('cfg-upiId')?document.getElementById('cfg-upiId').value.trim():CFG.upiId), upiName:(document.getElementById('cfg-upiName')?document.getElementById('cfg-upiName').value.trim():CFG.upiName), fssai:(document.getElementById('cfg-fssai')?document.getElementById('cfg-fssai').value.trim():CFG.fssai), legalName:(document.getElementById('cfg-legalName')?document.getElementById('cfg-legalName').value.trim():CFG.legalName), gstNumber:(document.getElementById('cfg-gstNumber')?document.getElementById('cfg-gstNumber').value.trim():CFG.gstNumber) };
     const btn=document.getElementById('saveConfigBtn'); btn.textContent='⏳ Saving...'; btn.disabled=true;
     apiPost({action:'saveConfig',user:adminCreds.user,pass:adminCreds.pass,config:cfg}).then(j=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; if(j.status==='success'){ cfg.variants=CFG.variants; cfg.banners=CFG.banners; CFG=cfg; storeSet('fbt_cfg',CFG); applyConfigToUI(); refreshAvailability(); showToast('✅ Setup saved!','success'); } else showToast('❌ '+(j.message||'Save failed'),'error'); }).catch(()=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; showToast(t('errNetwork'),'error'); }); }
 
