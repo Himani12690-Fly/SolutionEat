@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bgT" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3d6"/><stop offset="1" stop-color="#ffe0a0"/>
+    </linearGradient>
+    <radialGradient id="orangeC" cx="0.5" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#ffab5c"/><stop offset="1" stop-color="#f5822e"/>
+    </radialGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e7ebef"/><stop offset="1" stop-color="#b9c0c8"/>
+    </linearGradient>
+    <linearGradient id="lid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9aa2ab"/><stop offset="1" stop-color="#6d7580"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bgT)"/>
+  <circle cx="200" cy="155" r="128" fill="url(#orangeC)"/>
+
+  <!-- back bowls: dal (yellow) and sabzi (green) -->
+  <ellipse cx="128" cy="90" rx="46" ry="34" fill="#3a3226" opacity="0.15"/>
+  <ellipse cx="128" cy="86" rx="44" ry="32" fill="#caa53a" stroke="#2c2416" stroke-width="3"/>
+  <ellipse cx="128" cy="80" rx="34" ry="22" fill="#e7c25f"/>
+  <circle cx="118" cy="78" r="3" fill="#8a5a2b"/><circle cx="138" cy="84" r="3" fill="#8a5a2b"/>
+  <circle cx="128" cy="72" r="2.5" fill="#8a5a2b"/>
+
+  <ellipse cx="222" cy="72" rx="42" ry="30" fill="#3a3226" opacity="0.15"/>
+  <ellipse cx="222" cy="68" rx="40" ry="28" fill="#5d8a3a" stroke="#2c2416" stroke-width="3"/>
+  <ellipse cx="222" cy="62" rx="30" ry="18" fill="#7fb356"/>
+  <circle cx="212" cy="60" r="3" fill="#e0692e"/><circle cx="232" cy="64" r="3" fill="#e0692e"/>
+  <circle cx="222" cy="55" r="2.5" fill="#e0692e"/>
+
+  <!-- tiffin box body -->
+  <ellipse cx="196" cy="230" rx="72" ry="18" fill="#3a3226" opacity="0.2"/>
+  <path d="M138 150 h116 v70 a58 20 0 0 1 -116 0 z" fill="url(#steel)" stroke="#7a828b" stroke-width="3"/>
+  <ellipse cx="196" cy="150" rx="58" ry="20" fill="url(#steel)" stroke="#7a828b" stroke-width="3"/>
+  <!-- rice inside -->
+  <ellipse cx="196" cy="147" rx="46" ry="14" fill="#fbfbf6"/>
+  <ellipse cx="184" cy="142" rx="26" ry="9" fill="#ffffff" opacity="0.8"/>
+  <circle cx="178" cy="146" r="1.6" fill="#e9e6da"/><circle cx="196" cy="141" r="1.6" fill="#e9e6da"/>
+  <circle cx="210" cy="147" r="1.6" fill="#e9e6da"/><circle cx="188" cy="151" r="1.6" fill="#e9e6da"/>
+
+  <!-- lid, tilted aside -->
+  <g transform="translate(266,118) rotate(-18)">
+    <ellipse cx="0" cy="26" rx="46" ry="14" fill="#3a3226" opacity="0.15"/>
+    <ellipse cx="0" cy="16" rx="46" ry="14" fill="url(#lid)" stroke="#4d545c" stroke-width="3"/>
+    <ellipse cx="0" cy="0" rx="14" ry="8" fill="#4d545c"/>
+  </g>
+
+  <!-- chutney bowl + salad, bottom-left -->
+  <ellipse cx="80" cy="188" rx="26" ry="18" fill="#3a3226" opacity="0.15"/>
+  <ellipse cx="80" cy="182" rx="25" ry="17" fill="#5b2a1e" stroke="#2c2416" stroke-width="3"/>
+  <ellipse cx="80" cy="177" rx="17" ry="10" fill="#8a3f2a"/>
+
+  <path d="M60 222 a20 20 0 0 1 32 4 l-16 14 z" fill="#7fae4a" stroke="#2c2416" stroke-width="2.5"/>
+  <path d="M60 222 a20 20 0 0 1 32 4" fill="none" stroke="#5c8536" stroke-width="1.5"/>
+  <circle cx="98" cy="238" r="13" fill="#d9432c" stroke="#8a2318" stroke-width="2.5"/>
+  <path d="M92 232 q6 -6 12 0" fill="none" stroke="#f2a58e" stroke-width="2"/>
+
+  <!-- samosas bottom-right -->
+  <g stroke="#5c3a15" stroke-width="2.5">
+    <path d="M270 250 l40 -6 l-14 34 z" fill="#e0a24a"/>
+    <path d="M300 232 l38 6 l-24 32 z" fill="#e7ad55"/>
+  </g>
+  <circle cx="292" cy="252" r="1.6" fill="#8a5a20"/><circle cx="284" cy="264" r="1.6" fill="#8a5a20"/>
+  <circle cx="316" cy="244" r="1.6" fill="#8a5a20"/><circle cx="308" cy="256" r="1.6" fill="#8a5a20"/>
+
+  <text x="200" y="288" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" font-weight="800" fill="#8a4a1f">MEALNAME</text>
+</svg>
