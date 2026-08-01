@@ -2994,7 +2994,19 @@
     const box=document.getElementById('mealPanel'); if(!box)return;
     // Asli vendor data aane tak halka loading skeleton — hardcoded default menu NAHI.
     if(!__vendorReady){
-      const skel='<div class="c1card c1-closed" style="opacity:.55"><div class="c1-top"><div class="c1-img c1-emoji">🍽️</div><div class="c1-info"><div class="c1-h"><span class="c1-name">'+t('pleaseWait')+'</span></div><div class="c1-desc">…</div></div></div></div>';
+      // ⚠️ Pehle yahan ek "🍽️ Please wait… / …" card thi — theek to thi, par jab
+      // wait lamba ho jaaye (slow network, retry chalte waqt) to ye ek FROZEN/broken
+      // card jaisi dikhti thi, spinner jaisa kuch nahi tha jo saaf bataye "abhi bhi
+      // load ho raha hai". Ab wahi al-spin (admin loader wala) reuse kiya — ek
+      // ghoomta hua spinner + do-line text, jo boot/admin loader me already proven hai.
+      // Vendor ka apna logo (ya naam ka pehla letter, applyVendorBrand() jaisa hi
+      // pattern) spinner ke saath — generic plate emoji ki jagah, taaki loading
+      // state bhi turant pehchani jaaye ki KIS kitchen ka page hai.
+      const bn=(VENDOR_BRAND&&VENDOR_BRAND.name)||'', bl=(VENDOR_BRAND&&VENDOR_BRAND.logo)||'';
+      let logoHtml='';
+      if(bl) logoHtml='<img src="'+esc(bl)+'" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;">';
+      else if(bn) logoHtml='<div style="width:48px;height:48px;border-radius:50%;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:21px;">'+esc(bn.trim().charAt(0).toUpperCase())+'</div>';
+      const skel='<div class="c1card c1-closed" style="opacity:.75;justify-content:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0;width:100%;">'+logoHtml+'<div class="al-spin"></div><span class="c1-name">'+t('pleaseWait')+'</span></div></div>';
       if(box.__lastHtml!==skel){ box.__lastHtml=skel; box.innerHTML=skel; }
       return;
     }
@@ -3779,21 +3791,40 @@
       <div class="dl-s">Fresh home-style meals, loading up</div>
     </div>`;
   }
+  // ⚠️ SPEED: pehle areas() resolve hone ke BAAD hi discover() shuru hota tha —
+  // do sequential Apps Script round-trips (cold-start ke saath total 10-15s tak
+  // ja rahe the, sirf 5-6 vendors ke liye). Ab dono ek saath (parallel) fire hote
+  // hain — total wait "dono me se jo slow hai" ban jaata hai, "dono ka sum" nahi.
+  // discover() bina ?area (sab vendors, unfiltered) mangte hain — area-wise filter
+  // ab CLIENT-SIDE hota hai (dscAreaMatch se), taaki chip badalne pe DOBARA network
+  // call na lagana pade — poori list ek hi baar aati hai, baaki sab local filter hai.
+  let dscVendorsAll = [];
+  function dscAreaMatch(v, area){
+    if(!area) return true;
+    const a = String(area).toLowerCase();
+    return (v.areas||[]).some(x => String(x).toLowerCase()===a);
+  }
   function loadDscAreas(){
     // Area chips row khaali rakho (koi "Loading…" chip nahi) — bada centered loader dikhega
     document.getElementById('dscAreas').innerHTML = '';
     const st = document.getElementById('dscSecTitle'); if(st) st.style.visibility='hidden';
     document.getElementById('dscList').innerHTML = dscBigLoader();
-    fetch(GOOGLE_SCRIPT_URL+'?action=areas').then(r=>r.json()).then(j=>{
-      dscAreas = (j && j.areas) || [];
+    const areasP = fetch(GOOGLE_SCRIPT_URL+'?action=areas').then(r=>r.json()).catch(()=>null);
+    const vendorsP = fetch(GOOGLE_SCRIPT_URL+'?action=discover&area=').then(r=>r.json()).catch(()=>null);
+    Promise.all([areasP, vendorsP]).then(([aj, vj])=>{
+      if(!aj && !vj){
+        if(st) st.style.visibility='visible';
+        document.getElementById('dscAreas').innerHTML = '';
+        document.getElementById('dscList').innerHTML =
+          '<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:40px 14px;">Could not load kitchens. <span style="color:var(--accent-dark);font-weight:800;" onclick="loadDscAreas()">🔄 Retry</span></div>';
+        return;
+      }
+      dscAreas = (aj && aj.areas) || [];
       if(!dscArea && dscAreas.length) dscArea = dscAreas[0].area;
       if(st) st.style.visibility='visible';
-      renderDscAreas(); loadDscVendors();
-    }).catch(()=>{
-      if(st) st.style.visibility='visible';
-      document.getElementById('dscAreas').innerHTML = '';
-      document.getElementById('dscList').innerHTML =
-        '<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:40px 14px;">Could not load areas. <span style="color:var(--accent-dark);font-weight:800;" onclick="loadDscAreas()">🔄 Retry</span></div>';
+      renderDscAreas();
+      dscVendorsAll = (vj && vj.vendors) || [];
+      renderDscList(dscVendorsAll.filter(v=>dscAreaMatch(v,dscArea)));
     });
   }
   function renderDscAreas(){
@@ -3803,17 +3834,13 @@
       `<span class="dsc-ac ${a.area===dscArea?'on':''}" onclick="pickDscArea('${esc(a.area).replace(/'/g,"")}')">${esc(a.area)} <small style="opacity:.75;">${a.count}</small></span>`
     ).join('');
   }
-  function pickDscArea(a){ dscArea = a; renderDscAreas(); loadDscVendors(); }
+  // Chip switch ab poori tarah client-side hai — dscVendorsAll pehle hi aa chuki
+  // hai, isliye koi naya network call nahi lagta, list turant badalti hai.
+  function pickDscArea(a){ dscArea = a; renderDscAreas(); renderDscList(dscVendorsAll.filter(v=>dscAreaMatch(v,dscArea))); }
 
-  function loadDscVendors(){
-    const box = document.getElementById('dscList'); if(!box) return;
-    box.innerHTML = dscBigLoader();
-    fetch(GOOGLE_SCRIPT_URL+'?action=discover&area='+encodeURIComponent(dscArea||'')).then(r=>r.json()).then(j=>{
-      renderDscList((j && j.vendors) || []);
-    }).catch(()=>{
-      box.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12.5px;padding:26px 14px;">Could not load. <span style="color:var(--accent-dark);font-weight:800;" onclick="loadDscVendors()">🔄 Retry</span></div>';
-    });
-  }
+  // Retry button (network dono round trip fail hone par) isi combined loader ko
+  // dobara chalata hai. Naam backward-compat ke liye rakha hai.
+  function loadDscVendors(){ loadDscAreas(); }
   const DSC_COLORS = ['#6b7b5a','#e8974a','#4a90c9','#a35b8f','#0d9488','#c2410c'];
   const DSC_GRAD = [
     'linear-gradient(135deg,#e8974a,#b3541f)',
@@ -5673,7 +5700,12 @@
         // Vendor page: jab tak IS vendor ka confirmed data (bootstrap ya uski apni
         // cached key) na aaye, meal cards render NAHI karte — warna hardcoded/stale
         // menu ka 2-3 sec flash aata tha. Loader tab tak dikhta rahega.
-        loadVendorEndpoint().then(() => {
+        // ⚠️ RETRY: pehle bootstrap fetch fail/error/non-success hote hi HAAR maan
+        // leta tha — kabhi dobara try nahi karta, poori session ke liye CFG/MENU/
+        // VENDOR_BRAND khaali reh jaate (meal panel + brand dono blank). Ek transient
+        // hiccup (cold Apps Script, brief network blip) permanent blank screen bana
+        // deta tha. Ab ek retry hai (~1.2s baad) isse pehle finishInit() pe jump kare.
+        function tryBootstrap(attempt) {
             fetch(GOOGLE_SCRIPT_URL + '?action=bootstrap&vendorId=' + VENDOR_ID)
                 .then(r => r.json())
                 .then(j => {
@@ -5700,22 +5732,30 @@
                         pickDefaultDate(); pickActiveMeal();
                         preloadImgs();          // naye vendor ki images turant background me download → skeleton jaldi asli photo banega
                         __vendorReady = true;   // asli data aa gaya — ab meal cards render honge
+                        if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
+                        finishInit();
+                        return;
                     }
+                    if (attempt < 1) { setTimeout(() => tryBootstrap(attempt + 1), 1200); return; }
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
-                    __vendorReady = true;   // fail hua par jo cache mila wahi dikha do (skeleton me mat atko)
+                    __vendorReady = true;   // dono attempt fail — jo cache mila wahi dikha do (skeleton me mat atko)
                     finishInit();
                 })
                 .catch(() => {
+                    if (attempt < 1) { setTimeout(() => tryBootstrap(attempt + 1), 1200); return; }
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                     __vendorReady = true;
                     finishInit();
                 });
-        }).catch(() => {
+        }
+        loadVendorEndpoint().then(() => { tryBootstrap(0); }).catch(() => {
             if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
             __vendorReady = true;
             finishInit();
         });
     } else {
+
+
         // Bina ?v= — platform ka main link → discovery. Koi hardcoded vendor menu nahi.
         if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
         finishInit();
