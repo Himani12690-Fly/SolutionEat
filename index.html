@@ -909,22 +909,6 @@
     </div>
   </div>
   <!-- ══════ CUSTOM CONFIRM MODAL (native confirm() ki jagah) ══════ -->
-  <!-- ────── NOTIFICATION SOFT PROMPT ──────
-       Asli browser prompt is sheet ke "Allow" TAP se chalta hai, page load pe nahi.
-       Wajah: iOS/Safari ko requestPermission() ke liye user gesture chahiye — load pe
-       call karne se wo chup-chaap fail ho jaata hai. Aur Chrome pe bina context
-       prompt zyada "Block" khaata hai, jo PERMANENT hota hai. -->
-  <div class="sheet-overlay hidden" id="notifSheet" onclick="if(event.target===this)closeNotifSheet(false)">
-    <div class="sheet" style="max-width:380px;">
-      <div style="padding:26px 20px 20px;text-align:center;">
-        <div style="font-size:38px;">🔔</div>
-        <h3 style="font-size:17px;font-weight:900;margin-top:8px;">Order updates chahiye?</h3>
-        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-top:8px;">Tiffin ban gaya ya nikal gaya — turant pata chal jayega. Menu change aur kitchen band hone ki khabar bhi.</p>
-        <button class="add-cart-btn" style="margin-top:18px;" onclick="closeNotifSheet(true)">🔔 Haan, ON karo</button>
-        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeNotifSheet(false)">Abhi nahi</button>
-      </div>
-    </div>
-  </div>
   <div class="sheet-overlay hidden" id="confirmModal" onclick="if(event.target===this)closeConfirm(false)">
     <div class="sheet" style="max-width:380px;">
       <div style="padding:26px 20px 20px;text-align:center;">
@@ -1955,7 +1939,7 @@
 
   // ═══════ VIEW NAV ═══════
   function closeAllPopups(){
-    ['mealSheet','orderModal','limitModal','modeModal','notifSheet'].forEach(x=>{ const e=document.getElementById(x); if(e) e.classList.add('hidden'); });
+    ['mealSheet','orderModal','limitModal','modeModal'].forEach(x=>{ const e=document.getElementById(x); if(e) e.classList.add('hidden'); });
   }
   
   let lastGoodView = null;
@@ -2049,6 +2033,14 @@
     showView(target);
     // Boot loader agar atka reh gaya ho to usko bhi hatao
     const bl=document.getElementById('bootLoader'); if(bl){ bl.classList.add('gone'); setTimeout(()=>bl.remove(),300); }
+    // ⚠️ SELF-HEAL: Home dikh rahi hai par meal panel khaali hai (koi bhi wajah se —
+    // stale dateOffset, ek round-trip ke baad refresh chook gaya, jo bhi) — turant
+    // dobara bhar do. Ye check yahan (pageshow/focus/visibilitychange se) hamesha
+    // chalta hai, isliye trigger jo bhi ho, khaali screen zyada der nahi rukti.
+    if(target==='homeView'){
+      const mp=document.getElementById('mealPanel');
+      if(mp && !mp.children.length && isLoggedIn()){ refreshAvailability(); renderHome(); }
+    }
   }
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(recoverIfBlank, 80); });
   window.addEventListener('pageshow', ()=> setTimeout(recoverIfBlank, 80));
@@ -2215,13 +2207,14 @@
       if(isIOS && !standalone) return;
       // Koi aur popup khula hai to aaj mat chedho — flag set nahi karte, agli baar poochh lenge.
       if(document.querySelector('.sheet-overlay:not(.hidden)')) return;
-      var el = document.getElementById('notifSheet'); if(el) el.classList.remove('hidden');
+      // ⚠️ Pehle yahan ek custom "Order updates chahiye? Haan ON karo / Abhi nahi" sheet
+      // dikhate the, aur asli browser dialog uske "Haan" tap se chalta tha (do-step ask).
+      // Testing ke baad faisla: ye extra step hata do — seedha asli browser permission
+      // dialog trigger karo. Baaki guards (denied/granted/iOS-install/other-popup) sab
+      // waise hi hain, sirf beech ka custom-sheet step nikal diya.
+      storeSet('fbt_notif_asked', 1);
+      togglePushNotifications();
     }catch(e){}
-  }
-  function closeNotifSheet(allow){
-    var el = document.getElementById('notifSheet'); if(el) el.classList.add('hidden');
-    storeSet('fbt_notif_asked', 1);   // "Abhi nahi" pe bhi — nag nahi karte, Profile se kabhi bhi ON kar sakta hai
-    if(allow) togglePushNotifications();   // asli browser prompt: YE tap hi gesture hai
   }
   // Foreground (app khula/active) me push aaye to Firebase background handler nahi
   // chalta — apna toast dikhao taaki customer ko turant pata chale.
@@ -5834,7 +5827,12 @@
                 if (HAS_VENDOR_PARAM) { __dscIsTop = true; openDiscovery(); keep(); return; }
                 armExit(); return;
             }
-            if (isLoggedIn()) { showView('homeView'); renderHome(); }
+            // ⚠️ Fallback path — koi view (jaise adminLogin) ke liye upar explicit case
+            // nahi hai. Pehle sirf renderHome() chalta tha; refreshAvailability() nahi,
+            // jo date/slot selection revalidate karta hai. Bug repro se match karta hai:
+            // ek round-trip (auth/admin-login se) ke baad Home wapas aata tha par meal
+            // panel khaali reh jaata — is se safe hai chahe asli trigger kuch aur ho.
+            if (isLoggedIn()) { showView('homeView'); renderHome(); refreshAvailability(); }
             else { openDiscovery(); }
             keep();
         });
