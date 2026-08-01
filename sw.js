@@ -13,7 +13,7 @@
 // importScripts fail ho sakta hai — us case me bhi offline cache poora kaam karta
 // rehna chahiye, isliye push wala hissa alag try/catch me isolate hai.
 
-const CACHE = 'fbt-v38';
+const CACHE = 'fbt-v39';
 const ASSETS = ['./', './index.html', './manifest.json', './logo-round.png'];
 
 // ─────────────────────────── 1. CACHE (firebase se bilkul independent) ───────────────────────────
