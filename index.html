@@ -85,7 +85,7 @@
   }catch(e){}
 })();
 </script>
-<div id="adminLoader"><div class="al-logo"><img src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t">Loading dashboard…</div><div class="al-sub" id="adminLoaderSub">Please wait</div><div class="al-steps" id="adminLoaderSteps"></div></div>
+<div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t">Loading dashboard…</div><div class="al-sub" id="adminLoaderSub">Please wait</div><div class="al-steps" id="adminLoaderSteps"></div></div>
 <div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-spin"></div><div class="bl-t" id="authTransitionText">Signing in…</div></div>
 <div class="container">
 
@@ -93,6 +93,14 @@
   <!-- ══════ AUTH ══════ -->
 
   <div id="authPage" class="hidden">
+    <!-- ⚠️ HARD RULE: back-button/popstate trick sirf EK page-load ke andar ke
+         navigation ko intercept kar sakta hai. Kisi ne 3-4 vendor URL ek ke baad
+         ek khole (typed/refresh/bookmark — goToVendor() ke `location.replace()`
+         se bahar), to har navigation browser ki REAL history me apna alag entry
+         banati hai — JS koi bhi baad ke page-load se us purani history ko fix
+         nahi kar sakta. Isliye ye link back-button pe depend hi nahi karta —
+         hamesha tap-able hai, hamesha discovery pe hi jaata hai. -->
+    <div id="authBackKitchens" class="hidden" style="padding:14px 16px 0;font-size:13.5px;font-weight:800;color:var(--accent-dark,#6366f1);cursor:pointer;" onclick="__dscIsTop=true;openDiscovery();">‹ All Kitchens</div>
     <div class="hero">
       <div class="lang-switch"><select id="langSelAuth" class="js-lang" onchange="setLang(this.value)"></select></div>
       <div class="logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div>
@@ -1728,9 +1736,35 @@
     return fetch(GOOGLE_SCRIPT_URL+'?action=me&token='+encodeURIComponent(token)+'&vendorId='+(vid||VENDOR_ID)).then(r=>r.text());
   }
   let SESSION = storeGet('fbt_session') || readSharedSession();
+  // ⚠️ Ye 'shared se mila' flag isliye zaroori hai: neeche is token ko turant is
+  // vendor ke namespace me save kar dete hain (UX ke liye — turant logged-in dikhna
+  // chahiye), PAR ye token is vendor ke Sessions/Users sheet me kabhi likha hi nahi
+  // gaya tha. Isi se asli bug banta hai: customer order kar leta (token kaam kar
+  // jaata, koi hard-block nahi), par admin ki "Users" list is vendor ke liye
+  // HAMESHA khaali rehti — kyunki koi real signup backend pe kabhi hua hi nahi.
+  // Fix (neeche finishInit() me): agar ye flag true hai, ek silent crossVendorLogin
+  // call se ISI vendor ki apni Sheet me asli entry bana denge, bina dobara login UI
+  // dikhaye.
+  const __sessionIsForeign = !!(SESSION && SESSION.token && !storeGet('fbt_session'));
   // Agar shared se mila to is vendor ke namespace me bhi save kar do (agli baar direct mile)
   if(SESSION && SESSION.token && SESSION.phone && !storeGet('fbt_session')){ storeSet('fbt_session', SESSION); }
   function isLoggedIn(){ return !!(SESSION && SESSION.token); }
+  // Foreign token ko is vendor ki apni Sheet me "asli" bana do — silent, koi UI nahi.
+  // Success: SESSION ko naye (isi vendor ke liye scoped) token se badal do. Fail
+  // (token khud purane vendor pe bhi mar chuka): normal forceLogout, jaisa kisi
+  // bhi invalid session ke liye hota hai.
+  function completeCrossVendorLogin(){
+    if(!__sessionIsForeign || !SESSION) return;
+    apiPost({ action:'crossVendorLogin', fromVendorId: SESSION.vid||'', token: SESSION.token, phone: SESSION.phone||'', name: SESSION.name||'' }).then(j=>{
+      if(j && j.status==='success'){
+        SESSION = { token:j.token, name:j.name, phone:j.phone, vid: VENDOR_ID };
+        storeSet('fbt_session', SESSION);
+      } else if(j && j.status==='invalid_session'){
+        forceLogout();
+      }
+      // Network/other error: chup raho, andar hi rehne do — agli baar try karenge.
+    }).catch(()=>{});
+  }
 
   // ═══════ HELPERS ═══════
   let __toastT=null;
@@ -2546,6 +2580,7 @@
     const e2=document.getElementById('authGoogleErr'); if(e2)e2.classList.remove('show');
     // One Tap band — sirf apna custom blue button (googleBtnBox) dikhega
     showView('authPage');
+    const abk=document.getElementById('authBackKitchens'); if(abk) abk.classList.toggle('hidden', !HAS_VENDOR_PARAM);
     initGoogleButton();
   }
   // ⚠️ enterApp() har customer login path (email/Google/demo/restore) ke ek
@@ -5817,7 +5852,14 @@
 
             // Session refresh
             if (GOOGLE_SCRIPT_URL.indexOf('http') === 0) {
-                meCall(SESSION.token).then(applyMeResult).catch(() => {});
+                // ⚠️ Foreign (doosre vendor se shared) token ko meCall() se check karna
+                // galat hai — meCall ISI vendor ki Sessions sheet dekhta hai, jahan ye
+                // token kabhi likha hi nahi gaya (isliye hamesha invalid_session milta,
+                // jo forceLogout() trigger kar sakta tha — ulta nuksan). Iske liye
+                // crossVendorLogin hai (upar dekho) — original vendor se confirm karke
+                // ISI vendor ki apni Sheet me asli entry banata hai.
+                if (__sessionIsForeign) completeCrossVendorLogin();
+                else meCall(SESSION.token).then(applyMeResult).catch(() => {});
             }
         }
         else {
@@ -5851,6 +5893,16 @@
                 return true;
             };
 
+            const at = document.getElementById('authTransition');
+            if (at && !at.classList.contains('hidden')) {
+                // ⚠️ "Signing in…" overlay authPage ke UPAR dikhta hai, par ye ALL_VIEWS
+                // system ka hissa nahi hai — isliye back button dabane par koi bhi upar
+                // ka case ise pehchanta nahi tha, seedha neeche ke generic fallback pe
+                // gir jaata (login abhi chal raha hai, discovery pe jaana chahiye tha).
+                at.classList.add('gone'); setTimeout(() => at.classList.add('hidden'), 300);
+                if (isLoggedIn()) { showView('homeView'); keep(); return; }
+                __dscIsTop = true; openDiscovery(); keep(); return;
+            }
             if (isOn('dscView')) {
                 if (!__dscIsTop && isLoggedIn()) { showView('homeView'); keep(); return; }
                 armExit(); return;
