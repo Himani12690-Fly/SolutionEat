@@ -78,6 +78,17 @@
     .ogr-meta{font-size:12px;color:var(--muted);font-weight:700;margin-top:2px;}
     .ogr-amt{color:#b45309;}
     .ogr-paid{color:var(--ok);font-weight:800;}
+
+    /* Login page kitchen logo — spinner shows while the real logo image is still loading */
+    .logo-wrap{position:relative;width:96px;height:96px;margin:0 auto;}
+    .logo-spin{position:absolute;inset:0;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:logoSpin .8s linear infinite;}
+    .logo-spin.hidden{display:none;}
+    @keyframes logoSpin{to{transform:rotate(360deg);}}
+
+    /* Meal card photo — jab skeleton (silver shimmer) se asli photo pe badalta hai,
+       ab ek halka fade-in hota hai, achanak "pop" nahi karta. */
+    .c1-img-fade{animation:c1ImgFade .35s ease both;}
+    @keyframes c1ImgFade{0%{opacity:0;}100%{opacity:1;}}
     .ogr-check{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;cursor:pointer;}
     .ogr-check.on{background:var(--ok);border-color:var(--ok);}
     .ogr-row.ogr-done .ogr-name{text-decoration:line-through;opacity:.65;}
@@ -139,7 +150,7 @@
     <div id="authBackKitchens" class="hidden" style="padding:14px 16px 0;font-size:13.5px;font-weight:800;color:var(--accent-dark,#6366f1);cursor:pointer;" onclick="__dscIsTop=true;openDiscovery();">‹ All Kitchens</div>
     <div class="hero">
       <div class="lang-switch"><select id="langSelAuth" class="js-lang" onchange="setLang(this.value)"></select></div>
-      <div class="logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div>
+      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"><div class="logo-spin" id="authLogoSpin"></div></div>
       <p class="tagline" data-i="tagline"></p>
       <span class="hero-badge" data-i="secureLogin"></span>
     </div>
@@ -371,10 +382,6 @@
       <div class="cust-label" data-i="viewPast"></div>
       <div class="hist-row" style="margin-bottom:14px;">
         <input type="date" id="histDate" onchange="viewHistory()" style="width:100%;background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:11px;padding:12px;">
-      </div>
-      <div class="rate-nudge hidden" id="rateNudge" onclick="openRateSheet()">
-        <div class="rn-t" id="rnTitle">⭐ <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> kaisa laga?</div>
-        <div class="rn-s" id="rnSub">Ye rating poore kitchen ke liye hai — doosre customers ko sahi kitchen chunne me madad karega</div>
       </div>
       <div id="myOrdersList"></div>
     </div>
@@ -2765,6 +2772,11 @@
       // redirect_uri me query allowed nahi (Google exact match maangta hai), isliye
       // ?v=<vendor> yahan sambhal ke rakho aur login ke baad wapas laga do.
       sessionStorage.setItem('g_ret', location.search || '');
+      // Google redirect_uri me ?v= nahi jaata, isliye wapas aate waqt browser
+      // temporarily "kaunsa vendor hai" bhool jaata tha — "Signing in…" overlay
+      // pe isi wajah se logo blank dikhta tha. Naam/logo yahin stash kar dete
+      // hain, wapas aate hi turant laga denge.
+      if(VENDOR_BRAND && VENDOR_BRAND.name) sessionStorage.setItem('g_brand', JSON.stringify(VENDOR_BRAND));
     }catch(e){}
     const p=new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
@@ -2801,6 +2813,13 @@
     const idt=hp.get('id_token');
     try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
     if(!idt) return false;
+    // ?v= URL me nahi hai is waqt (Google redirect ke baad), isliye VENDOR_BRAND
+    // abhi khaali/default hai — redirect se pehle stash kiya naam/logo wapas laga
+    // dete hain taaki "Signing in…" overlay pe sahi kitchen ka logo dikhe.
+    try{
+      const gb=sessionStorage.getItem('g_brand'); sessionStorage.removeItem('g_brand');
+      if(gb && (!VENDOR_BRAND || !VENDOR_BRAND.name)){ VENDOR_BRAND=JSON.parse(gb); applyVendorBrand(); }
+    }catch(e){}
     // nonce match — dusri jagah se aaya token replay na ho
     let want=''; try{ want=sessionStorage.getItem('g_nonce')||''; sessionStorage.removeItem('g_nonce'); }catch(e){}
     const pl=jwtPayload(idt);
@@ -3181,7 +3200,7 @@
       const desc=(rich.items&&rich.items.length?rich.items:[]).slice(0,6).join(' · ');
       const ph=mealPhoto(m);
       const photo = ph
-        ? `<img class="c1-img" src="${ph}" alt="">`
+        ? `<img class="c1-img c1-img-fade" src="${ph}" alt="">`
         : (HAS_VENDOR_PARAM && vendorHasOwnImg(m)
             ? `<div class="c1-img c1-imgskel"></div>`      // vendor ki asli image aa rahi hai → skeleton, default flash nahi
             : `<div class="c1-img c1-emoji">${meta.emoji||'🍽️'}</div>`);
@@ -4106,6 +4125,22 @@
     // beech me landing/login/loading nahi. Flag localStorage me set karte hain
     // kyunki neeche full page reload ho raha hai.
     try{ if(isLoggedIn()) localStorage.setItem('fbt_jump_menu','1'); }catch(e){}
+    // ⚠️ Discovery list me har kitchen ka naam/logo already fetch ho chuka hota hai
+    // (list card me wahi dikh raha hota hai) — lekin nayi vendor page full reload
+    // hoti thi bina isi data ko carry kiye, isliye wahan phir se blank/silver
+    // skeleton dikh ke bootstrap() ka network round-trip khatam hone ka wait hota
+    // tha, phir achanak logo/image pop hoti thi. Ab discovery ka wahi naam+logo
+    // us vendor ki apni namespaced cache me seedha likh dete hain (ek extra
+    // network call ki zaroorat nahi) — target page load hote hi turant sahi logo
+    // dikhega, bootstrap() background me baaki (whatsapp, rating wagera) confirm
+    // kar dega.
+    try{
+      const v=(dscVendorsCache||[]).find(x=>x.vendorId===id);
+      if(v && (v.name||v.logo)){
+        const brandKey = (id===DEFAULT_VENDOR_ID) ? 'fbt_brand' : (id+'_fbt_brand');
+        localStorage.setItem(brandKey, JSON.stringify({ name:v.name||'', logo:v.logo||'', areas:v.areas||'', rating:v.rating, ratingCount:v.ratingCount }));
+      }
+    }catch(e){}
     const u = new URL(location.href);
     u.searchParams.set('v', id);
     u.searchParams.delete('superadmin');
@@ -5810,6 +5845,7 @@
       }
     }
     document.querySelectorAll('.vbrand-logo').forEach(img=>{ img.src = src; img.alt = name; img.classList.add('vb-ready'); });
+    const als=document.getElementById('authLogoSpin'); if(als) als.classList.add('hidden');
     document.title = (name||'Tiffin') + ' — Fresh Homemade Tiffin';
     const am=document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(am) am.setAttribute('content', name);
     // Location line — kitchen ka actual area dikhao (jaise "Godrej Garden City").
@@ -5845,7 +5881,7 @@
   }
   // Failsafe: agar 1.2 sec me bhi asli vendor branding nahi aayi (slow/dead network),
   // to bhi logo dikha do (default hi rahega) — hamesha ke liye chhupa nahi rehna chahiye.
-  setTimeout(()=>{ document.querySelectorAll('.vbrand-logo:not(.vb-ready)').forEach(img=>{ img.classList.add('vb-ready'); }); }, 1200);
+  setTimeout(()=>{ document.querySelectorAll('.vbrand-logo:not(.vb-ready)').forEach(img=>{ img.classList.add('vb-ready'); }); const als=document.getElementById('authLogoSpin'); if(als) als.classList.add('hidden'); }, 1200);
 
   // ═══════ ONE-TIME STORAGE CLEANUP ═══════
   // Device pe testing/multi-vendor browsing se 500+ purani keys jama ho gayi thi
