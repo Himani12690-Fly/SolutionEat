@@ -2446,7 +2446,7 @@
     updateNavAvatar();
     const ph=document.getElementById('pfPhone'); if(ph)ph.textContent=(SESSION&&SESSION.phone)?('📞 +91 '+SESSION.phone):'';
     const sel=document.getElementById('pfSociety');
-    if(sel){ const saved=storeGet('fbt_addr')||{}; sel.innerHTML=CFG.societies.map(s=>`<option value="${s}" ${saved.society===s?'selected':''}>${s}</option>`).join(''); const fl=document.getElementById('pfFlat'); if(fl)fl.value=saved.flatNo||''; }
+    if(sel){ const saved=storeGet('fbt_addr')||{}; sel.innerHTML=(CFG.societies||[]).map(s=>`<option value="${s}" ${saved.society===s?'selected':''}>${s}</option>`).join(''); const fl=document.getElementById('pfFlat'); if(fl)fl.value=saved.flatNo||''; }
     const ts=document.getElementById('themeSelProfile'); if(ts) ts.value = readTheme();
   }
   function savePfAddr(){
@@ -3188,59 +3188,73 @@
       if(box.__lastHtml!==skel){ box.__lastHtml=skel; box.innerHTML=skel; }
       return;
     }
-    const availAll=mealsAvail(dateOffset);
-    const cards = enabledMeals().map(m=>{
-      const meta=MEAL_META[m]||{};
-      const av=availAll[m];
-      const name=mealTitle(m);
-      const vs=variantsFor(m);
-      const pr=priceRange(m);
-      const priceLabel = (pr.min===pr.max) ? `₹${pr.min}` : `₹${pr.min}–${pr.max}`;
-      const rich=vs.reduce((a,b)=>b.price>a.price?b:a,vs[0]);
-      const desc=(rich.items&&rich.items.length?rich.items:[]).slice(0,6).join(' · ');
-      const ph=mealPhoto(m);
-      const photo = ph
-        ? `<img class="c1-img c1-img-fade" src="${ph}" alt="">`
-        : (HAS_VENDOR_PARAM && vendorHasOwnImg(m)
-            ? `<div class="c1-img c1-imgskel"></div>`      // vendor ki asli image aa rahi hai → skeleton, default flash nahi
-            : `<div class="c1-img c1-emoji">${meta.emoji||'🍽️'}</div>`);
-      const closed = !av.ok;
-      const sold = !closed && capacityReached(m,selDateStr());
-      const orderable = !closed && !sold;
-      let btn;
-      const inCart = orderable ? cartQtyFor(m) : 0;
-      if(closed) btn=`<button class="c1-add off" disabled>${t('lpClosed')}</button>`;
-      else if(sold) btn=`<button class="c1-add off" disabled>🔴 ${t('soldOutTitle')}</button>`;
-      else if(inCart>0) btn=`<div class="c1-step" onclick="event.stopPropagation()">`
-        + `<button class="c1-st-btn" aria-label="Remove" onclick="cartRemoveMeal('${m}',event)">−</button>`
-        + `<span class="c1-st-n">${inCart}</span>`
-        + `<button class="c1-st-btn" aria-label="Add more" onclick="cartPlusMeal('${m}',event)">+</button>`
-        + `</div>`;
-      else btn=`<button class="c1-add" onclick="quickAdd('${m}',event)">${t('addToCart2')} +</button>`;
-      const custLink = (orderable && vs.length>1)
-        ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>` : `<span></span>`;
-      return `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
-        <div class="c1-top" ${orderable?`onclick="openMealSheet('${m}')"`:''}>
-          ${photo}
-          <div class="c1-info">
-            <div class="c1-h">
-              <span class="c1-nw"><span class="c1-veg"></span><span class="c1-name">${meta.emoji||''} ${name}</span></span>
-              <span class="c1-price">${priceLabel}</span>
+    // ⚠️ Ye pura block (asli cards banana) try/catch me le liya. Wajah: agar kisi
+    // bhi ek meal ka data thoda ajeeb ho (edge-case: naya mealType, corrupt variant,
+    // etc.) to poora function beech me hi throw karke ruk jaata tha — upar wali
+    // skeleton/"Please wait" card WAHI ki WAHI frozen reh jaati thi, hamesha ke liye,
+    // kyunki neeche ka box.innerHTML wala assignment kabhi chalta hi nahi tha. Ab
+    // error console me dikhega aur user ko "Retry" mil jayega, blank/frozen screen
+    // nahi.
+    try{
+      const availAll=mealsAvail(dateOffset);
+      const cards = enabledMeals().map(m=>{
+        const meta=MEAL_META[m]||{};
+        const av=availAll[m];
+        const name=mealTitle(m);
+        const vs=variantsFor(m);
+        const pr=priceRange(m);
+        const priceLabel = (pr.min===pr.max) ? `₹${pr.min}` : `₹${pr.min}–${pr.max}`;
+        const rich=vs.reduce((a,b)=>b.price>a.price?b:a,vs[0]);
+        const desc=(rich.items&&rich.items.length?rich.items:[]).slice(0,6).join(' · ');
+        const ph=mealPhoto(m);
+        const photo = ph
+          ? `<img class="c1-img c1-img-fade" src="${ph}" alt="">`
+          : (HAS_VENDOR_PARAM && vendorHasOwnImg(m)
+              ? `<div class="c1-img c1-imgskel"></div>`      // vendor ki asli image aa rahi hai → skeleton, default flash nahi
+              : `<div class="c1-img c1-emoji">${meta.emoji||'🍽️'}</div>`);
+        const closed = !av.ok;
+        const sold = !closed && capacityReached(m,selDateStr());
+        const orderable = !closed && !sold;
+        let btn;
+        const inCart = orderable ? cartQtyFor(m) : 0;
+        if(closed) btn=`<button class="c1-add off" disabled>${t('lpClosed')}</button>`;
+        else if(sold) btn=`<button class="c1-add off" disabled>🔴 ${t('soldOutTitle')}</button>`;
+        else if(inCart>0) btn=`<div class="c1-step" onclick="event.stopPropagation()">`
+          + `<button class="c1-st-btn" aria-label="Remove" onclick="cartRemoveMeal('${m}',event)">−</button>`
+          + `<span class="c1-st-n">${inCart}</span>`
+          + `<button class="c1-st-btn" aria-label="Add more" onclick="cartPlusMeal('${m}',event)">+</button>`
+          + `</div>`;
+        else btn=`<button class="c1-add" onclick="quickAdd('${m}',event)">${t('addToCart2')} +</button>`;
+        const custLink = (orderable && vs.length>1)
+          ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>` : `<span></span>`;
+        return `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
+          <div class="c1-top" ${orderable?`onclick="openMealSheet('${m}')"`:''}>
+            ${photo}
+            <div class="c1-info">
+              <div class="c1-h">
+                <span class="c1-nw"><span class="c1-veg"></span><span class="c1-name">${meta.emoji||''} ${name}</span></span>
+                <span class="c1-price">${priceLabel}</span>
+              </div>
+              <div class="c1-desc">${desc}</div>
+              ${meta.time?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
             </div>
-            <div class="c1-desc">${desc}</div>
-            ${meta.time?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
           </div>
-        </div>
-        <div class="c1-actions" id="mca-${m}">${custLink}${btn}</div>
-      </div>`;
-    }).join('');
-    const __html = cards || `<div class="menu-closed">—</div>`;
-    // Load ke dauran ye function 2-3 baar call hota hai (availability → stats → images →
-    // language). Har baar innerHTML replace hone se page blink karta tha. Agar markup
-    // bilkul same hai to DOM ko chhedo hi nahi — blink khatam.
-    if(box.__lastHtml === __html) return;
-    box.__lastHtml = __html;
-    box.innerHTML = __html;
+          <div class="c1-actions" id="mca-${m}">${custLink}${btn}</div>
+        </div>`;
+      }).join('');
+      const __html = cards || `<div class="menu-closed">—</div>`;
+      // Load ke dauran ye function 2-3 baar call hota hai (availability → stats → images →
+      // language). Har baar innerHTML replace hone se page blink karta tha. Agar markup
+      // bilkul same hai to DOM ko chhedo hi nahi — blink khatam.
+      if(box.__lastHtml === __html) return;
+      box.__lastHtml = __html;
+      box.innerHTML = __html;
+    }catch(err){
+      try{ console.error('renderMealPanelNow failed', err); }catch(e){}
+      try{ dbgLog({ev:'meal_panel_render_error', err:String(err).slice(0,200)}); }catch(e){}
+      const errHtml='<div class="c1card c1-closed" style="opacity:.85;justify-content:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;width:100%;"><span style="font-size:28px;">⚠️</span><span class="c1-name">Menu load nahi ho paaya</span><button class="c1-add" onclick="box.__lastHtml=null;renderMealPanel();" style="max-width:160px;">🔄 Retry</button></div></div>';
+      box.__lastHtml=null; box.innerHTML=errHtml;
+    }
   }
 
   // ═══════ MEAL POPUP (bottom sheet) ═══════
@@ -3254,7 +3268,7 @@
   }
   function closeMealSheet(){ document.getElementById('mealSheet').classList.add('hidden'); document.body.style.overflow=''; }
   function renderMealSheet(){
-    const m=sheetMeal, b=builder[m], d=MENU[selDayKey()];
+    const m=sheetMeal, b=builder[m], d=MENU[selDayKey()]||{};
     const sel=findVariant(m,b.tiffinType);
     const shPh = (sel.img&&IMG_OK[sel.img]) ? sel.img : mealPhoto(m);
     document.getElementById('shPhoto').innerHTML = shPh?`<img src="${shPh}" alt="" style="width:100%;height:100%;object-fit:cover;">`:MEAL_META[m].emoji;
@@ -3284,7 +3298,7 @@
     let inner='';
 
     if(m!=='breakfast'){
-      const opts=d[m].sabziOptions.map(o=>`<option value="${o}" ${b.sabzi===o?'selected':''}>${o}</option>`).join('');
+      const opts=((d[m]&&d[m].sabziOptions)||[]).map(o=>`<option value="${o}" ${b.sabzi===o?'selected':''}>${o}</option>`).join('');
       // Admin-disabled add-ons customer ko dikhte hi nahi — sirf UI hide nahi,
       // backend computeTotal() bhi inhe alag se ignore karta hai (defense in depth).
       const AE=CFG.addonsEnabled||{};
@@ -3852,14 +3866,15 @@
     if(sub && sub.status==='Active' && !sub.__norerender){ subState={ meals:JSON.parse(JSON.stringify(sub.meals)), days:sub.days.slice(), time:Object.assign({},sub.time), startDate:sub.startDate, endDate:sub.endDate, society:sub.society, flat:sub.flat, payment:sub.payment }; }
     else if(!sub){
       const sa=storeGet('fbt_addr')||{};
-      subState={ meals:{}, days:[], time:{}, startDate:dateWithOffsetStr(1), endDate:'', society:sa.society||(CFG.societies[0]||''), flat:sa.flatNo||'', payment:'COD' };
+      subState={ meals:{}, days:[], time:{}, startDate:dateWithOffsetStr(1), endDate:'', society:sa.society||((CFG.societies||[])[0]||''), flat:sa.flatNo||'', payment:'COD' };
       const d=new Date(getISTNow().getTime()+30*86400000); subState.endDate=fmtYMD(d);
     }
-    const socOpts=CFG.societies.map(s=>`<option value="${s}" ${subState.society===s?'selected':''}>${s}</option>`).join('');
+    const socOpts=(CFG.societies||[]).map(s=>`<option value="${s}" ${subState.society===s?'selected':''}>${s}</option>`).join('');
     const mealCard=(m)=>{
       const on=!!subState.meals[m]; const mm=subState.meals[m]||{};
-      const sabziOpts=(m!=='breakfast')?(MENU.monday[m].sabziOptions.map(o=>`<option value="${o}" ${mm.sabzi===o?'selected':''}>${o}</option>`).join('')):'';
-      const timeOpts=TIME_SLOTS[m].map(s=>`<option value="${s}" ${(subState.time[m]===s)?'selected':''}>${s}</option>`).join('');
+      const mondayMenu=(MENU&&MENU.monday)||{};
+      const sabziOpts=(m!=='breakfast')?((mondayMenu[m]&&mondayMenu[m].sabziOptions||[]).map(o=>`<option value="${o}" ${mm.sabzi===o?'selected':''}>${o}</option>`).join('')):'';
+      const timeOpts=(TIME_SLOTS[m]||[]).map(s=>`<option value="${s}" ${(subState.time[m]===s)?'selected':''}>${s}</option>`).join('');
       return `<div class="sub-meal-card ${on?'on':''}">
         <div class="sub-meal-head"><span class="nm">${MEAL_META[m].emoji} ${mealTitle(m)}</span>
           <div class="toggle-switch ${on?'active':''}" onclick="subToggleMeal('${m}')"></div></div>
@@ -5726,8 +5741,8 @@
       const on=!(CFG.addonsEnabled && CFG.addonsEnabled[k]===false);
       return `<div class="price-row"><label>${PRICE_LABELS[k]}</label><div class="inp">₹<input type="number" id="pr-${k}" value="${(CFG.prices&&CFG.prices[k]!=null)?CFG.prices[k]:0}" min="0" max="2000"></div><label class="cfg-chk" style="margin:0 0 0 8px;white-space:nowrap;"><input type="checkbox" id="pren-${k}" ${on?'checked':''}> ON</label></div>`;
     }).join('');
-    document.getElementById('cfg-township').value=CFG.township;
-    document.getElementById('cfg-societies').value=CFG.societies.join('\n');
+    const twEl2=document.getElementById('cfg-township'); if(twEl2) twEl2.value=CFG.township||'';
+    document.getElementById('cfg-societies').value=(CFG.societies||[]).join('\n');
     const ce=document.getElementById('cfg-companies');
     if(ce) ce.value=(CFG.companies||[]).map(c=>[c.name,c.building||'',c.fee].join(' | ')).join('\n');
     const he=document.getElementById('cfg-homeEnabled'); if(he) he.checked=(CFG.homeEnabled!==false);
@@ -5797,18 +5812,24 @@
     apiPost({action:'saveConfig',user:adminCreds.user,pass:adminCreds.pass,config:cfg}).then(j=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; if(j.status==='success'){ cfg.variants=CFG.variants; cfg.banners=CFG.banners; CFG=cfg; storeSet('fbt_cfg',CFG); applyConfigToUI(); refreshAvailability(); showToast('✅ Setup saved!','success'); } else showToast('❌ '+(j.message||'Save failed'),'error'); }).catch(()=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; showToast(t('errNetwork'),'error'); }); }
 
   function applyConfigToUI(){
-    // Har meal (built-in ya admin-added) ka naam/emoji/window admin Setup se
-    // configurable hai — MEAL_META/MEALS/TIME_SLOTS/MEAL_ORDER poore app me dozens
-    // jagah directly use hote hain, isliye ek hi jagah se refresh kar do taaki har
-    // call site khud-ba-khud sahi dikhe (naya "Add Meal" bhi turant reflect hota hai).
+    // ⚠️ Ye function init() me setLang() se PEHLE chalta hai. Yahan kahin bhi
+    // koi CFG.xxx field undefined ho (vendor ka config kabhi poora migrate/save
+    // nahi hua) aur .map()/.forEach() seedha lagaya ho, to throw hote hi
+    // setLang() KABHI nahi chalta — poore app ke [data-i] text (English dropdown,
+    // "or sign in with", "Secure Login", tagline, sab kuch) blank reh jaate the,
+    // sirf hardcoded/static text (jaise "Admin") dikhta tha. Isliye poora function
+    // try/catch me + har CFG.xxx read `||[]`/`||''` ke saath defensive.
+    try{
     MEALS=(CFG.mealTypes||[]).map(mt=>mt.key);
     TIME_SLOTS={}; (CFG.mealTypes||[]).forEach(mt=>{ TIME_SLOTS[mt.key]=generateTimeSlots(mt.windowStart,mt.windowEnd); });
     MEAL_ORDER={}; MEALS.forEach((k,i)=>{ MEAL_ORDER[k]=i; });
     syncMealMetaFromConfig();
-    const sel=document.getElementById('society'); const cur=sel.value;
-    sel.innerHTML='<option value="">— '+t('society')+' —</option>'+CFG.societies.map(s=>`<option value="${s}">${s}</option>`).join('');
-    if(cur && CFG.societies.includes(cur)) sel.value=cur;
-    // Company dropdown + home/office toggle
+    const sel=document.getElementById('society'); const cur=sel?sel.value:'';
+    const socList=CFG.societies||[];
+    if(sel){
+      sel.innerHTML='<option value="">— '+t('society')+' —</option>'+socList.map(s=>`<option value="${s}">${s}</option>`).join('');
+      if(cur && socList.includes(cur)) sel.value=cur;
+    }
     const cs=document.getElementById('company');
     if(cs){ const cc=cs.value;
       cs.innerHTML='<option value="">— '+t('companyLbl')+' —</option>'+(CFG.companies||[]).map(c=>`<option value="${c.name}">${c.name}${c.building?(' — '+c.building):''}</option>`).join('');
@@ -5822,8 +5843,12 @@
     renderModeChip();
     const puOpt=document.getElementById('pay-UPI');
     if(puOpt){ const hasUpi=!!CFG.upiId; puOpt.classList.toggle('hidden',!hasUpi); if(!hasUpi&&payment==='UPI')setPay('COD'); }
-    document.getElementById('township').value=CFG.township;
+    const twEl=document.getElementById('township'); if(twEl) twEl.value=CFG.township||'';
     document.querySelectorAll('.fssai-line').forEach(e=>{ e.textContent = CFG.fssai ? ('FSSAI Reg. No: '+CFG.fssai) : ''; });
+    }catch(err){
+      try{ console.error('applyConfigToUI failed', err); }catch(e){}
+      try{ dbgLog({ev:'apply_config_error', err:String(err).slice(0,200)}); }catch(e){}
+    }
   }
 
   // Logo/naam pehle sab jagah "Nest & Nosh" hardcoded tha — ab jo vendor (?v=slug)
@@ -5995,6 +6020,7 @@
                 .then(r => r.json())
                 .then(j => {
                     if (j.status === 'success') {
+                      try{
                         if (j.vendor && j.vendor.name) {
                             VENDOR_BRAND = j.vendor;
                             storeSet('fbt_brand', VENDOR_BRAND);
@@ -6016,6 +6042,15 @@
                         applyConfigToUI();
                         pickDefaultDate(); pickActiveMeal();
                         preloadImgs();          // naye vendor ki images turant background me download → skeleton jaldi asli photo banega
+                      }catch(err){
+                        // ⚠️ Yahan koi bhi cheez throw kare (ek ajeeb config field, ek naye
+                        // meal type ka edge-case) to poora boot HAMESHA ke liye "Please wait"
+                        // pe fasa reh jaata tha — __vendorReady/finishInit() kabhi na chalte.
+                        // Ab error sirf log hota hai, boot aage badhta hai (jo bhi data mila
+                        // usi se page render hoga, poora blank nahi rehta).
+                        try{ console.error('bootstrap apply failed', err); }catch(e){}
+                        try{ dbgLog({ev:'bootstrap_apply_error', err:String(err).slice(0,200)}); }catch(e){}
+                      }
                         __vendorReady = true;   // asli data aa gaya — ab meal cards render honge
                         if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                         finishInit();
