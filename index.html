@@ -5948,9 +5948,16 @@
     document.title = (name||'Tiffin') + ' — Fresh Homemade Tiffin';
     const am=document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(am) am.setAttribute('content', name);
     // Location line — kitchen ka actual area dikhao (jaise "Godrej Garden City").
-    // areas comma-separated ho sakta hai → pehla area lo. Na ho to "Ahmedabad".
+    // areas comma-separated STRING ho sakta hai (bootstrap ke 'vendor' record se)
+    // YA ARRAY (discovery list se — goToVendor() isi shape ko seedha fbt_brand
+    // cache me likh deta hai, undo kiye bina). Dono shape crash na kare isliye
+    // Array.isArray() check — pehle sirf .split() maan ke chalte the, isliye
+    // discovery se aaya cached array pe ".split is not a function" crash hota
+    // tha (init() ke bilkul shuru me, uncaught — poora boot wahin ruk jaata).
     if(!MAPS_API_KEY){
-      const area = (VENDOR_BRAND.areas||'').split(',')[0].trim() || 'Ahmedabad';
+      const areasRaw = VENDOR_BRAND.areas;
+      const areasStr = Array.isArray(areasRaw) ? areasRaw.join(',') : (areasRaw||'');
+      const area = areasStr.split(',')[0].trim() || 'Ahmedabad';
       document.querySelectorAll('.loc-place').forEach(el=>{ el.textContent = area; });
     }
     // About page ke Call/WhatsApp buttons bhi vendor ke registered number pe point karein
@@ -6057,8 +6064,15 @@
       MENU = {};
     }
     if(cc&&cc.prices) CFG=cc;
-    if(cb&&cb.name){ VENDOR_BRAND=cb; applyVendorBrand(); }
-    else if(HAS_VENDOR_PARAM){
+    // ⚠️ Ye cached-brand priming try/catch ke bina thi — cache me koi bhi ajeeb
+    // shape (jaise areas array vs string mismatch, dekho applyVendorBrand()) throw
+    // kare to poora init() IIFE yahin ruk jaata (synchronous, uncaught) — bottom
+    // nav, event listeners, kuch bhi aage nahi banta, poora page load hi fail ho
+    // jaata. Ab isolate kiya: worst case sirf brand priming skip hoti hai, baaki
+    // boot (bootstrap fetch wagera) normally aage badhta hai.
+    try{ if(cb&&cb.name){ VENDOR_BRAND=cb; applyVendorBrand(); } }
+    catch(e){ try{ dbgLog({ev:'cached_brand_apply_error', err:String(e).slice(0,200)}); }catch(e2){} }
+    if(!(cb&&cb.name) && HAS_VENDOR_PARAM){
       // Brand cache nahi → default "Nest & Nosh" logo/naam flash na ho. Naam khaali,
       // logo neutral (transparent 1px) rakho jab tak bootstrap se asli branding na aaye.
       VENDOR_BRAND = { name:'', logo:'' };
