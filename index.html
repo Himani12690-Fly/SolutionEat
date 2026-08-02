@@ -1564,6 +1564,15 @@
     LANG = l;
     try { localStorage.setItem('fbt_lang', l); } catch(e){}
     document.documentElement.lang = (l === 'hinglish' ? 'en' : l);
+    // ⚠️ Pehle sirf init() ke waqt EK BAAR initLangSelectors() chalta tha. Agar
+    // koi bhi select.js-lang element us EXACT waqt options se khaali reh gaya
+    // (Profile/Admin panel jaise sections), to yahan neeche `.value=l` set karne
+    // se kuch nahi hota — browser silently ignore karta hai agar koi matching
+    // <option> na ho, aur dropdown HAMESHA ke liye blank dikhta reh jaata (login/
+    // discovery ke selects theek dikhte kyunki unke options waqt pe ban gaye the).
+    // Ab har setLang() call pe options FIR SE guaranteed bante hain — value set
+    // karne se pehle — isliye ye khaali-dropdown bug kabhi wapas nahi aa sakta.
+    initLangSelectors();
     document.querySelectorAll('select.js-lang').forEach(s => { s.value = l; });
     applyLang();
   }
@@ -2100,6 +2109,12 @@
     // chahiye. Pehle sirf openDiscovery() load karta tha, isliye fallback se aane par
     // "Available kitchens" ke neeche khaali page dikhta tha.
     if(id==='dscView'){ if(!dscAreas.length) loadDscAreas(); else renderDscAreas(); }
+    // ⚠️ Profile aur Admin panel me kabhi-kabhi language dropdown + kuch labels
+    // blank dikhte the (boot ke waqt kisi wajah se translation apply hone se
+    // reh gaya ho). Ye do views jab bhi khulte hain, translations ek baar zaroor
+    // fresh laga do — bilkul safe hai (idempotent), aur ye class of bug hamesha
+    // ke liye khatam ho jaata hai.
+    if(id==='profileView'||id==='adminPanel'){ try{ setLang(LANG); }catch(e){} }
     lastGoodView = id;
     window.scrollTo(0,0); updateBottomNav(id); }
 
