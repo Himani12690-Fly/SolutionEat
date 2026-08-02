@@ -123,7 +123,18 @@ test.describe('Layout', () => {
 
   test('sticky bar ke peeche content nahi chhupta', async ({ page }) => {
     await openApp(page);
-    await goTo(page, 'land');
+    await goTo(page, 'menu');
+    // ⚠️ Pehle #homeView .section dhoondta tha — Home page pe .section class kabhi
+    // istemal hi nahi hoti (wo sirf About/Profile jaisi doosri views me hai; Home ka
+    // container .h1-body hai). Isliye ye check Home page par HAMESHA silently
+    // skip ho jaata tha, chahe #miniBar (cart summary bar) neeche kisi card ko
+    // dabaye ya na dabaye — ek real overlap bug (Dinner card ke Customize/ADD+
+    // buttons ke upar #miniBar) isi wajah se pakda hi nahi gaya. Ab: (1) sahi
+    // container (.h1-body), aur (2) cart me ek item daal ke #miniBar ko
+    // genuinely visible karte hain, taaki check kuch real check kare.
+    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
+    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.waitForTimeout(300);
     // Page scrollable hai, isliye NEECHE tak scroll karke check karo —
     // top par content bar ke peeche hona normal hai.
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -131,7 +142,7 @@ test.describe('Layout', () => {
 
     const clearance = await page.evaluate(() => {
       const bar = document.querySelector('.sticky-bar:not(.hidden)');
-      const sec = document.querySelector('#homeView .section');
+      const sec = document.querySelector('#homeView .h1-body');
       if (!bar || !sec) return null;
       const last = [...sec.children].filter(e => e.getBoundingClientRect().height > 0).pop();
       if (!last) return null;
