@@ -6,7 +6,7 @@
     // Keep cart global for backward compatibility
     let cart = [];
     window.cart = cart;
-    const ALL_VIEWS = ['authPage','homeView','page1','page2','cartView','ordersView','subView','aboutView','profileView','c','adminLogin','adminPanel','superLogin','superPanel','qaView','dscView'];
+    const ALL_VIEWS = ['authPage','homeView','page1','page2','cartView','ordersView','subView','aboutView','profileView','c','adminLogin','adminPanel','superLogin','superPanel','qaView','dscView','kitchenClosedView'];
 
     // Minimal synchronous theme initializer to prevent FOUC
     (function(){
@@ -421,6 +421,28 @@
     </div>
     <div style="padding:16px;">
       <button class="new-order" style="background:var(--accent);color:#fff;font-weight:800;" onclick="showHomePage()" data-i="abBackToMenu"></button>
+    </div>
+  </div>
+
+  <!-- ══════ KITCHEN TEMPORARILY CLOSED — full-screen gate ══════
+       CFG.tempClosed true hone par SAB kuch (menu/cart/orders/subscribe/profile)
+       band, bottom nav bhi hidden (showView() ise ALL_VIEWS se bahar rakhta hai —
+       updateBottomNav() ko is view ke liye koi BN_SCREENS entry nahi milti). Sirf
+       ek simple message + Logout — koi confusion, koi doosra option nahi. Kitchen
+       wapas khulte hi (push ya 90s poll se) apne aap wapas normal view pe chala
+       jaata hai (refreshLiveViews() dekho). -->
+  <div id="kitchenClosedView" class="hidden">
+    <div class="hero" style="padding-top:70px;">
+      <div class="logo logo-wrap"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""></div>
+      <div class="vbrand-name" style="font-size:20px;font-weight:900;margin-top:10px;"></div>
+    </div>
+    <div style="text-align:center;padding:28px 24px 0;">
+      <div style="font-size:52px;margin-bottom:14px;">😴</div>
+      <div style="font-size:19px;font-weight:900;margin-bottom:10px;" data-i="kitchenTempClosedTitle"></div>
+      <div id="kcMsg" style="font-size:14.5px;color:var(--muted);line-height:1.55;max-width:320px;margin:0 auto;"></div>
+    </div>
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;padding:0 16px;text-align:center;">
+      <button class="new-order" style="background:var(--accent);color:#fff;font-weight:800;" onclick="logout()" data-i="logout"></button>
     </div>
   </div>
 
@@ -1268,7 +1290,7 @@
       extraRoti:'Extra Roti', addDahi:'Add Curd', extraSabzi:'Extra Sabzi portion', howMany:'How many tiffins?', unitPrice:'Unit price',
       perTiffin:'/ tiffin', specialInstr:'📝 Special instructions (optional)', notePh:'e.g. Less spicy, no onion...',
       backApp:'← Back to App', remove:'Remove', cancelOrder:'✖ Cancel', editOrder:'Edit', editLoaded:'Order loaded — make changes & checkout',
-      closedBreakfast:'Same-day breakfast is not available — please order a day in advance.', kitchenClosedMsg:'Kitchen is closed on this date — please choose another day.', happyCustomers:'Happy Customers Served', orderedForThisMeal:'tiffins ordered so far', beingPrepared:'being prepared right now', onlyLeftToday:'Only {n} remaining for today', soldOutToday:'Sold out for today', soldOutTitle:"We're Sold Out for This Meal", soldOutSub:'To keep every tiffin fresh, we only cook a limited batch. Please try another meal or day.',
+      closedBreakfast:'Same-day breakfast is not available — please order a day in advance.', kitchenClosedMsg:'Kitchen is closed on this date — please choose another day.', kitchenTempClosedTitle:'Kitchen Temporarily Closed', kitchenTempClosedMsg:"We're temporarily closed. We'll be back shortly — thank you for your patience!", happyCustomers:'Happy Customers Served', orderedForThisMeal:'tiffins ordered so far', beingPrepared:'being prepared right now', onlyLeftToday:'Only {n} remaining for today', soldOutToday:'Sold out for today', soldOutTitle:"We're Sold Out for This Meal", soldOutSub:'To keep every tiffin fresh, we only cook a limited batch. Please try another meal or day.',
       closedLunch:'Today\'s lunch booking is closed (was open till 9:00 AM).',
       closedDinner:'Today\'s dinner booking is closed (was open till 3:00 PM).', closedBkTom:'Tomorrow\'s breakfast booking is closed (was open till 10:00 PM last night).',
       closedTomorrow:'Tomorrow\'s booking is closed (was open till 10:00 PM).',
@@ -1324,7 +1346,7 @@
       extraRoti:'Extra Roti', addDahi:'Dahi add karein', extraSabzi:'Extra Sabzi', howMany:'Kitne tiffin?', unitPrice:'Unit price',
       perTiffin:'/ tiffin', specialInstr:'📝 Special instructions (optional)', notePh:'e.g. Kam mirchi, no onion...',
       backApp:'← App par wapas', remove:'Hatayein', cancelOrder:'✖ Cancel', editOrder:'Edit', editLoaded:'Order load ho gaya — badlav karke checkout karein',
-      closedBreakfast:'Same-day breakfast available nahi — ek din pehle order karein.', kitchenClosedMsg:'Is date par kitchen band hai — koi doosra din chunein.', happyCustomers:'Happy Customers Served', orderedForThisMeal:'tiffins ab tak order hue', beingPrepared:'abhi ban rahe hain', onlyLeftToday:'Aaj ke liye sirf {n} available hain', soldOutToday:'Aaj ke liye sold out', soldOutTitle:'Is Meal Ke Slots Full Ho Gaye', soldOutSub:'Har tiffin fresh rakhne ke liye hum limited batch hi banate hain. Doosra meal ya din try karein.',
+      closedBreakfast:'Same-day breakfast available nahi — ek din pehle order karein.', kitchenClosedMsg:'Is date par kitchen band hai — koi doosra din chunein.', kitchenTempClosedTitle:'Kitchen Abhi Band Hai', kitchenTempClosedMsg:'Hum abhi ke liye band hain. Jald hi wapas aayenge — dhanyawad!', happyCustomers:'Happy Customers Served', orderedForThisMeal:'tiffins ab tak order hue', beingPrepared:'abhi ban rahe hain', onlyLeftToday:'Aaj ke liye sirf {n} available hain', soldOutToday:'Aaj ke liye sold out', soldOutTitle:'Is Meal Ke Slots Full Ho Gaye', soldOutSub:'Har tiffin fresh rakhne ke liye hum limited batch hi banate hain. Doosra meal ya din try karein.',
       closedLunch:'Aaj ke lunch ki booking band (9:00 AM tak thi).',
       closedDinner:'Aaj ke dinner ki booking band (3:00 PM tak thi).', closedBkTom:'Kal ke breakfast ki booking band (kal raat 10:00 PM tak thi).',
       closedTomorrow:'Kal ki booking band (10:00 PM tak thi).',
@@ -1358,7 +1380,7 @@
       extraRoti:'एक्स्ट्रा रोटी', addDahi:'दही जोड़ें', extraSabzi:'एक्स्ट्रा सब्ज़ी', howMany:'कितने टिफ़िन?', unitPrice:'यूनिट प्राइस',
       perTiffin:'/ टिफ़िन', specialInstr:'📝 विशेष निर्देश (वैकल्पिक)', notePh:'जैसे कम मिर्च, बिना प्याज़...',
       backApp:'← ऐप पर वापस', remove:'हटाएँ', cancelOrder:'✖ कैंसिल', editOrder:'बदलें', editLoaded:'ऑर्डर लोड हुआ — बदलाव करके चेकआउट करें',
-      closedBreakfast:'सेम-डे ब्रेकफ़ास्ट उपलब्ध नहीं — एक दिन पहले ऑर्डर करें।', kitchenClosedMsg:'इस तारीख़ को किचन बंद है — कोई और दिन चुनें।', happyCustomers:'खुश ग्राहकों ने ऑर्डर किया', orderedForThisMeal:'टिफ़िन अब तक ऑर्डर हुए', beingPrepared:'अभी बन रहे हैं', onlyLeftToday:'आज के लिए केवल {n} उपलब्ध हैं', soldOutToday:'आज के लिए सोल्ड आउट', soldOutTitle:'इस मील के स्लॉट फुल हो गए', soldOutSub:'हर टिफ़िन ताज़ा रखने के लिए हम सीमित मात्रा में ही बनाते हैं। कोई और मील या दिन आज़माएँ।',
+      closedBreakfast:'सेम-डे ब्रेकफ़ास्ट उपलब्ध नहीं — एक दिन पहले ऑर्डर करें।', kitchenClosedMsg:'इस तारीख़ को किचन बंद है — कोई और दिन चुनें।', kitchenTempClosedTitle:'किचन अभी बंद है', kitchenTempClosedMsg:'हम अभी के लिए बंद हैं। हम जल्द ही वापस आएंगे — धन्यवाद!', happyCustomers:'खुश ग्राहकों ने ऑर्डर किया', orderedForThisMeal:'टिफ़िन अब तक ऑर्डर हुए', beingPrepared:'अभी बन रहे हैं', onlyLeftToday:'आज के लिए केवल {n} उपलब्ध हैं', soldOutToday:'आज के लिए सोल्ड आउट', soldOutTitle:'इस मील के स्लॉट फुल हो गए', soldOutSub:'हर टिफ़िन ताज़ा रखने के लिए हम सीमित मात्रा में ही बनाते हैं। कोई और मील या दिन आज़माएँ।',
       closedLunch:'आज के लंच की बुकिंग बंद (9:00 AM तक थी)।',
       closedDinner:'आज के डिनर की बुकिंग बंद (3:00 PM तक थी)।', closedBkTom:'कल के ब्रेकफ़ास्ट की बुकिंग बंद (कल रात 10:00 PM तक थी)।',
       closedTomorrow:'कल की बुकिंग बंद (10:00 PM तक थी)।',
@@ -1392,7 +1414,7 @@
       extraRoti:'એક્સ્ટ્રા રોટી', addDahi:'દહીં ઉમેરો', extraSabzi:'એક્સ્ટ્રા શાક', howMany:'કેટલા ટિફિન?', unitPrice:'યુનિટ ભાવ',
       perTiffin:'/ ટિફિન', specialInstr:'📝 ખાસ સૂચનાઓ (વૈકલ્પિક)', notePh:'દા.ત. ઓછું તીખું, ડુંગળી વગર...',
       backApp:'← એપ પર પાછા', remove:'દૂર કરો', cancelOrder:'✖ રદ કરો', editOrder:'બદલો', editLoaded:'ઓર્ડર લોડ થયો — ફેરફાર કરીને ચેકઆઉટ કરો',
-      closedBreakfast:'સેમ-ડે બ્રેકફાસ્ટ ઉપલબ્ધ નથી — એક દિવસ પહેલા ઓર્ડર કરો.', kitchenClosedMsg:'આ તારીખે કિચન બંધ છે — બીજી તારીખ પસંદ કરો.', happyCustomers:'ખુશ ગ્રાહકોએ ઓર્ડર કર્યો', orderedForThisMeal:'ટિફિન અત્યાર સુધી ઓર્ડર થયા', beingPrepared:'હમણાં બની રહ્યા છે', onlyLeftToday:'આજ માટે ફક્ત {n} ઉપલબ્ધ છે', soldOutToday:'આજ માટે સોલ્ડ આઉટ', soldOutTitle:'આ મીલના સ્લોટ ભરાઈ ગયા', soldOutSub:'દરેક ટિફિન તાજું રાખવા અમે મર્યાદિત જથ્થામાં જ બનાવીએ છીએ. બીજું મીલ કે દિવસ પસંદ કરો.',
+      closedBreakfast:'સેમ-ડે બ્રેકફાસ્ટ ઉપલબ્ધ નથી — એક દિવસ પહેલા ઓર્ડર કરો.', kitchenClosedMsg:'આ તારીખે કિચન બંધ છે — બીજી તારીખ પસંદ કરો.', kitchenTempClosedTitle:'કિચન હાલમાં બંધ છે', kitchenTempClosedMsg:'અમે હાલમાં બંધ છીએ. અમે જલ્દી પાછા આવીશું — આભાર!', happyCustomers:'ખુશ ગ્રાહકોએ ઓર્ડર કર્યો', orderedForThisMeal:'ટિફિન અત્યાર સુધી ઓર્ડર થયા', beingPrepared:'હમણાં બની રહ્યા છે', onlyLeftToday:'આજ માટે ફક્ત {n} ઉપલબ્ધ છે', soldOutToday:'આજ માટે સોલ્ડ આઉટ', soldOutTitle:'આ મીલના સ્લોટ ભરાઈ ગયા', soldOutSub:'દરેક ટિફિન તાજું રાખવા અમે મર્યાદિત જથ્થામાં જ બનાવીએ છીએ. બીજું મીલ કે દિવસ પસંદ કરો.',
       closedLunch:'આજના લંચનું બુકિંગ બંધ (9:00 AM સુધી હતું).',
       closedDinner:'આજના ડિનરનું બુકિંગ બંધ (3:00 PM સુધી હતું).', closedBkTom:'આવતીકાલના બ્રેકફાસ્ટનું બુકિંગ બંધ (ગઈકાલે રાત્રે 10:00 PM સુધી હતું).',
       closedTomorrow:'આવતીકાલનું બુકિંગ બંધ (10:00 PM સુધી હતું).',
@@ -1499,6 +1521,13 @@
     const pb=document.getElementById('abPolicyBody'); if(pb) pb.innerHTML=t('policyBody');
   }
   function toggleAboutPolicy(){ const b=document.getElementById('abPolicyBody'); if(b) b.classList.toggle('hidden'); }
+  // Vendor ki apni wajah (tempClosedMsg) ho to wahi, warna generic fallback.
+  // Brand naam/logo alag se karne ki zaroorat nahi — .vbrand-name/.vbrand-logo
+  // classes applyVendorBrand() se already sabhi jagah (is view samet) sync rehte hain.
+  function renderKitchenClosedGate(){
+    const el=document.getElementById('kcMsg');
+    if(el) el.textContent = (CFG.tempClosedMsg && CFG.tempClosedMsg.trim()) || t('kitchenTempClosedMsg');
+  }
 
 
   // ═══════ THEME (Light / Dark / System) ═══════
@@ -2104,6 +2133,17 @@
     // Logged-in user ko login page kabhi mat dikhao. Rapid back/forward pe
     // recoverIfBlank/stale state isi wajah se login flash karta tha.
     if(id==='authPage' && isLoggedIn()) id='homeView';
+    // ⚠️ Kitchen temporarily closed (emergency close) → customer ki koi bhi
+    // navigation (kahin se bhi — bottom nav, back button, deep link, restore)
+    // isi ek gate screen pe le jaani chahiye. Ye SINGLE enforcement point hai
+    // (showView()) isliye alag-alag jagah check duplicate nahi karna padta — jo
+    // bhi view khulwane ki koshish kare, tempClosed hone par yahi jeetega.
+    // Admin/superadmin apna alag login hai — customer ke tempClosed se unka
+    // koi lena dena nahi.
+    if(CFG.tempClosed && isLoggedIn() && id!=='kitchenClosedView' && ['adminPanel','adminLogin','superPanel','superLogin'].indexOf(id)<0){
+      id='kitchenClosedView';
+    }
+    if(id==='kitchenClosedView') renderKitchenClosedGate();
     closeAllPopups();                                       // page badle to koi popup upar chipka na rahe
     // authPage/pubView transient screens hai — inko fbt_view me SAVE nahi karna.
     // Warna recoverIfBlank() baad me inhe "last good view" samajh ke restore kar deta
@@ -2404,7 +2444,7 @@
         // notification hi nahi. order_status jaanbujh ke shamil nahi — wo "meri
         // order" ke baare me hai, vendor ke menu/config ke baare me nahi.
         const dtype=(payload.data&&payload.data.type)||'';
-        if(__forceConfigRefresh && ['menu_updated','kitchen_closed','kitchen_open','pricing_updated'].indexOf(dtype)>=0){
+        if(__forceConfigRefresh && ['menu_updated','kitchen_closed','kitchen_open','pricing_updated','closed_dates_updated'].indexOf(dtype)>=0){
           __forceConfigRefresh(true);
         }
       });
@@ -6132,10 +6172,28 @@
         // ho, ye safe/idempotent hai (renderMealPanel wagera pehle se hi apne
         // hidden/diff checks karte hain).
         function refreshLiveViews(){
+            // Kitchen band/khula badla — turant reflect karo (poll ya push, dono se
+            // yahi ek jagah se chalta hai), agle manual navigation ka wait mat karo.
+            if (isLoggedIn()) {
+                const gateEl = document.getElementById('kitchenClosedView');
+                const onGate = gateEl && !gateEl.classList.contains('hidden');
+                if (CFG.tempClosed && !onGate) { showView('kitchenClosedView'); return; }
+                if (!CFG.tempClosed && onGate) {
+                    let back = null;
+                    try { back = storeGet('fbt_view'); } catch (e) {}
+                    showView((back && ALL_VIEWS.indexOf(back) >= 0 && back !== 'kitchenClosedView') ? back : 'homeView');
+                }
+            }
             const hv = document.getElementById('homeView');
             if (hv && !hv.classList.contains('hidden')) {
-                if (typeof renderMenuDateTime === 'function') renderMenuDateTime();
-                renderMealPanel();
+                // refreshAvailability() ye sab karta hai: date-selector re-render (jisse
+                // "(Closed)" label/disable dikhta hai), agar abhi select ki hui date hi
+                // band ho gayi ho to pickDefaultDate() se agli available date pe shift,
+                // meal tabs, aur meal panel. Pehle yahan sirf renderMenuDateTime()+
+                // renderMealPanel() the — date-selector kabhi refresh hi nahi hota tha,
+                // isliye planned closed-date add/remove hone par bhi dropdown purana
+                // (bina "(Closed)" ke) hi dikhta rehta jab tak reload na ho.
+                refreshAvailability();
                 renderHome();
             }
             const cv = document.getElementById('cartView');
@@ -6387,8 +6445,11 @@
                         // aur neeche refreshLiveViews() kabhi na chalta (push-triggered force
                         // refresh ke saath bhi) — customer ko naya cutoff time kabhi UI me
                         // nahi dikhta jab tak page reload na kare. Ab mealTypes bhi compare.
-                        const old = JSON.stringify({ prices: CFG && CFG.prices, mealTypes: CFG && CFG.mealTypes });
-                        const nw = JSON.stringify({ prices: j.config.prices, mealTypes: j.config.mealTypes });
+                        // tempClosed/closedDates bhi shamil — warna emergency-close ya
+                        // planned closed-date add/remove hone par bhi 'changed' false reh
+                        // jaata, aur customer purani availability hi dekhta rehta.
+                        const old = JSON.stringify({ prices: CFG && CFG.prices, mealTypes: CFG && CFG.mealTypes, tempClosed: CFG && CFG.tempClosed, tempClosedMsg: CFG && CFG.tempClosedMsg, closedDates: CFG && CFG.closedDates });
+                        const nw = JSON.stringify({ prices: j.config.prices, mealTypes: j.config.mealTypes, tempClosed: j.config.tempClosed, tempClosedMsg: j.config.tempClosedMsg, closedDates: j.config.closedDates });
                         CFG = j.config;
                         CFG.promos = j.promos || [];
                         if (!CFG.mealTypes || !CFG.mealTypes.length) CFG.mealTypes = defaultMealTypes();
