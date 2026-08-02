@@ -210,8 +210,15 @@ test.describe('Checkout & orders', () => {
 
   test('duplicate order same date+meal reject', async ({ page }) => {
     const { state } = await openApp(page);
-    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     for (let i = 0; i < 2; i++) {
+      // ⚠️ menuChangeDate(1) must run EVERY iteration, not just once before the
+      // loop — resetAll() (end of each pass) calls pickDefaultDate(), which
+      // re-picks whatever date its own default logic lands on (not necessarily
+      // "tomorrow"). Without re-selecting here, pass 2 could silently land on
+      // a DIFFERENT delivery date than pass 1 — two genuinely different-date
+      // orders, neither a duplicate, both correctly accepted — which is exactly
+      // what made this test intermittently fail depending on time-of-day.
+      await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
       // `window.cart = []` re-points the *window property* to a new array —
       // it never touches the app's own top-level `let cart` (see AGENTS.md's
       // JS-scoping-gotcha note), so the real cart was never actually cleared
