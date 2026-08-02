@@ -3268,6 +3268,12 @@ function saveConfig(cfg) {
   else if (mealPricingChanged(cur.mealTypes, clean.mealTypes)) {
     try { notifyAllSubscribers('📋 Menu & Pricing Updated', 'Prices or timings have changed — check the latest before ordering!', { type: 'pricing_updated' }); } catch (e) {}
   }
+  // Planned closed-dates (Setup → Timing → "closed date add/remove") badle — customer
+  // client-side pehle ye kabhi refresh hi nahi karta tha jab tak 90s poll na chale
+  // ya reload na kare. Same diff-and-notify pattern.
+  else if (JSON.stringify((cur.closedDates || []).slice().sort()) !== JSON.stringify((clean.closedDates || []).slice().sort())) {
+    try { notifyAllSubscribers('📅 Schedule Updated', 'Some delivery dates have changed — please check before ordering!', { type: 'closed_dates_updated' }); } catch (e) {}
+  }
   return { status:'success' };
 }
 // Prices ya serving-window/cutoff badle to true — sirf ye fields customer-relevant
