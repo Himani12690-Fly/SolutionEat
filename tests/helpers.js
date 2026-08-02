@@ -13,7 +13,9 @@ function freshState() {
                firstOnly:true, perUser:1, totalLimit:0, expiry:'', active:true,
                visible:true, used:0 }],
     vendors: [{ vendorId:'nestandnosh', name:'Nest & Nosh', sheetId:'SHEET1',
-                notifyEmail:'a@b.com', status:'Active', isDefault:true }],
+                notifyEmail:'a@b.com', status:'Active', isDefault:true,
+                subStatus:'exempt', subDueDate:'', subLastPaid:'', subAmount:499 }],
+    platformPayment: { upiId:'', upiName:'', qrImageUrl:'' },
     config: JSON.parse(JSON.stringify(CONFIG)),
     menu: JSON.parse(JSON.stringify(MENU)),
     nextRow: 2,
@@ -93,7 +95,7 @@ function handlePost(state, body) {
   const denied   = { status:'error', message:'Invalid credentials' };
 
   // ── Super admin ──
-  if (action === 'listvendors') return superOK ? { status:'success', vendors:state.vendors } : denied;
+  if (action === 'listvendors') return superOK ? { status:'success', vendors:state.vendors, platformPayment:state.platformPayment } : denied;
   if (action === 'savevendor') {
     if (!superOK) return denied;
     // Real backend reads p.slug first (apiPost stamps p.vendorId with the CURRENT
@@ -103,14 +105,42 @@ function handlePost(state, body) {
     if (!id) return { status:'error', message:'Vendor ID zaroori hai' };
     if (!/^[a-z0-9]+$/.test(id)) return { status:'error', message:'Slug galat hai' };
     if (id === 'nestandnosh') return { status:'error', message:'default vendor ka slug hai' };
-    if (!p.sheetId || !p.adminUser || !p.adminPass)
-      return { status:'error', message:'Sheet ID, Admin Username aur Password zaroori hain' };
-    if (state.vendors.some(v => v.sheetId === p.sheetId))
-      return { status:'error', message:'Ye Sheet pehle se kisi vendor ke paas hai' };
-    state.vendors.push({ vendorId:id, name:p.name || id, sheetId:p.sheetId,
-                         notifyEmail:p.notifyEmail || '', status:'Active', isDefault:false });
+    const existing = state.vendors.find(v => v.vendorId === id);
+    if (!existing) {
+      if (!p.sheetId || !p.adminUser || !p.adminPass)
+        return { status:'error', message:'Sheet ID, Admin Username aur Password zaroori hain' };
+      if (state.vendors.some(v => v.sheetId === p.sheetId))
+        return { status:'error', message:'Ye Sheet pehle se kisi vendor ke paas hai' };
+      // Naya vendor — billing turant 'pending' se shuru (real backend jaisa hi: kabhi
+      // paid nahi hua, due date aaj).
+      state.vendors.push({ vendorId:id, name:p.name || id, sheetId:p.sheetId,
+                           notifyEmail:p.notifyEmail || '', status:p.status || 'Active', isDefault:false,
+                           subStatus:'pending', subDueDate:todayIST(0), subLastPaid:'', subAmount:499 });
+    } else {
+      // Existing vendor edit (ya status toggle) — billing state chhedo mat.
+      existing.name = p.name || existing.name;
+      if (p.status) existing.status = p.status;
+    }
     return { status:'success', vendors:state.vendors };
   }
+  if (action === 'markvendorpaid') {
+    if (!superOK) return denied;
+    const id = String(p.slug || p.vendorId || '').trim().toLowerCase();
+    const v = state.vendors.find(x => x.vendorId === id);
+    if (!v) return { status:'error', message:'Vendor mila hi nahi' };
+    v.subLastPaid = todayIST(0);
+    const next = new Date(); next.setDate(next.getDate() + 30);
+    v.subDueDate = next.toISOString().slice(0, 10);
+    v.subStatus = 'active';
+    return { status:'success', vendors:state.vendors };
+  }
+  if (action === 'saveplatformpayment') {
+    if (!superOK) return denied;
+    state.platformPayment = { upiId:p.upiId || '', upiName:p.upiName || '', qrImageUrl:p.qrImageUrl || '' };
+    return { status:'success', platformPayment:state.platformPayment };
+  }
+  if (action === 'uploadplatformqr' || action === 'uploadvendorlogo')
+    return superOK ? { status:'success', url:'https://example.test/img.jpg', id:'x1' } : denied;
 
   // ── Customer session ──
   if (action === 'emaillogin')
@@ -164,11 +194,15 @@ function handlePost(state, body) {
     if (!adminOK) return denied;
     const live = state.orders.filter(o => o.status !== 'Cancelled');
     const rev = live.reduce((s,o) => s + (parseInt(String(o.total).replace(/\D/g,''),10)||0), 0);
+    const vid = String(p.vendorId || 'nestandnosh').toLowerCase();
+    const v = state.vendors.find(x => x.vendorId === vid) || state.vendors[0];
     return { status:'success',
       today:{ count:live.filter(o=>o.deliveryDate===todayIST(0)).length, revenue:rev },
       week:{ count:live.length, revenue:rev },
       total:{ count:live.length, revenue:rev },
-      recent: live.slice(-10).reverse() };
+      recent: live.slice(-10).reverse(),
+      vendorBilling: { status:v.subStatus||'pending', amount:v.subAmount||499, dueDate:v.subDueDate||'', lastPaid:v.subLastPaid||'' },
+      platformPayment: state.platformPayment };
   }
   if (action === 'orders') {
     if (!adminOK) return denied;
