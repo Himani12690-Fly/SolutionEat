@@ -1654,7 +1654,7 @@
     });
     return out;
   }
-  function anyAvail(off){ const a=mealsAvail(off); return enabledMeals().some(m=>a[m].ok); }
+  function anyAvail(off){ const a=mealsAvail(off); return enabledMeals().some(m=>a[m]&&a[m].ok); }
   function canCancel(oOrD){
     const dstr = (typeof oOrD==='object'&&oOrD) ? oOrD.deliveryDate : oOrD;
     const p=String(dstr).split('-').map(Number); if(p.length!==3||!p[0])return false;
@@ -3084,9 +3084,24 @@
   function refreshAvailability(){ if(!anyAvail(dateOffset)) pickDefaultDate(); renderDateSelector(); pickActiveMeal(); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); const is=document.getElementById('infoStrip'); if(is)is.classList.toggle('hidden', !!storeGet('fbt_infostrip_x')); }
   function dismissInfoStrip(){ storeSet('fbt_infostrip_x',1); const is=document.getElementById('infoStrip'); if(is)is.classList.add('hidden'); }
   function pickActiveMeal(){
-    const en=enabledMeals(); const av=mealsAvail(dateOffset);
-    if(en.indexOf(activeMeal)<0) activeMeal=en[0];          // band meal select tha to hatao
-    if(!av[activeMeal].ok){ for(const m of en){ if(av[m].ok){ activeMeal=m; return; } } }
+    // ⚠️ ASLI ROOT CAUSE (mila!): init() ke bilkul shuru me, jab kisi vendor ka
+    // PEHLI BAAR visit ho (koi cache nahi), CFG.mealTypes abhi khaali hota hai
+    // (bootstrap() abhi tak resolve nahi hua — async hai). enabledMeals() tab
+    // fallback me global MEALS use karta hai (default breakfast/lunch/dinner),
+    // par mealsAvail() sirf CFG.mealTypes se banata hai — jo abhi khaali hai,
+    // isliye av={} milta hai. Neeche `av[activeMeal].ok` seedha crash — "Cannot
+    // read properties of undefined". Ye poore init() ko WAHI ROKTA THA — isके
+    // baad aane wala applyConfigToUI() aur SABSE ZAROORI setLang() kabhi nahi
+    // chalta, isliye login page ke saare text (English dropdown, "Secure
+    // Login", tagline) blank rehte the — sirf hardcoded text dikhta tha.
+    // Ye bug isliye "sab kitchen" pe dikha kyunki har kitchen ka PEHLA (cache
+    // se pehla) visit isi race condition se guzarta hai.
+    const en=enabledMeals();
+    if(!en.length) return;   // abhi kuch bhi pata nahi — kuch mat karo, baad me bootstrap ke baad dobara call hoga
+    const av=mealsAvail(dateOffset);
+    if(en.indexOf(activeMeal)<0) activeMeal=en[0];
+    const cur=av[activeMeal];
+    if(!cur||!cur.ok){ for(const m of en){ if(av[m]&&av[m].ok){ activeMeal=m; return; } } }
   }
 
   // ═══════ LIVE COUNTER ("cooking fresh, for you") ═══════
@@ -3127,7 +3142,7 @@
     const av=mealsAvail(dateOffset); const box=document.getElementById('mealTabs'); if(!box)return;
     box.innerHTML=enabledMeals().map(m=>{
       const inCart=cart.some(it=>it.deliveryDate===selDateStr() && it.meal===m);
-      return `<div class="meal-tab ${m===activeMeal?'active':''} ${av[m].ok?'':'closed'} ${inCart?'incart':''}" onclick="selectMeal('${m}')">
+      return `<div class="meal-tab ${m===activeMeal?'active':''} ${(av[m]&&av[m].ok)?'':'closed'} ${inCart?'incart':''}" onclick="selectMeal('${m}')">
         <span class="dot"></span><span class="emoji">${MEAL_META[m].emoji}</span>${mealTitle(m)}</div>`;
     }).join('');
   }
@@ -3136,14 +3151,14 @@
   // Date + Time row above tabs (applies to the whole order / active meal's time)
   function renderMenuDateTime(){
     const box=document.getElementById('menuDateTime'); if(!box)return;
-    const m=activeMeal, b=builder[m];
+    const m=activeMeal, b=builder[m]||{};
     const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
     const dn=dayNames[LANG]||dayNames.en;
     let dateChips=''; for(let o=0;o<=2;o++){ const open=anyAvail(o); dateChips+=`<button type="button" class="dchip ${o===dateOffset?'on':''}" ${open?'':'disabled'} onclick="menuChangeDate(${o})"><b>${dn[o]}</b><span>${fmtLabel(dateWithOffset(o))}</span>${open?'':'<i>✕</i>'}</button>`; }
-    const av=mealsAvail(dateOffset)[m];
+    const av=mealsAvail(dateOffset)[m]||{ok:false};
     let timeCell='';
     if(av.ok){
-      const timeOpts=TIME_SLOTS[m].map(s=>`<option value="${s}" ${b.timeSlot===s?'selected':''}>${s}</option>`).join('');
+      const timeOpts=(TIME_SLOTS[m]||[]).map(s=>`<option value="${s}" ${b.timeSlot===s?'selected':''}>${s}</option>`).join('');
       timeCell=`<div class="mdt-cell"><span class="mdt-lbl">${t('deliveryTime')}</span><select onchange="menuSetTime(this.value)">${timeOpts}</select></div>`;
     }
     box.innerHTML=`<div class="menu-dt" style="flex-direction:column;align-items:stretch;">
@@ -5193,7 +5208,33 @@
       </div></div>`).join(''); }
 
   // Menu editor
-  function initMenuEditor(){ adminMenuWorking=JSON.parse(JSON.stringify(MENU)); adminPrevDay=document.getElementById('adminDaySelect').value; loadEditorDay(adminPrevDay); }
+  function initMenuEditor(){
+    const box=document.getElementById('menuEditorMeals');
+    if(box) box.innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>Menu load ho raha hai…</span></div>';
+    // ⚠️ ASLI WAJAH (Save/Shuffle "kaam nahi kar raha" + sab din blank):
+    // Ye function pehle seedha global MENU (client-side variable) clone kar leta
+    // tha. MENU customer-side bootstrap() se aata hai — ek ALAG async chain jo
+    // admin login se pehle-pehle bhi chal rahi ho sakti hai. Admin login flow
+    // (adminLoadDataSequence) khud kabhi menu fetch nahi karta (sirf orders/users)
+    // — isliye agar admin jaldi login kare (ya bootstrap slow/fail ho), MENU abhi
+    // bhi khaali {} hota, aur Menu Editor har din blank dikhata — chahe backend
+    // me saved data mojood ho! Phir Save dabao to "incomplete menu" warning aati
+    // (kyunki editor khud khaali tha) — lagta "Save kaam nahi kar raha".
+    // Fix: yahan seedha backend se FRESH menu maango (lightweight 'menu' action,
+    // koi auth ki zaroorat nahi) — client cache pe bharosa nahi karte.
+    apiPost({action:'menu'}).then(function(j){
+      if(j && j.status==='success' && j.menu){ MENU=j.menu; storeSet('fbt_menu', MENU); }
+      adminMenuWorking=JSON.parse(JSON.stringify(MENU||{}));
+      adminPrevDay=document.getElementById('adminDaySelect').value;
+      loadEditorDay(adminPrevDay);
+    }).catch(function(){
+      // Network fail ho to bhi jo local mila wahi dikhao — blank forever se behtar
+      adminMenuWorking=JSON.parse(JSON.stringify(MENU||{}));
+      adminPrevDay=document.getElementById('adminDaySelect').value;
+      loadEditorDay(adminPrevDay);
+      showToast('⚠️ Menu fresh load nahi ho paaya — purana/local data dikha rahe hain.','warning');
+    });
+  }
   // ⚠️ Neeche ka poora chain (stats → orders → users, har ek apna retry) kabhi
   // kabhi Apps Script cold-start ke sath mil ke bahut lamba khinch jaata tha, aur
   // is loader ko hide karne ka HAR raasta un sab calls ke result par depend karta
