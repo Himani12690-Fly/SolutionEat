@@ -32,7 +32,10 @@
        blocks initial page render/parse if Firebase's CDN is ever slow/unreachable. -->
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js" defer crossorigin="anonymous"></script>
-  <title>Order Tiffin — Fresh Homemade Food</title>
+  <!-- applyVendorBrand() isse overwrite karta hai (asli vendor naam ke saath) — dono
+       ka suffix match hona chahiye, warna page load ke beech tab title "Food" se
+       "Tiffin" me achanak badalta hai, do alag taglines jaisa lagta hai. -->
+  <title>Order Tiffin — Fresh Homemade Tiffin</title>
   <!-- PWA / installable app -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#6366f1">
