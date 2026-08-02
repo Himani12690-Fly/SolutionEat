@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-const APP = 'http://127.0.0.1:8099/index.html';
+const APP = 'http://127.0.0.1:8080/index.html';
 
 function json(route, obj) {
   return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(obj) });
@@ -10,7 +10,7 @@ async function mockBackend(page, handlers = {}) {
   await page.route('**/*', async (route) => {
     const req = route.request();
     const url = req.url();
-    if (url.startsWith('http://127.0.0.1:8099')) return route.continue();
+    if (url.startsWith('http://127.0.0.1:8080')) return route.continue();
     if (url.includes('script.google.com')) {
       if (req.method() === 'GET') {
         if (url.includes('action=discover')) return json(route, { status: 'success', vendors: [] });

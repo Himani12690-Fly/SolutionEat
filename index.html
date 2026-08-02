@@ -2068,8 +2068,11 @@
   function updateCartBadge(){
     saveCart();
     const n=cart.reduce((s,it)=>s+it.qty,0);
-    const bnb=document.getElementById('bnCartBadge'); if(bnb){ bnb.textContent=n; bnb.classList.toggle('zero',n===0); }
-    const pfb=document.getElementById('pfCartBadge'); if(pfb){ pfb.textContent=n; pfb.classList.toggle('zero',n===0); }
+    // ⚠️ Bottom nav se ek standalone "Cart" tab hata diya gaya tha (ab land/orders/
+    // sub/profile) — us tab ke saath jo #bnCartBadge/#pfCartBadge dikhate the wo bhi
+    // HTML se hat chuke hain. Ye do lines unhi ab-nonexistent elements ko dhoondhti
+    // reh jaati thi (koi asar nahi, sirf dead code) — cart count ab sirf #miniBar
+    // (neeche) se dikhta hai.
     const mb=document.getElementById('miniBar'); if(mb) mb.style.display=n===0?'none':'flex';
     // Bar dikhe to content ke neeche jagah chhodo — warna last card bar ke peeche dab jaata hai
     const hb=document.querySelector('#homeView .h1-body');
@@ -4804,7 +4807,22 @@
         return;
       }
       ok=true; adminOrders=j.orders||[]; fillSocFilter();
-      if(!__ordersMealAutoPicked){ __ordersMealAutoPicked=true; if(mealFilter==='All'){ const em=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false)[0]; if(em) mealFilter=em.key; } }
+      // ⚠️ Pehle yahan sirf pehla ENABLED meal type auto-select hota tha (breakfast,
+      // config order me pehla hone ki wajah se) — chahe us meal ke us din KOI order
+      // ho ya na ho. Isse admin ko "koi order nahi" khaali list dikhti thi jabki
+      // asal me Lunch/Dinner ke orders maujood the, sirf Breakfast tab select tha.
+      // Ab pehla wahi enabled meal chunte hain jiske Pending/Preparing orders
+      // (current society filter ke saath) sach me hain. Kisi me na ho to 'All' hi
+      // rehne do — khaali list honest reflect karegi, galat filter nahi thopega.
+      if(!__ordersMealAutoPicked){
+        __ordersMealAutoPicked=true;
+        if(mealFilter==='All'){
+          const active=adminOrders.filter(o=>(o.status==='Pending'||o.status==='Preparing')&&socMatch(o));
+          const enabled=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false);
+          const withOrders=enabled.find(mt=>active.some(o=>Number(o[mt.key+'Qty'])>0));
+          if(withOrders) mealFilter=withOrders.key;
+        }
+      }
       renderOrders(); renderKitchen();
     }).catch(()=>{
       showToast(t('errNetwork'),'error');
@@ -6071,6 +6089,27 @@
         // VENDOR_BRAND khaali reh jaate (meal panel + brand dono blank). Ek transient
         // hiccup (cold Apps Script, brief network blip) permanent blank screen bana
         // deta tha. Ab ek retry hai (~1.2s baad) isse pehle finishInit() pe jump kare.
+        // ⚠️ Bug: agar bootstrap fetch 8s ke boot-failsafe (neeche) se SLOW ho, to
+        // failsafe finishInit() pehle hi chala deta hai (guard ke saath, sirf ek
+        // baar). Jab asli response baad me aata hai, tryBootstrap ka finishInit()
+        // call sirf guard se blocked no-op hota hai — koi bhi render() nahi chalta,
+        // aur "Please wait" skeleton screen HAMESHA ke liye frozen reh jaati thi,
+        // jab tak 90s wala refreshConfigSoon() poll ya tab visibility switch na ho.
+        // Shared Apps Script backend (sabhi vendors, ek hi quota) me ye bohot
+        // common hai. Fix: tryBootstrap ke har exit path pe explicitly abhi jo bhi
+        // view dikh rahi hai use turant refresh karo — finishInit() chala ho ya na
+        // ho, ye safe/idempotent hai (renderMealPanel wagera pehle se hi apne
+        // hidden/diff checks karte hain).
+        function refreshLiveViews(){
+            const hv = document.getElementById('homeView');
+            if (hv && !hv.classList.contains('hidden')) {
+                if (typeof renderMenuDateTime === 'function') renderMenuDateTime();
+                renderMealPanel();
+                renderHome();
+            }
+            const cv = document.getElementById('cartView');
+            if (cv && !cv.classList.contains('hidden')) renderCart();
+        }
         function tryBootstrap(attempt) {
             fetch(GOOGLE_SCRIPT_URL + '?action=bootstrap&vendorId=' + VENDOR_ID)
                 .then(r => r.json())
@@ -6110,18 +6149,21 @@
                         __vendorReady = true;   // asli data aa gaya — ab meal cards render honge
                         if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                         finishInit();
+                        refreshLiveViews();
                         return;
                     }
                     if (attempt < 1) { setTimeout(() => tryBootstrap(attempt + 1), 1200); return; }
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                     __vendorReady = true;   // dono attempt fail — jo cache mila wahi dikha do (skeleton me mat atko)
                     finishInit();
+                    refreshLiveViews();
                 })
                 .catch(() => {
                     if (attempt < 1) { setTimeout(() => tryBootstrap(attempt + 1), 1200); return; }
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                     __vendorReady = true;
                     finishInit();
+                    refreshLiveViews();
                 });
         }
         loadVendorEndpoint().then(() => { tryBootstrap(0); }).catch(() => {
@@ -6324,15 +6366,7 @@
                         applyVendorBrand();
                     }
                     if (!changed) return;
-                    const pg = document.getElementById('homeView');
-                    if (pg && !pg.classList.contains('hidden')) {
-                        if (typeof renderMenuDateTime === 'function') renderMenuDateTime();
-                        renderMealPanel();
-                    }
-                    const hv = document.getElementById('homeView');
-                    if (hv && !hv.classList.contains('hidden')) renderHome();
-                    const cv = document.getElementById('cartView');
-                    if (cv && !cv.classList.contains('hidden')) renderCart();
+                    refreshLiveViews();
                 })
                 .catch(() => {});
         }

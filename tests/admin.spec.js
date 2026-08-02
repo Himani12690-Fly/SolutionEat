@@ -57,6 +57,12 @@ test.describe('Admin orders', () => {
     await openApp(page, { state });
     await adminLogin(page);
     await page.waitForTimeout(500);
+    // Orders load hote hi Kitchen Summary ek meal (jiske orders hon) auto-select
+    // kar leta hai aur grouped/society checklist view khol deta hai (kitchen staff
+    // ke liye) — .oc wale full order cards sirf 'All' view me dikhte hain.
+    // setMealFilter('All') hamesha 'All' pe le jaata hai, chahe abhi kuch bhi
+    // selected ho (dekho index.html ka setMealFilter).
+    await page.evaluate(() => window.setMealFilter('All'));
     await expect(page.locator('#ordersList .oc')).toHaveCount(2);
   });
 
@@ -67,6 +73,7 @@ test.describe('Admin orders', () => {
     await openApp(page, { state });
     await adminLogin(page);
     await page.waitForTimeout(500);
+    await page.evaluate(() => window.setMealFilter('All'));   // grouped view se bahar — status chips wahan hidden hain
     await page.evaluate(() => window.setOrderFilter('Delivered'));
     await page.waitForTimeout(200);
     await expect(page.locator('#ordersList .oc')).toHaveCount(1);
@@ -141,6 +148,7 @@ test.describe('Admin orders', () => {
     await openApp(page, { state });
     await adminLogin(page);
     await page.waitForTimeout(500);
+    await page.evaluate(() => window.setMealFilter('All'));   // grouped view se bahar — society dropdown wahan hidden hai
     await page.evaluate(() => window.setSocFilter('Eden'));
     await page.waitForTimeout(200);
     await expect(page.locator('#ordersList .oc')).toHaveCount(1);

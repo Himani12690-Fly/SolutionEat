@@ -12,10 +12,12 @@ const { test, expect } = require('@playwright/test');
 const { openApp, setTheme, goTo } = require('./helpers');
 
 const SCREENS = ['land', 'menu', 'cart', 'orders', 'profile'];
-// Bottom nav ab sirf 3 buttons rakhta hai (redesign — Orders/Subscribe/Ask-AI
-// Profile ke quick links me chale gaye); land/menu/cart/orders/profile abhi bhi
-// valid navTo() destinations hain (SCREENS upar), sirf inhi 3 ka apna nav button hai.
-const NAV_TABS = ['land', 'cart', 'profile'];
+// Bottom nav 4 buttons rakhta hai: Home/Orders/Subscribe/Profile (id="bn-land"/
+// "bn-orders"/"bn-sub"/"bn-profile" — index.html:428-432). Cart ka apna standalone
+// tab kabhi nahi raha is redesign ke baad — cart access #miniBar (sticky summary)
+// aur cart view se hota hai. land/menu/cart/orders/profile abhi bhi valid navTo()
+// destinations hain (SCREENS upar), sirf inhi 4 ka apna nav button hai.
+const NAV_TABS = ['land', 'orders', 'sub', 'profile'];
 
 test.describe('App loads', () => {
   test('koi JS ya console error nahi', async ({ page }) => {
