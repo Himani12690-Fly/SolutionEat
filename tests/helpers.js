@@ -229,7 +229,22 @@ function handlePost(state, body) {
     return { status:'success', counts:{ orders: before - state.orders.length,
              sessions:1, subs:0, promoUses:0, user:1 } };
   }
-  if (action === 'savemenu')   { if (!adminOK) return denied; state.menu = p.menu; return { status:'success' }; }
+  if (action === 'savemenu') {
+    // App ab poora hafta nahi, ek din (day + dayData) bhejta hai aur backend se
+    // poora MERGED menu wapas expect karta hai (saveMenu() dekho index.html me) —
+    // pehle ye mock purane "poora menu ek saath" shape ke liye likha tha
+    // (state.menu = p.menu), jo naye payload se state.menu ko poora undefined
+    // kar deta tha (p.menu ab bheja hi nahi jaata).
+    if (!adminOK) return denied;
+    if (!p.day || !p.dayData) return { status:'error', message:'day/dayData required' };
+    state.menu[p.day] = p.dayData;
+    return { status:'success', menu: state.menu };
+  }
+  if (action === 'savemenuweek') {
+    if (!adminOK) return denied;
+    state.menu = p.menu || state.menu;
+    return { status:'success', menu: state.menu };
+  }
   if (action === 'saveconfig') {
     if (!adminOK) return denied;
     Object.assign(state.config, p.config);
@@ -363,7 +378,15 @@ async function openApp(page, opts = {}) {
        loggedIn: opts.loggedIn !== false,
        addr: opts.addr || { deliveryType:'home', society:'Vrindavan', flatNo:'D-706' } });
 
-  await page.goto(APP_URL);
+  // ⚠️ opts.vendor tha hi nahi yahan — callers (admin.spec.js, customer.spec.js)
+  // ise pass karte the (?v=<vendor> se real bootstrap/CFG load karne ke liye,
+  // warna app hardcoded DEFAULT CFG seed pe hi atka rehta — township/societies
+  // khaali, prices/mealTypes sirf ISLIYE "sahi" dikhte the kyunki default seed ke
+  // numbers (₹80/₹60) fixture ke numbers se coincidentally match kar gaye).
+  // Isse saveConfig() ka township-required check har baar fail hota, aur meal-
+  // panel bhi kabhi asli vendor menu load nahi karta. Ab query string me jodte hain.
+  const url = opts.vendor ? `${APP_URL}?v=${encodeURIComponent(opts.vendor)}` : APP_URL;
+  await page.goto(url);
   await page.waitForSelector('#bootLoader.gone', { timeout:15000 }).catch(() => {});
   return { errors, state };
 }

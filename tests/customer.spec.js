@@ -11,9 +11,11 @@ test.describe('Cart & pricing', () => {
     await goTo(page, 'menu');
     await page.evaluate(() => window.quickAdd('lunch'));
     await page.waitForTimeout(200);
-    // Cart summary redesign: #cartBadge/#barTotal don't exist anymore — item
-    // count now lives on the bottom-nav badge, total via cartTotalDisplay().
-    await expect(page.locator('#bnCartBadge')).toHaveText('1');
+    // Nav redesign: bottom nav no longer has a standalone Cart tab/badge
+    // (#bnCartBadge doesn't exist anymore — see updateCartBadge() in index.html).
+    // Item count lives in the app's own `cart` array; total via cartTotalDisplay().
+    const qty = await page.evaluate(() => window.cart.reduce((s, it) => s + it.qty, 0));
+    expect(qty).toBe(1);
     // Full tiffin ₹80 + near delivery ₹10
     const total = await page.evaluate(() => window.cartTotalDisplay());
     expect(total).toBe(90);
@@ -26,7 +28,8 @@ test.describe('Cart & pricing', () => {
     await page.evaluate(() => window.shSetSize('mini'));
     await page.evaluate(() => window.shAddToCartConfirmed());
     await page.waitForTimeout(200);
-    await expect(page.locator('#bnCartBadge')).toHaveText('1');
+    const qty = await page.evaluate(() => window.cart.reduce((s, it) => s + it.qty, 0));
+    expect(qty).toBe(1);
     const total = await page.evaluate(() => window.cartTotalDisplay());
     expect(total).toBe(70);   // 60 + 10
   });
@@ -95,11 +98,12 @@ test.describe('Cart & pricing', () => {
     await goTo(page, 'menu');
     await page.evaluate(() => { window.quickAdd('lunch'); window.quickAdd('dinner'); });
     await page.waitForTimeout(200);
-    await expect(page.locator('#bnCartBadge')).toHaveText('2');
+    const qty = () => page.evaluate(() => window.cart.reduce((s, it) => s + it.qty, 0));
+    expect(await qty()).toBe(2);
     await page.evaluate(() => window.removeCart(window.cart[0].id));
-    await expect(page.locator('#bnCartBadge')).toHaveText('1');
+    expect(await qty()).toBe(1);
     await page.evaluate(() => window.clearCart());
-    await expect(page.locator('#bnCartBadge')).toHaveText('0');
+    expect(await qty()).toBe(0);
   });
 
   test('cart refresh ke baad bhi bacha rehta hai', async ({ page }) => {
@@ -168,6 +172,11 @@ test.describe('Promo', () => {
 test.describe('Checkout & orders', () => {
   test('order place hone par success card aata hai', async ({ page }) => {
     const { state } = await openApp(page);
+    // Lunch cutoff is 09:00 — after that, "today" (offset 0) is genuinely closed
+    // and goToCheckout() re-validates + silently strips it from the cart, so
+    // this test would flake depending on what time of day it runs. Tomorrow
+    // (offset 1) has no same-day cutoff and is always open (see mealsAvail()).
+    await page.evaluate(() => window.menuChangeDate(1));
     await page.evaluate(() => window.quickAdd('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.waitForTimeout(200);
@@ -187,6 +196,7 @@ test.describe('Checkout & orders', () => {
     // anything. The mock's order handler (see helpers.js) computes the total
     // itself from state.config.variants/prices, never from a client-sent
     // total, so server-side authority is verified by any successful order.
+    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     await page.evaluate(() => {
       window.quickAdd('lunch');
       window.cart[0].qty = 1;
@@ -200,6 +210,7 @@ test.describe('Checkout & orders', () => {
 
   test('duplicate order same date+meal reject', async ({ page }) => {
     const { state } = await openApp(page);
+    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     for (let i = 0; i < 2; i++) {
       // `window.cart = []` re-points the *window property* to a new array —
       // it never touches the app's own top-level `let cart` (see AGENTS.md's
@@ -234,6 +245,7 @@ test.describe('Checkout & orders', () => {
 
   test('address blank ho to validation rukta hai', async ({ page }) => {
     await openApp(page, { addr:{ deliveryType:'home', society:'', flatNo:'' } });
+    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     await page.evaluate(() => window.quickAdd('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.waitForTimeout(200);
@@ -246,6 +258,7 @@ test.describe('Checkout & orders', () => {
 
   test('flat number format normalize hota hai', async ({ page }) => {
     await openApp(page);
+    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     await page.evaluate(() => window.quickAdd('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.fill('#flatNo', 'd706');
@@ -255,6 +268,7 @@ test.describe('Checkout & orders', () => {
 
   test('UPI chunne par QR box dikhta hai', async ({ page }) => {
     await openApp(page);
+    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     await page.evaluate(() => window.quickAdd('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.evaluate(() => window.setPay('UPI'));
@@ -267,6 +281,7 @@ test.describe('Checkout & orders', () => {
 
   test('COD chunne par cash note dikhta hai', async ({ page }) => {
     await openApp(page);
+    await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     await page.evaluate(() => window.quickAdd('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.evaluate(() => window.setPay('COD'));

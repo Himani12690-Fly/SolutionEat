@@ -84,6 +84,20 @@ test.describe('Admin — many orders', () => {
 
     const t0 = Date.now();
     await adminLogin(page);
+    // Orders load hote hi Kitchen Summary ek meal (jiske orders hon) auto-select
+    // kar leta hai aur grouped/society checklist view khol deta hai — .oc wale
+    // full order cards sirf 'All' view me dikhte hain (dekho index.html ka
+    // loadOrders()/setMealFilter()). Seeded orders breakfast/lunch/dinner sabme
+    // cycle karte hain, isliye auto-pick hamesha kisi EK meal pe atak jaata, aur
+    // .oc count kabhi N_ORDERS tak nahi pahunchta. Auto-pick khud loadOrders() ke
+    // async 'orders' response ke baad chalta hai — pehle usko settle hone do
+    // (Kitchen Summary "Loading..." se aage badh jaaye), phir 'All' pe force karo,
+    // warna abhi 'All' set karna auto-pick se turant overwrite ho jaata.
+    await page.waitForFunction(
+      () => { const el = document.getElementById('kitchenSummary'); return el && !el.textContent.includes('Loading'); },
+      { timeout: 15000 },
+    );
+    await page.evaluate(() => window.setMealFilter('All'));
     await page.waitForFunction(
       (want) => document.querySelectorAll('#ordersList .oc').length >= want,
       N_ORDERS,

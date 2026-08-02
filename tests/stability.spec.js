@@ -90,9 +90,20 @@ test('C: Admin panel renders orders from all 50 clients', async ({ page }) => {
   const t0 = Date.now();
   await page.evaluate(() => { adminCreds = { user: 'demo', pass: 'demo123' }; });
   await page.evaluate(() => { showView('adminPanel'); loadOrders(); loadUsers(); });
+  // loadOrders() auto-selects a meal (jiske orders hon) aur grouped/society
+  // checklist view khol deta hai — .oc wale full order cards sirf 'All' view me
+  // dikhte hain (same as volume.spec.js's admin-orders test). Seeded orders
+  // breakfast/lunch/dinner sabme cycle karte hain, isliye auto-pick se pehle
+  // Kitchen Summary load hone ka wait karo, phir 'All' pe force karo.
+  await page.waitForFunction(
+    () => { const el = document.getElementById('kitchenSummary'); return el && !el.textContent.includes('Loading'); },
+    { timeout: 15000 },
+  ).catch(() => {});
+  await page.evaluate(() => window.setMealFilter('All'));
   await page.waitForFunction((w) => document.querySelectorAll('#ordersList .oc').length >= w, N_CLIENTS, { timeout: 15000 }).catch(() => {});
   const count = await page.locator('#ordersList .oc').count();
   results.adminRender = { seededOrders: N_CLIENTS, renderedCount: count, renderMs: Date.now() - t0, ok: count === N_CLIENTS };
+  expect(count).toBe(N_CLIENTS);
 });
 
 test('D: 50 separate client sessions — login, order, refresh, verify state holds', async ({ browser }) => {
