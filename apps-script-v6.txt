@@ -2398,13 +2398,30 @@ function sendTestTelegram() {
 function b64url(bytes) {
   return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/, '');
 }
+// FCM_PRIVATE_KEY script property kai shape me stored mil sakti hai — real newlines
+// ke saath, literal "\n" (do-character) text ke saath, ya (jaisa debugFcmKey() se
+// pakda gaya) bilkul bina kisi newline ke, ek hi lambi line. computeRsaSha256Signature()
+// ko theek PEM chahiye (BEGIN/body/END alag lines pe), warna "Invalid argument: key"
+// throw karta hai. Manually 1600+ character base64 blob me sahi jagah newlines
+// dobara paste karna error-prone hai — isliye jo bhi shape mile usse yahin normalize
+// karke sahi PEM bana lete hain.
+function normalizePemKey(raw) {
+  const body = String(raw || '')
+    .replace(/\\n/g, '\n')
+    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
+    .replace(/-----END PRIVATE KEY-----/g, '')
+    .replace(/\s+/g, '');
+  const lines = body.match(/.{1,64}/g) || [];
+  return '-----BEGIN PRIVATE KEY-----\n' + lines.join('\n') + '\n-----END PRIVATE KEY-----\n';
+}
 function fcmAccessToken() {
   const cache = CacheService.getScriptCache();
   const cached = cache.get('fcm_token');
   if (cached) return cached;
   const clientEmail = secret('FCM_CLIENT_EMAIL');
-  const privateKey = secret('FCM_PRIVATE_KEY');
-  if (!clientEmail || !privateKey) return '';   // configure nahi kiya → chup-chaap skip (order flow kabhi block na ho)
+  const privateKeyRaw = secret('FCM_PRIVATE_KEY');
+  if (!clientEmail || !privateKeyRaw) return '';   // configure nahi kiya → chup-chaap skip (order flow kabhi block na ho)
+  const privateKey = normalizePemKey(privateKeyRaw);
   const now = Math.floor(Date.now() / 1000);
   const header = { alg: 'RS256', typ: 'JWT' };
   const claims = {
