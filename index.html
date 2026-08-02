@@ -636,14 +636,53 @@
 
   <div id="superPanel" class="hidden">
     <div class="admin-topbar">
-      <div class="atb-title">🏢 Manage Vendors</div>
+      <div class="atb-title" id="superTopTitle">🏢 Manage Vendors</div>
       <span class="alert-toggle" onclick="superLogout()">🚪 Logout</span>
     </div>
-    <div class="section" style="padding-bottom:120px;">
-      <div id="superVendorList"></div>
 
-      <div class="pf-box" style="margin-top:18px;">
-        <div style="font-size:14px;font-weight:900;margin-bottom:12px;">➕ Naya Vendor Add Karo</div>
+    <!-- ══════ LIST VIEW — vendor cards ab sirf click karke kholte hain, koi
+         inline edit/toggle/delete yahan nahi (wo sab detail page me hai). ══════ -->
+    <div id="svp-list" class="section" style="padding-bottom:120px;">
+      <div class="pf-box" id="svpPaySettings" style="margin-bottom:14px;">
+        <div style="font-size:14px;font-weight:900;margin-bottom:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="document.getElementById('svpPayBody').classList.toggle('hidden')">
+          <span>💳 Payment Settings <span style="font-size:10.5px;color:var(--muted);font-weight:600;">— sab vendor yahi pay karte hain</span></span>
+          <span style="font-size:11px;color:var(--muted);">▾</span>
+        </div>
+        <div id="svpPayBody">
+          <div class="form-group"><label>UPI ID (PhonePe / Google Pay)</label><input type="text" id="ppUpiId" placeholder="yourname@okhdfcbank"></div>
+          <div class="form-group"><label>Payee Name (vendor ko dikhega)</label><input type="text" id="ppUpiName" placeholder="e.g. Himani Babaria"></div>
+          <div class="form-group">
+            <label>🔲 QR Code (optional — number ke alawa)</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <img id="ppQrPreview" src="" alt="" class="hidden" style="width:64px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;">
+              <button type="button" class="admin-btn" style="flex:0 0 auto;width:auto;padding:8px 14px;" onclick="pickPlatformQr()">📤 Upload QR</button>
+              <span id="ppQrStatus" style="font-size:11px;color:var(--muted);"></span>
+            </div>
+            <input type="hidden" id="ppQrUrl">
+          </div>
+          <button class="admin-btn" id="ppSaveBtn" onclick="savePlatformPaymentFE()">💾 Save Payment Settings</button>
+        </div>
+      </div>
+
+      <div id="superVendorList"></div>
+      <button class="admin-btn" style="margin-top:14px;" onclick="openVendorDetail(null)">➕ Naya Vendor Add Karo</button>
+    </div>
+
+    <!-- ══════ DETAIL VIEW — ek waqt me ek hi vendor, poora page usi ke liye. ══════ -->
+    <div id="svp-detail" class="section hidden" style="padding-bottom:120px;">
+      <div class="back-btn" style="cursor:pointer;font-weight:800;margin-bottom:10px;" onclick="superGoList()">← Saare Vendors</div>
+
+      <div class="pf-box" id="svBillingBox" style="margin-bottom:14px;">
+        <div style="font-size:14px;font-weight:900;margin-bottom:10px;">💳 Subscription — ₹<span id="svBillAmount">499</span>/month</div>
+        <div class="row" style="display:flex;justify-content:space-between;align-items:center;">
+          <span id="svBillChip" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:9px;"></span>
+          <span id="svBillDue" style="font-size:12px;color:var(--muted);"></span>
+        </div>
+        <button class="admin-btn" id="svMarkPaidBtn" style="margin-top:12px;" onclick="markVendorPaidFE()">✅ Mark as Paid</button>
+      </div>
+
+      <div class="pf-box">
+        <div style="font-size:14px;font-weight:900;margin-bottom:12px;" id="svFormTitle">➕ Naya Vendor Add Karo</div>
         <div class="form-group"><label>Business Naam</label><input type="text" id="svName" placeholder="e.g. Rasoi Express"></div>
         <div class="form-group"><label>Vendor Slug — sirf chhota naam, poora URL nahi</label><input type="text" id="svId" placeholder="shyamrasoi"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Sirf naam likho — jaise <b>shyamrasoi</b>. (<b>?v=</b> mat likhna, wo apne aap lagta hai)</div></div>
         <div class="form-group"><label>Google Sheet ID</label><input type="text" id="svSheetId" placeholder="1T6tTy_I-C8VH8JKOsB8...."><div style="font-size:10.5px;color:var(--muted);margin-top:4px;"><b>Blank</b> nayi Google Sheet banao (sheets.new) aur uska URL yahan paste kar do — tabs, menu, settings sab apne aap ban jayenge.</div></div>
@@ -676,6 +715,11 @@
         </div>
         <div class="form-group"><label>💰 Min Order ₹ (optional)</label><input type="number" id="svMinOrder" placeholder="150"></div>
         <button class="admin-btn" id="svSaveBtn" onclick="saveVendorFE()">✅ Vendor Create Karo</button>
+      </div>
+
+      <div id="svDangerZone" style="display:flex;gap:8px;margin-top:14px;">
+        <button class="vd-btn" id="svToggleBtn" onclick="toggleVendorFE(__svCurId,this)">⏸️ Band karo</button>
+        <button class="vd-btn danger" id="svDeleteBtn" onclick="deleteVendorFE(__svCurId,__svCurName,this)">🗑️ Delete</button>
       </div>
     </div>
   </div>
@@ -922,6 +966,33 @@
         </div>
         <div id="promoList"><div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>
       </div>
+
+      <!-- ══════ BILLING — vendor ki apni PLATFORM subscription (index.html me VENDOR-
+           customer meal-subscription se bilkul alag cheez hai — wo aview-orders/
+           subView me kahin nahi, ye sirf "hum SolutionEat ko kya dete hain") ══════ -->
+      <div id="aview-billing" class="hidden">
+        <div class="section-title" style="margin-top:4px;">💳 Subscription</div>
+        <div class="pf-box" style="margin-bottom:14px;">
+          <div style="font-size:13.5px;font-weight:800;margin-bottom:10px;">Flat plan — ₹<span id="vbAmount">499</span>/month</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="vbChip" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:9px;"></span>
+            <span id="vbDue" style="font-size:12px;color:var(--muted);"></span>
+          </div>
+        </div>
+        <div class="pf-box" id="vbPayBox">
+          <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">📲 Pay to continue</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">App ke bahar, apne PhonePe/GPay se pay karo. Confirm hote hi (kuch der lagegi) subscription khud continue ho jaayegi.</div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <img id="vbQr" src="" alt="Payment QR" class="hidden" style="width:110px;height:110px;border-radius:12px;border:1px solid var(--line);flex:0 0 auto;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;color:var(--muted);">UPI ID</div>
+              <div style="font-size:14px;font-weight:800;word-break:break-all;" id="vbUpiId">—</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px;" id="vbUpiName"></div>
+              <button class="vd-btn" style="margin-top:8px;" onclick="copyPlatformUpi()">📋 UPI ID Copy Karo</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="footer">
       <div class="f-copy">⚙️ Admin · © 2026 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> · Ahmedabad, India</div>
@@ -932,6 +1003,7 @@
         <div class="more-item" id="adr-config" onclick="adminBnGo('config')"><span class="di-icon">⚙️</span><span>Setup</span></div>
         <div class="more-item" id="adr-variants" onclick="adminBnGo('variants')"><span class="di-icon">🍱</span><span>Variants</span></div>
         <div class="more-item" id="adr-promos" onclick="adminBnGo('promos')"><span class="di-icon">🎟️</span><span>Promos</span></div>
+        <div class="more-item" id="adr-billing" onclick="adminBnGo('billing')"><span class="di-icon">💳</span><span>Subscription</span></div>
         <div style="padding:10px 14px 4px;">
           <div class="lp-sec-t">🌐 Language</div>
           <select class="sh-select js-lang" id="langSelAdmin" onchange="setLangAdmin(this.value)"></select>
@@ -2077,7 +2149,7 @@
   function removePromo(){ appliedPromo=null; renderCart(); if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); document.getElementById('barTotal2').textContent='₹'+cartTotalDisplay(); } }
 
   // ── Admin drawer (left slide menu) ──
-  const ADMIN_SECTIONS={orders:'🧾 Orders',users:'👥 Users',menu:'✏️ Menu',config:'⚙️ Setup',variants:'🍱 Variants',promos:'🎟️ Promos',stats:'📊 Stats'};
+  const ADMIN_SECTIONS={orders:'🧾 Orders',users:'👥 Users',menu:'✏️ Menu',config:'⚙️ Setup',variants:'🍱 Variants',promos:'🎟️ Promos',stats:'📊 Stats',billing:'💳 Subscription'};
   function openAdminMore(){ document.getElementById('adminMoreOverlay').classList.remove('hidden'); }
   function closeAdminMore(){ document.getElementById('adminMoreOverlay').classList.add('hidden'); }
   let adminCurTab='orders';
@@ -4453,10 +4525,13 @@
   // bharosa karo, raw adminCreds par nahi — warna stale/galat cached creds wale
   // kisi bhi customer ko admin panel dikh sakta hai (real bug jo mila tha).
   let adminCreds=null, adminCredsValidated=false, adminMenuWorking=null, adminPrevDay='monday', adminOrders=[], adminUsers=[], orderFilter='All';
+  // Vendor ki apni PLATFORM subscription — 'stats' response me aata hai (admin login
+  // ke ek hi round-trip me), Billing tab khulte hi renderVendorBilling() isse dikhata hai.
+  let vendorBilling=null, platformPaymentInfo=null;
   function showAdminLogin(){ showView('adminLogin'); }
   function hideAdmin(){ exitAdminTheme(); if(storeGet('fbt_lang')) setLang(storeGet('fbt_lang')); isLoggedIn()?showLanding():showPublic(); }
   function adminLogout(){ adminCreds=null; adminCredsValidated=false; storeDel('fbt_admin'); stopAlertPolling(); stopRing(); hideAdmin(); }
-  function adminTab(tb){ ['orders','users','menu','config','stats','variants','promos'].forEach(x=>{ const v=document.getElementById('aview-'+x); const b=document.getElementById('atab-'+x); if(v)v.classList.toggle('hidden',x!==tb); if(b)b.classList.toggle('active',x===tb); }); if(tb==='variants') openVariantsEditor(); if(tb==='promos') loadPromos(); }
+  function adminTab(tb){ ['orders','users','menu','config','stats','variants','promos','billing'].forEach(x=>{ const v=document.getElementById('aview-'+x); const b=document.getElementById('atab-'+x); if(v)v.classList.toggle('hidden',x!==tb); if(b)b.classList.toggle('active',x===tb); }); if(tb==='variants') openVariantsEditor(); if(tb==='promos') loadPromos(); if(tb==='billing') renderVendorBilling(); }
 
   // ═══════ ADMIN PROMOS ═══════
   let adminPromos=[];
@@ -4545,6 +4620,9 @@
   // ═══════ SUPER ADMIN (platform owner) ═══════
   // Bilkul alag creds/flow — kisi vendor ke admin se koi connection nahi.
   let superCreds=null, superCredsValidated=false, superVendors=[];   // same pattern as adminCreds/adminCredsValidated — see comment there
+  // Ek waqt me sirf EK vendor ka poora page khula hota hai — ye state batata hai kaunsa.
+  let __svCurId=null, __svCurName='';
+  let superPlatformPayment={upiId:'',upiName:'',qrImageUrl:''};
   function superLogin(){
     const u=document.getElementById('superUser').value.trim(), p=document.getElementById('superPass').value;
     if(!u||!p){ showToast('⚠️ Username/password daalo.','warning'); return; }
@@ -4553,7 +4631,8 @@
       btn.textContent='🔓 Login'; btn.disabled=false;
       if(j.status!=='success'){ showToast('❌ Invalid username or password.','error'); return; }
       superCreds={user:u,pass:p}; storeSet('fbt_super',superCreds); superCredsValidated=true;
-      superVendors=j.vendors||[]; showView('superPanel'); renderSuperVendorList();
+      superVendors=j.vendors||[]; superPlatformPayment=j.platformPayment||superPlatformPayment;
+      showView('superPanel'); superGoList();
     }).catch(()=>{ btn.textContent='🔓 Login'; btn.disabled=false; showToast(t('errNetwork'),'error'); });
   }
   function superLogout(){ superCreds=null; superCredsValidated=false; storeDel('fbt_super'); showView('superLogin'); }
@@ -4563,30 +4642,45 @@
     apiPost({action:'listvendors', user:a.user, pass:a.pass}).then(j=>{
       if(j.status!=='success'){ superCreds=null; superCredsValidated=false; storeDel('fbt_super'); return; }
       superCredsValidated=true;
-      superVendors=j.vendors||[]; showView('superPanel'); renderSuperVendorList();
-    }).catch(()=>{ superCredsValidated=true; showView('superPanel'); renderSuperVendorList(); });
+      superVendors=j.vendors||[]; superPlatformPayment=j.platformPayment||superPlatformPayment;
+      showView('superPanel'); superGoList();
+    }).catch(()=>{ superCredsValidated=true; showView('superPanel'); superGoList(); });
     return true;
+  }
+  // ═══════ LIST VIEW ⇄ DETAIL VIEW ═══════
+  // Pehle list + ek shared "add/edit" form same lambe scrolling page pe the —
+  // Edit dabane par form neeche scroll ho jaata, confusing tha kaunsa vendor
+  // abhi edit ho raha hai. Ab click karte hi UISI vendor ka apna alag page khulta
+  // hai (list poori tarah hidden), aur Subscription/billing bhi wahin usi page pe.
+  function superGoList(){
+    document.getElementById('svp-detail').classList.add('hidden');
+    document.getElementById('svp-list').classList.remove('hidden');
+    document.getElementById('superTopTitle').textContent='🏢 Manage Vendors';
+    renderSuperVendorList();
+    fillPlatformPaymentForm();
+  }
+  function subStatusChip(v){
+    const map={ active:{t:'✅ Paid',bg:'var(--okbg)',c:'var(--ok)'}, pending:{t:'🟡 Payment Pending',bg:'var(--warnbg)',c:'var(--warn)'}, overdue:{t:'🔴 Overdue',bg:'var(--dangerbg)',c:'var(--danger)'} };
+    const m=map[v.subStatus]; if(!m) return '';   // 'exempt' (default vendor) — koi chip nahi
+    return `<span style="font-size:9.5px;font-weight:900;padding:3px 8px;border-radius:9px;background:${m.bg};color:${m.c};">${m.t}</span>`;
   }
   function renderSuperVendorList(){
     const box=document.getElementById('superVendorList'); if(!box)return;
     if(!superVendors.length){ box.innerHTML='<p style="color:var(--muted);font-size:12px;">Koi vendor nahi.</p>'; return; }
     box.innerHTML=superVendors.map(v=>`
-      <div class="pf-box" style="margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div class="pf-box" style="margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="openVendorDetail('${v.vendorId}')">
         <div style="width:42px;height:42px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;flex:0 0 auto;">${(v.name||'?').charAt(0).toUpperCase()}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:13.5px;font-weight:800;">${v.name}${v.isDefault?' <span style="font-size:10px;color:var(--muted);">(default)</span>':''}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:1px;">?v=${v.vendorId}</div>
           <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${v.ratingCount?('⭐ '+v.rating+' ('+v.ratingCount+')'):'⭐ abhi koi rating nahi'}${v.areas?(' · '+esc(v.areas)):''}</div>
-          <div style="font-size:9.5px;margin-top:2px;${v.scriptUrl?'color:var(--ok);':'color:var(--warn);'}">${v.scriptUrl?'⚡ Apna deployment':'⚠️ Shared deployment (quota shared)'}</div>
-          <div style="font-size:9.5px;margin-top:2px;${v.tgConfigured?'color:var(--ok);':'color:var(--warn);'}">${v.tgConfigured?'📲 Telegram alerts ON':'⚠️ Telegram not set — order alerts nahi jayenge'}</div>
+          <div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;">
+            <span style="font-size:9.5px;font-weight:900;padding:3px 8px;border-radius:9px;${v.status==='Active'?'background:var(--okbg);color:var(--ok);':'background:var(--line);color:var(--muted);'}">${v.status||'Active'}</span>
+            ${subStatusChip(v)}
+          </div>
         </div>
-        <div style="font-size:9.5px;font-weight:900;padding:3px 8px;border-radius:9px;flex:0 0 auto;${v.status==='Active'?'background:var(--okbg);color:var(--ok);':'background:var(--line);color:var(--muted);'}">${v.status||'Active'}</div>
-      </div>
-      ${v.isDefault?'':`<div style="display:flex;gap:6px;margin:-4px 0 10px;">
-        <button class="vd-btn" onclick="editVendorFE('${v.vendorId}')">✏️ Edit</button>
-        <button class="vd-btn" onclick="toggleVendorFE('${v.vendorId}',this)">${v.status==='Active'?'⏸️ Band karo':'▶️ Chalu karo'}</button>
-        <button class="vd-btn danger" onclick="deleteVendorFE('${v.vendorId}','${(v.name||'').replace(/'/g,'')}',this)">🗑️ Delete</button>
-      </div>`}`).join('');
+        <span style="font-size:18px;color:var(--muted);flex:0 0 auto;">›</span>
+      </div>`).join('');
   }
   // User aksar poora URL ya "?v=slug" paste kar deta hai — usme se sirf slug nikaalo
   // User aksar poora URL ya "?v=slug" paste kar deta hai — usme se sirf slug nikaalo.
@@ -4606,8 +4700,29 @@
     if(parts.length > 1) x = parts[1].split('/')[0].split('?')[0];
     return x;
   }
-  function editVendorFE(id){
-    const v=superVendors.find(x=>x.vendorId===id); if(!v)return;
+  // ═══════ DETAIL VIEW: ek vendor ka poora page (id=null → naya vendor, blank) ═══════
+  function openVendorDetail(id){
+    __svCurId=id; __svCurName='';
+    document.getElementById('svp-list').classList.add('hidden');
+    document.getElementById('svp-detail').classList.remove('hidden');
+    window.scrollTo(0,0);
+    const v = id ? superVendors.find(x=>x.vendorId===id) : null;
+    const billBox=document.getElementById('svBillingBox'), danger=document.getElementById('svDangerZone');
+    if(!v){
+      // Naya vendor — abhi exist hi nahi karta, billing/band-delete dikhane ka matlab nahi.
+      document.getElementById('superTopTitle').textContent='➕ Naya Vendor';
+      document.getElementById('svFormTitle').textContent='➕ Naya Vendor Add Karo';
+      ['svName','svId','svSheetId','svScriptUrl','svAdminUser','svAdminPass','svEmail','svWhatsapp','svTgToken','svTgChat','svAreas','svCuisine','svLogo','svMinOrder'].forEach(fid=>{ const el=document.getElementById(fid); if(el)el.value=''; });
+      document.getElementById('svLogoPreview').src='logo-round.png';
+      document.getElementById('svLogoStatus').textContent='';
+      const tgSt0=document.getElementById('svTgStatus'); if(tgSt0) tgSt0.textContent='';
+      document.getElementById('svSaveBtn').textContent='✅ Vendor Create Karo';
+      billBox.classList.add('hidden'); danger.classList.add('hidden');
+      return;
+    }
+    __svCurName=v.name||'';
+    document.getElementById('superTopTitle').textContent=v.name||v.vendorId;
+    document.getElementById('svFormTitle').textContent='✏️ '+(v.name||v.vendorId)+' — Edit Karo';
     document.getElementById('svName').value=v.name||'';
     document.getElementById('svId').value=v.vendorId;
     document.getElementById('svSheetId').value=v.sheetId||'';
@@ -4630,8 +4745,109 @@
     document.getElementById('svTgChat').value='';
     const tgSt=document.getElementById('svTgStatus'); if(tgSt){ tgSt.textContent=v.tgConfigured?'✅ Configured':'⚠️ Not set'; tgSt.style.color=v.tgConfigured?'var(--ok)':'var(--warn)'; }
     document.getElementById('svSaveBtn').textContent='💾 Changes Save Karo';
-    document.getElementById('svName').scrollIntoView({behavior:'smooth',block:'center'});
-    showToast('✏️ Edit mode — password/Telegram khaali chhodo to purana hi rahega','success');
+    if(v.isDefault){
+      billBox.classList.add('hidden');   // apna hi (platform-owner) vendor — billing nahi
+      danger.classList.add('hidden');    // default vendor band/delete nahi ho sakta
+    } else {
+      billBox.classList.remove('hidden'); danger.classList.remove('hidden');
+      renderBillingBox(v);
+      document.getElementById('svToggleBtn').textContent = v.status==='Active' ? '⏸️ Band karo' : '▶️ Chalu karo';
+    }
+  }
+  function renderBillingBox(v){
+    document.getElementById('svBillAmount').textContent = v.subAmount || 499;
+    const chip=document.getElementById('svBillChip'), due=document.getElementById('svBillDue'), btn=document.getElementById('svMarkPaidBtn');
+    const map={ active:{t:'✅ Paid',bg:'var(--okbg)',c:'var(--ok)'}, pending:{t:'🟡 Payment Pending',bg:'var(--warnbg)',c:'var(--warn)'}, overdue:{t:'🔴 Overdue',bg:'var(--dangerbg)',c:'var(--danger)'} };
+    const m=map[v.subStatus]||map.pending;
+    chip.style.background=m.bg; chip.style.color=m.c; chip.textContent=m.t;
+    let dueTxt = v.subDueDate ? ('Due: '+v.subDueDate) : '';
+    if(v.subLastPaid) dueTxt += (dueTxt?' · ':'')+'Last paid: '+v.subLastPaid;
+    due.textContent = dueTxt || 'Kabhi pay nahi hua';
+    btn.textContent = v.subStatus==='active' ? '✅ Paid — Extend Karo' : '✅ Mark as Paid';
+  }
+  // Vendor ne app ke BAHAR (UPI app se) pay kiya — koi payment gateway/webhook
+  // nahi hai, isliye ye purely manual "haan, mujhe mila" confirmation hai.
+  function markVendorPaidFE(){
+    if(!superCreds||!__svCurId)return;
+    const btn=document.getElementById('svMarkPaidBtn'); btn.disabled=true; const old=btn.textContent; btn.textContent='⏳ ...';
+    apiPost({action:'markvendorpaid',user:superCreds.user,pass:superCreds.pass,slug:__svCurId}).then(j=>{
+      btn.disabled=false;
+      if(j.status!=='success'){ btn.textContent=old; showToast('❌ '+(j.message||'Failed'),'error'); return; }
+      superVendors=j.vendors||superVendors;
+      const v=superVendors.find(x=>x.vendorId===__svCurId);
+      if(v) renderBillingBox(v); else btn.textContent=old;
+      showToast('✅ Payment marked — subscription continue rahegi','success');
+    }).catch(()=>{ btn.disabled=false; btn.textContent=old; showToast(t('errNetwork'),'error'); });
+  }
+  // ═══════ PLATFORM PAYMENT SETTINGS (super admin ka apna UPI/QR) ═══════
+  function fillPlatformPaymentForm(){
+    document.getElementById('ppUpiId').value=superPlatformPayment.upiId||'';
+    document.getElementById('ppUpiName').value=superPlatformPayment.upiName||'';
+    document.getElementById('ppQrUrl').value=superPlatformPayment.qrImageUrl||'';
+    const pv=document.getElementById('ppQrPreview');
+    if(superPlatformPayment.qrImageUrl){ pv.src=superPlatformPayment.qrImageUrl; pv.classList.remove('hidden'); }
+    else pv.classList.add('hidden');
+  }
+  function savePlatformPaymentFE(){
+    if(!superCreds)return;
+    const btn=document.getElementById('ppSaveBtn'); btn.disabled=true; const old=btn.textContent; btn.textContent='⏳ Saving…';
+    apiPost({action:'saveplatformpayment',user:superCreds.user,pass:superCreds.pass,
+      upiId:document.getElementById('ppUpiId').value.trim(), upiName:document.getElementById('ppUpiName').value.trim(),
+      qrImageUrl:document.getElementById('ppQrUrl').value.trim()}).then(j=>{
+      btn.disabled=false; btn.textContent=old;
+      if(j.status==='success'){ superPlatformPayment=j.platformPayment||superPlatformPayment; showToast('✅ Payment settings saved','success'); }
+      else showToast('❌ '+(j.message||'Failed'),'error');
+    }).catch(()=>{ btn.disabled=false; btn.textContent=old; showToast(t('errNetwork'),'error'); });
+  }
+  function pickPlatformQr(){
+    const inp=document.createElement('input');
+    inp.type='file'; inp.accept='image/jpeg,image/png,image/webp';
+    inp.onchange=()=>{
+      const f=inp.files[0]; if(!f) return;
+      if(ALLOWED_IMG.indexOf(f.type)<0){ showToast('⚠️ Only JPG, PNG or WebP images are allowed.','warning'); return; }
+      const mb=f.size/(1024*1024);
+      if(mb>MAX_UPLOAD_MB){ showToast('⚠️ Image is '+mb.toFixed(1)+'MB — please use one under '+MAX_UPLOAD_MB+'MB.','warning'); return; }
+      compressAndUploadPlatformQr(f);
+    };
+    inp.click();
+  }
+  function compressAndUploadPlatformQr(file){
+    if(!superCreds)return;
+    const st=document.getElementById('ppQrStatus'); if(st)st.textContent='⏳ Compressing…';
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        function encode(mx,q){
+          let w=img.width,h=img.height;
+          if(w>h && w>mx){ h=Math.round(h*mx/w); w=mx; }
+          else if(h>mx){ w=Math.round(w*mx/h); h=mx; }
+          const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+          cv.getContext('2d').drawImage(img,0,0,w,h);
+          return cv.toDataURL('image/jpeg',q);
+        }
+        const dims=[600,480,360], qs=[0.8,0.7,0.6,0.5];
+        let dataUrl=null;
+        outer:
+        for(const mx of dims){ for(const q of qs){ dataUrl=encode(mx,q); if(dataUrlKB(dataUrl)<=LOGO_TARGET_KB) break outer; } }
+        if(dataUrlKB(dataUrl)>1000){
+          if(st)st.textContent='❌ Too complex to compress — try a smaller/simpler image.';
+          showToast('⚠️ Ye QR compress karne ke baad bhi bahut bada hai.','warning');
+          return;
+        }
+        if(st)st.textContent='⏳ Uploading… ('+dataUrlKB(dataUrl)+'KB)';
+        apiPost({ action:'uploadplatformqr', user:superCreds.user, pass:superCreds.pass, dataUrl:dataUrl, name:'platformqr' })
+          .then(j=>{
+            if(j.status==='success'){
+              document.getElementById('ppQrUrl').value=j.url;
+              const pv=document.getElementById('ppQrPreview'); if(pv){ pv.src=j.url; pv.classList.remove('hidden'); }
+              if(st)st.textContent='✅ Uploaded';
+            } else { if(st)st.textContent='❌ '+(j.message||'Upload failed'); }
+          }).catch(()=>{ if(st)st.textContent='❌ Upload failed'; });
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
   }
   function toggleVendorFE(id,btn){
     const v=superVendors.find(x=>x.vendorId===id); if(!v||!superCreds)return;
@@ -4642,8 +4858,13 @@
       adminUser:v.adminUser||'',adminPass:'',notifyEmail:v.notifyEmail||'',
       whatsapp:v.whatsapp||'',areas:v.areas||'',cuisine:v.cuisine||'',logo:v.logo||'',
       minOrder:v.minOrder||0,status:next}).then(j=>{
-      if(j.status!=='success'){ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast('❌ '+(j.message||'Failed'),'error'); return; }
-      superVendors=j.vendors||superVendors; renderSuperVendorList();
+      if(btn) btn.disabled=false;
+      if(j.status!=='success'){ if(btn) btn.textContent=btn.dataset.oldText||''; showToast('❌ '+(j.message||'Failed'),'error'); return; }
+      superVendors=j.vendors||superVendors;
+      // Detail page pe hi rehte hain (list pe nahi jaate) — button ka apna label
+      // khud update karo, warna "⏳ ..." pe hi atka reh jaata (pehle renderSuperVendorList()
+      // poori list DOM hi dobara banata tha, is button ko fresh bana deta — ab nahi).
+      if(btn) btn.textContent = next==='Active' ? '⏸️ Band karo' : '▶️ Chalu karo';
       showToast(next==='Active'?'▶️ Chalu ho gaya':'⏸️ Band kar diya','success');
     }).catch(()=>{ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast(t('errNetwork'),'error'); });
   }
@@ -4653,8 +4874,9 @@
     if(btn){ btn.disabled=true; btn.dataset.oldText=btn.textContent; btn.textContent='⏳ ...'; }
     apiPost({action:'deletevendor',user:superCreds.user,pass:superCreds.pass,slug:id}).then(j=>{
       if(j.status!=='success'){ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast('❌ '+(j.message||'Failed'),'error'); return; }
-      superVendors=j.vendors||[]; renderSuperVendorList();
+      superVendors=j.vendors||[];
       showToast('🗑️ Vendor hata diya','success');
+      superGoList();   // ab-nonexistent vendor ka detail page khula rehna galat hai
     }).catch(()=>{ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast(t('errNetwork'),'error'); });
   }
   function saveVendorFE(){
@@ -4685,19 +4907,15 @@
       showToast('⚠️ Naam, Slug, Admin username zaroori hain.'+(isEditingExisting?'':' Naya vendor banane ke liye password bhi zaroori hai.'),'warning');
       return;
     }
-    const btn=document.getElementById('svSaveBtn'); btn.disabled=true; btn.textContent='⏳ Saving…';
+    const btn=document.getElementById('svSaveBtn'); const oldTxt=btn.textContent; btn.disabled=true; btn.textContent='⏳ Saving…';
     apiPost(d).then(j=>{
-      btn.disabled=false; btn.textContent='✅ Vendor Create Karo';
+      btn.disabled=false; btn.textContent=oldTxt;
       if(j.status==='success'){
-        superVendors=j.vendors||superVendors; renderSuperVendorList();
-        ['svName','svId','svSheetId','svScriptUrl','svAdminUser','svAdminPass','svEmail','svWhatsapp','svTgToken','svTgChat','svAreas','svCuisine','svLogo','svMinOrder'].forEach(id=>document.getElementById(id).value='');
-        const tgSt0=document.getElementById('svTgStatus'); if(tgSt0) tgSt0.textContent='';
-        document.getElementById('svLogoPreview').src='logo-round.png';
-        document.getElementById('svLogoStatus').textContent='';
-        document.getElementById('svSaveBtn').textContent='✅ Vendor Create Karo';
+        superVendors=j.vendors||superVendors;
         showToast('✅ Save ho gaya','success');
+        superGoList();   // save ho gaya — poori list me wapas, jahan naya/updated vendor turant dikhega
       } else showToast('❌ '+(j.message||'Failed'),'error');
-    }).catch(()=>{ btn.disabled=false; btn.textContent='✅ Vendor Create Karo'; showToast(t('errNetwork'),'error'); });
+    }).catch(()=>{ btn.disabled=false; btn.textContent=oldTxt; showToast(t('errNetwork'),'error'); });
   }
   // adminLogin() aur restoreAdmin() dono me ye EXACT sequence duplicate thi — dono
   // jagah 'stats' success ke baad orders → users → alert-polling load hota hai, 800ms
@@ -5280,7 +5498,9 @@
       else showToast('❌ '+(j.message||'Failed — pehle Firebase setup karo (AGENTS.md dekho).'),'error');
     }).catch(()=>{ btn.disabled=false; btn.textContent=old; showToast(t('errNetwork'),'error'); });
   }
-  function fillStats(j){ document.getElementById('st-todayCount').textContent=j.today.count; document.getElementById('st-todayRev').textContent='₹'+j.today.revenue; document.getElementById('st-weekCount').textContent=j.week.count; document.getElementById('st-totalCount').textContent=j.total.count;
+  function fillStats(j){
+    vendorBilling=j.vendorBilling||null; platformPaymentInfo=j.platformPayment||null;
+    document.getElementById('st-todayCount').textContent=j.today.count; document.getElementById('st-todayRev').textContent='₹'+j.today.revenue; document.getElementById('st-weekCount').textContent=j.week.count; document.getElementById('st-totalCount').textContent=j.total.count;
     const banner=document.getElementById('statsPendingBanner');
     const pendingCount=(j.recent||[]).filter(o=>o.status==='Pending').length;
     if(banner){ if(pendingCount){ banner.textContent='⏳ '+pendingCount+' order(s) abhi action ka wait kar rahe hain — tap karo dekhne ke liye'; banner.classList.remove('hidden'); } else banner.classList.add('hidden'); }
@@ -5296,6 +5516,31 @@
         <span>🕐 ${o.time} · 🏠 ${o.society?o.society.charAt(0)+'-':''}${esc(o.flat)}</span>
         <span><b style="color:var(--ink);">₹${o.total}</b> · ${o.payment}</span>
       </div></div>`).join(''); }
+
+  // ═══════ BILLING TAB (vendor ki apni platform subscription) ═══════
+  function renderVendorBilling(){
+    const vb=vendorBilling||{}, pp=platformPaymentInfo||{};
+    document.getElementById('vbAmount').textContent = vb.amount || 499;
+    const chip=document.getElementById('vbChip'), due=document.getElementById('vbDue'), payBox=document.getElementById('vbPayBox');
+    const map={ active:{t:'✅ Paid',bg:'var(--okbg)',c:'var(--ok)'}, pending:{t:'🟡 Payment Pending',bg:'var(--warnbg)',c:'var(--warn)'}, overdue:{t:'🔴 Overdue',bg:'var(--dangerbg)',c:'var(--danger)'}, exempt:{t:'✅ Active',bg:'var(--okbg)',c:'var(--ok)'} };
+    const m=map[vb.status]||map.pending;
+    chip.style.background=m.bg; chip.style.color=m.c; chip.textContent=m.t;
+    let dueTxt = vb.dueDate ? ('Due: '+vb.dueDate) : '';
+    if(vb.lastPaid) dueTxt += (dueTxt?' · ':'')+'Last paid: '+vb.lastPaid;
+    due.textContent = dueTxt || 'Kabhi pay nahi hua';
+    // Already paid/active (ya default vendor, exempt) — "pay karo" card dikhane ki zaroorat nahi.
+    payBox.classList.toggle('hidden', vb.status==='active' || vb.status==='exempt');
+    document.getElementById('vbUpiId').textContent = pp.upiId || 'Abhi set nahi hua — vendor se poochho';
+    document.getElementById('vbUpiName').textContent = pp.upiName ? ('Payee: '+pp.upiName) : '';
+    const qr=document.getElementById('vbQr');
+    if(pp.qrImageUrl){ qr.src=pp.qrImageUrl; qr.classList.remove('hidden'); } else qr.classList.add('hidden');
+  }
+  function copyPlatformUpi(){
+    const id=(platformPaymentInfo&&platformPaymentInfo.upiId)||'';
+    if(!id){ showToast('⚠️ UPI ID abhi set nahi hai.','warning'); return; }
+    try{ navigator.clipboard.writeText(id); showToast('📋 UPI ID copy ho gayi','success'); }
+    catch(e){ showToast(id,'success'); }   // clipboard API na chale (bahut purana browser) to toast me hi dikha do
+  }
 
   // Menu editor
   function initMenuEditor(){

@@ -81,6 +81,12 @@ function debugFcmKey() {
 // (default vendor ki Sheet mein hi) store hote hain — Super Admin panel se add hote
 // hain, koi code-edit/redeploy nahi karna padta.
 const DEFAULT_VENDOR_ID = 'nestandnosh';
+// ⚠️ Naam jaanbujh ke "VENDOR_SUB_" hai, "Subscription" akela nahi — SUBS_SHEET/
+// subsSheet() neeche (buildStats() ke baad) ek BILKUL ALAG cheez hai: customer ka
+// weekly/monthly meal-repeat plan. Ye yahan wala platform ko vendor ki APNI
+// monthly billing hai — dono ko ek naam se bulane se confusion hoga.
+const VENDOR_SUB_AMOUNT = 499;        // flat ₹/month — Idea 1 se
+const VENDOR_SUB_CYCLE_DAYS = 30;
 const VENDORS_SEED = {
   nestandnosh: {
     name: 'Nest & Nosh',
@@ -90,7 +96,8 @@ const VENDORS_SEED = {
     notifyEmail: 'himani12690@gmail.com',
     tgBotToken: secret('TG_BOT_TOKEN'),
     tgChatId: secret('TG_CHAT_ID'),
-    status: 'Active'
+    status: 'Active',
+    subDueDate: '', subLastPaid: ''   // platform-owner ka apna vendor — billing exempt (neeche vendorSubStatus)
   }
 };
 const VENDORS_SHEET = 'Vendors';
@@ -99,7 +106,7 @@ const VENDORS_SHEET = 'Vendors';
 function getMasterSS() { return SpreadsheetApp.openById(SHEET_ID); }
 function vendorsSheet() {
   return sheetWithHeaders(VENDORS_SHEET,
-    ['VendorId','Name','SheetId','AdminUser','AdminPassHash','NotifyEmail','TgBotToken','TgChatId','WhatsApp','Status','Created','AdminSalt','ScriptUrl','Areas','Cuisine','Logo','RatingSum','RatingCount','MinOrder'],
+    ['VendorId','Name','SheetId','AdminUser','AdminPassHash','NotifyEmail','TgBotToken','TgChatId','WhatsApp','Status','Created','AdminSalt','ScriptUrl','Areas','Cuisine','Logo','RatingSum','RatingCount','MinOrder','SubDueDate','SubLastPaid'],
     getMasterSS());
 }
 // Vendors registry ko CacheService mein rakhte hain (60 sec) — Apps Script ki har
@@ -120,7 +127,7 @@ function loadVendors() {
     const sh = vendorsSheet();
     const lr = sh.getLastRow();
     if (lr >= 2) {
-      const rows = sh.getRange(2, 1, lr - 1, 19).getValues();
+      const rows = sh.getRange(2, 1, lr - 1, 21).getValues();
       rows.forEach(function(r){
         const id = String(r[0] || '').trim().toLowerCase();
         if (!id || id === DEFAULT_VENDOR_ID) return;   // default hardcoded hi rehta hai, Sheet se override nahi
@@ -129,7 +136,8 @@ function loadVendors() {
           notifyEmail: r[5] || '', tgBotToken: r[6] || '', tgChatId: r[7] || '',
           whatsapp: r[8] || '', status: r[9] || 'Active', scriptUrl: r[12] || '',
           areas: String(r[13] || ''), cuisine: String(r[14] || ''), logo: String(r[15] || ''),
-          ratingSum: Number(r[16]) || 0, ratingCount: Number(r[17]) || 0, minOrder: Number(r[18]) || 0
+          ratingSum: Number(r[16]) || 0, ratingCount: Number(r[17]) || 0, minOrder: Number(r[18]) || 0,
+          subDueDate: ddStr(r[19]), subLastPaid: ddStr(r[20])
         };
       });
     }
@@ -170,6 +178,16 @@ function vendorBlocked() {
 // koi handler currentVendor().sheetId khulwane tak pahunchta hi nahi.
 function currentVendor() { const reg = loadVendors(); return reg[CURRENT_VENDOR_ID] || null; }
 function getSS() { return SpreadsheetApp.openById(currentVendor().sheetId); }
+// Vendor ki apni PLATFORM billing (₹499/month flat) — kabhi auto-detect nahi hota
+// (koi payment gateway nahi hai), sirf 3 states, purely subLastPaid/subDueDate se
+// derive: kabhi paid hi nahi = 'pending', due date aage hai = 'active', due date
+// nikal chuki = 'overdue'. Platform-owner ka apna vendor (DEFAULT_VENDOR_ID) exempt.
+function vendorSubStatus(id, v) {
+  if (id === DEFAULT_VENDOR_ID) return 'exempt';
+  if (!v || !v.subLastPaid) return 'pending';
+  const today = todayIST();
+  return (v.subDueDate && v.subDueDate >= today) ? 'active' : 'overdue';
+}
 
 // ═══════════ AI HELP ASSISTANT (Gemini free tier) ═══════════
 // Setup: https://aistudio.google.com/apikey → API key banao → yahan paste karo.
@@ -609,7 +627,8 @@ function listVendorsForSuper() {
       areas:v.areas || '', cuisine:v.cuisine || '', logo:v.logo || '', minOrder:v.minOrder || 0,
       tgConfigured: !!(v.tgBotToken && v.tgChatId),
       rating: v.ratingCount ? Math.round((v.ratingSum / v.ratingCount) * 10) / 10 : 0,
-      ratingCount: v.ratingCount || 0, isDefault:(id === DEFAULT_VENDOR_ID) };
+      ratingCount: v.ratingCount || 0, isDefault:(id === DEFAULT_VENDOR_ID),
+      subStatus: vendorSubStatus(id, v), subDueDate: v.subDueDate || '', subLastPaid: v.subLastPaid || '', subAmount: VENDOR_SUB_AMOUNT };
   });
 }
 function deleteVendor(p) {
@@ -696,14 +715,84 @@ function saveVendor(p) {
   // hi pattern: khaali bheja gaya to purana jo bhi tha wahi rakho.
   const tgBotToken = p.tgBotToken ? String(p.tgBotToken).trim() : (existing ? (existing.tgBotToken || '') : '');
   const tgChatId = p.tgChatId ? String(p.tgChatId).trim() : (existing ? (existing.tgChatId || '') : '');
+  // Naya vendor: billing turant "pending" se shuru (due date = aaj) — abhi tak
+  // kabhi paid nahi hua. Existing vendor: sirf details edit karne se (naam/WhatsApp/
+  // wagera) billing state reset NAHI honi chahiye — jo bhi tha wahi le jao. Mark-
+  // paid apna alag action (markVendorPaid) hai, isi save se nahi hota.
+  const subDueDate = existing ? (existing.subDueDate || todayIST()) : todayIST();
+  const subLastPaid = existing ? (existing.subLastPaid || '') : '';
   const row = [id, safeCell(p.name || id), p.sheetId, safeCell(p.adminUser), passHash, p.notifyEmail || '', tgBotToken, tgChatId, safeCell(p.whatsapp || ''), p.status || 'Active', todayIST(), salt, String(p.scriptUrl || '').trim(),
     safeCell(p.areas || ''), safeCell(p.cuisine || ''), String(p.logo || '').trim(),
     existing ? (existing.ratingSum || 0) : 0, existing ? (existing.ratingCount || 0) : 0,
-    parseInt(p.minOrder, 10) || 0];
+    parseInt(p.minOrder, 10) || 0, subDueDate, subLastPaid];
   if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, row.length).setValues([row]);
   else sh.appendRow(row);
   resetVendorsCache();
   return { status:'success', vendors: listVendorsForSuper() };
+}
+
+// Super Admin: vendor ne UPI/PhonePe/GPay se bahar (app ke bahar) pay kar diya hai
+// — koi payment gateway/webhook nahi hai, isliye ye purely manual "haan, mila"
+// confirmation hai. SubDueDate ko VENDOR_SUB_CYCLE_DAYS aage badha deta hai.
+function markVendorPaid(p) {
+  const id = String(p.slug || p.vendorId || '').trim().toLowerCase();
+  if (!id) return { status:'error', message:'Vendor ID zaroori hai' };
+  if (id === DEFAULT_VENDOR_ID) return { status:'error', message:'Default vendor ki billing nahi hoti' };
+  const sh = vendorsSheet();
+  const lr = sh.getLastRow();
+  let rowIdx = -1;
+  if (lr >= 2) {
+    const ids = sh.getRange(2, 1, lr - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) { if (String(ids[i][0] || '').trim().toLowerCase() === id) { rowIdx = i + 2; break; } }
+  }
+  if (rowIdx < 0) return { status:'error', message:'Vendor "' + id + '" mila hi nahi' };
+  const today = todayIST();
+  const nextDue = Utilities.formatDate(new Date(Date.now() + VENDOR_SUB_CYCLE_DAYS * 86400000), TZ, 'yyyy-MM-dd');
+  sh.getRange(rowIdx, 20, 1, 2).setValues([[nextDue, today]]);   // cols 20,21 = SubDueDate, SubLastPaid
+  resetVendorsCache();
+  audit('VENDOR_MARKED_PAID', '', id + ' — next due ' + nextDue);
+  return { status:'success', vendors: listVendorsForSuper() };
+}
+
+// ═══════════ PLATFORM PAYMENT SETTINGS (super admin's own UPI/QR) ═══════════
+// Ek hi jagah — SAARE vendors isi ek UPI ID/QR pe pay karte hain (flat-fee model,
+// per-vendor alag payment info nahi chahiye). Vendors master sheet me hi ek chhoti
+// 'PlatformSettings' sheet, Config sheet jaisa hi JSON-in-A1 pattern.
+const PLATFORM_SETTINGS_SHEET = 'PlatformSettings';
+function platformSettingsSheet() {
+  const ss = getMasterSS();
+  let sh = ss.getSheetByName(PLATFORM_SETTINGS_SHEET);
+  if (!sh) sh = ss.insertSheet(PLATFORM_SETTINGS_SHEET);
+  return sh;
+}
+function getPlatformPayment() {
+  try {
+    const cached = CacheService.getScriptCache().get('platform_payment');
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  let result = { upiId: '', upiName: '', qrImageUrl: '' };
+  try {
+    const raw = platformSettingsSheet().getRange(1, 1).getValue();
+    if (raw) {
+      const j = JSON.parse(raw);
+      result = { upiId: j.upiId || '', upiName: j.upiName || '', qrImageUrl: j.qrImageUrl || '' };
+    }
+  } catch (e) {}
+  try { CacheService.getScriptCache().put('platform_payment', JSON.stringify(result), 300); } catch (e) {}
+  return result;
+}
+function savePlatformPayment(p) {
+  const clean = {
+    upiId: String(p.upiId || '').slice(0, 80).trim(),
+    upiName: String(p.upiName || '').slice(0, 60).trim(),
+    qrImageUrl: String(p.qrImageUrl || '').trim()
+  };
+  const sh = platformSettingsSheet();
+  sh.getRange(1, 1).setValue(JSON.stringify(clean));
+  sh.getRange(2, 1).setValue('⚠️ Cell A1 manually edit mat karo — Super Admin panel se update karo.');
+  try { CacheService.getScriptCache().remove('platform_payment'); } catch (e) {}
+  audit('PLATFORM_PAYMENT_SAVED', '', clean.upiId);
+  return { status: 'success', platformPayment: clean };
 }
 
 // ⚠️ 1) Admin username/password: ab har vendor ka apna hota hai — upar VENDORS
@@ -818,7 +907,7 @@ function doPost(e) {
     //    ye vendor-agnostic hai, seedha master registry se baat karta hai ──
     if (action === 'listvendors') {
       if (!checkSuperAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
-      return json({ status:'success', vendors: listVendorsForSuper() });
+      return json({ status:'success', vendors: listVendorsForSuper(), platformPayment: getPlatformPayment() });
     }
     if (action === 'deletevendor') {
       if (!checkSuperAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
@@ -829,6 +918,18 @@ function doPost(e) {
       return json(saveVendor(p));
     }
     if (action === 'uploadvendorlogo') {
+      if (!checkSuperAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
+      return json(uploadImage(p));
+    }
+    if (action === 'markvendorpaid') {
+      if (!checkSuperAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
+      return json(markVendorPaid(p));
+    }
+    if (action === 'saveplatformpayment') {
+      if (!checkSuperAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
+      return json(savePlatformPayment(p));
+    }
+    if (action === 'uploadplatformqr') {
       if (!checkSuperAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
       return json(uploadImage(p));
     }
@@ -3425,9 +3526,18 @@ function uploadImage(p) {
     });
 
     res.recent = orders.filter(o => o.status !== 'Cancelled').slice(-10).reverse().map(o => ({
-      time: o.time, name: o.name, society: o.society, flat: o.flat, 
+      time: o.time, name: o.name, society: o.society, flat: o.flat,
       total: o.total, payment: o.payment, status: o.status, deliveryDate: o.deliveryDate
     }));
+
+    // Vendor ki apni PLATFORM billing + kaha pay karna hai — admin login ke ek hi
+    // round-trip me, taaki alag se fetch na karna pade.
+    const cv = currentVendor() || {};
+    res.vendorBilling = {
+      status: vendorSubStatus(CURRENT_VENDOR_ID, cv), amount: VENDOR_SUB_AMOUNT,
+      dueDate: cv.subDueDate || '', lastPaid: cv.subLastPaid || ''
+    };
+    res.platformPayment = getPlatformPayment();
 
     try {
       CacheService.getScriptCache().put('stats_' + CURRENT_VENDOR_ID, JSON.stringify(res), 60);

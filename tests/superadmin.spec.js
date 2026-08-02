@@ -20,6 +20,7 @@ test.describe('Super admin', () => {
     const state = freshState();
     await openApp(page, { state });
     await superLogin(page);
+    await page.click('button:has-text("Naya Vendor Add Karo")');
     await page.fill('#svName', 'Shyam Rasoi');
     await page.fill('#svId', 'shyamrasoi');
     await page.fill('#svSheetId', 'SHEET_NEW_123');
@@ -35,6 +36,7 @@ test.describe('Super admin', () => {
     const state = freshState();
     await openApp(page, { state });
     await superLogin(page);
+    await page.click('button:has-text("Naya Vendor Add Karo")');
     await page.fill('#svName', 'Test');
     await page.fill('#svId', 'https://app.com/?v=shyamrasoi');
     await page.fill('#svSheetId', 'https://docs.google.com/spreadsheets/d/ABC123/edit');
@@ -51,6 +53,7 @@ test.describe('Super admin', () => {
     const state = freshState();
     await openApp(page, { state });
     await superLogin(page);
+    await page.click('button:has-text("Naya Vendor Add Karo")');
     await page.fill('#svName', 'Dupe');
     await page.fill('#svId', 'dupe');
     await page.fill('#svSheetId', 'SHEET1');     // default vendor ka
@@ -65,6 +68,7 @@ test.describe('Super admin', () => {
   test('zaroori fields bina save nahi', async ({ page }) => {
     await openApp(page);
     await superLogin(page);
+    await page.click('button:has-text("Naya Vendor Add Karo")');
     await page.fill('#svName', 'Adhura');
     await page.click('#svSaveBtn');
     await page.waitForTimeout(300);
