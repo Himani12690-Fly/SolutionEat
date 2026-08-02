@@ -109,7 +109,7 @@
   <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 16.5V11"/><path d="M12 7.6h.01"/></symbol>
   <symbol id="ic-whatsapp" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4c1.4.8 3.1 1.3 4.8 1.3 5.5 0 10-4.5 10-10S17.5 2 12 2z"/><path fill="#fff" stroke="none" d="M9 8.4c.2-.4.5-.4.7-.4h.6c.2 0 .4 0 .6.4.3.6.8 1.8.8 1.9s0 .3-.1.4c-.2.3-.3.4-.5.6-.2.2-.4.3-.2.6.5.8 1 1.5 1.7 2 .4.3.6.2.8 0 .2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.3.1 1.7.8 2 1 .3.1.4.2.5.4.1.2.1.9-.3 1.7-.4.8-1.9 1.5-2.6 1.6-.6.1-1.3.2-4-.9-3.3-1.3-5.3-4.5-5.5-4.8-.2-.3-1.3-1.7-1.3-3.2s.8-2.2 1.1-2.6z"/></symbol>
 </svg>
-<div id="bootLoader"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Loading"></div><div class="bl-spin"></div><div class="bl-t">Loading…</div></div>
+<div id="bootLoader"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Loading"></div><div class="bl-spin"></div><div class="bl-t" data-i="loadingEllipsis">Loading…</div></div>
 <script>
 /* Boot loader ka logo TURANT sahi karo — main script (body ke end me) chalne se pehle,
    warna vendor page pe pehle Nest & Nosh ka default logo flash hota hai. */
@@ -136,7 +136,7 @@
 })();
 </script>
 <div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t">Loading dashboard…</div><div class="al-sub" id="adminLoaderSub">Please wait</div><div class="al-steps" id="adminLoaderSteps"></div></div>
-<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-spin"></div><div class="bl-t" id="authTransitionText">Signing in…</div></div>
+<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-spin"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
 <div class="container">
 
   <!-- ══════ ADMIN DRAWER ══════ -->
@@ -150,7 +150,7 @@
          banati hai — JS koi bhi baad ke page-load se us purani history ko fix
          nahi kar sakta. Isliye ye link back-button pe depend hi nahi karta —
          hamesha tap-able hai, hamesha discovery pe hi jaata hai. -->
-    <div id="authBackKitchens" class="hidden" style="padding:14px 16px 0;font-size:13.5px;font-weight:800;color:var(--accent-dark,#6366f1);cursor:pointer;" onclick="__dscIsTop=true;openDiscovery();">‹ All Kitchens</div>
+    <div id="authBackKitchens" class="hidden" style="padding:14px 16px 0;font-size:13.5px;font-weight:800;color:var(--accent-dark,#6366f1);cursor:pointer;" onclick="__dscIsTop=true;openDiscovery();" data-i="allKitchensBack">‹ All Kitchens</div>
     <div class="hero">
       <div class="lang-switch"><select id="langSelAuth" class="js-lang" onchange="setLang(this.value)"></select></div>
       <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"><div class="logo-spin" id="authLogoSpin"></div></div>
@@ -159,9 +159,9 @@
     </div>
     <div class="section">
       <div class="demo-login hidden" id="demoCustHint">
-        <div class="dl-t">🎬 Demo Mode</div>
-        <div class="dl-s">Signup ki zaroorat nahi — ek tap me andar aa jaao aur poora customer experience dekho.</div>
-        <button onclick="demoLoginFE()" id="demoLoginBtn">🚀 Demo Customer se Login</button>
+        <div class="dl-t" data-i="demoModeTitle">🎬 Demo Mode</div>
+        <div class="dl-s" data-i="demoModeDesc">Signup ki zaroorat nahi — ek tap me andar aa jaao aur poora customer experience dekho.</div>
+        <button onclick="demoLoginFE()" id="demoLoginBtn" data-i="demoLoginBtn2">🚀 Demo Customer se Login</button>
       </div>
 
       <!-- Google Sign-In hi customer login ka ekmatra tareeka hai — email/password
@@ -186,8 +186,8 @@
         <div class="center-hint" data-i="loginHint"></div>
         <div id="googlePhoneBox" class="hidden" style="margin-top:14px;">
           <div class="form-group">
-            <label>👤 Full Name</label>
-            <input type="text" id="authName" maxlength="40" placeholder="Your name">
+            <label data-i="fullName">👤 Full Name</label>
+            <input type="text" id="authName" maxlength="40" data-ph="namePh" placeholder="Your name">
             <div class="field-error" id="err-authName" data-i="errName"></div>
           </div>
           <div class="form-group">
@@ -312,7 +312,7 @@
         <span class="zo-pin">📍</span>
         <div class="zo-loc-txt">
           <div class="zo-loc-label" id="dscCity">Ahmedabad</div>
-          <div class="zo-loc-sub">Fresh home-style meals near you</div>
+          <div class="zo-loc-sub" data-i="dscTagline">Fresh home-style meals near you</div>
         </div>
       </div>
       <div class="zo-head-actions">
@@ -334,10 +334,11 @@
 
     <!-- Kitchens list -->
     <div class="zo-body">
-      <div class="zo-sec-title" id="dscSecTitle">Available kitchens</div>
+      <div class="zo-sec-title" id="dscSecTitle" data-i="dscAvailableKitchens">Available kitchens</div>
       <div id="dscList"></div>
     </div>
-    <div class="dsc-foot">© 2026 Nest &amp; Nosh · All rights reserved</div>
+    <a href="become-a-vendor.html" class="dsc-vendor-cta" style="display:block;text-align:center;margin:4px 16px 10px;padding:12px 14px;border-radius:14px;background:var(--accent-soft);color:var(--accent-dark);font-size:12.5px;font-weight:800;text-decoration:none;" data-i="dscVendorCta">🍱 Apni kitchen hai? Apna online ordering app shuru karo →</a>
+    <div class="dsc-foot">© 2026 SolutionEat · All rights reserved</div>
   </div>
 
   <!-- ══════ AI HELP / Q&A ══════ -->
@@ -578,17 +579,17 @@
         <button class="add-cart-btn" style="margin-top:12px;" onclick="savePfAddr()" data-i="pfSave"></button>
       </div>
       <div class="lp-sec-t" data-i="pfQuick"></div>
-      <div class="pf-row" onclick="browseKitchens()"><span class="ic-tile tile-red"><svg class="ic"><use href="#ic-menu"/></svg></span><span>Browse Kitchens</span><i>›</i></div>
+      <div class="pf-row" onclick="browseKitchens()"><span class="ic-tile tile-red"><svg class="ic"><use href="#ic-menu"/></svg></span><span data-i="browseKitchens">Browse Kitchens</span><i>›</i></div>
       <div class="pf-row" onclick="openRateSheet()"><span class="ic-tile tile-orange em">⭐</span><span data-i="rateKitchen"></span><i>›</i></div>
       <div class="pf-row" onclick="openQA()"><span class="pf-orb"><span class="pf-orb-ring"></span><span class="pf-orb-core">💬</span></span><span data-i="navAiShort"></span><i>›</i></div>
       <div class="pf-row" onclick="showAboutPage()"><span class="ic-tile tile-green"><svg class="ic"><use href="#ic-info"/></svg></span><span data-i="navAbout"></span><i>›</i></div>
       <div class="lp-sec-t" data-i="pfLang"></div>
       <select class="sh-select js-lang" id="langSelProfile" onchange="setLang(this.value)"></select>
-      <div class="lp-sec-t">🎨 Theme</div>
+      <div class="lp-sec-t" data-i="themeLabel">🎨 Theme</div>
       <select class="sh-select" id="themeSelProfile" onchange="setTheme(this.value)">
-        <option value="system">📱 System Default</option>
-        <option value="light">☀️ Light</option>
-        <option value="dark">🌙 Dark</option>
+        <option value="system" data-i="themeSystem">📱 System Default</option>
+        <option value="light" data-i="themeLight">☀️ Light</option>
+        <option value="dark" data-i="themeDark">🌙 Dark</option>
       </select>
       <button class="add-cart-btn" style="margin-top:20px;background:var(--dangerbg);color:var(--danger);" onclick="logout()" data-i="logout"></button>
     </div>
@@ -1087,16 +1088,16 @@
     <div class="sheet" style="max-width:380px;">
       <div style="padding:22px 20px 20px;text-align:center;">
         <div style="font-size:15px;font-weight:900;" id="rateTitle"></div>
-        <div style="font-size:11.5px;color:var(--muted);margin-top:3px;">Tap karke stars chuniye</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:3px;" data-i="ratingTapStars">Tap karke stars chuniye</div>
         <div class="star-row" id="starRow"></div>
         <div style="font-size:11.5px;font-weight:800;color:var(--muted);" id="rateWord">&nbsp;</div>
-        <textarea class="rate-cmt" id="rateComment" rows="2" maxlength="200" placeholder="Kuch likhna chahein? (optional)"></textarea>
-        <button class="add-cart-btn" id="rateSendBtn" style="margin-top:12px;" onclick="sendRating()">Rating bhejein</button>
-        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeRateSheet()">Abhi nahi</button>
+        <textarea class="rate-cmt" id="rateComment" rows="2" maxlength="200" data-ph="ratingCommentPh" placeholder="Kuch likhna chahein? (optional)"></textarea>
+        <button class="add-cart-btn" id="rateSendBtn" style="margin-top:12px;" onclick="sendRating()" data-i="ratingSubmitBtn">Rating bhejein</button>
+        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeRateSheet()" data-i="ratingNotNow">Abhi nahi</button>
       </div>
     </div>
   </div>
-  <div class="demo-bar hidden" id="demoBar">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
+  <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
 <script>
@@ -1339,6 +1340,7 @@
   const LANGS = { en:'English', hinglish:'Hinglish', hi:'हिन्दी', gu:'ગુજરાતી' };
   const T = {
     en: {
+      loadingEllipsis:'Loading…', signingIn:'Signing in…', allKitchensBack:'‹ All Kitchens', demoModeTitle:'🎬 Demo Mode', demoModeDesc:'No signup needed — jump in with one tap and see the full customer experience.', demoLoginBtn2:'🚀 Demo Login', demoLoggingIn:'⏳ Taking you in…', dscTagline:'Fresh home-style meals near you', dscAvailableKitchens:'Available kitchens', dscVendorCta:'Own a kitchen? Start your online ordering app →', browseKitchens:'Browse Kitchens', themeLabel:'🎨 Theme', themeSystem:'📱 System Default', themeLight:'☀️ Light', themeDark:'🌙 Dark', ratingTapStars:'Tap to choose stars', ratingCommentPh:'Want to say something? (optional)', ratingSubmitBtn:'Submit Rating', ratingNotNow:'Not Now', demoGlobalBanner:'🎬 DEMO — feel free to try anything, data resets every night', dscLoaderTitle:'Finding kitchens near you…', dscLoaderSub:'Fresh home-style meals, loading up', couldNotLoadOrders:'Could not load orders.', networkErrorShort:'Network error.', retryBtn:'🔄 Retry', lblVariant:'Variant', lblSabzi:'Sabzi', lblRoti:'Roti', topRatedBadge:'★ TOP RATED', newBadge:'🆕 NEW', newTag:'New', noReviewsYet:'No reviews yet', couponNotApplied:'Coupon not applied', amountChargedLbl:'Amount charged:', legalNameLbl:'Legal Name', gstNumberLbl:'GST Number', fssaiLbl:'FSSAI Lic No', menuLoadFailed:'Could not load the menu', totalLbl:'Total', ordersPlacedOne:'Your order has been placed successfully.', ordersPlacedMany:'Your {n} orders have been placed successfully.', ordersDupSuffix:' {n} date(s) already had an order.',
       errNetwork:'❌ Network error. Please check your connection and try again.', sessionExpired:'⚠️ Your session has expired — please sign in again.', completeFields:'⚠️ Please complete all required fields.', orderFailed:'❌ Your order could not be placed. Please try again.', selectDate:'⚠️ Please select a date first.', orderCancelled:'✅ Your order has been cancelled.', resetLinkBad:'❌ This reset link is invalid or has expired.', confirmCancel:'Cancel this order?', welcomeUser:'🎉 Welcome,', errLogin:'Please sign in to continue.',
       tagline:'Fresh • Home-Style • Home & Office Delivery', secureLogin:'🔐 Secure Login', signInTitle:'Welcome Back', emailLabel:'Email', passwordLabel:'Password', passwordPh:'Apna password daalein', passwordPh6:'Kam se kam 6 characters', confirmPwLabel:'Password Confirm Karein', confirmPwPh:'Password dobara daalein', errEmail:'Valid email address daalein.', errPassword:'Apna password daalein.', errPassword6:'Password kam se kam 6 characters ka ho.', errConfirmPw:'Password match nahi ho raha.', forgotPw:'Password Bhool Gaye?', signInBtn:'Sign In', signUpTitle:'Account Banayein', signUpSub:'Roz ka tiffin order karne ke liye sign up karein.', phoneDeliveryHint:'Delivery contact ke liye use hoga.', createAccountBtn:'Account Banayein', switchToSignUp:'Account nahi hai? <b onclick="showAuthMode(\'signup\')">Sign Up</b>', switchToSignIn:'Pehle se account hai? <b onclick="showAuthMode(\'signin\')">Sign In</b>', backToSignIn:'← Sign In par wapas', forgotTitle:'Password Reset Karein', forgotSub:'Apna email daalein, hum reset link bhej denge.', sendResetBtn:'Reset Link Bhejein', resetTitle:'Naya Password Set Karein', resetSub:'Apne account ke liye naya password chunein.', newPasswordLabel:'Naya Password', resetBtn:'Password Reset Karein', orDivider:'ya', resetLinkSent:'Agar ye email registered hai, reset link bhej diya gaya hai.', passwordResetDone:'Password update ho gaya — ab sign in kar sakte hain.', signInTitle:'Welcome Back', emailLabel:'Email', passwordLabel:'Password', passwordPh:'Enter your password', passwordPh6:'At least 6 characters', confirmPwLabel:'Confirm Password', confirmPwPh:'Re-enter your password', errEmail:'Please enter a valid email address.', errPassword:'Please enter your password.', errPassword6:'Password must be at least 6 characters.', errConfirmPw:'Passwords do not match.', forgotPw:'Forgot Password?', signInBtn:'Sign In', signUpTitle:'Create an Account', signUpSub:'Sign up to start ordering your daily tiffin.', phoneDeliveryHint:'Used for delivery contact.', createAccountBtn:'Create Account', switchToSignUp:'Don\'t have an account? <b onclick="showAuthMode(\'signup\')">Sign Up</b>', switchToSignIn:'Already have an account? <b onclick="showAuthMode(\'signin\')">Sign In</b>', backToSignIn:'← Back to Sign In', forgotTitle:'Reset Password', forgotSub:'Enter your email and we will send you a reset link.', sendResetBtn:'Send Reset Link', resetTitle:'Set New Password', resetSub:'Choose a new password for your account.', newPasswordLabel:'New Password', resetBtn:'Reset Password', orDivider:'or', resetLinkSent:'If that email is registered, a reset link has been sent.', passwordResetDone:'Password updated — you can sign in now.',
       loginTitle:'Login or Sign Up', mobileLabel:'Mobile Number', mobilePh:'Enter 10-digit mobile number',
@@ -1373,6 +1375,7 @@
       aboutContact:'📞 Questions? We\'re just a call away.'
     },
     hinglish: {
+      loadingEllipsis:'Loading…', signingIn:'Sign in ho raha hai…', allKitchensBack:'‹ All Kitchens', demoModeTitle:'🎬 Demo Mode', demoModeDesc:'Signup ki zaroorat nahi — ek tap me andar aa jaao aur poora customer experience dekho.', demoLoginBtn2:'🚀 Demo Customer se Login', demoLoggingIn:'⏳ Andar le ja rahe hain…', dscTagline:'Fresh home-style meals near you', dscAvailableKitchens:'Available kitchens', dscVendorCta:'🍱 Apni kitchen hai? Apna online ordering app shuru karo →', browseKitchens:'Browse Kitchens', themeLabel:'🎨 Theme', themeSystem:'📱 System Default', themeLight:'☀️ Light', themeDark:'🌙 Dark', ratingTapStars:'Tap karke stars chuniye', ratingCommentPh:'Kuch likhna chahein? (optional)', ratingSubmitBtn:'Rating bhejein', ratingNotNow:'Abhi nahi', demoGlobalBanner:'🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai', dscLoaderTitle:'Finding kitchens near you…', dscLoaderSub:'Fresh home-style meals, loading up', couldNotLoadOrders:'Orders load nahi ho paaye.', networkErrorShort:'Network error.', retryBtn:'🔄 Retry', lblVariant:'Variant', lblSabzi:'Sabzi', lblRoti:'Roti', topRatedBadge:'★ TOP RATED', newBadge:'🆕 NEW', newTag:'New', noReviewsYet:'Abhi koi review nahi', couponNotApplied:'Coupon apply nahi hua', amountChargedLbl:'Amount charged:', legalNameLbl:'Legal Name', gstNumberLbl:'GST Number', fssaiLbl:'FSSAI Lic No', menuLoadFailed:'Menu load nahi ho paaya', totalLbl:'Total', ordersPlacedOne:'Aapka order successfully place ho gaya hai.', ordersPlacedMany:'Aapke {n} order successfully place ho gaye hain.', ordersDupSuffix:' {n} date par pehle se order maujood tha.',
       errNetwork:'❌ Network error. Connection check karke dobara try karein.', sessionExpired:'⚠️ Session expire ho gaya — kripya dobara sign in karein.', completeFields:'⚠️ Kripya saari zaroori details bharein.', orderFailed:'❌ Order place nahi ho paya. Kripya dobara try karein.', selectDate:'⚠️ Pehle ek date chunein.', orderCancelled:'✅ Aapka order cancel ho gaya.', resetLinkBad:'❌ Ye reset link invalid ya expire ho chuka hai.', confirmCancel:'Ye order cancel karein?', welcomeUser:'🎉 Swagat hai,', errLogin:'Aage badhne ke liye sign in karein.',
       // ── Auth (sign in / sign up / password reset) ──
       signInTitle:'Wapas Aapka Swagat Hai', signInBtn:'Sign In', signUpTitle:'Naya Account Banayein', signUpSub:'Roz ka tiffin order karne ke liye sign up karein.',
@@ -1429,6 +1432,7 @@
       aboutContact:'📞 Koi sawaal ho to humein call karein.'
     },
     hi: {
+      loadingEllipsis:'लोड हो रहा है…', signingIn:'साइन इन हो रहा है…', allKitchensBack:'‹ सभी किचन', demoModeTitle:'🎬 डेमो मोड', demoModeDesc:'साइनअप की ज़रूरत नहीं — एक टैप में अंदर जाएं और पूरा कस्टमर अनुभव देखें।', demoLoginBtn2:'🚀 डेमो कस्टमर से लॉगिन करें', demoLoggingIn:'⏳ अंदर ले जा रहे हैं…', dscTagline:'आपके पास ताज़ा घर-जैसा खाना', dscAvailableKitchens:'उपलब्ध किचन', dscVendorCta:'🍱 अपनी किचन है? अपना ऑनलाइन ऑर्डरिंग ऐप शुरू करें →', browseKitchens:'किचन ब्राउज़ करें', themeLabel:'🎨 थीम', themeSystem:'📱 सिस्टम डिफ़ॉल्ट', themeLight:'☀️ लाइट', themeDark:'🌙 डार्क', ratingTapStars:'स्टार चुनने के लिए टैप करें', ratingCommentPh:'कुछ लिखना चाहेंगे? (वैकल्पिक)', ratingSubmitBtn:'रेटिंग भेजें', ratingNotNow:'अभी नहीं', demoGlobalBanner:'🎬 डेमो — जो चाहे कर सकते हैं, डेटा रोज़ रात को रीसेट हो जाता है', dscLoaderTitle:'आपके पास किचन ढूंढ रहे हैं…', dscLoaderSub:'ताज़ा घर-जैसा खाना लोड हो रहा है', couldNotLoadOrders:'ऑर्डर लोड नहीं हो पाए।', networkErrorShort:'नेटवर्क में समस्या।', retryBtn:'🔄 फिर कोशिश करें', lblVariant:'वैरिएंट', lblSabzi:'सब्ज़ी', lblRoti:'रोटी', topRatedBadge:'★ टॉप रेटेड', newBadge:'🆕 नया', newTag:'नया', noReviewsYet:'अभी कोई रिव्यू नहीं', couponNotApplied:'कूपन लागू नहीं हुआ', amountChargedLbl:'चार्ज की गई राशि:', legalNameLbl:'कानूनी नाम', gstNumberLbl:'GST नंबर', fssaiLbl:'FSSAI लाइसेंस नंबर', menuLoadFailed:'मेन्यू लोड नहीं हो पाया', totalLbl:'कुल', ordersPlacedOne:'आपका ऑर्डर सफलतापूर्वक प्लेस हो गया है।', ordersPlacedMany:'आपके {n} ऑर्डर सफलतापूर्वक प्लेस हो गए हैं।', ordersDupSuffix:' {n} तारीख़(ों) पर पहले से ऑर्डर मौजूद था।',
       errNetwork:'❌ नेटवर्क त्रुटि। कनेक्शन जाँचकर दोबारा प्रयास करें।', sessionExpired:'⚠️ आपका सेशन समाप्त हो गया — कृपया दोबारा साइन इन करें।', completeFields:'⚠️ कृपया सभी आवश्यक जानकारी भरें।', orderFailed:'❌ ऑर्डर प्लेस नहीं हो सका। कृपया दोबारा प्रयास करें।', selectDate:'⚠️ कृपया पहले एक तारीख़ चुनें।', orderCancelled:'✅ आपका ऑर्डर कैंसल हो गया।', resetLinkBad:'❌ यह रीसेट लिंक अमान्य या समाप्त हो चुका है।', confirmCancel:'क्या यह ऑर्डर कैंसल करें?', welcomeUser:'🎉 स्वागत है,', errLogin:'आगे बढ़ने के लिए साइन इन करें।',
       tagline:'ताज़ा • घर का बना • डोरस्टेप डिलीवरी', secureLogin:'🔐 सुरक्षित लॉगिन', signInTitle:'वापसी पर स्वागत है', emailLabel:'ईमेल', passwordLabel:'पासवर्ड', passwordPh:'अपना पासवर्ड डालें', passwordPh6:'कम से कम 6 अक्षर', confirmPwLabel:'पासवर्ड की पुष्टि करें', confirmPwPh:'पासवर्ड दोबारा डालें', errEmail:'सही ईमेल एड्रेस डालें।', errPassword:'अपना पासवर्ड डालें।', errPassword6:'पासवर्ड कम से कम 6 अक्षर का हो।', errConfirmPw:'पासवर्ड मैच नहीं हो रहा।', forgotPw:'पासवर्ड भूल गए?', signInBtn:'साइन इन करें', signUpTitle:'अकाउंट बनाएं', signUpSub:'रोज़ का टिफ़िन ऑर्डर करने के लिए साइन अप करें।', phoneDeliveryHint:'डिलीवरी संपर्क के लिए इस्तेमाल होगा।', createAccountBtn:'अकाउंट बनाएं', switchToSignUp:'अकाउंट नहीं है? <b onclick="showAuthMode(\'signup\')">साइन अप करें</b>', switchToSignIn:'पहले से अकाउंट है? <b onclick="showAuthMode(\'signin\')">साइन इन करें</b>', backToSignIn:'← साइन इन पर वापस', forgotTitle:'पासवर्ड रीसेट करें', forgotSub:'अपना ईमेल डालें, हम रीसेट लिंक भेज देंगे।', sendResetBtn:'रीसेट लिंक भेजें', resetTitle:'नया पासवर्ड सेट करें', resetSub:'अपने अकाउंट के लिए नया पासवर्ड चुनें।', newPasswordLabel:'नया पासवर्ड', resetBtn:'पासवर्ड रीसेट करें', orDivider:'या', resetLinkSent:'अगर ये ईमेल रजिस्टर्ड है, रीसेट लिंक भेज दिया गया है।', passwordResetDone:'पासवर्ड अपडेट हो गया — अब साइन इन कर सकते हैं।',
       loginTitle:'लॉगिन या साइन अप', mobileLabel:'मोबाइल नंबर', mobilePh:'10 अंकों का मोबाइल नंबर डालें',
@@ -1463,6 +1467,7 @@
       aboutContact:'📞 कोई सवाल? हम एक कॉल दूर हैं।'
     },
     gu: {
+      loadingEllipsis:'લોડ થઈ રહ્યું છે…', signingIn:'સાઇન ઇન થઈ રહ્યું છે…', allKitchensBack:'‹ બધા કિચન', demoModeTitle:'🎬 ડેમો મોડ', demoModeDesc:'સાઇનઅપની જરૂર નથી — એક ટેપમાં અંદર જાઓ અને પૂરો કસ્ટમર અનુભવ જુઓ.', demoLoginBtn2:'🚀 ડેમો કસ્ટમરથી લૉગિન કરો', demoLoggingIn:'⏳ અંદર લઈ જઈ રહ્યા છીએ…', dscTagline:'તમારી નજીક તાજું ઘર-જેવું ભોજન', dscAvailableKitchens:'ઉપલબ્ધ કિચન', dscVendorCta:'🍱 તમારું કિચન છે? તમારી ઓનલાઇન ઓર્ડરિંગ એપ શરૂ કરો →', browseKitchens:'કિચન બ્રાઉઝ કરો', themeLabel:'🎨 થીમ', themeSystem:'📱 સિસ્ટમ ડિફૉલ્ટ', themeLight:'☀️ લાઇટ', themeDark:'🌙 ડાર્ક', ratingTapStars:'સ્ટાર પસંદ કરવા ટેપ કરો', ratingCommentPh:'કંઈક લખવા માંગો છો? (વૈકલ્પિક)', ratingSubmitBtn:'રેટિંગ મોકલો', ratingNotNow:'હમણાં નહીં', demoGlobalBanner:'🎬 ડેમો — જે ઈચ્છો તે કરી શકો છો, ડેટા દરરોજ રાત્રે રીસેટ થાય છે', dscLoaderTitle:'તમારી નજીક કિચન શોધી રહ્યા છીએ…', dscLoaderSub:'તાજું ઘર-જેવું ભોજન લોડ થઈ રહ્યું છે', couldNotLoadOrders:'ઓર્ડર લોડ થઈ શક્યા નહીં.', networkErrorShort:'નેટવર્ક ભૂલ.', retryBtn:'🔄 ફરી પ્રયત્ન કરો', lblVariant:'વેરિઅન્ટ', lblSabzi:'શાક', lblRoti:'રોટલી', topRatedBadge:'★ ટોપ રેટેડ', newBadge:'🆕 નવું', newTag:'નવું', noReviewsYet:'હજુ કોઈ રિવ્યૂ નથી', couponNotApplied:'કૂપન લાગુ થયું નથી', amountChargedLbl:'ચાર્જ થયેલી રકમ:', legalNameLbl:'કાનૂની નામ', gstNumberLbl:'GST નંબર', fssaiLbl:'FSSAI લાઇસન્સ નંબર', menuLoadFailed:'મેનૂ લોડ થઈ શક્યું નહીં', totalLbl:'કુલ', ordersPlacedOne:'તમારો ઓર્ડર સફળતાપૂર્વક પ્લેસ થયો છે.', ordersPlacedMany:'તમારા {n} ઓર્ડર સફળતાપૂર્વક પ્લેસ થયા છે.', ordersDupSuffix:' {n} તારીખ(તારીખો) પર પહેલેથી ઓર્ડર હતો.',
       errNetwork:'❌ નેટવર્ક ભૂલ. કનેક્શન તપાસીને ફરી પ્રયાસ કરો.', sessionExpired:'⚠️ તમારું સેશન સમાપ્ત થયું — કૃપા કરીને ફરી સાઇન ઇન કરો.', completeFields:'⚠️ કૃપા કરીને બધી જરૂરી માહિતી ભરો.', orderFailed:'❌ ઓર્ડર પ્લેસ થઈ શક્યો નથી. કૃપા કરીને ફરી પ્રયાસ કરો.', selectDate:'⚠️ કૃપા કરીને પહેલા તારીખ પસંદ કરો.', orderCancelled:'✅ તમારો ઓર્ડર કૅન્સલ થઈ ગયો.', resetLinkBad:'❌ આ રીસેટ લિંક અમાન્ય અથવા સમાપ્ત થઈ ગઈ છે.', confirmCancel:'આ ઓર્ડર કૅન્સલ કરવો છે?', welcomeUser:'🎉 સ્વાગત છે,', errLogin:'આગળ વધવા માટે સાઇન ઇન કરો.',
       tagline:'તાજું • ઘરનું બનાવેલું • ડોરસ્ટેપ ડિલિવરી', secureLogin:'🔐 સુરક્ષિત લોગિન', signInTitle:'ફરી સ્વાગત છે', emailLabel:'ઈમેલ', passwordLabel:'પાસવર્ડ', passwordPh:'તમારો પાસવર્ડ દાખલ કરો', passwordPh6:'ઓછામાં ઓછા 6 અક્ષર', confirmPwLabel:'પાસવર્ડ કન્ફર્મ કરો', confirmPwPh:'પાસવર્ડ ફરીથી દાખલ કરો', errEmail:'સાચું ઈમેલ સરનામું દાખલ કરો.', errPassword:'તમારો પાસવર્ડ દાખલ કરો.', errPassword6:'પાસવર્ડ ઓછામાં ઓછા 6 અક્ષરનો હોવો જોઈએ.', errConfirmPw:'પાસવર્ડ મેચ થતો નથી.', forgotPw:'પાસવર્ડ ભૂલી ગયા?', signInBtn:'સાઇન ઇન કરો', signUpTitle:'એકાઉન્ટ બનાવો', signUpSub:'રોજનું ટિફિન ઓર્ડર કરવા સાઇન અપ કરો.', phoneDeliveryHint:'ડિલિવરી સંપર્ક માટે વપરાશે.', createAccountBtn:'એકાઉન્ટ બનાવો', switchToSignUp:'એકાઉન્ટ નથી? <b onclick="showAuthMode(\'signup\')">સાઇન અપ કરો</b>', switchToSignIn:'પહેલેથી એકાઉન્ટ છે? <b onclick="showAuthMode(\'signin\')">સાઇન ઇન કરો</b>', backToSignIn:'← સાઇન ઇન પર પાછા', forgotTitle:'પાસવર્ડ રીસેટ કરો', forgotSub:'તમારું ઈમેલ દાખલ કરો, અમે રીસેટ લિંક મોકલીશું.', sendResetBtn:'રીસેટ લિંક મોકલો', resetTitle:'નવો પાસવર્ડ સેટ કરો', resetSub:'તમારા એકાઉન્ટ માટે નવો પાસવર્ડ પસંદ કરો.', newPasswordLabel:'નવો પાસવર્ડ', resetBtn:'પાસવર્ડ રીસેટ કરો', orDivider:'અથવા', resetLinkSent:'જો આ ઈમેલ રજિસ્ટર્ડ છે, રીસેટ લિંક મોકલી દેવાઈ છે.', passwordResetDone:'પાસવર્ડ અપડેટ થયો — હવે સાઇન ઇન કરી શકો છો.',
       loginTitle:'લોગિન અથવા સાઇન અપ', mobileLabel:'મોબાઇલ નંબર', mobilePh:'10 અંકનો મોબાઇલ નંબર દાખલ કરો',
@@ -1585,9 +1590,9 @@
     const lb=document.getElementById('abLegalBox');
     if(lb){
       let rows='';
-      if(CFG.legalName) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">Legal Name</span><span style="font-weight:800;text-align:right;">${esc(CFG.legalName)}</span></div>`;
-      if(CFG.gstNumber) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">GST Number</span><span style="font-weight:800;text-align:right;">${esc(CFG.gstNumber)}</span></div>`;
-      if(CFG.fssai) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">FSSAI Lic No</span><span style="font-weight:800;text-align:right;">${esc(CFG.fssai)}</span></div>`;
+      if(CFG.legalName) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">${t('legalNameLbl')}</span><span style="font-weight:800;text-align:right;">${esc(CFG.legalName)}</span></div>`;
+      if(CFG.gstNumber) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">${t('gstNumberLbl')}</span><span style="font-weight:800;text-align:right;">${esc(CFG.gstNumber)}</span></div>`;
+      if(CFG.fssai) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">${t('fssaiLbl')}</span><span style="font-weight:800;text-align:right;">${esc(CFG.fssai)}</span></div>`;
       lb.innerHTML = rows ? ('<hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">'+rows) : '';
     }
     const pb=document.getElementById('abPolicyBody'); if(pb) pb.innerHTML=t('policyBody');
@@ -2831,7 +2836,7 @@
     ['demoCustHint','demoAdminHint'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.remove('hidden'); });
   }
   function demoLoginFE(){
-    const btn=document.getElementById('demoLoginBtn'); if(btn){ btn.disabled=true; btn.textContent='⏳ Andar le ja rahe hain…'; }
+    const btn=document.getElementById('demoLoginBtn'); if(btn){ btn.disabled=true; btn.textContent=t('demoLoggingIn'); }
     apiPost({action:'demologin'}).then(j=>{
       if(btn){ btn.disabled=false; btn.textContent='🚀 Demo Customer se Login'; }
       if(j.status!=='success'){ showToast('❌ '+(j.message||'Demo login fail'),'error'); return; }
@@ -3010,7 +3015,7 @@
     const err=document.getElementById('authGoogleErr'); if(err) err.classList.remove('show');
     document.getElementById('err-authPhone').classList.remove('show');
     const at=document.getElementById('authTransition'); const atText=document.getElementById('authTransitionText');
-    if(at){ atText.textContent='Signing in…'; atText.classList.remove('welcome'); at.classList.remove('hidden','gone'); }
+    if(at){ atText.textContent=t('signingIn'); atText.classList.remove('welcome'); at.classList.remove('hidden','gone'); }
     // fetch() ka apna koi timeout nahi hota — network sach me atak jaye to ye overlay
     // hamesha ke liye "Signing in…" pe fasa reh jaata (.then/.catch kabhi na chale).
     let __gcSettled=false;
@@ -3414,7 +3419,7 @@
     }catch(err){
       try{ console.error('renderMealPanelNow failed', err); }catch(e){}
       try{ dbgLog({ev:'meal_panel_render_error', err:String(err).slice(0,200)}); }catch(e){}
-      const errHtml='<div class="c1card c1-closed" style="opacity:.85;justify-content:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;width:100%;"><span style="font-size:28px;">⚠️</span><span class="c1-name">Menu load nahi ho paaya</span><button class="c1-add" onclick="box.__lastHtml=null;renderMealPanel();" style="max-width:160px;">🔄 Retry</button></div></div>';
+      const errHtml='<div class="c1card c1-closed" style="opacity:.85;justify-content:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;width:100%;"><span style="font-size:28px;">⚠️</span><span class="c1-name">'+t('menuLoadFailed')+'</span><button class="c1-add" onclick="box.__lastHtml=null;renderMealPanel();" style="max-width:160px;">'+t('retryBtn')+'</button></div></div>';
       box.__lastHtml=null; box.innerHTML=errHtml;
     }
   }
@@ -3681,7 +3686,7 @@
       html+=`<div class="sum-sub">${cartLineDesc(it)}</div>`;
     });
     html+=`<div class="sum-row" style="margin-top:6px;"><span class="l">🛵 ${t('deliveryLbl')}${feeDates()>1?(' × '+feeDates()):''}</span><span>₹${deliveryFeeTotal()}</span></div>`;
-    html+=`${appliedPromo?`<div class="sum-row" style="color:var(--ok);"><span class="l">🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${promoDiscountNow()}</span></div>`:''}<div class="sum-total"><span>Total</span><span>₹${cartTotalDisplay()}</span></div>`;
+    html+=`${appliedPromo?`<div class="sum-row" style="color:var(--ok);"><span class="l">🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${promoDiscountNow()}</span></div>`:''}<div class="sum-total"><span>${t('totalLbl')}</span><span>₹${cartTotalDisplay()}</span></div>`;
     document.getElementById('summaryCard').innerHTML=html;
   }
 
@@ -3835,8 +3840,8 @@
           waEl.className='wa-icon-btn';   // icon button hamesha same dikhta hai, auto-open ho ya na ho
         });
         stepP('successMsg', () => {
-          let m=(LANG==='en')?`Your ${ok} order${ok>1?'s have':' has'} been placed successfully.`:`Aapke ${ok} order successfully place ho gaye hain.`;
-          if(dup) m+=(LANG==='en')?` ${dup} date(s) already had an order.`:` ${dup} date par pehle se order maujood tha.`;
+          let m=t(ok>1?'ordersPlacedMany':'ordersPlacedOne').replace('{n}', ok);
+          if(dup) m+=t('ordersDupSuffix').replace('{n}', dup);
           if(promoLine) m+=' 🎟️ '+promoLine+' applied.';
           document.getElementById('successMsg').textContent=m;
         });
@@ -3847,7 +3852,7 @@
           if(cwBox){
             if(couponWarn){
               cwBox.className='coupon-warn';
-              cwBox.innerHTML=`🎟️ <b>Coupon not applied</b><br><span>${esc(couponWarn)}</span><br><span>Amount charged: <b>₹${serverTotal}</b></span>`;
+              cwBox.innerHTML=`🎟️ <b>${t('couponNotApplied')}</b><br><span>${esc(couponWarn)}</span><br><span>${t('amountChargedLbl')} <b>₹${serverTotal}</b></span>`;
             } else { cwBox.className='coupon-warn hidden'; cwBox.innerHTML=''; }
           }
         });
@@ -3964,7 +3969,7 @@
     const boxF=document.getElementById('subFormBox');
     if(!boxA||!boxF) return;
     const failBox = msg => {
-      boxA.innerHTML='<div style="color:var(--muted);font-size:13px;">'+msg+' <span style="color:var(--accent-dark);font-weight:800;cursor:pointer;" onclick="loadSub(true)">🔄 Retry</span></div>';
+      boxA.innerHTML='<div style="color:var(--muted);font-size:13px;">'+msg+' <span style="color:var(--accent-dark);font-weight:800;cursor:pointer;" onclick="loadSub(true)">'+t('retryBtn')+'</span></div>';
       boxF.innerHTML='';
     };
     const fresh = subCacheValid && (Date.now()-subCacheAt < SUB_TTL);
@@ -3972,7 +3977,7 @@
       renderSub(subCache);                 // turant dikha do — koi spinner nahi
       if(fresh && !force) return;          // data taza hai, network call bhi nahi
     } else {
-      boxA.innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading…</span></div>';
+      boxA.innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>'+t('loadingEllipsis')+'</span></div>';
       boxF.innerHTML='<div class="sub-skel"><div class="sk-line" style="width:60%;"></div><div class="sk-box"></div><div class="sk-box" style="height:70px;"></div><div class="sk-box" style="height:50px;"></div></div>';
     }
     // silent = cache pehle se screen pe hai, toh fail hone par UI mat todo
@@ -4171,8 +4176,8 @@
   function dscBigLoader(){
     return `<div class="dsc-loader">
       <div class="dl-ring"><div class="dl-emoji">🍱</div></div>
-      <div class="dl-t">Finding kitchens near you…</div>
-      <div class="dl-s">Fresh home-style meals, loading up</div>
+      <div class="dl-t">${t('dscLoaderTitle')}</div>
+      <div class="dl-s">${t('dscLoaderSub')}</div>
     </div>`;
   }
   // ⚠️ SPEED: pehle areas() resolve hone ke BAAD hi discover() shuru hota tha —
@@ -4238,7 +4243,7 @@
   function renderDscList(list){
     dscVendorsCache = list || [];
     const st = document.getElementById('dscSecTitle');
-    if(st) st.textContent = 'Available kitchens';
+    if(st) st.textContent = t('dscAvailableKitchens');
     const sb = document.getElementById('dscSearch'); if(sb) sb.value='';
     paintDscList(dscVendorsCache);
   }
@@ -4267,15 +4272,15 @@
         : `background:${DSC_GRAD[i % DSC_GRAD.length]};`;
       // Top-left badge: TOP RATED for 4.5+, NEW for unrated
       let badge = '';
-      if(rated && Number(v.rating) >= 4.5) badge = `<span class="zrc-badge top">★ TOP RATED</span>`;
-      else if(!rated) badge = `<span class="zrc-badge new">🆕 NEW</span>`;
+      if(rated && Number(v.rating) >= 4.5) badge = `<span class="zrc-badge top">${t('topRatedBadge')}</span>`;
+      else if(!rated) badge = `<span class="zrc-badge new">${t('newBadge')}</span>`;
       const eta = v.eta || v.deliveryTime || '';
       const rateHtml = rated
         ? `<span class="zrc-rate">${v.rating} ★</span>`
-        : `<span class="zrc-rate none">New</span>`;
+        : `<span class="zrc-rate none">${t('newTag')}</span>`;
       const metaBits = [];
       if(rated) metaBits.push(`${v.ratingCount} review${v.ratingCount>1?'s':''}`);
-      else metaBits.push('No reviews yet');
+      else metaBits.push(t('noReviewsYet'));
       if(v.minOrder) metaBits.push(`Min ₹${v.minOrder}`);
       const cuisine = (v.cuisine||'').replace(/\s*,\s*/g, ' · ').trim();
       return `<div class="zrc" onclick="goToVendor('${esc(v.vendorId).replace(/'/g,"")}')">
@@ -4449,10 +4454,10 @@
     const mealBlock=(emoji,title,qty,sabzi,tiffin,roti,addons,time)=>{
       if(!Number(qty))return '';
       const rows=[];
-      rows.push(`<div class="om-line"><span class="l">Variant</span><span class="r">${tiffin||'—'}</span></div>`);
-      if(title!=='Breakfast') rows.push(`<div class="om-line"><span class="l">Sabzi</span><span class="r">${(sabzi&&String(sabzi).trim())||'Chef&#39;s choice'}</span></div>`);
-      if(roti&&title!=='Breakfast') rows.push(`<div class="om-line"><span class="l">Roti</span><span class="r">${roti}</span></div>`);
-      if(addons&&addons!=='None') rows.push(`<div class="om-line"><span class="l">Add-ons</span><span class="r">${addons}</span></div>`);
+      rows.push(`<div class="om-line"><span class="l">${t('lblVariant')}</span><span class="r">${tiffin||'—'}</span></div>`);
+      if(title!=='Breakfast') rows.push(`<div class="om-line"><span class="l">${t('lblSabzi')}</span><span class="r">${(sabzi&&String(sabzi).trim())||t('subAnySabzi')}</span></div>`);
+      if(roti&&title!=='Breakfast') rows.push(`<div class="om-line"><span class="l">${t('lblRoti')}</span><span class="r">${roti}</span></div>`);
+      if(addons&&addons!=='None') rows.push(`<div class="om-line"><span class="l">${t('addOns')}</span><span class="r">${addons}</span></div>`);
       if(time) rows.push(`<div class="om-line"><span class="l">${t('deliveryTime').replace(/[⏰🕐]\s*/,'')}</span><span class="r">🕐 ${time}</span></div>`);
       return `<div class="om-meal"><div class="omm-head"><span>${emoji} ${title}</span><span class="omm-badge">× ${qty}</span></div>${rows.join('')}</div>`;
     };
@@ -4495,7 +4500,7 @@
       return;
     }
 
-    box.innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading…</span></div>';
+    box.innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>'+t('loadingEllipsis')+'</span></div>';
     let url=GOOGLE_SCRIPT_URL+'?action=myOrders&token='+encodeURIComponent(SESSION.token)+'&vendorId='+VENDOR_ID+'&authVendorId='+((SESSION&&SESSION.vid)||VENDOR_ID); if(dateOpt)url+='&date='+encodeURIComponent(dateOpt);
     fetch(url).then(r=>r.json()).then(j=>{
       if(j.status==='success'){
@@ -4504,8 +4509,8 @@
         if(!dateOpt) upcomingOrders = j.orders || [];
       }
       else if(j.status==='invalid_session')handleInvalidSession();
-      else box.innerHTML='<div style="color:var(--muted);font-size:13px;">Could not load orders.</div>';
-    }).catch(()=>{ box.innerHTML='<div style="color:var(--muted);font-size:13px;">Network error.</div>'; });
+      else box.innerHTML='<div style="color:var(--muted);font-size:13px;">'+t('couldNotLoadOrders')+'</div>';
+    }).catch(()=>{ box.innerHTML='<div style="color:var(--muted);font-size:13px;">'+t('networkErrorShort')+'</div>'; });
   }
   function viewHistory(){ const d=document.getElementById('histDate').value; if(!d){ showToast(t('selectDate'),'warning'); return; } loadMyOrders(d); }
   async function cancelMyOrder(row,dd,createdIso){ if(!isLoggedIn()){ showAuth(); return; } if(!canCancel({deliveryDate:dd,createdIso:createdIso||''})){ showToast(t('cancelClosed'),'error'); return; }

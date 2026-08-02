@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolutionEat — Apni Tiffin/Kitchen Ko Online Le Jaao</title>
+<meta name="description" content="Apni tiffin service ya cloud-kitchen ke liye apna khud ka online ordering app aur dashboard — sirf ₹499/month (~₹20/din), koi commission nahi.">
+<meta name="theme-color" content="#6366f1">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#211f38; --ink-soft:#5b587a; --paper:#f6f5fb; --card:#ffffff;
+    --line:#e6e4f2; --accent:#6366f1; --accent-dark:#4338ca; --accent-soft:#ececff;
+    --gold:#c8912c; --gold-soft:#faf1de; --ok:#1a8a52; --ok-soft:#e7f6ee;
+    --shadow:0 20px 50px -20px rgba(33,31,56,.25);
+    --radius:20px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --ink:#f1f0fb; --ink-soft:#b3b0cf; --paper:#15131f; --card:#1d1b2c;
+      --line:#312e46; --accent:#818cf8; --accent-dark:#a5b4fc; --accent-soft:#26243b;
+      --gold:#e0ac52; --gold-soft:#2a2314; --ok:#4ade80; --ok-soft:#152a1f;
+      --shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    }
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.01em;text-wrap:balance;margin:0;}
+  p{margin:0;}
+  img,svg{display:block;max-width:100%;}
+  a{color:inherit;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-dark);background:var(--accent-soft);padding:6px 13px;border-radius:50px;}
+  .eyebrow::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+  /* ── Nav ── */
+  .nav{position:sticky;top:0;z-index:40;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
+  .brand{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-weight:700;font-size:19px;text-decoration:none;color:var(--ink);}
+  .brand-mark{width:32px;height:32px;border-radius:10px;background:linear-gradient(155deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;flex:none;}
+  .brand-mark svg{width:18px;height:18px;}
+  .nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--paper);font-weight:700;font-size:13px;padding:9px 16px;border-radius:50px;text-decoration:none;white-space:nowrap;flex:none;}
+  @media(max-width:420px){
+    .brand{font-size:16px;}
+    .nav-cta{font-size:0;padding:9px;gap:0;}
+    .nav-cta svg{width:17px;height:17px;}
+  }
+
+  /* ── Hero ── */
+  .hero{padding:56px 0 40px;}
+  .hero-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center;}
+  .hero h1{font-size:clamp(30px,4.2vw,46px);line-height:1.1;margin:16px 0 18px;}
+  .hero h1 em{font-style:normal;color:var(--accent-dark);}
+  .hero-sub{font-size:16px;color:var(--ink-soft);max-width:46ch;margin-bottom:26px;}
+  .hero-ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:22px;}
+  .btn{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:14.5px;padding:14px 22px;border-radius:50px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 12px 24px -10px rgba(99,102,241,.55);}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);}
+  .price-pill{display:inline-flex;align-items:baseline;gap:6px;font-size:13.5px;font-weight:700;color:var(--ink-soft);}
+  .price-pill b{font-family:'Fraunces',serif;font-size:19px;font-weight:700;color:var(--ink);}
+
+  .hero-art{position:relative;display:flex;align-items:center;justify-content:center;height:360px;}
+  .tiffin{position:relative;width:190px;}
+  .tiffin-handle{width:70px;height:34px;border:7px solid var(--ink);border-bottom:none;border-radius:20px 20px 0 0;margin:0 auto -3px;}
+  .tiffin-tier{height:56px;border-radius:16px;margin-bottom:6px;box-shadow:var(--shadow);position:relative;}
+  .tiffin-tier:nth-child(2){background:linear-gradient(155deg,var(--accent),var(--accent-dark));}
+  .tiffin-tier:nth-child(3){background:var(--gold);}
+  .tiffin-tier:nth-child(4){background:var(--card);border:1.5px solid var(--line);}
+  .float-card{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 13px;box-shadow:var(--shadow);font-size:11.5px;font-weight:800;display:flex;align-items:center;gap:7px;}
+  .float-card svg{width:15px;height:15px;color:var(--accent);flex:none;}
+  .fc1{top:6px;left:-18px;color:var(--ok);}
+  .fc1 svg{color:var(--ok);}
+  .fc2{bottom:24px;right:-24px;color:var(--accent-dark);}
+  @media(max-width:760px){
+    .hero-grid{grid-template-columns:1fr;}
+    .hero-art{height:260px;order:-1;}
+  }
+
+  /* ── Trust strip ── */
+  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0;}
+  .trust-row{display:flex;flex-wrap:wrap;gap:26px;justify-content:space-between;}
+  .trust-item{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:var(--ink-soft);flex:1 1 200px;}
+  .trust-item svg{width:19px;height:19px;color:var(--accent);flex:none;}
+
+  /* ── Section shell ── */
+  section{padding:64px 0;}
+  .sec-head{max-width:56ch;margin-bottom:38px;}
+  .sec-head h2{font-size:clamp(24px,3vw,32px);margin-top:14px;}
+  .sec-head p{color:var(--ink-soft);font-size:15px;margin-top:10px;}
+
+  /* ── Features grid ── */
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .feat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;}
+  .feat-ic{width:42px;height:42px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+  .feat-ic svg{width:21px;height:21px;color:var(--accent-dark);}
+  .feat-card h3{font-size:16.5px;font-weight:700;margin-bottom:7px;}
+  .feat-card p{font-size:13.5px;color:var(--ink-soft);line-height:1.55;}
+  @media(max-width:760px){.feat-grid{grid-template-columns:1fr;}}
+  @media(min-width:761px) and (max-width:980px){.feat-grid{grid-template-columns:repeat(2,1fr);}}
+
+  /* ── Steps ── */
+  .steps{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:44px 36px;}
+  .step-row{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;}
+  .step{position:relative;padding-left:2px;}
+  .step-n{font-family:'Fraunces',serif;font-size:34px;font-weight:600;color:var(--accent-soft);-webkit-text-stroke:1.5px var(--accent);color:transparent;margin-bottom:10px;display:block;}
+  .step h3{font-size:15.5px;font-weight:700;margin-bottom:7px;}
+  .step p{font-size:13.5px;color:var(--ink-soft);line-height:1.55;}
+  @media(max-width:760px){.step-row{grid-template-columns:1fr;gap:26px;}}
+
+  /* ── Pricing ── */
+  .price-card{background:linear-gradient(165deg,var(--ink),#000);color:#f4f3fc;border-radius:28px;padding:44px 40px;display:grid;grid-template-columns:1fr auto;gap:36px;align-items:center;}
+  .price-card .eyebrow{background:rgba(255,255,255,.12);color:#c7c5f5;}
+  .price-card .eyebrow::before{background:#a5b4fc;}
+  .price-big{display:flex;align-items:baseline;gap:8px;margin:16px 0 6px;}
+  .price-big .amt{font-family:'Fraunces',serif;font-size:56px;font-weight:600;}
+  .price-big .per{font-size:15px;color:#a9a6cc;font-weight:700;}
+  .price-approx{font-size:13.5px;color:#c7c5f5;font-weight:700;margin-bottom:20px;}
+  .price-list{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+  .price-list li{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#dcdaf2;}
+  .price-list svg{width:16px;height:16px;color:#86efac;flex:none;margin-top:2px;}
+  .price-cta{display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:26px 30px;text-align:center;}
+  .price-cta small{font-size:11px;color:#a9a6cc;font-weight:700;}
+  @media(max-width:760px){.price-card{grid-template-columns:1fr;padding:32px 24px;}}
+
+  /* ── Founder note ── */
+  .note{max-width:64ch;margin:0 auto;text-align:center;}
+  .note blockquote{font-family:'Fraunces',serif;font-size:clamp(19px,2.3vw,25px);font-weight:500;line-height:1.5;margin:0 0 18px;text-wrap:balance;}
+  .note cite{font-style:normal;font-size:13px;font-weight:700;color:var(--ink-soft);}
+
+  /* ── FAQ ── */
+  .faq{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  .faq-item{background:var(--card);padding:20px 22px;}
+  .faq-item h3{font-size:14.5px;font-weight:700;margin-bottom:6px;}
+  .faq-item p{font-size:13.5px;color:var(--ink-soft);line-height:1.55;}
+
+  /* ── Contact ── */
+  .contact-card{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+  .contact-form{display:grid;gap:12px;}
+  .field label{display:block;font-size:12px;font-weight:800;color:var(--ink-soft);margin-bottom:6px;}
+  .field input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:14px;}
+  .field input:focus{outline:none;border-color:var(--accent);}
+  .contact-side{display:flex;flex-direction:column;justify-content:center;gap:16px;}
+  .contact-side h3{font-size:19px;}
+  .contact-side p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;}
+  .wa-direct{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:700;color:var(--ok);}
+  .wa-direct svg{width:18px;height:18px;}
+  @media(max-width:760px){.contact-card{grid-template-columns:1fr;padding:26px;}}
+
+  /* ── Footer ── */
+  footer{border-top:1px solid var(--line);padding:34px 0;}
+  .foot-row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;align-items:center;font-size:12.5px;color:var(--ink-soft);}
+  .foot-row a{font-weight:700;text-decoration:none;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a href="#top" class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M7 2v4M17 2v4M4 10h16M5 10l1.2 10a2 2 0 0 0 2 1.8h7.6a2 2 0 0 0 2-1.8L19 10"/></svg>
+      </span>
+      SolutionEat
+    </a>
+    <a href="#contact" class="nav-cta">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
+      WhatsApp par baat karo
+    </a>
+  </div>
+</nav>
+
+<main id="top">
+  <div class="wrap hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Kitchen &amp; Tiffin Owners ke liye</span>
+        <h1>Apni tiffin service ko <em>apna online ordering app</em> do.</h1>
+        <p class="hero-sub">Koi coding nahi, koi app-developer nahi. Aapka apna branded link, order dashboard aur customer notifications — sab kuch ready, sirf ek flat monthly fee par.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="#contact">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
+            Shuru karna hai
+          </a>
+          <a class="btn btn-ghost" href="#how">Kaise kaam karta hai?</a>
+        </div>
+        <div class="price-pill">Sirf <b>₹499</b>/month · lagbhag <b>₹20</b>/din · koi order-commission nahi</div>
+      </div>
+      <div class="hero-art">
+        <div class="float-card fc1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Naya order aaya
+        </div>
+        <div class="float-card fc2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          Customer ko live update
+        </div>
+        <div class="tiffin">
+          <div class="tiffin-handle"></div>
+          <div class="tiffin-tier"></div>
+          <div class="tiffin-tier"></div>
+          <div class="tiffin-tier"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trust">
+    <div class="wrap trust-row">
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13.5 6.5 17 3l4 4-3.5 3.5M8 8l8 8M3 21l4.5-1L21 6.5a2 2 0 0 0-2.8-2.8L4 17l-1 4Z"/></svg> Apna branded ordering link</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h18v4H3zM3 12h8v8H3zM15 12h6v8h-6z"/></svg> Poora order &amp; menu dashboard</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg> Instant WhatsApp order alerts</div>
+      <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> 24-48 ghante me live</div>
+    </div>
+  </div>
+
+  <section id="what">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Kya milta hai</span>
+        <h2>Ek chhoti kitchen ko bhi bade jaisa system.</h2>
+        <p>Har vendor ko apna alag, isolated setup milta hai — apna menu, apni pricing, apne customers.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat-card">
+          <div class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13.5 6.5 17 3l4 4-3.5 3.5M8 8l8 8M3 21l4.5-1L21 6.5a2 2 0 0 0-2.8-2.8L4 17l-1 4Z"/></svg></div>
+          <h3>Apna branded app</h3>
+          <p>Aapke kitchen ke naam se ek alag link (jaise <em>?v=aapkakitchen</em>) — customer isi se order karega, aapka naam aur logo sabko dikhega.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h18v4H3zM3 12h8v8H3zM15 12h6v8h-6z"/></svg></div>
+          <h3>Poora control aapke haath me</h3>
+          <p>Menu, price, timing, kitchen open/close — sab khud manage karo, kabhi bhi. Koi update customer side turant reflect hota hai.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6.5 5.5 5.5 0 0 1 21.5 12c-2.5 4.5-9.5 9-9.5 9Z"/></svg></div>
+          <h3>Area ke customers tak pahunch</h3>
+          <p>Aapki kitchen discovery list me dikhti hai, jahan aapke area ke customers naye kitchens dhoondte hain.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+          <h3>Turant order alerts</h3>
+          <p>Naya order aate hi WhatsApp/Telegram par seedha message aata hai — baar-baar app check karne ki zaroorat nahi.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 0 0-14.6-4.6M4 16a8 8 0 0 0 14.6 4.6"/></svg></div>
+          <h3>Live sync, bina reload</h3>
+          <p>Price ya timing badlo, aapke sab customers ki open app par khud-ba-khud update ho jaata hai — smooth, bina confusion.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m20.6 12.6-8-8A2 2 0 0 0 11.2 4H5a1 1 0 0 0-1 1v6.2c0 .5.2 1 .6 1.4l8 8a2 2 0 0 0 2.8 0l5.2-5.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.5" r="1"/></svg></div>
+          <h3>Promo &amp; subscription tools</h3>
+          <p>Discount codes, meal-subscriptions, order-status tracking — jo bade platforms me milta hai, wahi aapki apni kitchen me bhi.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Kaise shuru karein</span>
+        <h2>Teen simple steps, bas.</h2>
+      </div>
+      <div class="steps">
+        <div class="step-row">
+          <div class="step">
+            <span class="step-n">01</span>
+            <h3>WhatsApp par batao</h3>
+            <p>Kitchen ka naam, area/city aur ek chhota menu bhej do — neeche diye form se ya seedha WhatsApp par.</p>
+          </div>
+          <div class="step">
+            <span class="step-n">02</span>
+            <h3>Aapka app taiyaar hota hai</h3>
+            <p>24-48 ghanto me aapka apna branded ordering link, menu aur dashboard live kar diya jaata hai.</p>
+          </div>
+          <div class="step">
+            <span class="step-n">03</span>
+            <h3>Pay karo, orders lo</h3>
+            <p>₹499/month UPI/QR se pay karo, apna link customers ke saath share karo — order aana shuru.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <div class="price-card">
+        <div>
+          <span class="eyebrow">Pricing</span>
+          <div class="price-big"><span class="amt">₹499</span><span class="per">/ month</span></div>
+          <div class="price-approx">Lagbhag ₹20 din ka — ek chai se bhi kam</div>
+          <ul class="price-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Apna branded ordering app + dashboard</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Koi per-order commission nahi</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Unlimited orders, unlimited customers</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> WhatsApp/Telegram order alerts</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Pay seedha UPI/QR se, jab chaho cancel karo</li>
+          </ul>
+        </div>
+        <div class="price-cta">
+          <a class="btn btn-primary" href="#contact" style="background:#fff;color:var(--ink);box-shadow:none;">Shuru karna hai</a>
+          <small>Setup me koi extra charge nahi</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="why">
+    <div class="wrap note">
+      <span class="eyebrow">Kyun banaya</span>
+      <blockquote>&ldquo;Maine dekha ki chhoti tiffin/ghar ki kitchens ke paas customers to hain, par apna online system banane ka na waqt hai na paisa. Isliye maine wahi system sabke liye ban diya — aap sirf khana banao, baaki main sambhal leta hoon.&rdquo;</blockquote>
+      <cite>— SolutionEat Team</cite>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Aksar puche jaane wale sawaal</span>
+        <h2>Aapke sawaalon ke jawab</h2>
+      </div>
+      <div class="faq">
+        <div class="faq-item">
+          <h3>Kya mujhe technical knowledge chahiye?</h3>
+          <p>Bilkul nahi. Aap sirf menu aur price batao, baaki setup hum karte hain.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Kya customer ko koi alag app install karna padega?</h3>
+          <p>Nahi — seedha browser me hi khulta hai. App install karna sirf ek optional shortcut hai.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Agar main pay nahi karta to kya hoga?</h3>
+          <p>Pehli baar pay karne tak aapka kitchen "Payment Pending" me rehta hai. Pay karte hi ek din me active ho jaata hai.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Kya order par koi commission katega?</h3>
+          <p>Nahi. Sirf flat ₹499/month — order chhota ho ya bada, aapka utna hi milta hai.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact-card">
+        <div class="contact-form">
+          <div class="field">
+            <label for="cfName">Aapka naam</label>
+            <input id="cfName" type="text" placeholder="e.g. Ramesh Patel" autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="cfKitchen">Kitchen/Tiffin service ka naam</label>
+            <input id="cfKitchen" type="text" placeholder="e.g. Shyam Rasoi">
+          </div>
+          <div class="field">
+            <label for="cfArea">Area / City</label>
+            <input id="cfArea" type="text" placeholder="e.g. Gota, Ahmedabad">
+          </div>
+          <div class="field">
+            <label for="cfPhone">Aapka WhatsApp number</label>
+            <input id="cfPhone" type="tel" placeholder="9XXXXXXXXX" autocomplete="tel">
+          </div>
+          <button class="btn btn-primary" style="justify-content:center;margin-top:6px;" onclick="sendLead()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
+            WhatsApp par bhejo
+          </button>
+        </div>
+        <div class="contact-side">
+          <h3>Details bhar ke bhejo, hum WhatsApp par jawab denge.</h3>
+          <p>Form bharte hi WhatsApp khulega, aapki details pehle se likhi hongi — bas send dabao. Chaho to seedha bhi message kar sakte ho:</p>
+          <a class="wa-direct" href="https://wa.me/917043491481?text=Hi!%20Mujhe%20SolutionEat%20platform%20ke%20baare%20me%20jaankari%20chahiye." target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
+            +91 70434 91481 par seedha message karo
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <span>© 2026 SolutionEat · All rights reserved</span>
+    <a href="index.html">Pehle se vendor ho? Apna dashboard kholo →</a>
+  </div>
+</footer>
+
+<script>
+  var OWNER_WHATSAPP = '917043491481';
+  function sendLead(){
+    var name = document.getElementById('cfName').value.trim();
+    var kitchen = document.getElementById('cfKitchen').value.trim();
+    var area = document.getElementById('cfArea').value.trim();
+    var phone = document.getElementById('cfPhone').value.trim();
+    if(!name || !kitchen || !phone){
+      alert('Kripya naam, kitchen ka naam aur WhatsApp number bharein.');
+      return;
+    }
+    var lines = [
+      'Hi! Main apni kitchen SolutionEat platform par shuru karna chahta/chahti hoon.',
+      'Naam: ' + name,
+      'Kitchen: ' + kitchen,
+      'Area/City: ' + (area || '-'),
+      'Mera WhatsApp: ' + phone
+    ];
+    var msg = encodeURIComponent(lines.join('\n'));
+    window.open('https://wa.me/' + OWNER_WHATSAPP + '?text=' + msg, '_blank');
+  }
+</script>
+
+</body>
+</html>
