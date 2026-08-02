@@ -2221,7 +2221,8 @@ function setMealStatus(p) {
   const sheetPhone = cleanPhone(sh.getRange(row, 6).getValue());
   if (sheetPhone !== String(p.phone || '')) return { status:'error', message:'Order mismatch — please refresh.' };
 
-  const cur = parseMealStatus(sh.getRange(row, 29).getValue(), sh.getRange(row, STATUS_COL).getValue() || 'Pending');
+  const prevOverall = sh.getRange(row, STATUS_COL).getValue() || 'Pending';
+  const cur = parseMealStatus(sh.getRange(row, 29).getValue(), prevOverall);
   cur[meal] = p.status;
   sh.getRange(row, 29).setValue(JSON.stringify(cur));
 
@@ -2231,6 +2232,10 @@ function setMealStatus(p) {
   const active = allMealKeys(cfgS).filter(function(m){ return rowMealQty(rowVals, m) > 0; });
   const overall = deriveOrderStatus(cur, active);
   sh.getRange(row, STATUS_COL).setValue(overall);
+  if (overall !== prevOverall) {
+    const txt = orderStatusPushText(overall);
+    if (txt) notifyPhone(sheetPhone, txt.title, txt.body, { type: 'order_status', status: overall });
+  }
   return { status:'success', mealStatus: cur, orderStatus: overall };
 }
 
@@ -2324,7 +2329,12 @@ function setOrderStatus(p) {
   if (ADMIN_STATUS.indexOf(p.status) === -1) return { status:'error', message:'Invalid status' };
   const sheetPhone = cleanPhone(sh.getRange(row, 6).getValue());
   if (sheetPhone !== String(p.phone || '')) return { status:'error', message:'Order mismatch — please refresh.' };
+  const prevStatus = sh.getRange(row, STATUS_COL).getValue();
   sh.getRange(row, STATUS_COL).setValue(p.status);
+  if (p.status !== prevStatus) {
+    const txt = orderStatusPushText(p.status);
+    if (txt) notifyPhone(sheetPhone, txt.title, txt.body, { type: 'order_status', status: p.status });
+  }
   return { status:'success' };
 }
 
@@ -2451,6 +2461,37 @@ function notifyAllSubscribers(title, body, data) {
     });
     for (let i = deadRows.length - 1; i >= 0; i--) sh.deleteRow(deadRows[i]);
   } catch (e) { /* push kabhi bhi order/admin flow ko block na kare */ }
+}
+// ⚠️ MISSING tha: koi bhi order-status-change path (setMealStatus/setOrderStatus/
+// setOrderStatusBulk) kabhi push nahi bhejta tha. Frontend ka toggle "Order Updates"
+// naam se hai (index.html togglePushNotifications()) — customer isko is umeed se ON
+// karta hai ki apne order ka status-change pata chalega, par sirf broadcast events
+// (menu update / kitchen closed, dono notifyAllSubscribers() se) hi kaam karte the.
+// Ye us specific customer (uske saare devices — multiple ho sakte hain) ko bhejta hai.
+function notifyPhone(phone, title, body, data) {
+  try {
+    const cleaned = cleanPhone(phone);
+    if (!cleaned) return;
+    const sh = pushTokensSheet();
+    const last = sh.getLastRow();
+    if (last < 2) return;
+    const rows = sh.getRange(2, 1, last - 1, 2).getValues();
+    const deadRows = [];
+    rows.forEach(function (r, i) {
+      if (cleanPhone(r[0]) !== cleaned) return;
+      const token = String(r[1] || ''); if (!token) return;
+      const result = sendPushToToken(token, title, body, data);
+      if (result === 'invalid') deadRows.push(i + 2);
+    });
+    for (let i = deadRows.length - 1; i >= 0; i--) sh.deleteRow(deadRows[i]);
+  } catch (e) { /* push kabhi bhi order/admin flow ko block na kare */ }
+}
+// Sirf customer-relevant transitions pe push — Pending naya order ka default state
+// hai (notify karne layak nahi), Cancelled ka apna alag confirmation flow hai.
+function orderStatusPushText(status) {
+  if (status === 'Preparing') return { title: '👨‍🍳 Order Update', body: 'Your order is being prepared!' };
+  if (status === 'Delivered') return { title: '✅ Order Delivered', body: 'Your order has been delivered. Enjoy your meal!' };
+  return null;
 }
 function savePushToken(p) {
   const sess = getSessionCross(p.token, p.authVendorId); if (!sess) return { status: 'invalid_session' };
@@ -3233,7 +3274,18 @@ function setOrderStatusBulk(p) {
   const sh = ordersSheet();
   const last = sh.getLastRow();
   let done = 0;
-  rows.forEach(r => { if (r <= last) { sh.getRange(r, STATUS_COL).setValue(st); done++; } });
+  const txt = orderStatusPushText(st);   // saare rows ke liye same text — ek hi baar compute
+  rows.forEach(r => {
+    if (r <= last) {
+      const prevStatus = sh.getRange(r, STATUS_COL).getValue();
+      sh.getRange(r, STATUS_COL).setValue(st);
+      done++;
+      if (txt && st !== prevStatus) {
+        const phone = cleanPhone(sh.getRange(r, 6).getValue());
+        notifyPhone(phone, txt.title, txt.body, { type: 'order_status', status: st });
+      }
+    }
+  });
   audit('STATUS_BULK', '', st + ' × ' + done);
   return { status:'success', updated: done, statusVal: st };
 }
