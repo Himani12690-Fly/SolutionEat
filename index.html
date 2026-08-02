@@ -848,7 +848,7 @@
         <label class="cfg-chk"><input type="checkbox" id="cfg-whatsappAuto"> 💬 Order place hote hi WhatsApp auto-open karo</label>
 
         <div class="section-title" style="margin-top:4px;">🔔 Push Notifications</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Emergency close/reopen, order status (Preparing/Delivered), aur (opt-in checkbox se) menu updates par customers ko automatic push jaata hai (agar setup hai). Test karne ke liye:</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Emergency close/reopen, order status (Preparing/Delivered), price/timing badalne par (automatic), aur (opt-in checkbox se) menu content updates par customers ko automatic push jaata hai (agar setup hai). App khula ho tab bhi turant refresh ho jaata hai. Test karne ke liye:</div>
         <button class="admin-btn" id="testPushBtn" onclick="sendTestPushFE()" style="margin-bottom:16px;">🔔 Send Test Notification</button>
 
           </div>
@@ -2288,6 +2288,10 @@
   // nahi, permission deny, FIREBASE_CONFIG abhi paste nahi hui) to sirf silently
   // skip, customer ka baaki app (ordering, cart, checkout) par ZERO asar.
   let __fbApp=null, __fbMessaging=null;
+  // finishInit() (neeche, init() IIFE ke andar) apna refreshConfigSoon() define
+  // karte hi ise yahan point kar deta hai — isse push handler (jo bahar, top-level
+  // scope me hai) us closure ko chhoo sakta hai bina poora refresh logic dobara likhe.
+  let __forceConfigRefresh = null;
   function pushSubscribed(){ return !!storeGet('fbt_push_token'); }
   // ⚠️ localStorage me token hone ka matlab ye NAHI ki push subscription abhi bhi
   // zinda hai. SW replace/unregister hone pe subscription mar jaati thi par token
@@ -2393,6 +2397,16 @@
       __fbMessaging.onMessage(function(payload){
         const n=payload.notification||{};
         showToast((n.title?('🔔 '+n.title+' — '):'')+(n.body||''), 'success');
+        // Vendor-content-change pushes (menu/prices/timings/kitchen open-close) —
+        // sirf toast se kaam nahi chalta, warna app khula rehte hue customer purani
+        // (stale) menu/price/timing dekhta rehta jab tak agla 90s poll na chale.
+        // Turant force-refresh karo taaki UI bhi turant sahi ho jaaye, sirf
+        // notification hi nahi. order_status jaanbujh ke shamil nahi — wo "meri
+        // order" ke baare me hai, vendor ke menu/config ke baare me nahi.
+        const dtype=(payload.data&&payload.data.type)||'';
+        if(__forceConfigRefresh && ['menu_updated','kitchen_closed','kitchen_open','pricing_updated'].indexOf(dtype)>=0){
+          __forceConfigRefresh(true);
+        }
       });
     }catch(e){}
   }
@@ -6368,8 +6382,13 @@
                         changed = true;
                     }
                     if (j.config && j.config.prices) {
-                        const old = JSON.stringify(CFG && CFG.prices);
-                        const nw = JSON.stringify(j.config.prices);
+                        // ⚠️ Pehle sirf .prices compare hota tha — agar SIRF serving-window/
+                        // cutoff (timing) badle ho, prices nahi, to 'changed' false reh jaata
+                        // aur neeche refreshLiveViews() kabhi na chalta (push-triggered force
+                        // refresh ke saath bhi) — customer ko naya cutoff time kabhi UI me
+                        // nahi dikhta jab tak page reload na kare. Ab mealTypes bhi compare.
+                        const old = JSON.stringify({ prices: CFG && CFG.prices, mealTypes: CFG && CFG.mealTypes });
+                        const nw = JSON.stringify({ prices: j.config.prices, mealTypes: j.config.mealTypes });
                         CFG = j.config;
                         CFG.promos = j.promos || [];
                         if (!CFG.mealTypes || !CFG.mealTypes.length) CFG.mealTypes = defaultMealTypes();
@@ -6387,6 +6406,12 @@
                 })
                 .catch(() => {});
         }
+
+        // Push handler (top-level scope, index.html:~2290) is bahar se ye closure
+        // chhoo nahi sakta — isliye ek top-level reference ko yahan point karte hain,
+        // taaki foreground push (menu/price/timing/kitchen update) aate hi turant
+        // force-refresh call kar sake, 90s poll ka wait kiye bina.
+        __forceConfigRefresh = refreshConfigSoon;
 
         setInterval(() => refreshConfigSoon(false), 90000);
         document.addEventListener('visibilitychange', () => {
