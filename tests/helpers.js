@@ -39,8 +39,10 @@ function handleGet(state, url) {
     return { status:'success', menu:state.menu, config:state.config,
              promos: state.promos.filter(p => p.active && p.visible)
                        .map(p => ({ code:p.code, label:'₹'+p.value+' off',
-                                    minOrder:p.minOrder, firstOnly:p.firstOnly })) };
-  if (action === 'config') return { status:'success', config:state.config };
+                                    minOrder:p.minOrder, firstOnly:p.firstOnly })),
+             ...(state.vendorBrand ? { vendor: state.vendorBrand } : {}) };
+  if (action === 'config') return { status:'success', config:state.config,
+             ...(state.vendorBrand ? { vendor: state.vendorBrand } : {}) };
   if (action === 'menu')   return { status:'success', menu:state.menu };
   if (action === 'publicstats')
     return { status:'success', stats:{ date:url.searchParams.get('date'),

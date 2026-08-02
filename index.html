@@ -1152,15 +1152,27 @@
   // isliye routing khud kabhi bottleneck nahi banegi.
   const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdMXlSwNdqO84OspsUe2jAEeDL-hbwjwLcKL-fo6YObB6Se-dvTxX2iS5BMz2t8bV6/exec';
   let GOOGLE_SCRIPT_URL = DEFAULT_SCRIPT_URL;   // boot pe vendor ke hisaab se set hota hai
-  // ⚠️ Pehle yahan 'vendors.json' fetch karte the (25+ vendors ke baad apna alag
-  // deployment wale vendors ke liye custom script URL lookup) — par ye file
-  // repo me kabhi bani hi nahi, isliye har non-default vendor ke boot pe ek
-  // guaranteed 404 hota tha (console noise, ek wasted request). Feature already
-  // silently no-op tha (.catch() se hamesha shared URL pe fallback) — koi vendor
-  // isse kabhi actually use nahi kar paaya, isliye hata dene se behavior nahi
-  // badalta, sirf ye faaltu request/404 hat jaata hai. Jab 25+ vendors ho jayen
-  // aur kisi ko apna alag deployment chahiye ho, ye function wapas laana hoga
-  // (vendors.json bana ke).
+  // 25+ vendors ke baad shared deployment ka LockService.getScriptLock() SAARE
+  // vendors ke order-placement ko globally serialize karne lagta hai (chahe wo
+  // alag-alag Sheets me likh rahe hon) — real bottleneck load-testing me pakda
+  // gaya. Vendor apna alag Apps Script deployment bana ke Super Admin me
+  // scriptUrl set kar sakta hai; ye us record ko bootstrap response (j.vendor.
+  // scriptUrl) se validate karke GOOGLE_SCRIPT_URL switch kar deta hai, taaki
+  // uske baad ke saare calls (order/menu/admin) us alag deployment pe jaayein,
+  // apne lock ke saath, doosre vendors se independent.
+  // ⚠️ Pehle yahan alag se 'vendors.json' fetch karte the isi lookup ke liye —
+  // wo file repo me kabhi bani hi nahi (guaranteed 404, silent no-op fallback).
+  // Ab lookup alag request ki jagah usi bootstrap response ke andar aata hai.
+  function applyVendorScriptUrl(vendor){
+    const u = vendor && vendor.scriptUrl;
+    if(!u) return;
+    // Sirf asli script.google.com URL accept karo — GOOGLE_SCRIPT_URL har call
+    // me session token bhejta hai, isliye kisi bhi arbitrary URL pe switch hona
+    // (galat data-entry ya compromised Super Admin account se) token leak kar
+    // sakta hai. Format galat ho to chup-chaap shared URL pe hi rehte hain.
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u)) return;
+    GOOGLE_SCRIPT_URL = u;
+  }
   function loadVendorEndpoint(){
     return Promise.resolve();
   }
@@ -2970,7 +2982,7 @@
     // dete hain taaki "Signing in…" overlay pe sahi kitchen ka logo dikhe.
     try{
       const gb=sessionStorage.getItem('g_brand'); sessionStorage.removeItem('g_brand');
-      if(gb && (!VENDOR_BRAND || !VENDOR_BRAND.name)){ VENDOR_BRAND=JSON.parse(gb); applyVendorBrand(); }
+      if(gb && (!VENDOR_BRAND || !VENDOR_BRAND.name)){ VENDOR_BRAND=JSON.parse(gb); applyVendorBrand(); applyVendorScriptUrl(VENDOR_BRAND); }
     }catch(e){}
     // nonce match — dusri jagah se aaya token replay na ho
     let want=''; try{ want=sessionStorage.getItem('g_nonce')||''; sessionStorage.removeItem('g_nonce'); }catch(e){}
@@ -6377,7 +6389,7 @@
     // nav, event listeners, kuch bhi aage nahi banta, poora page load hi fail ho
     // jaata. Ab isolate kiya: worst case sirf brand priming skip hoti hai, baaki
     // boot (bootstrap fetch wagera) normally aage badhta hai.
-    try{ if(cb&&cb.name){ VENDOR_BRAND=cb; applyVendorBrand(); } }
+    try{ if(cb&&cb.name){ VENDOR_BRAND=cb; applyVendorBrand(); applyVendorScriptUrl(cb); } }
     catch(e){ try{ dbgLog({ev:'cached_brand_apply_error', err:String(e).slice(0,200)}); }catch(e2){} }
     if(!(cb&&cb.name) && HAS_VENDOR_PARAM){
       // Brand cache nahi → default "Nest & Nosh" logo/naam flash na ho. Naam khaali,
@@ -6459,6 +6471,7 @@
                             VENDOR_BRAND = j.vendor;
                             storeSet('fbt_brand', VENDOR_BRAND);
                             applyVendorBrand();
+                            applyVendorScriptUrl(j.vendor);
                         }
                         // 🔑 Real menu/config YAHIN apply karo — pehle ye sirf 90s wale
                         // refresh me aata tha, isliye boot pe hardcoded default dikhta tha.
@@ -6711,6 +6724,7 @@
                         VENDOR_BRAND = j.vendor;
                         storeSet('fbt_brand', VENDOR_BRAND);
                         applyVendorBrand();
+                        applyVendorScriptUrl(j.vendor);
                     }
                     if (!changed) return;
                     refreshLiveViews();

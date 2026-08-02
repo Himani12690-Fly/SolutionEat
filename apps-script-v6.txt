@@ -821,6 +821,17 @@ const ADMIN_STATUS = ['Pending','Preparing','Delivered'];
 // Ek hi request ke andar Orders sheet baar-baar na padhe jaaye (capacity check +
 // duplicate check dono ko same data chahiye) — isse lock jyada der block nahi
 // hoti aur zyada concurrent orders (100+) ek saath handle ho paate hain.
+// ⚠️ KNOWN FUTURE LIMIT (load-testing se pakda gaya, jaanbujh ke abhi nahi
+// chheda — blind fix karna galat duplicate-check/capacity-check ka risk hai,
+// jo real orders/paise touch karta hai): ye poora Orders sheet row 2 se
+// getLastRow() tak padhta hai, HAR order-placement request pe — koi date
+// window nahi. Ek vendor ke paas mahino/saalon ka order history jamaa hone
+// ke baad ye read (aur isके saath LOCK ka hold-time bhi, kyunki capacity/
+// duplicate check LOCK ke ANDAR chalta hai — placeOrderAuthed() dekho) dheere-
+// dheere badhta jayega. Jab ye asli bottleneck bane, fix: purane
+// (jaise 90+ din se pehle ke) orders ko ek "Orders Archive" sheet me move
+// karo taaki active sheet chhota rahe — row-range se filter karna risky hai
+// kyunki rows submission-order me hain, delivery-date order me nahi.
 let _ordersRawCache = null;
 let _configCache = null;
 let _menuCache = null;
@@ -847,7 +858,12 @@ function vendorBrand() {
   // Ab fallback vendor ki APNI id se banta hai (jaise 'shyamr' -> 'Shyamr') — khaali
   // ya kisi doosre vendor ka naam kabhi nahi.
   const fallbackName = CURRENT_VENDOR_ID ? (CURRENT_VENDOR_ID.charAt(0).toUpperCase() + CURRENT_VENDOR_ID.slice(1)) : 'Kitchen';
-  return { name: v.name || fallbackName, logo: v.logo || '', whatsapp: v.whatsapp || '' };
+  // scriptUrl: agar vendor ka apna alag Apps Script deployment hai (25+ vendors
+  // ke baad zaroori — shared deployment ka LockService.getScriptLock() SAARE
+  // vendors ke order-placement ko globally serialize karta hai, chahe wo alag-
+  // alag Sheets me likh rahe hon). Frontend isse bootstrap response se padhkar
+  // GOOGLE_SCRIPT_URL switch kar leta hai (index.html tryBootstrap()).
+  return { name: v.name || fallbackName, logo: v.logo || '', whatsapp: v.whatsapp || '', scriptUrl: v.scriptUrl || '' };
 }
 
 // ─────────────────────────────────────────────
@@ -3165,16 +3181,20 @@ function findCompany(name) {
 // Order ka delivery fee: office => company fee, home => society (near/far)
 function deliveryFeeForOrder(p) {
   // Us date ka pehle se koi active order hai? To ye same-trip hai — fee dobara mat lo.
+  // ⚠️ Pehle yahan apna alag sh.getRange(...).getValues() tha — poora Orders sheet
+  // DOBARA padhta tha, jabki findActiveOrderRow() (isi request me, isi lock ke
+  // andar) ordersRawCached() se WAHI data already utha chuka hota hai (same row
+  // shape: r[5] phone, r[18] status, r[19] deliveryDate — DELDATE_COL(20) <=
+  // ORDERS_COL_COUNT(36), sab already cache me hai). Har order-placement Sheets
+  // I/O double karta tha aur LOCK ko utna hi zyada der hold karta tha — ab shared
+  // cache reuse karta hai.
   try {
     if (p.deliveryDate && p._phoneForFee) {
-      const sh = ordersSheet(); const last = sh.getLastRow();
-      if (last >= 2) {
-        const data = sh.getRange(2, 1, last - 1, DELDATE_COL).getValues();
-        for (let i = 0; i < data.length; i++) {
-          const r = data[i];
-          if (cleanPhone(r[5]) === p._phoneForFee && ddStr(r[19]) === p.deliveryDate && r[18] !== 'Cancelled') {
-            return 0;   // is date par delivery fee already ek order me lag chuki hai
-          }
+      const data = ordersRawCached();
+      for (let i = 0; i < data.length; i++) {
+        const r = data[i];
+        if (cleanPhone(r[5]) === p._phoneForFee && ddStr(r[19]) === p.deliveryDate && r[18] !== 'Cancelled') {
+          return 0;   // is date par delivery fee already ek order me lag chuki hai
         }
       }
     }
