@@ -1518,7 +1518,6 @@
   function t(k) { return (T[LANG] && T[LANG][k]) || T.en[k] || k; }
 
   // ═══════ ABOUT US SLIDES ═══════
-  const ABOUT_BG = ['var(--accent)','var(--ok)','linear-gradient(135deg,#f7971e,#ffd200)','linear-gradient(135deg,#2193b0,#6dd5ed)','linear-gradient(135deg,#eb3349,#f45c43)'];
   const ABOUT = {
     en: [
       { icon:'🍲', title:'Fresh Batches, Every Single Day', body:'We cook in small batches each morning with same-day ingredients — no frozen stock, no leftovers carried forward. Your tiffin leaves the kitchen within minutes of being prepared.' },
@@ -1966,9 +1965,6 @@
     b.onclick=function(){ try{ localStorage.removeItem(DBG_KEY); }catch(e){} d.remove(); b.remove(); };
     document.body.appendChild(d); document.body.appendChild(b);
   }
-  function meRaw(token,vid){
-    return fetch(GOOGLE_SCRIPT_URL+'?action=me&token='+encodeURIComponent(token)+'&vendorId='+(vid||VENDOR_ID)).then(r=>r.text());
-  }
   let SESSION = storeGet('fbt_session') || readSharedSession();
   // ⚠️ Ye 'shared se mila' flag isliye zaroori hai: neeche is token ko turant is
   // vendor ke namespace me save kar dete hain (UX ke liye — turant logged-in dikhna
@@ -2374,7 +2370,6 @@
     __dscIsTop = true; openDiscovery();
   }
   function showProfilePage(){ showView('profileView'); renderProfile(); }
-  function goMenuMeal(m){ showHomePage(); const av=mealsAvail(dateOffset); if(av[m]&&av[m].ok) selectMeal(m); }
   // ═══════ LOCATION AUTO-DETECT (optional, non-blocking) ═══════
   // Home page ki "📍 Ahmedabad" line ko user ke aas-paas ke naam se replace karta hai.
   // Har cheez optional hai — permission deny, API key na ho, ya network fail ho jaye
@@ -2388,17 +2383,6 @@
 
   // Google ke result me se sabse kaam ka naam chuno:
   // pehle building/society (premise), phir mohalla (neighborhood/sublocality)
-  let __locBusy=false;
-  function refreshLocation(ev){
-    if(ev&&ev.stopPropagation) ev.stopPropagation();
-    if(__locBusy) return;                          // double-tap se do requests na jaayein
-    __locBusy=true;
-    document.querySelectorAll('.loc-refresh').forEach(b=>{ b.textContent='⏳'; });
-    detectLocation(true, ()=>{                     // cache ignore karke naya lo
-      __locBusy=false;
-      document.querySelectorAll('.loc-refresh').forEach(b=>{ b.textContent='↻'; });
-    });
-  }
   function pickPlaceName(results){
     if(!results || !results.length) return '';
     const wanted = ['neighborhood','sublocality_level_1','sublocality','locality'];
@@ -2574,27 +2558,6 @@
     // Compact merged: date/time + all-3-meal cards
     renderMenuDateTime(); renderMealPanel();
     const is=document.getElementById('infoStrip'); if(is)is.classList.toggle('hidden', !!storeGet('fbt_infostrip_x'));
-  }
-  // Home page "Today's Meals" preview strip — chhote cards, aaj ke meals + status
-  function homeMealItemName(m){
-    try{
-      const d=MENU[weekdayKey(dateWithOffset(0))];
-      if(!d||!d[m])return '';
-      if(m==='breakfast') return (d[m][0]||'').replace(/^[^\w]*\s*/,'');
-      const opts=(d[m]&&d[m].sabziOptions)||[];
-      return opts[0]||'';
-    }catch(e){ return ''; }
-  }
-  function homeMealPrice(m){
-    try{ return priceRange(m).min || 0; }catch(e){ return 0; }
-  }
-  // Home card "ADD" — meal ko active kar ke seedha quick-add, order page load ho jaata hai
-  function homeQuickAdd(m, ev){
-    if(ev&&ev.stopPropagation){ ev.stopPropagation(); }
-    if(!isLoggedIn()){ showAuth(); return; }
-    activeMeal = m;
-    showHomePage();
-    quickAdd(m);
   }
   // Bottom-nav ka profile avatar — user ke naam ka pehla letter
   function updateNavAvatar(){
@@ -3246,7 +3209,6 @@
   }
   function pickDefaultDate(){ for(let o=0;o<=2;o++){ if(anyAvail(o)){ dateOffset=o; return; } } dateOffset=2; }
   function refreshAvailability(){ if(!anyAvail(dateOffset)) pickDefaultDate(); renderDateSelector(); pickActiveMeal(); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); const is=document.getElementById('infoStrip'); if(is)is.classList.toggle('hidden', !!storeGet('fbt_infostrip_x')); }
-  function dismissInfoStrip(){ storeSet('fbt_infostrip_x',1); const is=document.getElementById('infoStrip'); if(is)is.classList.add('hidden'); }
   function pickActiveMeal(){
     // ⚠️ ASLI ROOT CAUSE (mila!): init() ke bilkul shuru me, jab kisi vendor ka
     // PEHLI BAAR visit ho (koi cache nahi), CFG.mealTypes abhi khaali hota hai
@@ -4239,10 +4201,6 @@
   // hai, isliye koi naya network call nahi lagta, list turant badalti hai.
   function pickDscArea(a){ dscArea = a; renderDscAreas(); renderDscList(dscVendorsAll.filter(v=>dscAreaMatch(v,dscArea))); }
 
-  // Retry button (network dono round trip fail hone par) isi combined loader ko
-  // dobara chalata hai. Naam backward-compat ke liye rakha hai.
-  function loadDscVendors(){ loadDscAreas(); }
-  const DSC_COLORS = ['#6b7b5a','#e8974a','#4a90c9','#a35b8f','#0d9488','#c2410c'];
   const DSC_GRAD = [
     'linear-gradient(135deg,#e8974a,#b3541f)',
     'linear-gradient(135deg,#6b7b5a,#3f4a33)',
@@ -4495,7 +4453,6 @@
   }
   // Edit: load order back into cart, remember row so backend replaces it
   let editingRow=null;
-  function dateOffsetFromStr(dstr){ for(let o=0;o<=2;o++){ if(dateWithOffsetStr(o)===dstr) return o; } return 0; }
   function loadMyOrders(dateOpt, force){
     if(!isLoggedIn())return; const box=document.getElementById('myOrdersList'); if(!box)return;
     const today=fmtYMD(dateWithOffset(0));
@@ -6364,6 +6321,8 @@
     // 1. पहले वाले सभी Initializations (Theme, Language, Config etc.)
     // ============================================================
     initTheme();
+    initDemo();   // ⚠️ pehle kabhi call hi nahi hota tha — demoBar/demoCustHint/demoAdminHint
+                  // hamesha hidden reh jaate the, ?v=demo par bhi. Dead-code sweep me pakda gaya.
     if(MAPS_API_KEY){
         document.querySelectorAll('.loc-refresh').forEach(b=>b.classList.remove('hidden'));
         detectLocation();
