@@ -123,6 +123,20 @@ function loadVendors() {
   } catch (e) { /* cache miss ya error — neeche se fresh padh lo */ }
   const reg = {};
   Object.keys(VENDORS_SEED).forEach(function(k){ reg[k] = VENDORS_SEED[k]; });
+  // ⚠️ DEFAULT_VENDOR_ID ka VENDORS_SEED me listInDiscovery field hi nahi hai
+  // (aur "default hardcoded hi rehta hai, Sheet se override nahi" — neeche ka
+  // rows.forEach isse skip karta hai, aur Super Admin ka saveVendor() default
+  // ke liye Sheet row banane hi nahi deta) — isliye discoverVendors()/
+  // listAreas() ka `listInDiscovery === false` check kabhi match hi nahi hota
+  // tha, toggle OFF karne ke baad bhi default vendor Discovery me dikhta rehta
+  // tha. Ye ek genuinely vendor-self-service Setup toggle hai (Super Admin ka
+  // registry-only concern nahi), isliye default vendor ke liye Script
+  // Properties me persist karte hain — syncVendorListing() neeche isi ko likhta
+  // hai jab CURRENT_VENDOR_ID === DEFAULT_VENDOR_ID ho.
+  try {
+    const dv = PropertiesService.getScriptProperties().getProperty('default_vendor_list_in_discovery');
+    reg[DEFAULT_VENDOR_ID].listInDiscovery = (dv !== 'false');
+  } catch (e) { reg[DEFAULT_VENDOR_ID].listInDiscovery = true; }
   try {
     const sh = vendorsSheet();
     const lr = sh.getLastRow();
@@ -597,6 +611,16 @@ function syncVendorRating(vendorId, sumDelta, countDelta) {
 // (jo sirf registry padhte hain, har vendor ki apni sheet nahi) turant sahi
 // filter kar saken. syncVendorRating() jaisa hi pattern.
 function syncVendorListing(vendorId, listInDiscovery) {
+  // Default vendor ka Vendors-sheet me koi row hota hi nahi (saveVendor() ise
+  // banane hi nahi deta) — is loop se kabhi match nahi milega, isliye alag se
+  // Script Properties me persist karo (loadVendors() yahi wapas padhta hai).
+  if (vendorId === DEFAULT_VENDOR_ID) {
+    try {
+      PropertiesService.getScriptProperties().setProperty('default_vendor_list_in_discovery', String(listInDiscovery !== false));
+      resetVendorsCache();
+    } catch (e) {}
+    return;
+  }
   try {
     const sh = vendorsSheet(); const lr = sh.getLastRow(); if (lr < 2) return;
     const ids = sh.getRange(2, 1, lr - 1, 1).getValues();

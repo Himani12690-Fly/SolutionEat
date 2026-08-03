@@ -37,13 +37,13 @@
        "Tiffin" me achanak badalta hai, do alag taglines jaisa lagta hai. -->
   <title>Order Tiffin — Fresh Homemade Tiffin</title>
   <!-- PWA / installable app -->
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json" id="appManifestLink">
   <meta name="theme-color" content="#6366f1">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Order Tiffin">
-  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAC50lEQVR42u3cMU/WUBSA4bZhZGeFhV1WEnQAxAGcmEj4cSZObi6auKgJo7ozKIuDu3v5A3ylhOSec3KfJ26StLRv7v0Ob[...]">
+  <link rel="apple-touch-icon" id="appTouchIcon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAC50lEQVR42u3cMU/WUBSA4bZhZGeFhV1WEnQAxAGcmEj4cSZObi6auKgJo7ozKIuDu3v5A3ylhOSec3KfJ26StLRv7v0Ob[...]">
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAABEklEQVR42u2ZLQ/CMBRF22USjwWDR5MMBJ8CUCgSfhwJCodBYAgJEvAImEHg8UUsLMH1JVtZ2Xmq4q273dm9ecv0[...]">
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
@@ -6465,6 +6465,12 @@
     document.querySelectorAll('.vbrand-logo').forEach(img=>{ img.src = src; img.alt = name; img.classList.add('vb-ready'); });
     const als=document.getElementById('authLogoSpin'); if(als) als.classList.add('hidden');
     document.title = (name||'Tiffin') + ' — Fresh Homemade Tiffin';
+    // Naam aane ke baad hi (transparent placeholder ko kabhi "installed" icon
+    // mat banao) — "Add to Home Screen" har vendor ke apne link ke liye ALAG
+    // icon + naam dikhaye, sirf ek shared platform icon nahi. GitHub Pages
+    // static hosting hai (per-vendor manifest.json fetch nahi kar sakte), isliye
+    // manifest ko runtime pe data: URI se replace karte hain.
+    if(name) applyVendorManifest(name, src, logo);
     const am=document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(am) am.setAttribute('content', name);
     // Location line — kitchen ka actual area dikhao (jaise "Godrej Garden City").
     // areas comma-separated STRING ho sakta hai (bootstrap ke 'vendor' record se)
@@ -6503,6 +6509,37 @@
     const acW=document.getElementById('acWa');  if(acW) acW.href='https://wa.me/'+wa;
     document.querySelectorAll('.vbrand-tel').forEach(a=>{ a.href='tel:+'+wa; });
     document.querySelectorAll('.ac-num').forEach(el=>{ el.textContent = pretty; });
+  }
+
+  // Per-vendor "Add to Home Screen" branding — GitHub Pages static hosting
+  // ka matlab hai ek hi manifest.json sabke liye, isliye runtime pe replace
+  // karte hain taaki har vendor ke apne link se install kiya gaya icon/naam
+  // ALAG dikhe, ek shared platform icon nahi. Do cheezein zaroori hain, sirf
+  // cosmetic nahi: (1) icon, (2) start_url — isके bina installed icon tap
+  // karne par bare platform URL khulta, is vendor ka context poora kho jaata.
+  function applyVendorManifest(name, iconSrc, hasRealLogo){
+    try{
+      const startUrl = location.pathname + '?v=' + encodeURIComponent(VENDOR_ID);
+      const iconType = hasRealLogo ? 'image/png' : (iconSrc.indexOf('image/svg+xml')>=0 ? 'image/svg+xml' : 'image/png');
+      const man = {
+        name: name + ' — Tiffin Ordering', short_name: name,
+        description: 'Order tiffin online from ' + name,
+        start_url: startUrl, scope: location.pathname,
+        display: 'standalone', orientation: 'portrait',
+        background_color: '#f5eee0', theme_color: '#6366f1',
+        lang: 'en', dir: 'ltr', id: startUrl,
+        icons: [
+          { src: iconSrc, sizes: '192x192', type: iconType, purpose: 'any' },
+          { src: iconSrc, sizes: '512x512', type: iconType, purpose: 'any' }
+        ]
+      };
+      const ml=document.getElementById('appManifestLink');
+      if(ml) ml.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man));
+      // iOS Safari apna alag mechanism use karta hai, JSON manifest kabhi
+      // bharosemand tareeke se nahi padhta — apple-touch-icon seedha set karo.
+      const ti=document.getElementById('appTouchIcon');
+      if(ti) ti.href = iconSrc;
+    }catch(e){}
   }
   // Failsafe: agar 1.2 sec me bhi asli vendor branding nahi aayi (slow/dead network),
   // to bhi logo dikha do (default hi rahega) — hamesha ke liye chhupa nahi rehna chahiye.
