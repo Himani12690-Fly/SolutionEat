@@ -1,8 +1,12 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "io.github.himani12690_fly.twa",
-    "sha256_cert_fingerprints": ["49:77:24:6F:6D:D0:3B:F4:39:57:B2:42:EC:DF:40:04:71:31:D2:8B:8A:8A:F1:5B:9D:FD:B4:F9:87:03:EC:BC"]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "co.median.android.yexjlxk",
+      "sha256_cert_fingerprints": [
+        "2A:D2:7F:B2:91:9E:4F:23:C0:1A:14:C4:4A:A3:4F:8A:0A:A6:F8:1F:5B:8B:25:57:DF:1E:4D:03:60:0B:5B:CD"
+      ]
+    }
   }
-}]
+]
