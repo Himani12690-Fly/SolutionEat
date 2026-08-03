@@ -106,7 +106,7 @@ const VENDORS_SHEET = 'Vendors';
 function getMasterSS() { return SpreadsheetApp.openById(SHEET_ID); }
 function vendorsSheet() {
   return sheetWithHeaders(VENDORS_SHEET,
-    ['VendorId','Name','SheetId','AdminUser','AdminPassHash','NotifyEmail','TgBotToken','TgChatId','WhatsApp','Status','Created','AdminSalt','ScriptUrl','Areas','Cuisine','Logo','RatingSum','RatingCount','MinOrder','SubDueDate','SubLastPaid'],
+    ['VendorId','Name','SheetId','AdminUser','AdminPassHash','NotifyEmail','TgBotToken','TgChatId','WhatsApp','Status','Created','AdminSalt','ScriptUrl','Areas','Cuisine','Logo','RatingSum','RatingCount','MinOrder','SubDueDate','SubLastPaid','ListInDiscovery'],
     getMasterSS());
 }
 // Vendors registry ko CacheService mein rakhte hain (60 sec) — Apps Script ki har
@@ -127,7 +127,7 @@ function loadVendors() {
     const sh = vendorsSheet();
     const lr = sh.getLastRow();
     if (lr >= 2) {
-      const rows = sh.getRange(2, 1, lr - 1, 21).getValues();
+      const rows = sh.getRange(2, 1, lr - 1, 22).getValues();
       rows.forEach(function(r){
         const id = String(r[0] || '').trim().toLowerCase();
         if (!id || id === DEFAULT_VENDOR_ID) return;   // default hardcoded hi rehta hai, Sheet se override nahi
@@ -137,7 +137,8 @@ function loadVendors() {
           whatsapp: r[8] || '', status: r[9] || 'Active', scriptUrl: r[12] || '',
           areas: String(r[13] || ''), cuisine: String(r[14] || ''), logo: String(r[15] || ''),
           ratingSum: Number(r[16]) || 0, ratingCount: Number(r[17]) || 0, minOrder: Number(r[18]) || 0,
-          subDueDate: ddStr(r[19]), subLastPaid: ddStr(r[20])
+          subDueDate: ddStr(r[19]), subLastPaid: ddStr(r[20]),
+          listInDiscovery: r[21] !== false   // blank (existing rows, column just added) defaults to listed
         };
       });
     }
@@ -498,6 +499,7 @@ function listAreas() {
   Object.keys(reg).forEach(function (id) {
     const v = reg[id];
     if (String(v.status || 'Active') === 'Inactive') return;
+    if (v.listInDiscovery === false) return;
     String(v.areas || '').split(',').forEach(function (a) {
       const t = a.trim(); if (t) set[t] = (set[t] || 0) + 1;
     });
@@ -511,6 +513,7 @@ function discoverVendors(area) {
   Object.keys(reg).forEach(function (id) {
     const v = reg[id];
     if (String(v.status || 'Active') === 'Inactive') return;
+    if (v.listInDiscovery === false) return;
     const areas = String(v.areas || '').split(',').map(function (a) { return a.trim(); }).filter(Boolean);
     if (want && areas.map(function (a) { return a.toLowerCase(); }).indexOf(want) === -1) return;
     out.push({
@@ -586,6 +589,25 @@ function syncVendorRating(vendorId, sumDelta, countDelta) {
       }
     }
   } catch (e) { /* rating sync fail ho to order flow kabhi na ruke */ }
+}
+
+// Vendor apni Setup me "Discovery me dikhna hai" toggle badalta hai — wo save
+// khud vendor ki apni Config me hota hai (saveConfig), yahan sirf master
+// registry ke us row ko mirror karte hain taaki discoverVendors()/listAreas()
+// (jo sirf registry padhte hain, har vendor ki apni sheet nahi) turant sahi
+// filter kar saken. syncVendorRating() jaisa hi pattern.
+function syncVendorListing(vendorId, listInDiscovery) {
+  try {
+    const sh = vendorsSheet(); const lr = sh.getLastRow(); if (lr < 2) return;
+    const ids = sh.getRange(2, 1, lr - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0] || '').trim().toLowerCase() === vendorId) {
+        sh.getRange(i + 2, 22).setValue(listInDiscovery !== false);
+        resetVendorsCache();
+        return;
+      }
+    }
+  } catch (e) { /* listing sync fail ho to config save kabhi na ruke */ }
 }
 
 // Customer ne rating di ya nahi — "Rate karo" prompt dikhane ke liye
@@ -963,6 +985,8 @@ function doPost(e) {
     if (action === 'demologin')    return json(demoLogin());
     if (action === 'askai')        return json(askAI(p));
     if (action === 'googlelogin')  return json(googleLogin(p));
+    if (action === 'completependinggoogleauth') return json(completePendingGoogleAuth(p));
+    if (action === 'checkpendinggoogleauth')    return json(checkPendingGoogleAuth(p));
     if (action === 'crossvendorlogin') return json(crossVendorLogin(p));
     if (action === 'emailsignup')  return json(emailSignup(p));
     if (action === 'emaillogin')   return json(emailLogin(p));
@@ -1324,6 +1348,43 @@ function googleLogin(p) {
     return { status:'success', token: token, name: name, phone: phone };
   } finally {
     try { lock.releaseLock(); } catch (e) {}
+  }
+}
+
+// ═══════════ WEBVIEW (APK) GOOGLE SIGN-IN — external-browser bounce-back ═══════════
+// Google blocks its own sign-in flow when it detects it's running inside an
+// embedded WebView (exactly what an Android-APK-wrapped version of this app
+// is) — regardless of implicit vs. authorization-code flow. So for wrapped
+// builds (index.html's isWrappedApp()), the Google auth screen opens in the
+// device's real system browser instead, which can't hand a result back to
+// the WebView via a normal redirect/postMessage. This is the bridge: the
+// external-browser tab (still just this same index.html, distinguished by
+// ?authcomplete=1) verifies + logs in exactly like googleLogin() already
+// does, then stashes the session here for a few minutes; the still-open
+// WebView polls checkPendingGoogleAuth() until it shows up.
+const PENDING_AUTH_TTL_SEC = 300;   // 5 min — plenty for a real human to sign in
+function completePendingGoogleAuth(p) {
+  const pendingId = String(p.pendingId || '').trim();
+  if (!pendingId) return { status:'error', message:'Missing pending auth id' };
+  const result = googleLogin(p);   // same verify + user lookup/create + session issuance
+  if (result.status === 'success') {
+    try {
+      CacheService.getScriptCache().put('pending_auth_' + pendingId, JSON.stringify(result), PENDING_AUTH_TTL_SEC);
+    } catch (e) {}
+  }
+  return result;
+}
+function checkPendingGoogleAuth(p) {
+  const pendingId = String(p.pendingId || '').trim();
+  if (!pendingId) return { status:'error', message:'Missing pending auth id' };
+  try {
+    const c = CacheService.getScriptCache();
+    const cached = c.get('pending_auth_' + pendingId);
+    if (!cached) return { status:'pending' };
+    c.remove('pending_auth_' + pendingId);   // single-use — WebView consumed it
+    return JSON.parse(cached);
+  } catch (e) {
+    return { status:'pending' };
   }
 }
 
@@ -3325,6 +3386,7 @@ function saveConfig(cfg) {
   const companies = sanitizeCompanies(cfg.companies);
   const homeEnabled = (cfg.homeEnabled !== false);
   const officeEnabled = (cfg.officeEnabled === true);
+  const listInDiscovery = (cfg.listInDiscovery !== false);
   // Cutoffs: minutes-since-midnight, 0..1439. Galat/missing value pe default rakho.
   const cutoffs = {};
   Object.keys(d.cutoffs).forEach(k => {
@@ -3345,7 +3407,7 @@ function saveConfig(cfg) {
     meal4:     !!(cfg.mealsEnabled && cfg.mealsEnabled.meal4 === true)
   };
   applyMealTypesToLegacy(mealTypes, mealsEnabled, cutoffs, capacity);
-  const clean = { prices: prices, addonsEnabled: addonsEnabled, mealTypes: mealTypes, township: township, societies: societies, deliveryNear: dNear, deliveryFar: dFar, farSocieties: farSoc, closedDates: closedDates, capacity: capacity, cutoffs: cutoffs, tempClosed: tempClosed, tempClosedMsg: tempClosedMsg, meal4Label: meal4Label, meal4Emoji: meal4Emoji, upiId: upiId, upiName: upiName, fssai: fssai, legalName: legalName, gstNumber: gstNumber, whatsappAuto: (cfg.whatsappAuto !== false), mealsEnabled: mealsEnabled, companies: companies, homeEnabled: homeEnabled, officeEnabled: officeEnabled };
+  const clean = { prices: prices, addonsEnabled: addonsEnabled, mealTypes: mealTypes, township: township, societies: societies, deliveryNear: dNear, deliveryFar: dFar, farSocieties: farSoc, closedDates: closedDates, capacity: capacity, cutoffs: cutoffs, tempClosed: tempClosed, tempClosedMsg: tempClosedMsg, meal4Label: meal4Label, meal4Emoji: meal4Emoji, upiId: upiId, upiName: upiName, fssai: fssai, legalName: legalName, gstNumber: gstNumber, whatsappAuto: (cfg.whatsappAuto !== false), mealsEnabled: mealsEnabled, companies: companies, homeEnabled: homeEnabled, officeEnabled: officeEnabled, listInDiscovery: listInDiscovery };
   // Preserve variants + banners that were set via the Variants tab (Setup save
   // must not wipe them). Read whatever is currently saved and carry it over.
   const cur = readConfig();
@@ -3358,6 +3420,9 @@ function saveConfig(cfg) {
   sh.getRange(2, 1).setValue('⚠️ Cell A1 manually edit mat karo — app ke Admin → Setup se update karo. Last: ' + Utilities.formatDate(new Date(), TZ, 'dd MMM yyyy, hh:mm a'));
   audit('CONFIG_SAVED', '', 'prices/township/societies updated');
   resetConfigCache();
+  // discoverVendors()/listAreas() sirf master registry padhte hain (har vendor
+  // ki apni sheet nahi) — is vendor ka listing-choice wahan mirror karo.
+  syncVendorListing(CURRENT_VENDOR_ID, listInDiscovery);
   // Emergency-close TOGGLE hone par (dono direction — band ya wapas khula) subscribed
   // customers ko push bhejo. Har config save par NAHI — sirf jab tempClosed state
   // genuinely BADLA ho, warna admin baar-baar Setup save kare to spam ho jaayega.
