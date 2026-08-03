@@ -826,12 +826,17 @@ const ADMIN_STATUS = ['Pending','Preparing','Delivered'];
 // jo real orders/paise touch karta hai): ye poora Orders sheet row 2 se
 // getLastRow() tak padhta hai, HAR order-placement request pe — koi date
 // window nahi. Ek vendor ke paas mahino/saalon ka order history jamaa hone
-// ke baad ye read (aur isके saath LOCK ka hold-time bhi, kyunki capacity/
+// ke baad ye read (aur iske saath LOCK ka hold-time bhi, kyunki capacity/
 // duplicate check LOCK ke ANDAR chalta hai — placeOrderAuthed() dekho) dheere-
 // dheere badhta jayega. Jab ye asli bottleneck bane, fix: purane
 // (jaise 90+ din se pehle ke) orders ko ek "Orders Archive" sheet me move
 // karo taaki active sheet chhota rahe — row-range se filter karna risky hai
 // kyunki rows submission-order me hain, delivery-date order me nahi.
+// Dead-code sweep me ek adhoora pichla attempt (isDuplicate(), bounded
+// last-600-rows scan) mila jo kabhi call hi nahi hota tha — hataya gaya,
+// kyunki wo meal-scoped nahi tha (koi bhi order us date pe duplicate maan
+// leta, jabki ek hi date pe alag-alag meal ke orders VAALID hain) — agla
+// attempt is gap ko dhyaan me rakhe.
 let _ordersRawCache = null;
 let _configCache = null;
 let _menuCache = null;
@@ -2125,24 +2130,6 @@ function ordersSheet() {
   if (!sh.getRange(1, 29).getValue()) sh.getRange(1, 29).setValue('Meal Status');
   try { CacheService.getScriptCache().put(_hdrKey, '1', 21600); } catch (e) {}
   return sh;
-}
-
-function isDuplicate(phone, deliveryDate) {
-  if (!phone || !deliveryDate) return false;
-  const sh = ordersSheet();
-  const lastRow = sh.getLastRow();
-  if (lastRow < 2) return false;
-  // ⚠️ PERF: pehle poori sheet scan hoti thi (10k rows = har order pe 10k rows padho).
-  // Duplicate hamesha HAAL ka hota hai (same delivery date), isliye sirf aakhri
-  // DUP_SCAN rows dekhna kaafi hai — 3 mahine ka data bhi isme aa jaata hai.
-  const DUP_SCAN = 600;
-  const startRow = Math.max(2, lastRow - DUP_SCAN + 1);
-  const data = sh.getRange(startRow, 1, lastRow - startRow + 1, 20).getValues();
-  for (let i = 0; i < data.length; i++) {
-    const r = data[i];
-    if (cleanPhone(r[5]) === phone && ddStr(r[19]) === deliveryDate && r[18] !== 'Cancelled') return true;
-  }
-  return false;
 }
 
 // ═══════ PROMO / COUPON MODULE ═══════
