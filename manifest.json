@@ -5,7 +5,7 @@
     "start_url": "/SolutionEat/",
     "scope": "/SolutionEat/",
     "id": "/SolutionEat/",
-    "display": "standalone",
+    "display_override": ["fullscreen", "standalone"],
     "orientation": "portrait",
     "background_color": "#f5eee0",
     "theme_color": "#6366f1",
