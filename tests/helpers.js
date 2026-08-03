@@ -71,15 +71,17 @@ function handleGet(state, url) {
 
   // Discovery/marketplace (no ?v= vendor) — volume tests seed state.discoveryVendors;
   // default [] keeps every existing test (which never sets it) unaffected.
+  // listInDiscovery mirrors apps-script-v6.txt's discoverVendors()/listAreas() —
+  // a vendor with it explicitly false is excluded, same as opting out in Setup.
   if (action === 'areas') {
-    const vs = state.discoveryVendors || [];
+    const vs = (state.discoveryVendors || []).filter(v => v.listInDiscovery !== false);
     const counts = {};
     vs.forEach(v => (v.areas || []).forEach(a => { counts[a] = (counts[a] || 0) + 1; }));
     return { status:'success', areas: Object.keys(counts).map(a => ({ area:a, count:counts[a] })) };
   }
   if (action === 'discover') {
     const area = url.searchParams.get('area') || '';
-    const vs = (state.discoveryVendors || []).filter(v => !area || (v.areas || []).includes(area));
+    const vs = (state.discoveryVendors || []).filter(v => v.listInDiscovery !== false && (!area || (v.areas || []).includes(area)));
     return { status:'success', vendors: vs };
   }
 
@@ -151,6 +153,23 @@ function handlePost(state, body) {
       : { status:'error', code:'wrong_pw', message:'Incorrect password.' };
   if (action === 'demologin') return { status:'success', ...SESSION };
   if (action === 'logout')    return { status:'success' };
+
+  // ── Wrapped-APK Google sign-in bounce-back (mirrors completePendingGoogleAuth/
+  // checkPendingGoogleAuth in apps-script-v6.txt) ──
+  if (action === 'completependinggoogleauth') {
+    if (!p.pendingId) return { status:'error', message:'Missing pending auth id' };
+    const result = { status:'success', ...SESSION };
+    state.pendingAuth = state.pendingAuth || {};
+    state.pendingAuth[p.pendingId] = result;
+    return result;
+  }
+  if (action === 'checkpendinggoogleauth') {
+    if (!p.pendingId) return { status:'error', message:'Missing pending auth id' };
+    const stash = (state.pendingAuth || {})[p.pendingId];
+    if (!stash) return { status:'pending' };
+    delete state.pendingAuth[p.pendingId];
+    return stash;
+  }
 
   // ── Promo ──
   if (action === 'checkpromo') {
@@ -421,7 +440,10 @@ async function openApp(page, opts = {}) {
   // numbers (₹80/₹60) fixture ke numbers se coincidentally match kar gaye).
   // Isse saveConfig() ka township-required check har baar fail hota, aur meal-
   // panel bhi kabhi asli vendor menu load nahi karta. Ab query string me jodte hain.
-  const url = opts.vendor ? `${APP_URL}?v=${encodeURIComponent(opts.vendor)}` : APP_URL;
+  const qs = new URLSearchParams();
+  if (opts.vendor) qs.set('v', opts.vendor);
+  if (opts.mode) qs.set('mode', opts.mode);   // APK mode split testing — 'admin' | 'customer'
+  const url = qs.toString() ? `${APP_URL}?${qs.toString()}` : APP_URL;
   await page.goto(url);
   await page.waitForSelector('#bootLoader.gone', { timeout:15000 }).catch(() => {});
   return { errors, state };
