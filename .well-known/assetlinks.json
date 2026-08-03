@@ -1,12 +1,8 @@
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "REPLACE_WITH_YOUR_APK_PACKAGE_NAME",
-      "sha256_cert_fingerprints": [
-        "REPLACE:WITH:YOUR:APKS:SIGNING:CERTIFICATE:SHA256:FINGERPRINT"
-      ]
-    }
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.himani12690_fly.twa",
+    "sha256_cert_fingerprints": ["49:77:24:6F:6D:D0:3B:F4:39:57:B2:42:EC:DF:40:04:71:31:D2:8B:8A:8A:F1:5B:9D:FD:B4:F9:87:03:EC:BC"]
   }
-]
+}]
