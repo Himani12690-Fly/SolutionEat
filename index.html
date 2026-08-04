@@ -169,7 +169,9 @@
            brute-force throttle/reset-email logic) hata diya gaya hai taaki login
            simple/ek-hi-raasta rahe. -->
       <div id="authSocialBlock">
-        <div class="divider"><span data-i="orSignInWith"></span></div>
+        <!-- Google hi ekmatra sign-in tareeka hai — koi doosra option nahi jisse
+             ye button divide ho, isliye "or sign in with" wala divider hata diya
+             gaya (bina kisi upar wale option ke wo orphaned/confusing lagta tha). -->
         <button type="button" class="g-btn" id="gBtn" onclick="googleRedirectLogin()">
           <svg class="g-ico" viewBox="0 0 48 48" aria-hidden="true">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -392,19 +394,52 @@
   </div>
 
 
-  <!-- ══════ ABOUT (kitchen info card — Zomato-style, only real vendor data) ══════ -->
+  <!-- ══════ ABOUT (kitchen info card — Zomato-style, only real vendor data) ══════
+       Order: hero/brand → USP strip → "Us vs Delivery Apps" comparison → cancellation
+       policy → contact/legal. Comparison + USP copy already existed as unused i18n
+       keys (badgeFresh/cmpU1-7 etc.) from an earlier, never-wired-up build — reused
+       here as-is, no new translation strings needed. -->
   <div id="aboutView" class="hidden">
     <div class="hero" style="padding:16px;">
       <button class="back-btn" onclick="navTo('profile')" aria-label="Back" style="border:none;background:none;font-size:22px;font-weight:900;color:var(--ink);cursor:pointer;padding:4px 8px;margin:0;">←</button>
     </div>
     <div class="section" style="padding-top:0;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <img class="brand-ic vbrand-logo" style="width:52px;height:52px;border-radius:14px;flex:none;" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="">
         <div>
           <div class="vbrand-name" style="font-size:21px;font-weight:900;line-height:1.15;"></div>
           <div id="abTagline" style="font-size:12.5px;color:var(--muted);font-weight:700;margin-top:2px;"></div>
         </div>
       </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="hero-badge" data-i="badgeFresh"></span>
+        <span class="hero-badge" data-i="badgeCustom"></span>
+        <span class="hero-badge" data-i="badgeCOD"></span>
+      </div>
+      <div class="fresh-note" style="margin-top:12px;" data-i="freshStrip"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title" data-i="cmpQualT"></div>
+      <div style="font-size:12.5px;color:var(--muted);font-weight:600;margin:-6px 0 14px;" data-i="cmpQualS"></div>
+      <div class="cmp-table">
+        <div class="cmp-row cmp-head"><span data-i="cmpUs"></span><span data-i="cmpThem"></span></div>
+        <div class="cmp-row"><span data-i="cmpU1"></span><span data-i="cmpT1"></span></div>
+        <div class="cmp-row"><span data-i="cmpU2"></span><span data-i="cmpT2"></span></div>
+        <div class="cmp-row"><span data-i="cmpU3"></span><span data-i="cmpT3"></span></div>
+        <div class="cmp-row"><span data-i="cmpU4"></span><span data-i="cmpT4"></span></div>
+        <div class="cmp-row"><span data-i="cmpU5"></span><span data-i="cmpT5"></span></div>
+        <div class="cmp-row"><span data-i="cmpU6"></span><span data-i="cmpT6"></span></div>
+        <div class="cmp-row"><span data-i="cmpU7"></span><span data-i="cmpT7"></span></div>
+      </div>
+    </div>
+
+    <div class="section" id="abPolicySection">
+      <div class="section-title" data-i="policyTitle" style="cursor:pointer;" onclick="toggleAboutPolicy()"></div>
+      <div id="abPolicyBody" class="policy-b hidden"></div>
+    </div>
+
+    <div class="section">
       <div id="abAddr" class="cust-row" style="padding:8px 0;"></div>
       <div style="display:flex;gap:10px;margin:10px 0 4px;">
         <a id="acCall" href="tel:+917043491481" style="flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;color:inherit;background:var(--card);border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.08);">📞</a>
@@ -416,10 +451,7 @@
       <div class="cust-row" style="padding:8px 0;"><span>🛵 <span data-i="abDeliveryOnly"></span></span></div>
       <div id="abLegalBox"></div>
     </div>
-    <div class="section" id="abPolicySection">
-      <div class="section-title" data-i="policyTitle" style="cursor:pointer;" onclick="toggleAboutPolicy()"></div>
-      <div id="abPolicyBody" class="policy-b hidden"></div>
-    </div>
+
     <div style="padding:16px;">
       <button class="new-order" style="background:var(--accent);color:#fff;font-weight:800;" onclick="showHomePage()" data-i="abBackToMenu"></button>
     </div>
@@ -465,7 +497,7 @@
       <p class="tagline" style="margin:0;" data-i="checkoutSub"></p>
     </div>
 
-    <div class="section" id="orderFormWrap" style="padding-bottom:104px;">
+    <div class="section" id="orderFormWrap" style="padding-bottom:130px;">
       
       <div class="summary-card" id="summaryCard"></div>
       <div class="saved-note" id="savedNote" data-i="autofillNote"></div>
@@ -990,12 +1022,15 @@
            subView me kahin nahi, ye sirf "hum SolutionEat ko kya dete hain") ══════ -->
       <div id="aview-billing" class="hidden">
         <div class="section-title" style="margin-top:4px;">💳 Subscription</div>
-        <div class="pf-box" style="margin-bottom:14px;">
-          <div style="font-size:13.5px;font-weight:800;margin-bottom:10px;">Flat plan — ₹<span id="vbAmount">499</span>/month</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="pf-box" style="margin-bottom:14px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#fff;border:none;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div style="opacity:.85;font-size:11px;font-weight:700;letter-spacing:.03em;">MONTHLY PLAN</div>
+              <div style="font-size:24px;font-weight:800;margin-top:4px;">₹<span id="vbAmount">499</span><span style="font-size:12px;font-weight:600;opacity:.85;">/mo</span></div>
+            </div>
             <span id="vbChip" style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:9px;"></span>
-            <span id="vbDue" style="font-size:12px;color:var(--muted);"></span>
           </div>
+          <div id="vbDue" style="margin-top:12px;font-size:12.5px;opacity:.9;"></div>
         </div>
         <div class="pf-box" id="vbPayBox">
           <div style="font-size:13.5px;font-weight:800;margin-bottom:4px;">📲 Pay to continue</div>
@@ -1010,6 +1045,9 @@
             </div>
           </div>
         </div>
+
+        <div class="section-title" style="margin-top:18px;font-size:14px;">📅 Last 12 Months</div>
+        <div id="vbHistoryList"></div>
       </div>
     </div>
     <div class="footer">
@@ -4809,7 +4847,7 @@
   let adminCreds=null, adminCredsValidated=false, adminMenuWorking=null, adminPrevDay='monday', adminOrders=[], adminUsers=[], orderFilter='All';
   // Vendor ki apni PLATFORM subscription — 'stats' response me aata hai (admin login
   // ke ek hi round-trip me), Billing tab khulte hi renderVendorBilling() isse dikhata hai.
-  let vendorBilling=null, platformPaymentInfo=null;
+  let vendorBilling=null, platformPaymentInfo=null, vendorBillingHistory=null;
   function showAdminLogin(){ showView('adminLogin'); }
   function hideAdmin(){ exitAdminTheme(); if(storeGet('fbt_lang')) setLang(storeGet('fbt_lang')); isLoggedIn()?showLanding():showPublic(); }
   function adminLogout(){ adminCreds=null; adminCredsValidated=false; storeDel('fbt_admin'); stopAlertPolling(); stopRing(); hideAdmin(); }
@@ -5781,7 +5819,7 @@
     }).catch(()=>{ btn.disabled=false; btn.textContent=old; showToast(t('errNetwork'),'error'); });
   }
   function fillStats(j){
-    vendorBilling=j.vendorBilling||null; platformPaymentInfo=j.platformPayment||null;
+    vendorBilling=j.vendorBilling||null; platformPaymentInfo=j.platformPayment||null; vendorBillingHistory=j.vendorBillingHistory||[];
     document.getElementById('st-todayCount').textContent=j.today.count; document.getElementById('st-todayRev').textContent='₹'+j.today.revenue; document.getElementById('st-weekCount').textContent=j.week.count; document.getElementById('st-totalCount').textContent=j.total.count;
     const banner=document.getElementById('statsPendingBanner');
     const pendingCount=(j.recent||[]).filter(o=>o.status==='Pending').length;
@@ -5816,6 +5854,21 @@
     document.getElementById('vbUpiName').textContent = pp.upiName ? ('Payee: '+pp.upiName) : '';
     const qr=document.getElementById('vbQr');
     if(pp.qrImageUrl){ qr.src=pp.qrImageUrl; qr.classList.remove('hidden'); } else qr.classList.add('hidden');
+    renderVendorBillingHistory();
+  }
+  // Vendors sheet sirf LATEST due/paid snapshot rakhti hai — asli month-by-month
+  // history backend Audit sheet se derive karta hai (getVendorBillingHistory()),
+  // yahan bas simple list bana rahe hain, sabse recent sabse upar.
+  function renderVendorBillingHistory(){
+    const list=document.getElementById('vbHistoryList'); if(!list) return;
+    const hist=vendorBillingHistory||[];
+    if(!hist.length){ list.innerHTML='<div style="font-size:11.5px;color:var(--muted);padding:4px 0;">Abhi tak koi payment record nahi hai.</div>'; return; }
+    list.innerHTML = hist.map(function(h){
+      return '<div class="pf-box" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;margin-bottom:8px;">'
+        + '<span style="font-size:12.5px;font-weight:700;">'+esc(h.paidOn)+'</span>'
+        + '<span style="font-size:11.5px;font-weight:700;color:var(--ok);">✓ ₹'+esc(String(h.amount))+' Paid</span>'
+        + '</div>';
+    }).join('');
   }
   function copyPlatformUpi(){
     const id=(platformPaymentInfo&&platformPaymentInfo.upiId)||'';

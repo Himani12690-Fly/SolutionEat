@@ -800,6 +800,33 @@ function markVendorPaid(p) {
   return { status:'success', vendors: listVendorsForSuper() };
 }
 
+// Vendor Admin ke apne subscription tab me "last 12 months" dikhane ke liye —
+// Vendors sheet sirf LATEST due/paid snapshot rakhti hai (har markVendorPaid()
+// purana overwrite kar deta hai), asli history sirf Audit sheet ke
+// VENDOR_MARKED_PAID rows me bachi hai. Wahi se derive karte hain, koi naya
+// sheet/schema change nahi chahiye.
+function getVendorBillingHistory(id) {
+  try {
+    const sh = auditSheet();
+    const lr = sh.getLastRow();
+    if (lr < 2) return [];
+    const rows = sh.getRange(2, 1, lr - 1, 4).getValues();   // Time, Phone, Action, Details
+    const prefix = id + ' — next due ';
+    const out = [];
+    rows.forEach(r => {
+      if (r[2] === 'VENDOR_MARKED_PAID' && String(r[3] || '').indexOf(prefix) === 0) {
+        out.push({
+          paidOn: Utilities.formatDate(new Date(r[0]), TZ, 'yyyy-MM-dd'),
+          nextDue: String(r[3]).slice(prefix.length),
+          amount: VENDOR_SUB_AMOUNT
+        });
+      }
+    });
+    out.sort((a, b) => a.paidOn < b.paidOn ? 1 : (a.paidOn > b.paidOn ? -1 : 0));
+    return out.slice(0, 12);
+  } catch (e) { return []; }
+}
+
 // ═══════════ PLATFORM PAYMENT SETTINGS (super admin's own UPI/QR) ═══════════
 // Ek hi jagah — SAARE vendors isi ek UPI ID/QR pe pay karte hain (flat-fee model,
 // per-vendor alag payment info nahi chahiye). Vendors master sheet me hi ek chhoti
@@ -3633,6 +3660,7 @@ function uploadImage(p) {
       status: vendorSubStatus(CURRENT_VENDOR_ID, cv), amount: VENDOR_SUB_AMOUNT,
       dueDate: cv.subDueDate || '', lastPaid: cv.subLastPaid || ''
     };
+    res.vendorBillingHistory = getVendorBillingHistory(CURRENT_VENDOR_ID);
     res.platformPayment = getPlatformPayment();
 
     try {
