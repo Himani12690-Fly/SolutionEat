@@ -141,7 +141,7 @@
     .coupon-warn { background:var(--warnbg); border:1.5px solid var(--warn); color:var(--warn);
                    border-radius:12px; padding:12px 14px; font-size:12.5px; font-weight:700;
                    line-height:1.6; margin-bottom:12px; text-align:left; }
-    .cod-note { background:var(--okbg); border:1.5px dashed var(--ok); border-radius:13px; padding:14px; font-size:12.5px; font-weight:700; color:#166534; line-height:1.6; text-align:center; }
+    .cod-note, .fresh-note { background:var(--okbg); border:1.5px dashed var(--ok); border-radius:13px; padding:14px; font-size:12.5px; font-weight:700; color:#166534; line-height:1.6; text-align:center; }
     .upi-pay-box .upb-note { font-size:11px; color:var(--muted); margin-top:12px; line-height:1.5; }
     .spin { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.45); border-top-color:#fff; border-radius:50%; animation:sp .7s linear infinite; vertical-align:-2px; }
     button.is-busy { opacity:0.75; cursor:progress; }
@@ -703,6 +703,16 @@
     .cust-row .sub { display:block; font-size:11px; color:var(--muted); font-weight:600; }
     .cust-row select { padding:9px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:14px; font-weight:600; background:var(--card); outline:none; max-width:55%; }
 
+    /* About Us — "Us vs Delivery Apps" comparison table */
+    .cmp-table { border:1.5px solid var(--line); border-radius:14px; overflow:hidden; }
+    .cmp-row { display:grid; grid-template-columns:1fr 1fr; }
+    .cmp-row:not(:last-child) { border-bottom:1px solid var(--line); }
+    .cmp-row > span { padding:10px 12px; font-size:12.5px; font-weight:600; line-height:1.4; }
+    .cmp-row > span:first-child { color:var(--ok); font-weight:700; border-right:1px solid var(--line); }
+    .cmp-row > span:last-child { color:var(--muted); }
+    .cmp-row.cmp-head { background:var(--accent-soft); }
+    .cmp-row.cmp-head > span { color:var(--ink); font-weight:800; }
+
     .stepper { display:flex; align-items:center; gap:10px; }
     .stepper button { width:32px; height:32px; border-radius:50%; border:none; background:var(--accent-soft); color:var(--accent); font-size:18px; font-weight:800; cursor:pointer; }
     .stepper .val { min-width:22px; text-align:center; font-weight:800; font-size:15px; }
@@ -746,6 +756,14 @@
     .mb-txt { flex:1; font-size:14.5px; font-weight:800; color:var(--ink); }
     .mb-go { display:flex; align-items:center; gap:3px; color:var(--accent-dark);
       font-size:14.5px; font-weight:900; white-space:nowrap; }
+
+    /* Checkout total bar — full-width flush-to-edge instead of the floating
+       rounded pill every other .sticky-bar uses, so the total/Place Order stays
+       pinned exactly like the rest of the screen, not "floating" above content. */
+    #page2Bar { left:0; right:0; bottom:0; width:100%; max-width:480px; margin:0 auto;
+      transform:none; border-radius:0; border:none; border-top:1.5px solid var(--line);
+      box-shadow:0 -6px 18px rgba(0,0,0,0.08);
+      padding:14px 18px calc(14px + env(safe-area-inset-bottom)); }
 
     .back-link { display:inline-flex; gap:6px; color:var(--accent); font-weight:800; font-size:14px; cursor:pointer; margin-bottom:12px; }
     .summary-card { background:var(--bg); border:1.5px solid var(--line); border-radius:16px; padding:16px; margin-bottom:18px; }
@@ -796,7 +814,6 @@
        aur scroll na aaye. Sirf #authPage pe scoped hai, baaki pages waise hi. */
     #authPage .hero { padding:14px 20px 12px; }
     #authPage .section { padding:14px 16px; }
-    #authPage .divider { margin:14px 0 10px; }
     #authPage .center-hint { margin-top:6px; }
     #authPage .footer { padding-top:10px; }
     /* Bottom nav wale pages pe uski jagah ghata do warna 88px ka extra scroll banta hai */
@@ -1123,8 +1140,6 @@
     .admin-btn { width:100%; padding:14px; background:var(--accent); color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:800; cursor:pointer; margin-top:6px; }
     .btn-primary { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:15px 16px; background:var(--accent); color:#fff; border:none; border-radius:16px; font-size:15.5px; font-weight:800; letter-spacing:.2px; cursor:pointer; margin-top:4px; box-shadow:0 6px 16px rgba(99,102,241,0.28); }
     .btn-primary:active { transform:translateY(1px); }
-    .divider { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:12px; font-weight:700; margin:20px 0 14px; }
-    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--line); }
     .pwd-wrap { position:relative; }
     .pwd-wrap input { padding-right:46px !important; }
     .pwd-toggle { position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:16px; cursor:pointer; padding:8px; opacity:0.55; }
@@ -1152,7 +1167,7 @@
     .g-btn:disabled { opacity:0.6; cursor:default; }
     .g-btn .g-ico { width:22px; height:22px; flex-shrink:0; }
     html[data-theme="dark"] .g-btn { background:var(--card); border-color:var(--line); }
-    #authSocialBlock { margin-top:6px; }
+    #authSocialBlock { margin-top:28px; }
 
     .admin-btn:disabled { opacity:0.6; }
     .admin-btn.sec { background:var(--accent-soft); color:var(--accent); }

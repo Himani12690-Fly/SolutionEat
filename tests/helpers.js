@@ -223,6 +223,7 @@ function handlePost(state, body) {
       total:{ count:live.length, revenue:rev },
       recent: live.slice(-10).reverse(),
       vendorBilling: { status:v.subStatus||'pending', amount:v.subAmount||499, dueDate:v.subDueDate||'', lastPaid:v.subLastPaid||'' },
+      vendorBillingHistory: v.subHistory || [],
       platformPayment: state.platformPayment };
   }
   if (action === 'orders') {
