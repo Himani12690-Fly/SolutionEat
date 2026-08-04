@@ -940,6 +940,23 @@
         <label class="cfg-chk"><input type="checkbox" id="cfg-homeEnabled" checked> 🏠 Home delivery (Society / Flat)</label>
         <label class="cfg-chk"><input type="checkbox" id="cfg-officeEnabled"> 🏢 Office delivery (Company / Employee ID)</label>
 
+        <div class="section-title" style="margin-top:20px;">💰 Delivery Charges <span style="font-size:11px;color:var(--muted);font-weight:600;">(home delivery)</span></div>
+        <label class="cfg-chk"><input type="checkbox" id="cfg-deliveryEnabled" checked onchange="document.getElementById('deliveryFeeWrap').classList.toggle('hidden', !this.checked)"> 🛵 Charge delivery fee (OFF = free delivery for everyone)</label>
+        <div id="deliveryFeeWrap">
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div style="flex:1;">
+              <label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">Near societies ₹</label>
+              <input type="number" class="inp-mini" id="cfg-deliveryNear" min="0" max="500" placeholder="10">
+            </div>
+            <div style="flex:1;">
+              <label style="font-size:11.5px;color:var(--muted);font-weight:700;display:block;margin-bottom:4px;">Far societies ₹</label>
+              <input type="number" class="inp-mini" id="cfg-deliveryFar" min="0" max="500" placeholder="20">
+            </div>
+          </div>
+          <div style="font-size:11.5px;color:var(--muted);margin:10px 0 4px;">Far societies (ek line ek naam) — inhe "far" fee lagega, baaki sab "near" fee. Khaali chhodo to sabko near fee lagega.</div>
+          <textarea id="cfg-farSocieties" rows="3" placeholder="Eden&#10;Harihar"></textarea>
+        </div>
+
         <div class="section-title" style="margin-top:20px;">🏢 Companies <span style="font-size:11px;color:var(--muted);font-weight:600;">(office delivery)</span></div>
         <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Har line: <b>Company name | Building (optional) | Delivery fee ₹</b><br>Jaise: <code>MoneyPlant Fintech | Tower B | 20</code><br>Employee ID har office order pe zaroori hoti hai.</div>
         <textarea id="cfg-companies" rows="4" placeholder="MoneyPlant Fintech | Tower B | 20&#10;Zydus Corporate Park | Wing 2 | 20"></textarea>
@@ -1459,6 +1476,7 @@
     // karta tha) — defensive fallbacks crash se bachate hain, par field yahan bhi
     // rakhna zyada sahi/consistent hai.
     tempClosed: false, tempClosedMsg: '',
+    deliveryEnabled: true,
     deliveryNear: 10,
     deliveryFar: 20,
     farSocieties: [],
@@ -2278,6 +2296,7 @@
   }
   function deliveryFee(){
     if(!cart.length) return 0;
+    if(CFG.deliveryEnabled===false) return 0;   // vendor ne "free delivery for everyone" ON kiya hai
     const savedAddr = storeGet('fbt_addr') || {};
     if(deliveryType==='office'){
       const domVal = document.getElementById('company') ? document.getElementById('company').value : '';
@@ -6459,6 +6478,11 @@
     if(ce) ce.value=(CFG.companies||[]).map(c=>[c.name,c.building||'',c.fee].join(' | ')).join('\n');
     const he=document.getElementById('cfg-homeEnabled'); if(he) he.checked=(CFG.homeEnabled!==false);
     const oe=document.getElementById('cfg-officeEnabled'); if(oe) oe.checked=(CFG.officeEnabled===true);
+    const de=document.getElementById('cfg-deliveryEnabled'); if(de) de.checked=(CFG.deliveryEnabled!==false);
+    const dn=document.getElementById('cfg-deliveryNear'); if(dn) dn.value=(CFG.deliveryNear!=null?CFG.deliveryNear:10);
+    const df=document.getElementById('cfg-deliveryFar'); if(df) df.value=(CFG.deliveryFar!=null?CFG.deliveryFar:20);
+    const fs=document.getElementById('cfg-farSocieties'); if(fs) fs.value=(CFG.farSocieties||[]).join('\n');
+    const dfWrap=document.getElementById('deliveryFeeWrap'); if(dfWrap) dfWrap.classList.toggle('hidden', CFG.deliveryEnabled===false);
     const wa=document.getElementById('cfg-whatsappAuto'); if(wa) wa.checked=(CFG.whatsappAuto!==false);
     // Deep-copy so edits (incl. Add/Remove Meal) are a draft until Save Config.
     workingMealTypes=JSON.parse(JSON.stringify((CFG.mealTypes&&CFG.mealTypes.length)?CFG.mealTypes:defaultMealTypes()));
@@ -6516,10 +6540,15 @@
     const officeEnabled=document.getElementById('cfg-officeEnabled')?document.getElementById('cfg-officeEnabled').checked:false;
     if(!homeEnabled&&!officeEnabled){ cfgFail('delivery','⚠️ Keep at least one delivery mode ON.'); return; }
     if(officeEnabled&&!companies.length){ cfgFail('delivery','⚠️ Add at least one company for office delivery.'); return; }
+    const deliveryEnabled=document.getElementById('cfg-deliveryEnabled')?document.getElementById('cfg-deliveryEnabled').checked:true;
+    const deliveryNear=parseInt(document.getElementById('cfg-deliveryNear')?document.getElementById('cfg-deliveryNear').value:10,10);
+    const deliveryFar=parseInt(document.getElementById('cfg-deliveryFar')?document.getElementById('cfg-deliveryFar').value:20,10);
+    if(deliveryEnabled&&(isNaN(deliveryNear)||deliveryNear<0||isNaN(deliveryFar)||deliveryFar<0)){ cfgFail('delivery','⚠️ Enter valid delivery fees (₹0 or more).'); return; }
+    const farSocieties=(document.getElementById('cfg-farSocieties')?document.getElementById('cfg-farSocieties').value:'').split('\n').map(s=>s.trim()).filter(Boolean);
     const tempClosed=document.getElementById('cfg-tempClosed')?document.getElementById('cfg-tempClosed').checked:false;
     const tempClosedMsg=document.getElementById('cfg-tempClosedMsg')?document.getElementById('cfg-tempClosedMsg').value.trim():'';
     const listInDiscovery=document.getElementById('cfg-listInDiscovery')?document.getElementById('cfg-listInDiscovery').checked:true;
-    const cfg={ prices, addonsEnabled, mealTypes, township, societies, deliveryNear:CFG.deliveryNear, deliveryFar:CFG.deliveryFar, farSocieties:CFG.farSocieties, closedDates:workingClosedDates, tempClosed:tempClosed, tempClosedMsg:tempClosedMsg, companies:companies, homeEnabled:homeEnabled, officeEnabled:officeEnabled, listInDiscovery:listInDiscovery, whatsappAuto:(document.getElementById('cfg-whatsappAuto')?document.getElementById('cfg-whatsappAuto').checked:true),
+    const cfg={ prices, addonsEnabled, mealTypes, township, societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:workingClosedDates, tempClosed:tempClosed, tempClosedMsg:tempClosedMsg, companies:companies, homeEnabled:homeEnabled, officeEnabled:officeEnabled, listInDiscovery:listInDiscovery, whatsappAuto:(document.getElementById('cfg-whatsappAuto')?document.getElementById('cfg-whatsappAuto').checked:true),
       upiId:(document.getElementById('cfg-upiId')?document.getElementById('cfg-upiId').value.trim():CFG.upiId), upiName:(document.getElementById('cfg-upiName')?document.getElementById('cfg-upiName').value.trim():CFG.upiName), fssai:(document.getElementById('cfg-fssai')?document.getElementById('cfg-fssai').value.trim():CFG.fssai), legalName:(document.getElementById('cfg-legalName')?document.getElementById('cfg-legalName').value.trim():CFG.legalName), gstNumber:(document.getElementById('cfg-gstNumber')?document.getElementById('cfg-gstNumber').value.trim():CFG.gstNumber) };
     const btn=document.getElementById('saveConfigBtn'); btn.textContent='⏳ Saving...'; btn.disabled=true;
     apiPost({action:'saveConfig',user:adminCreds.user,pass:adminCreds.pass,config:cfg}).then(j=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; if(j.status==='success'){ cfg.variants=CFG.variants; cfg.banners=CFG.banners; CFG=cfg; storeSet('fbt_cfg',CFG); applyConfigToUI(); refreshAvailability(); showToast('✅ Setup saved!','success'); } else showToast('❌ '+(j.message||'Save failed'),'error'); }).catch(()=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; showToast(t('errNetwork'),'error'); }); }
