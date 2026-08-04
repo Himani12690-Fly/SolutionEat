@@ -351,7 +351,7 @@ function handlePost(state, body) {
   });
   const sameDate = state.orders.some(o => o.deliveryDate === p.deliveryDate &&
                                           o.status !== 'Cancelled' && o.phone === SESSION.phone);
-  const fee = sameDate ? 0
+  const fee = (sameDate || state.config.deliveryEnabled === false) ? 0
     : (state.config.farSocieties.includes(p.society) ? state.config.deliveryFar
                                                      : state.config.deliveryNear);
   let total = subtotal + fee;

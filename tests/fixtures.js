@@ -13,7 +13,7 @@ const CONFIG = {
   ],
   township: 'Godrej Garden City',
   societies: ['Vrindavan','Eden'],
-  deliveryNear: 10, deliveryFar: 20, farSocieties: ['Eden'],
+  deliveryEnabled: true, deliveryNear: 10, deliveryFar: 20, farSocieties: ['Eden'],
   closedDates: [], capacity: { breakfast:0, lunch:0, dinner:0 },
   // ⚠️ Order matters — app ka defaultVariantId(m) hamesha variantsFor(m)[0] uthata hai
   // (quickAdd isi se default tiffin decide karta hai). Real app me 'full' hamesha

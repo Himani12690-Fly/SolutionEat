@@ -3230,7 +3230,9 @@ function defaultConfig() {
                      // (kabhi save na hua vendor) ke liye hi kabhi dikhta hai.
     societies: [],   // ⚠️ khaali — wajah upar wali same
     // Delivery: <=3km ₹10, beyond ₹20. farSocieties me jo naam honge unpe ₹20, baaki sab ₹10.
-    deliveryNear: 10, deliveryFar: 20, farSocieties: [],
+    // deliveryEnabled OFF = vendor "free delivery for everyone" chuna hai — near/far/
+    // farSocieties tab bhi set rahenge, bas fee-calc functions unhe ignore karke 0 return karte hain.
+    deliveryEnabled: true, deliveryNear: 10, deliveryFar: 20, farSocieties: [],
     closedDates: [], capacity: { breakfast:0, lunch:0, dinner:0, meal4:0 },
     // Cutoff times, minutes-since-midnight IST. lunch/dinner/meal4 apply to the
     // SAME delivery day; breakfast applies to the NIGHT BEFORE (order tomorrow's
@@ -3279,6 +3281,7 @@ function findCompany(name) {
 }
 // Order ka delivery fee: office => company fee, home => society (near/far)
 function deliveryFeeForOrder(p) {
+  if (readConfig().deliveryEnabled === false) return 0;   // vendor ne free delivery ON kiya hai
   // Us date ka pehle se koi active order hai? To ye same-trip hai — fee dobara mat lo.
   // ⚠️ Pehle yahan apna alag sh.getRange(...).getValues() tha — poora Orders sheet
   // DOBARA padhta tha, jabki findActiveOrderRow() (isi request me, isi lock ke
@@ -3375,6 +3378,7 @@ function readConfigUncached() {
       addonsEnabled: addonsEnabled,
       township: c.township || d.township,
       societies: (c.societies && c.societies.length) ? c.societies : d.societies,
+      deliveryEnabled: (c.deliveryEnabled !== false),
       deliveryNear: (typeof c.deliveryNear === 'number') ? c.deliveryNear : d.deliveryNear,
       deliveryFar: (typeof c.deliveryFar === 'number') ? c.deliveryFar : d.deliveryFar,
       farSocieties: Array.isArray(c.farSocieties) ? c.farSocieties : d.farSocieties,
@@ -3420,6 +3424,7 @@ function saveConfig(cfg) {
   const township = String(cfg.township || d.township).slice(0, 60);
   let societies = Array.isArray(cfg.societies) ? cfg.societies.map(s => String(s).slice(0, 40).trim()).filter(Boolean) : [];
   if (!societies.length) societies = d.societies;
+  const deliveryEnabled = (cfg.deliveryEnabled !== false);
   let dNear = parseInt(cfg.deliveryNear, 10); if (isNaN(dNear) || dNear < 0) dNear = d.deliveryNear; dNear = Math.min(500, dNear);
   let dFar = parseInt(cfg.deliveryFar, 10); if (isNaN(dFar) || dFar < 0) dFar = d.deliveryFar; dFar = Math.min(500, dFar);
   let farSoc = Array.isArray(cfg.farSocieties) ? cfg.farSocieties.map(s => String(s).slice(0, 40).trim()).filter(Boolean) : [];
@@ -3458,7 +3463,7 @@ function saveConfig(cfg) {
     meal4:     !!(cfg.mealsEnabled && cfg.mealsEnabled.meal4 === true)
   };
   applyMealTypesToLegacy(mealTypes, mealsEnabled, cutoffs, capacity);
-  const clean = { prices: prices, addonsEnabled: addonsEnabled, mealTypes: mealTypes, township: township, societies: societies, deliveryNear: dNear, deliveryFar: dFar, farSocieties: farSoc, closedDates: closedDates, capacity: capacity, cutoffs: cutoffs, tempClosed: tempClosed, tempClosedMsg: tempClosedMsg, meal4Label: meal4Label, meal4Emoji: meal4Emoji, upiId: upiId, upiName: upiName, fssai: fssai, legalName: legalName, gstNumber: gstNumber, whatsappAuto: (cfg.whatsappAuto !== false), mealsEnabled: mealsEnabled, companies: companies, homeEnabled: homeEnabled, officeEnabled: officeEnabled, listInDiscovery: listInDiscovery };
+  const clean = { prices: prices, addonsEnabled: addonsEnabled, mealTypes: mealTypes, township: township, societies: societies, deliveryEnabled: deliveryEnabled, deliveryNear: dNear, deliveryFar: dFar, farSocieties: farSoc, closedDates: closedDates, capacity: capacity, cutoffs: cutoffs, tempClosed: tempClosed, tempClosedMsg: tempClosedMsg, meal4Label: meal4Label, meal4Emoji: meal4Emoji, upiId: upiId, upiName: upiName, fssai: fssai, legalName: legalName, gstNumber: gstNumber, whatsappAuto: (cfg.whatsappAuto !== false), mealsEnabled: mealsEnabled, companies: companies, homeEnabled: homeEnabled, officeEnabled: officeEnabled, listInDiscovery: listInDiscovery };
   // Preserve variants + banners that were set via the Variants tab (Setup save
   // must not wipe them). Read whatever is currently saved and carry it over.
   const cur = readConfig();
