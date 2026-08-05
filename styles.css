@@ -142,6 +142,10 @@
                    border-radius:12px; padding:12px 14px; font-size:12.5px; font-weight:700;
                    line-height:1.6; margin-bottom:12px; text-align:left; }
     .cod-note, .fresh-note { background:var(--okbg); border:1.5px dashed var(--ok); border-radius:13px; padding:14px; font-size:12.5px; font-weight:700; color:#166534; line-height:1.6; text-align:center; }
+    .kitchen-avail-banner { border-radius:12px; padding:9px 13px; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .kitchen-avail-banner.kab-open { background:var(--okbg); color:#166534; }
+    .kitchen-avail-banner.kab-closed { background:var(--dangerbg); color:var(--danger); }
+    .kitchen-avail-banner .kab-sub { opacity:0.8; font-weight:600; }
     .upi-pay-box .upb-note { font-size:11px; color:var(--muted); margin-top:12px; line-height:1.5; }
     .spin { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.45); border-top-color:#fff; border-radius:50%; animation:sp .7s linear infinite; vertical-align:-2px; }
     button.is-busy { opacity:0.75; cursor:progress; }
@@ -1056,6 +1060,10 @@
     .cfg-flash { animation:cfgFlash 1.2s ease; }
     @keyframes cfgFlash { 0%,100%{ box-shadow:none; } 30%{ box-shadow:0 0 0 3px var(--danger); } }
     .admin-topbar .alert-toggle { float:none; font-size:10.5px; font-weight:800; background:rgba(255,255,255,.18); color:#fff; border-radius:16px; padding:6px 12px; cursor:pointer; }
+    /* Har admin tab pe hamesha visible — Emergency Close ko Setup ke andar kahin
+       dabaya nahi rehne diya, jab bhi zaroorat pade turant ek tap door hai. */
+    .emg-toggle { flex:none; width:30px; height:30px; border-radius:9px; background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center; font-size:15px; cursor:pointer; }
+    .emg-toggle.on { background:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.5); }
     /* Admin drawer active item */
     #adminPanel .back-link, #adminPanel .alert-toggle { font-size:11px; }
     .date-chips { display:flex; gap:8px; margin-top:5px; }

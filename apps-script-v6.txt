@@ -1067,6 +1067,14 @@ function doPost(e) {
       if (!checkAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
       return json(saveConfig(p.config));
     }
+    // Admin topbar ka one-tap Emergency Close/Reopen shortcut — poore Setup form
+    // (prices/societies/mealTypes...) ko dobara bhejne/wipe hone ke risk se bachne
+    // ke liye ye apna chhota dedicated read-merge-write action hai, saveConfig() se
+    // alag.
+    if (action === 'setemergencyclose') {
+      if (!checkAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
+      return json(setEmergencyClose(p.closed === '1' || p.closed === true, p.msg, p.until));
+    }
     if (action === 'savevariants') {
       if (!checkAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
       return json(saveVariants(p));
@@ -3244,6 +3252,9 @@ function defaultConfig() {
     // gas leak, staff na hona) — admin jab tak khud ON->OFF na kare, saara ordering
     // (aaj + future sab) band rahega.
     tempClosed: false, tempClosedMsg: '',
+    // Quick emergency-close (topbar shortcut) sets this to an ISO timestamp so
+    // customers see a reopen countdown; empty = indefinite, admin manually reopens.
+    tempClosedUntil: '',
     variants: defaultVariants(),
     banners: { breakfast:'', lunch:'', dinner:'', meal4:'' },   // optional meal banner images
     upiId: '', upiName: '',        // online UPI payment (Option A) — khaali; UI ise 'hide' treat karti hai jab tak vendor apna naam na daale
@@ -3387,6 +3398,7 @@ function readConfigUncached() {
       cutoffs: cutoffs,
       tempClosed: (c.tempClosed === true),
       tempClosedMsg: String(c.tempClosedMsg || '').trim(),
+      tempClosedUntil: String(c.tempClosedUntil || '').trim(),
       variants: variants,
       banners: Object.assign(banners, c.banners || {}),
       upiId: String(c.upiId || '').trim(),
@@ -3469,6 +3481,12 @@ function saveConfig(cfg) {
   const cur = readConfig();
   clean.variants = cur.variants;
   clean.banners = cur.banners;
+  // Setup ka checkbox koi duration nahi leta — sirf jab tempClosed state ISI save
+  // se genuinely badla ho (fresh close ya reopen), tempClosedUntil clear karo. State
+  // same raha (admin ne koi aur unrelated field save ki, jabki quick emergency-close
+  // se pehle se ek timed close chal raha tha) to us duration ko preserve karo —
+  // warna Setup save silently countdown gayab kar deta.
+  clean.tempClosedUntil = (cur.tempClosed === tempClosed) ? (cur.tempClosedUntil || '') : '';
   const ss = getSS();
   let sh = ss.getSheetByName(CONFIG_SHEET);
   if (!sh) sh = ss.insertSheet(CONFIG_SHEET);
@@ -3484,7 +3502,10 @@ function saveConfig(cfg) {
   // genuinely BADLA ho, warna admin baar-baar Setup save kare to spam ho jaayega.
   if (cur.tempClosed !== clean.tempClosed) {
     try {
-      if (clean.tempClosed) notifyAllSubscribers('🚨 Kitchen Closed', clean.tempClosedMsg || 'We are temporarily not taking orders.', { type: 'kitchen_closed' });
+      if (clean.tempClosed) {
+        const untilTxt = clean.tempClosedUntil ? (' Reopens around ' + Utilities.formatDate(new Date(clean.tempClosedUntil), TZ, 'hh:mm a') + '.') : '';
+        notifyAllSubscribers('🚨 Kitchen Closed', (clean.tempClosedMsg || 'We are temporarily not taking orders.') + untilTxt, { type: 'kitchen_closed' });
+      }
       else notifyAllSubscribers('✅ Kitchen is Open Again', 'We are back and taking orders!', { type: 'kitchen_open' });
     } catch (e) {}
   }
@@ -3504,6 +3525,37 @@ function saveConfig(cfg) {
     try { notifyAllSubscribers('📅 Schedule Updated', 'Some delivery dates have changed — please check before ordering!', { type: 'closed_dates_updated' }); } catch (e) {}
   }
   return { status:'success' };
+}
+// Admin topbar ke 🚨 icon se turant close/reopen — pura Setup form (prices,
+// societies, mealTypes...) dobara bhejne ki zaroorat nahi, isliye saveConfig()
+// use nahi karta (agar isse partial object bheja jaaye to baaki saari config
+// default values se overwrite ho jaati — saveConfig() koi merge nahi karta,
+// sirf variants/banners ko explicitly carry-over karta hai). Ye function khud
+// hi read-modify-write karta hai, sirf teen fields chhoo ke.
+function setEmergencyClose(closed, msg, untilIso) {
+  const cur = readConfig();
+  const clean = Object.assign({}, cur);
+  clean.tempClosed = (closed === true);
+  clean.tempClosedMsg = String(msg || '').slice(0, 200).trim();
+  clean.tempClosedUntil = clean.tempClosed ? String(untilIso || '').slice(0, 40).trim() : '';
+  const ss = getSS();
+  let sh = ss.getSheetByName(CONFIG_SHEET);
+  if (!sh) sh = ss.insertSheet(CONFIG_SHEET);
+  sh.getRange(1, 1).setValue(JSON.stringify(clean));
+  sh.getRange(2, 1).setValue('⚠️ Cell A1 manually edit mat karo — app ke Admin → Setup se update karo. Last: ' + Utilities.formatDate(new Date(), TZ, 'dd MMM yyyy, hh:mm a'));
+  audit('CONFIG_SAVED', '', 'emergency close (quick) = ' + clean.tempClosed);
+  resetConfigCache();
+  if (cur.tempClosed !== clean.tempClosed) {
+    try {
+      if (clean.tempClosed) {
+        const untilTxt = clean.tempClosedUntil ? (' Reopens around ' + Utilities.formatDate(new Date(clean.tempClosedUntil), TZ, 'hh:mm a') + '.') : '';
+        notifyAllSubscribers('🚨 Kitchen Closed', (clean.tempClosedMsg || 'We are temporarily not taking orders.') + untilTxt, { type: 'kitchen_closed' });
+      } else {
+        notifyAllSubscribers('✅ Kitchen is Open Again', 'We are back and taking orders!', { type: 'kitchen_open' });
+      }
+    } catch (e) {}
+  }
+  return { status:'success', tempClosed: clean.tempClosed, tempClosedUntil: clean.tempClosedUntil, tempClosedMsg: clean.tempClosedMsg };
 }
 // Prices ya serving-window/cutoff badle to true — sirf ye fields customer-relevant
 // hain. Naam/emoji/capacity/enabled jaanbujh ke yahan check nahi karte.

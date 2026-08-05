@@ -306,6 +306,14 @@ function handlePost(state, body) {
     Object.assign(state.config, p.config);
     return { status:'success' };
   }
+  if (action === 'setemergencyclose') {
+    if (!adminOK) return denied;
+    const closed = p.closed === '1' || p.closed === true;
+    state.config.tempClosed = closed;
+    state.config.tempClosedMsg = closed ? String(p.msg || '') : '';
+    state.config.tempClosedUntil = closed ? String(p.until || '') : '';
+    return { status:'success', tempClosed: state.config.tempClosed, tempClosedUntil: state.config.tempClosedUntil, tempClosedMsg: state.config.tempClosedMsg };
+  }
   if (action === 'savevariants') {
     if (!adminOK) return denied;
     state.config.variants = p.variants;
@@ -425,14 +433,16 @@ async function openApp(page, opts = {}) {
 
   await mockBackend(page, state);
 
-  await page.addInitScript(({ session, theme, loggedIn, addr }) => {
+  await page.addInitScript(({ session, theme, loggedIn, addr, istOverride }) => {
     if (loggedIn) localStorage.setItem('fbt_session', JSON.stringify(session));
     if (theme) localStorage.setItem('fbt_theme', JSON.stringify(theme));
     if (addr)  localStorage.setItem('fbt_addr', JSON.stringify(addr));
     localStorage.setItem('fbt_infostrip_x', JSON.stringify(1));
+    if (istOverride) window.__TEST_IST_OVERRIDE = istOverride;   // app's getISTNow() reads this once at load
   }, { session:SESSION, theme:opts.theme,
        loggedIn: opts.loggedIn !== false,
-       addr: opts.addr || { deliveryType:'home', society:'Vrindavan', flatNo:'D-706' } });
+       addr: opts.addr || { deliveryType:'home', society:'Vrindavan', flatNo:'D-706' },
+       istOverride: opts.istOverride || null });
 
   // ⚠️ opts.vendor tha hi nahi yahan — callers (admin.spec.js, customer.spec.js)
   // ise pass karte the (?v=<vendor> se real bootstrap/CFG load karne ke liye,
