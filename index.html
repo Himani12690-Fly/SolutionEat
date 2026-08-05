@@ -227,6 +227,7 @@
       <!-- Header ka cart icon hata diya — bottom nav me Cart tab pehle se hai (badge ke saath),
            aur neeche "N items added → Continue" bar bhi hai. Teen jagah cart zyada tha. -->
     </div>
+    <div id="kitchenAvailBanner" class="hidden" style="margin:0 16px 10px;"></div>
     <div class="mt-user" id="profileName" style="display:none;"></div>
     <div id="modeChip" style="padding:0 16px;"></div>
     <!-- Sticky date + time picker -->
@@ -768,6 +769,7 @@
         <span class="atb-dot">·</span>
         <span class="atb-sect" id="adminSectionTitle">🧾 Orders</span>
       </div>
+      <span class="emg-toggle" id="emgToggle" title="Emergency Close" onclick="openEmergencySheet()">🚨</span>
       <span class="alert-toggle" id="alertToggle" onclick="toggleAlerts()">🔕 OFF</span>
     </div>
     <div class="section" style="padding-bottom:110px;">
@@ -1073,7 +1075,7 @@
 
     <div class="sheet-overlay hidden" id="adminMoreOverlay" onclick="if(event.target===this)closeAdminMore()">
       <div class="admin-more-sheet" id="adminMoreSheet">
-        <div class="more-item" id="adr-config" onclick="adminBnGo('config')"><span class="di-icon">⚙️</span><span>Setup</span></div>
+        <div class="more-item" id="adr-users" onclick="adminBnGo('users')"><span class="di-icon">👥</span><span>Users</span></div>
         <div class="more-item" id="adr-variants" onclick="adminBnGo('variants')"><span class="di-icon">🍱</span><span>Variants</span></div>
         <div class="more-item" id="adr-promos" onclick="adminBnGo('promos')"><span class="di-icon">🎟️</span><span>Promos</span></div>
         <div class="more-item" id="adr-billing" onclick="adminBnGo('billing')"><span class="di-icon">💳</span><span>Subscription</span></div>
@@ -1090,9 +1092,38 @@
         <div class="more-item danger" onclick="closeAdminMore();adminLogout()"><span class="di-icon">🚪</span><span>Logout</span></div>
       </div>
     </div>
+    <!-- Emergency Close quick-action — topbar 🚨 se, kisi bhi admin tab se pahunch
+         sakte hain, Setup ke accordion me dhoondhne ki zaroorat nahi. -->
+    <div class="sheet-overlay hidden" id="emergencySheet" onclick="if(event.target===this)closeEmergencySheet()">
+      <div class="sheet" style="max-width:380px;">
+        <div style="padding:22px 20px 20px;">
+          <div id="emgOpenBlock">
+            <div style="font-size:15px;font-weight:900;text-align:center;">🚨 Emergency Close</div>
+            <div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:4px;">Kitchen ko turant band karo — sabke liye ordering ruk jayegi</div>
+            <div style="font-weight:800;font-size:12px;margin-top:16px;">Kitne der ke liye?</div>
+            <div id="emgDurationOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+              <div class="pay-opt" data-mins="60" onclick="pickEmergencyDuration(60)">1 Hour</div>
+              <div class="pay-opt" data-mins="120" onclick="pickEmergencyDuration(120)">2 Hours</div>
+              <div class="pay-opt" data-mins="240" onclick="pickEmergencyDuration(240)">4 Hours</div>
+              <div class="pay-opt sel" data-mins="0" onclick="pickEmergencyDuration(0)">Until I Reopen</div>
+            </div>
+            <input type="text" id="emgMsgInput" placeholder="Wajah (optional) — e.g. Maintenance" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);margin-top:14px;">
+            <button class="admin-btn" style="background:var(--danger);margin-top:14px;" onclick="confirmEmergencyClose()">🚨 Close Kitchen Now</button>
+            <button class="admin-btn sec" style="margin-top:8px;" onclick="closeEmergencySheet()">Cancel</button>
+          </div>
+          <div id="emgClosedBlock" class="hidden" style="text-align:center;">
+            <div style="font-size:34px;">😴</div>
+            <div style="font-size:15px;font-weight:900;margin-top:8px;">Kitchen is Closed</div>
+            <div id="emgClosedDetail" style="font-size:12.5px;color:var(--muted);margin-top:6px;"></div>
+            <button class="admin-btn" style="margin-top:18px;" onclick="reopenKitchenNow()">✅ Reopen Now</button>
+            <button class="admin-btn sec" style="margin-top:8px;" onclick="closeEmergencySheet()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="admin-bottom-nav">
       <div class="abn-item" id="abn-orders" onclick="adminBnGo('orders')"><span class="abn-ic">🧾</span><span>Orders</span></div>
-      <div class="abn-item" id="abn-users" onclick="adminBnGo('users')"><span class="abn-ic">👥</span><span>Users</span></div>
+      <div class="abn-item" id="abn-config" onclick="adminBnGo('config')"><span class="abn-ic">⚙️</span><span>Setup</span></div>
       <div class="abn-item" id="abn-menu" onclick="adminBnGo('menu')"><span class="abn-ic">✏️</span><span>Menu</span></div>
       <div class="abn-item" id="abn-stats" onclick="adminBnGo('stats')"><span class="abn-ic">📊</span><span>Stats</span></div>
       <div class="abn-item" id="abn-more" onclick="openAdminMore()"><span class="abn-ic">⋯</span><span>More</span></div>
@@ -1723,12 +1754,26 @@
       { icon:'⏱️', title:'સાચું તાજું ભોજન સમય લે છે', body:'સારું ભોજન બનવામાં સમય લાગે છે — બસ એટલી જ વાત છે. અમે થોડો વધુ સમય લઈએ છીએ, જેથી એ જ ભોજન મોકલીએ જે અમે પોતે ખાઈએ.' }
     ]
   };
-  // About page — sirf wahi info dikhate hain jo humare paas actually hai (CFG /
-  // VENDOR_BRAND se). Koi bhi field khaali ho to uska row/section hide ho jaata hai.
-  function aboutOpenStatus(){
+  // Ek hi jagah se "kitchen abhi open hai ya band, kab tak/kab se" nikalta hai —
+  // About page ka status aur Home page ka timer banner dono isi se bante hain
+  // (pehle About page apna alag hisaab lagata tha jo Emergency Close ko bilkul
+  // check hi nahi karta tha — is wajah se emergency-close ke dauran bhi "Open
+  // now" dikha sakta tha; ab dono ek hi sahi jagah se aate hain).
+  // Enforcement gates (ordering block, full-screen redirect) sab isi se poochhein —
+  // raw CFG.tempClosed nahi, warna ek "1 hour" quick-close ka time nikalne ke baad
+  // bhi tab tak band rehta jab tak admin khud Setup me jaake checkbox UNCHECK na
+  // kare (jabki poora point hi ye tha ki duration khatam hote hi apne aap khul jaye).
+  function isKitchenEmergencyClosed(){ return kitchenAvailabilityInfo().state==='emergency'; }
+  function kitchenAvailabilityInfo(){
+    if(CFG.tempClosed){
+      const untilMs = CFG.tempClosedUntil ? Date.parse(CFG.tempClosedUntil) : NaN;
+      const nowMs = getISTNow().getTime();
+      if(!isFinite(untilMs) || untilMs > nowMs) return { state:'emergency', untilMs: isFinite(untilMs)?untilMs:null };
+      // untilMs beet chuka — auto-reopened maano, neeche normal window-logic chalne do
+    }
     const mts=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false);
-    if(!mts.length) return '';
-    const now=new Date(); const curMin=now.getHours()*60+now.getMinutes();
+    if(!mts.length) return { state:'unknown' };
+    const now=getISTNow(); const curMin=now.getHours()*60+now.getMinutes();
     let openMt=null, nextMt=null, nextDiff=Infinity;
     mts.forEach(mt=>{
       const s=hhmmToMins(mt.windowStart), e=hhmmToMins(mt.windowEnd);
@@ -1736,10 +1781,53 @@
       if(e>s && curMin>=s && curMin<e){ if(!openMt || e>hhmmToMins(openMt.windowEnd)) openMt=mt; }
       else { let diff=s-curMin; if(diff<0) diff+=1440; if(diff<nextDiff){ nextDiff=diff; nextMt=mt; } }
     });
-    const fmt=(mins)=>{ const h=Math.floor(mins/60)%24, m=mins%60; const ap=h>=12?'pm':'am'; let hh=h%12; if(hh===0)hh=12; return hh+(m?':'+String(m).padStart(2,'0'):'')+' '+ap; };
-    if(openMt) return `<span style="color:var(--ok);font-weight:800;">${t('abOpenNow')||'Open now'}</span> · ${(t('abCloses')||'Closes')} ${fmt(hhmmToMins(openMt.windowEnd))}`;
-    if(nextMt) return `<span style="color:var(--danger);font-weight:800;">${t('abClosedNow')||'Closed now'}</span> · ${(t('abOpensAt')||'Opens')} ${fmt(hhmmToMins(nextMt.windowStart))}`;
+    if(openMt){ let closesIn=hhmmToMins(openMt.windowEnd)-curMin; if(closesIn<0) closesIn+=1440; return { state:'open', mt:openMt, mins:closesIn }; }
+    if(nextMt) return { state:'closed', mt:nextMt, mins:nextDiff };
+    return { state:'unknown' };
+  }
+  function fmtDuration(mins){
+    mins=Math.max(0,Math.round(mins));
+    const h=Math.floor(mins/60), m=mins%60;
+    if(h && m) return h+'h '+m+'m';
+    if(h) return h+'h';
+    return m+'m';
+  }
+  // About page — sirf wahi info dikhate hain jo humare paas actually hai (CFG /
+  // VENDOR_BRAND se). Koi bhi field khaali ho to uska row/section hide ho jaata hai.
+  function aboutOpenStatus(){
+    const info=kitchenAvailabilityInfo();
+    if(info.state==='emergency') return `<span style="color:var(--danger);font-weight:800;">${t('abClosedNow')||'Closed now'}</span>`;
+    if(info.state==='open') return `<span style="color:var(--ok);font-weight:800;">${t('abOpenNow')||'Open now'}</span> · ${(t('abCloses')||'Closes')} ${formatMinutesAsClock(hhmmToMins(info.mt.windowEnd))}`;
+    if(info.state==='closed') return `<span style="color:var(--danger);font-weight:800;">${t('abClosedNow')||'Closed now'}</span> · ${(t('abOpensAt')||'Opens')} ${formatMinutesAsClock(hhmmToMins(info.mt.windowStart))}`;
     return '';
+  }
+  // Home page ke top par persistent timer/banner — "abhi open hai, X der me band
+  // hoga" ya "band hai, agla meal X der me" — customer ko baar-baar About page
+  // check kiye bina hi pata chal jaye.
+  function renderHomeAvailBanner(){
+    const box=document.getElementById('kitchenAvailBanner'); if(!box) return;
+    const info=kitchenAvailabilityInfo();
+    let html='', cls='';
+    if(info.state==='emergency'){
+      cls='kab-closed';
+      if(info.untilMs){
+        const d=new Date(info.untilMs);
+        html='😴 <b>'+esc(t('kitchenTempClosedTitle')||'Kitchen Closed')+'</b> — reopens '+formatMinutesAsClock(d.getHours()*60+d.getMinutes())+' <span class="kab-sub">(in '+fmtDuration((info.untilMs-getISTNow().getTime())/60000)+')</span>';
+      } else {
+        html='😴 <b>'+esc(t('kitchenTempClosedTitle')||'Kitchen Closed')+'</b>';
+      }
+    } else if(info.state==='open'){
+      cls='kab-open';
+      html='🟢 <b>'+(t('abOpenNow')||'Open now')+'</b> — '+(info.mt.emoji||'')+' '+esc(info.mt.title||'')+' closes in <b>'+fmtDuration(info.mins)+'</b>';
+    } else if(info.state==='closed'){
+      cls='kab-closed';
+      html='🔔 Next: '+(info.mt.emoji||'')+' <b>'+esc(info.mt.title||'')+'</b> in '+fmtDuration(info.mins);
+    } else {
+      box.classList.add('hidden'); return;
+    }
+    box.className='kitchen-avail-banner '+cls;
+    box.innerHTML=html;
+    box.classList.remove('hidden');
   }
   function renderAbout(){
     // Tagline — real serving windows honi zaroori, fake cuisine tags nahi.
@@ -1932,8 +2020,9 @@
     // ⚠️ Emergency close — planned closedDates se PEHLE aur SABHI din (aaj + future)
     // ke liye check karo. closedDates ek SPECIFIC calendar date block karta hai
     // (pre-planned); tempClosed admin ka turant "sab kuch abhi pause karo" switch
-    // hai (jaise gas leak, staff na hona) — jab tak khud OFF na kare, band rahega.
-    if(CFG.tempClosed){
+    // hai (jaise gas leak, staff na hona) — quick-close se duration di gayi ho to
+    // us time ke baad apne aap khul jaata hai, warna jab tak khud OFF na kare.
+    if(isKitchenEmergencyClosed()){
       const msg=CFG.tempClosedMsg||t('kitchenClosedMsg');
       MEALS.forEach(m=>out[m]=A(false,msg)); return out;
     }
@@ -2341,8 +2430,67 @@
   const ADMIN_SECTIONS={orders:'🧾 Orders',users:'👥 Users',menu:'✏️ Menu',config:'⚙️ Setup',variants:'🍱 Variants',promos:'🎟️ Promos',stats:'📊 Stats',billing:'💳 Subscription'};
   function openAdminMore(){ document.getElementById('adminMoreOverlay').classList.remove('hidden'); }
   function closeAdminMore(){ document.getElementById('adminMoreOverlay').classList.add('hidden'); }
+
+  // ═══════ Emergency Close — admin topbar quick-action ═══════
+  // Setup ke andar checkbox pehle se hai (indefinite close, koi duration nahi
+  // poochhta) — ye alag, chhota flow hai jo topbar se kabhi bhi reachable hai
+  // aur "kitne der ke liye" poochhta hai taaki customer ko exact reopen time
+  // dikhaya ja sake (Home page ka timer banner).
+  let __emgSelectedMins = 0;   // 0 = "Until I Reopen" (indefinite), default selection
+  function updateEmergencyToggleUI(){
+    const el=document.getElementById('emgToggle'); if(!el) return;
+    el.classList.toggle('on', CFG.tempClosed===true);
+  }
+  function openEmergencySheet(){
+    const openBlock=document.getElementById('emgOpenBlock'), closedBlock=document.getElementById('emgClosedBlock');
+    if(CFG.tempClosed){
+      openBlock.classList.add('hidden'); closedBlock.classList.remove('hidden');
+      const detail=document.getElementById('emgClosedDetail');
+      let txt=CFG.tempClosedMsg||'';
+      if(CFG.tempClosedUntil){
+        const d=new Date(CFG.tempClosedUntil);
+        txt=(txt?txt+' · ':'')+'Reopens around '+formatMinutesAsClock(d.getHours()*60+d.getMinutes());
+      }
+      detail.textContent = txt || 'Closed until you reopen it manually.';
+    } else {
+      openBlock.classList.remove('hidden'); closedBlock.classList.add('hidden');
+      __emgSelectedMins=0;
+      document.querySelectorAll('#emgDurationOpts .pay-opt').forEach(el=>el.classList.toggle('sel', el.dataset.mins==='0'));
+      const mi=document.getElementById('emgMsgInput'); if(mi) mi.value='';
+    }
+    document.getElementById('emergencySheet').classList.remove('hidden');
+  }
+  function closeEmergencySheet(){ document.getElementById('emergencySheet').classList.add('hidden'); }
+  function pickEmergencyDuration(mins){
+    __emgSelectedMins=mins;
+    document.querySelectorAll('#emgDurationOpts .pay-opt').forEach(el=>el.classList.toggle('sel', parseInt(el.dataset.mins,10)===mins));
+  }
+  function confirmEmergencyClose(){
+    const msg=(document.getElementById('emgMsgInput').value||'').trim();
+    const until = __emgSelectedMins>0 ? new Date(Date.now()+__emgSelectedMins*60000).toISOString() : '';
+    apiPost({action:'setemergencyclose', user:adminCreds.user, pass:adminCreds.pass, closed:'1', msg:msg, until:until}).then(j=>{
+      if(j.status!=='success'){ showToast('❌ '+(j.message||'Failed'),'error'); return; }
+      CFG.tempClosed=true; CFG.tempClosedMsg=j.tempClosedMsg||msg; CFG.tempClosedUntil=j.tempClosedUntil||until;
+      storeSet('fbt_cfg',CFG);
+      updateEmergencyToggleUI();
+      closeEmergencySheet();
+      showToast('🚨 Kitchen closed','success');
+    }).catch(()=>showToast('❌ Network error','error'));
+  }
+  function reopenKitchenNow(){
+    apiPost({action:'setemergencyclose', user:adminCreds.user, pass:adminCreds.pass, closed:'0'}).then(j=>{
+      if(j.status!=='success'){ showToast('❌ '+(j.message||'Failed'),'error'); return; }
+      CFG.tempClosed=false; CFG.tempClosedMsg=''; CFG.tempClosedUntil='';
+      storeSet('fbt_cfg',CFG);
+      updateEmergencyToggleUI();
+      closeEmergencySheet();
+      showToast('✅ Kitchen reopened','success');
+    }).catch(()=>showToast('❌ Network error','error'));
+  }
   let adminCurTab='orders';
-  const ADMIN_BN_TABS=['orders','users','menu','stats'];   // ye 4 seedhe bottom nav mein; baaki "More" sheet mein
+  // Users occasional lookup hai (dispute/block ke waqt), Setup me Emergency Close jaisa
+  // time-critical toggle hai — isliye Setup primary bar me, Users "More" me shift kiya.
+  const ADMIN_BN_TABS=['orders','config','menu','stats'];   // ye 4 seedhe bottom nav mein; baaki "More" sheet mein
   function adminOpenLastTab(){
     let tab='orders';
     try{ const s=storeGet('fbt_admin_tab'); if(s && ADMIN_SECTIONS[s]) tab=s; }catch(e){}
@@ -2401,7 +2549,7 @@
     // bhi view khulwane ki koshish kare, tempClosed hone par yahi jeetega.
     // Admin/superadmin apna alag login hai — customer ke tempClosed se unka
     // koi lena dena nahi.
-    if(CFG.tempClosed && isLoggedIn() && id!=='kitchenClosedView' && ['adminPanel','adminLogin','superPanel','superLogin'].indexOf(id)<0){
+    if(isKitchenEmergencyClosed() && isLoggedIn() && id!=='kitchenClosedView' && ['adminPanel','adminLogin','superPanel','superLogin'].indexOf(id)<0){
       id='kitchenClosedView';
     }
     if(id==='kitchenClosedView') renderKitchenClosedGate();
@@ -3516,7 +3664,7 @@
     sel.innerHTML=html;
   }
   function pickDefaultDate(){ for(let o=0;o<=2;o++){ if(anyAvail(o)){ dateOffset=o; return; } } dateOffset=2; }
-  function refreshAvailability(){ if(!anyAvail(dateOffset)) pickDefaultDate(); renderDateSelector(); pickActiveMeal(); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); const is=document.getElementById('infoStrip'); if(is)is.classList.toggle('hidden', !!storeGet('fbt_infostrip_x')); }
+  function refreshAvailability(){ if(!anyAvail(dateOffset)) pickDefaultDate(); renderDateSelector(); pickActiveMeal(); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); renderHomeAvailBanner(); const is=document.getElementById('infoStrip'); if(is)is.classList.toggle('hidden', !!storeGet('fbt_infostrip_x')); }
   function pickActiveMeal(){
     // ⚠️ ASLI ROOT CAUSE (mila!): init() ke bilkul shuru me, jab kisi vendor ka
     // PEHLI BAAR visit ho (koi cache nahi), CFG.mealTypes abhi khaali hota hai
@@ -3585,23 +3733,17 @@
   // Date + Time row above tabs (applies to the whole order / active meal's time)
   function renderMenuDateTime(){
     const box=document.getElementById('menuDateTime'); if(!box)return;
-    const m=activeMeal, b=builder[m]||{};
     const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
     const dn=dayNames[LANG]||dayNames.en;
     let dateChips=''; for(let o=0;o<=2;o++){ const open=anyAvail(o); dateChips+=`<button type="button" class="dchip ${o===dateOffset?'on':''}" ${open?'':'disabled'} onclick="menuChangeDate(${o})"><b>${dn[o]}</b><span>${fmtLabel(dateWithOffset(o))}</span>${open?'':'<i>✕</i>'}</button>`; }
-    const av=mealsAvail(dateOffset)[m]||{ok:false};
-    let timeCell='';
-    if(av.ok){
-      const timeOpts=(TIME_SLOTS[m]||[]).map(s=>`<option value="${s}" ${b.timeSlot===s?'selected':''}>${s}</option>`).join('');
-      timeCell=`<div class="mdt-cell"><span class="mdt-lbl">${t('deliveryTime')}</span><select onchange="menuSetTime(this.value)">${timeOpts}</select></div>`;
-    }
+    // Time-slot dropdown yahan se hata diya — customer ko choose karne ki zaroorat nahi,
+    // builder[m].timeSlot ab bhi defaultTimeSlot() se silently seed hota hai (last-remembered
+    // ya slot[0]), cart/order/backend sab waisa hi chalta hai.
     box.innerHTML=`<div class="menu-dt" style="flex-direction:column;align-items:stretch;">
       <div class="mdt-cell"><span class="mdt-lbl">${t('deliveryDate')}</span><div class="date-chips">${dateChips}</div></div>
-      ${timeCell}
     </div>`;
   }
   function menuChangeDate(v){ const off=parseInt(v,10)||0; if(!anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
-  function menuSetTime(v){ builder[activeMeal].timeSlot=v; saveTimePref(activeMeal,v); }
 
   // ═══════ MENU AS CARDS — sabhi meals ek saath (compact, no scroll) ═══════
   // Public wrapper — burst calls (availability + stats + images ek hi waqt) ko ek
@@ -6563,6 +6705,7 @@
     // try/catch me + har CFG.xxx read `||[]`/`||''` ke saath defensive.
     try{
     renderVendorQr();   // admin-only element, no-ops on customer-facing loads
+    updateEmergencyToggleUI();   // admin-only element, no-ops on customer-facing loads
     MEALS=(CFG.mealTypes||[]).map(mt=>mt.key);
     TIME_SLOTS={}; (CFG.mealTypes||[]).forEach(mt=>{ TIME_SLOTS[mt.key]=generateTimeSlots(mt.windowStart,mt.windowEnd); });
     MEAL_ORDER={}; MEALS.forEach((k,i)=>{ MEAL_ORDER[k]=i; });
@@ -6834,8 +6977,8 @@
             if (isLoggedIn()) {
                 const gateEl = document.getElementById('kitchenClosedView');
                 const onGate = gateEl && !gateEl.classList.contains('hidden');
-                if (CFG.tempClosed && !onGate) { showView('kitchenClosedView'); return; }
-                if (!CFG.tempClosed && onGate) {
+                if (isKitchenEmergencyClosed() && !onGate) { showView('kitchenClosedView'); return; }
+                if (!isKitchenEmergencyClosed() && onGate) {
                     let back = null;
                     try { back = storeGet('fbt_view'); } catch (e) {}
                     showView((back && ALL_VIEWS.indexOf(back) >= 0 && back !== 'kitchenClosedView') ? back : 'homeView');
@@ -7087,8 +7230,12 @@
         })();
 
         // ---------- 1 minute availability refresh ----------
+        // ⚠️ Pehle #page1 check karta tha — wo "menu ab home me merged" refactor ke
+        // baad kabhi unhide hi nahi hota, isliye ye interval kabhi fire hi nahi hota
+        // tha. #homeView check karo — yahi asli page hai jahan availability/timer
+        // dikhta hai.
         setInterval(() => {
-            if (!document.getElementById('page1').classList.contains('hidden')) refreshAvailability();
+            if (!document.getElementById('homeView').classList.contains('hidden')) refreshAvailability();
         }, 60000);
 
         // ---------- Config refresh (90 sec) ----------
