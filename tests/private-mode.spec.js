@@ -51,6 +51,45 @@ test.describe('Private mode — no vendor param (bare platform link)', () => {
   });
 });
 
+test.describe('Private mode — hardware back button', () => {
+  // The mobile back-button (popstate) handler used to check HAS_VENDOR_PARAM,
+  // which is true for BOTH a vendor's own direct link and a Discovery-picked
+  // vendor — so a vendor's own customer could reach Discovery with one back
+  // press, bypassing the Browse Kitchens/All Kitchens hiding above entirely.
+  // Fixed to use shouldShowDiscoveryEscape() (the same source of truth).
+  test('direct ?v= link: back from Home shows the exit-confirm sheet, never Discovery', async ({ page }) => {
+    await openApp(page);
+    await expect(page.locator('#homeView')).not.toHaveClass(/hidden/);
+    await page.goBack();
+    await expect(page.locator('#dscView')).toHaveClass(/hidden/);
+    await expect(page.locator('#exitConfirmSheet')).not.toHaveClass(/hidden/);
+  });
+
+  test('arrived via Discovery: back from Home still returns to Discovery', async ({ page }) => {
+    await page.addInitScript(() => { try { sessionStorage.setItem('fbt_from_discovery', '1'); } catch (e) {} });
+    await openApp(page);
+    await expect(page.locator('#homeView')).not.toHaveClass(/hidden/);
+    await page.goBack();
+    await expect(page.locator('#dscView')).not.toHaveClass(/hidden/);
+  });
+
+  // confirmExitApp() itself ends in history.back() — in a real device that's
+  // what actually leaves the app, but in a single-tab Playwright session it
+  // navigates the test tab away and kills the JS context mid-call. So this
+  // tests the piece that matters (logout('none') clears the session but does
+  // NOT redirect to Discovery, unlike a normal logout) directly.
+  test('logout("none") — used by the exit-confirm flow — clears the session without redirecting to Discovery', async ({ page }) => {
+    await openApp(page);
+    await expect(page.locator('#homeView')).not.toHaveClass(/hidden/);
+    await page.evaluate(() => window.logout('none'));
+    await page.waitForTimeout(200);
+    const loggedIn = await page.evaluate(() => window.isLoggedIn());
+    expect(loggedIn).toBe(false);
+    await expect(page.locator('#homeView')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#dscView')).toHaveClass(/hidden/);
+  });
+});
+
 test.describe('Discovery opt-out toggle', () => {
   test('vendor with listInDiscovery=false is excluded from discover/areas', async ({ page }) => {
     const state = freshState();

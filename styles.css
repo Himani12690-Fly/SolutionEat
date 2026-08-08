@@ -658,6 +658,7 @@
     .admin-more-sheet .more-item { display:flex; align-items:center; gap:14px; padding:13px 14px; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer; border-radius:12px; }
     .admin-more-sheet .more-item:active { background:var(--accent-soft); }
     .admin-more-sheet .more-item.danger { color:var(--danger); }
+    .more-item-badge { margin-left:auto; background:var(--danger); color:#fff; font-size:11px; font-weight:800; min-width:20px; height:20px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0 6px; }
     .has-bottom-nav { padding-bottom:88px; }
     .ps-right { display:flex; align-items:center; gap:14px; }
     .drawer { position:fixed; top:0; left:0; bottom:0; width:270px; max-width:80%; background:var(--card); z-index:201; transform:translateX(-100%); transition:transform .3s ease; box-shadow:4px 0 24px rgba(0,0,0,0.2); display:flex; flex-direction:column; }

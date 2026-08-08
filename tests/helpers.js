@@ -19,6 +19,7 @@ function freshState() {
     config: JSON.parse(JSON.stringify(CONFIG)),
     menu: JSON.parse(JSON.stringify(MENU)),
     nextRow: 2,
+    bulkRequests: [],  // { row, id, phone, name, meal, qty, date, address, notes, status, approvedQty, approvedPrice, adminNote }
     calls: []          // audit trail — tests isse assert karte hain
   };
 }
@@ -153,6 +154,11 @@ function handlePost(state, body) {
       : { status:'error', code:'wrong_pw', message:'Incorrect password.' };
   if (action === 'demologin') return { status:'success', ...SESSION };
   if (action === 'logout')    return { status:'success' };
+  if (action === 'googlelogin') {
+    if (!p.credential) return { status:'error', message:'Missing credential' };
+    if (!p.phone) return { status:'need_phone' };
+    return { status:'success', token: SESSION.token, name: p.name || SESSION.name, phone: p.phone };
+  }
 
   // ── Wrapped-APK Google sign-in bounce-back (mirrors completePendingGoogleAuth/
   // checkPendingGoogleAuth in apps-script-v6.txt) ──
@@ -208,6 +214,29 @@ function handlePost(state, body) {
     if (!adminOK) return denied;
     state.promos = state.promos.filter(x => x.code !== String(p.code).toUpperCase());
     return { status:'success', promos:state.promos };
+  }
+
+  // ── Bulk / party order requests (vendor approval queue) ──
+  if (action === 'listbulkrequests') {
+    if (!adminOK) return denied;
+    return { status:'success', requests: [...state.bulkRequests].reverse() };
+  }
+  if (action === 'respondbulkrequest') {
+    if (!adminOK) return denied;
+    const r = state.bulkRequests.find(x => x.row === parseInt(p.row, 10));
+    if (!r) return { status:'error', message:'Invalid request' };
+    if (r.status !== 'Pending') return { status:'error', message:'This request has already been ' + r.status.toLowerCase() + '.' };
+    const decision = String(p.decision || '').toLowerCase();
+    if (decision === 'approve') {
+      r.status = 'Approved';
+      r.approvedQty = parseInt(p.approvedQty, 10) || r.qty;
+      r.approvedPrice = (p.approvedPrice !== undefined && p.approvedPrice !== '') ? Number(p.approvedPrice) : null;
+      r.adminNote = p.adminNote || '';
+    } else if (decision === 'decline') {
+      r.status = 'Declined';
+      r.adminNote = p.adminNote || '';
+    } else return { status:'error', message:'Invalid decision' };
+    return { status:'success' };
   }
 
   // ── Admin reads ──
@@ -331,6 +360,21 @@ function handlePost(state, body) {
       return { status:'error', code:'already_cancelled', message:'already cancelled' };
     o.status = 'Cancelled';
     return { status:'success' };
+  }
+  if (action === 'submitbulkrequest') {
+    if (p.token !== SESSION.token) return { status:'invalid_session' };
+    const qty = parseInt(p.qty, 10);
+    if (!p.meal || !qty || qty < 5) return { status:'error', message:'Please enter a valid meal and quantity (5+).' };
+    if (!p.date) return { status:'error', message:'Please pick a delivery date.' };
+    const row = state.bulkRequests.length + 2;
+    state.bulkRequests.push({ row, id:'bulk'+row, phone:SESSION.phone, name:SESSION.name,
+      meal:p.meal, qty, date:p.date, address:p.address || '', notes:p.notes || '',
+      status:'Pending', approvedQty:null, approvedPrice:null, adminNote:'' });
+    return { status:'success', id:'bulk'+row };
+  }
+  if (action === 'mybulkrequests') {
+    if (p.token !== SESSION.token) return { status:'invalid_session' };
+    return { status:'success', requests: state.bulkRequests.filter(r => r.phone === SESSION.phone).reverse() };
   }
 
   // Default = place order
