@@ -5082,18 +5082,38 @@
   function dscShowOnly(idsToShow){
     DSC_STATE_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.toggle('hidden', idsToShow.indexOf(id)<0); });
   }
+  // Ek hi one-shot getCurrentPosition() kabhi-kabhi pehla (coarse, WiFi/cell-tower
+  // based) fix turant de deta hai, jabki asli GPS fix 1-3s me converge hoke kaafi
+  // behtar ho jaata — bilkul isi wajah se real map apps "locating…" thodi der
+  // dikhate hain, instant fix par bharosa nahi karte. Isliye watchPosition() se
+  // ~3s tak sunte hain aur jo bhi sabse accurate (lowest accuracy number) sample
+  // mile wahi final use karte hain — GPS-grade fix (<=50m) turant mil jaye to
+  // poora 3s wait nahi karna.
   function startDiscoveryFlow(){
     dscShowOnly(['dscRadarState']);
     if(!navigator.geolocation){ fallbackToBrowse(); return; }
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const lat=pos.coords.latitude, lng=pos.coords.longitude;
-      resolveDscAreaLabel(lat,lng,pos.coords.accuracy);
+    let best=null, watchId=null, done=false;
+    function useBest(){
+      if(done) return; done=true;
+      if(watchId!=null) navigator.geolocation.clearWatch(watchId);
+      if(!best){ fallbackToBrowse(); return; }
+      const lat=best.coords.latitude, lng=best.coords.longitude;
+      resolveDscAreaLabel(lat,lng,best.coords.accuracy);
       fetch(GOOGLE_SCRIPT_URL+'?action=nearbyvendors&lat='+lat+'&lng='+lng).then(r=>r.json()).then(j=>{
         const vendors=(j&&j.vendors)||[];
         if(vendors.length) renderDscNearby(vendors);
         else dscShowOnly(['dscEmptyNear']);
       }).catch(()=>{ fallbackToBrowse(); });
-    }, ()=>{ fallbackToBrowse(); }, { enableHighAccuracy:true, timeout:10000 });
+    }
+    watchId = navigator.geolocation.watchPosition(pos=>{
+      if(!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+      if(pos.coords.accuracy <= 50) useBest();
+    }, ()=>{
+      if(done) return; done=true;
+      if(watchId!=null) navigator.geolocation.clearWatch(watchId);
+      fallbackToBrowse();
+    }, { enableHighAccuracy:true, timeout:10000 });
+    setTimeout(useBest, 3000);
   }
   // Top header ka "Ahmedabad" — customer ke apne area/locality naam se badalne ke
   // liye. Free reverse-geocoding (OpenStreetMap Nominatim, no API key/billing) —
@@ -5104,7 +5124,7 @@
   // door ka area naam dikhana (jaise "Adalaj" jab customer asal me Godrej Garden
   // City/Gota me ho) fake-precision hai. Bahut kharab accuracy pe label ko chhedo
   // hi mat — default text hi behtar hai ek galat-specific naam se.
-  const AREA_LABEL_MAX_ACCURACY_M = 3000;
+  const AREA_LABEL_MAX_ACCURACY_M = 1000;
   let dscAreaLabelCache = null;
   function resolveDscAreaLabel(lat,lng,accuracy){
     if(accuracy!=null && accuracy>AREA_LABEL_MAX_ACCURACY_M) return;
