@@ -32,26 +32,73 @@ test.describe('Admin nav — Setup vs Users', () => {
   });
 });
 
-test.describe('Home page — time dropdown removed, timer banner added', () => {
-  test('no time-slot <select> on Home, only the date-chip row', async ({ page }) => {
+test.describe('Home page — time dropdown and date chips removed, timer banner added', () => {
+  test('no time-slot <select> and no date-chip row on Home by default (today)', async ({ page }) => {
     await openApp(page);
     const selects = await page.locator('#menuDateTime select').count();
     expect(selects).toBe(0);
-    await expect(page.locator('#menuDateTime .date-chips')).toBeVisible();
+    await expect(page.locator('#menuDateTime .date-chips')).toHaveCount(0);
+    await expect(page.locator('#menuDateTime')).toBeEmpty();
   });
 
-  test('shows "closes in" when inside a meal window (lunch 12:00-14:00, pinned to 13:00)', async ({ page }) => {
+  // Banner now reads the real ORDER CUTOFF (mealsAvail), not the serving
+  // window — at 13:00, lunch's cutoff (09:00) has already passed, so the
+  // "closes in" meal is dinner (cutoff 15:00), not lunch's 12:00-14:00
+  // serving window like the old (buggy) windowStart/windowEnd logic showed.
+  test('shows "closes in" for dinner once lunch cutoff has passed (13:00)', async ({ page }) => {
     await openApp(page, { istOverride: '2026-08-04T13:00:00' });
     const banner = page.locator('#kitchenAvailBanner');
     await expect(banner).not.toHaveClass(/hidden/);
-    await expect(banner).toContainText('closes in');
+    await expect(banner).toContainText('Dinner');
+    await expect(banner).toContainText('close in');
   });
 
-  test('shows "Next" meal when between windows (10:00, before lunch)', async ({ page }) => {
+  // "Next meal opens at X" messaging was removed entirely — only "closes in"
+  // for whatever is actually orderable right now, or nothing at all.
+  test('never shows a "next meal opens at" message — only "closes in" for what is orderable now', async ({ page }) => {
     await openApp(page, { istOverride: '2026-08-04T10:00:00' });
     const banner = page.locator('#kitchenAvailBanner');
     await expect(banner).not.toHaveClass(/hidden/);
-    await expect(banner).toContainText('Next');
+    const text = await banner.textContent();
+    expect(text).not.toContain('Next');
+    expect(text).toContain('close in');
+  });
+});
+
+test.describe('Schedule Your Meal', () => {
+  test('bottom nav has a Schedule tab between Orders and Subscribe', async ({ page }) => {
+    await openApp(page);
+    await expect(page.locator('#bn-schedule')).toBeVisible();
+  });
+
+  test('opens a sheet with Tomorrow / Day After options', async ({ page }) => {
+    await openApp(page);
+    await page.click('#bn-schedule');
+    await expect(page.locator('#scheduleSheet')).not.toHaveClass(/hidden/);
+    const opts = await page.locator('#scheduleOptions button').count();
+    expect(opts).toBe(2);
+  });
+
+  test('picking a day switches Home to that date and shows the "ordering for" banner', async ({ page }) => {
+    await openApp(page);
+    await page.click('#bn-schedule');
+    await page.locator('#scheduleOptions button').first().click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#homeView')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#menuDateTime')).toContainText('Ordering for');
+    await expect(page.locator('#menuDateTime')).toContainText('Back to Today');
+    await expect(page.locator('#bn-schedule')).toHaveClass(/active/);
+  });
+
+  test('"Back to Today" resets Home to today and clears the banner', async ({ page }) => {
+    await openApp(page);
+    await page.click('#bn-schedule');
+    await page.locator('#scheduleOptions button').first().click();
+    await page.waitForTimeout(200);
+    await page.click('text=Back to Today');
+    await page.waitForTimeout(200);
+    await expect(page.locator('#menuDateTime')).toBeEmpty();
+    await expect(page.locator('#bn-land')).toHaveClass(/active/);
   });
 });
 
