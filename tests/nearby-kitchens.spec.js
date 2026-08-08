@@ -97,6 +97,20 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
   });
 
+  test('poor GPS accuracy skips the resolved locality label — no confidently-wrong far-away place name', async ({ page, context }) => {
+    const state = seedVendors();
+    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    // 5km accuracy radius — device only knows it's SOMEWHERE in a 5km circle, so
+    // naming a specific locality (which may be km away from where the customer
+    // actually is) would be confidently wrong, not just imprecise.
+    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG, accuracy: 5000 });
+    await openAppRaw(page, { state, loggedIn: false });
+    await page.evaluate(() => window.openDiscovery());
+    // The actual nearby-vendor match still runs fine — only the cosmetic label is gated.
+    await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/, { timeout: 10000 });
+    await expect(page.locator('#dscCity')).toHaveText('Ahmedabad'); // untouched default, not a reverse-geocoded guess
+  });
+
   test('location denied falls back to the existing area-chip/full-list browsing', async ({ page, context }) => {
     const state = seedVendors();
     // No grantPermissions() call — geolocation stays denied, matching Chromium's default.
