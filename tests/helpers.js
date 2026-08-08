@@ -85,6 +85,22 @@ function handleGet(state, url) {
     const vs = (state.discoveryVendors || []).filter(v => v.listInDiscovery !== false && (!area || (v.areas || []).includes(area)));
     return { status:'success', vendors: vs };
   }
+  if (action === 'nearbyvendors') {
+    const lat = parseFloat(url.searchParams.get('lat')), lng = parseFloat(url.searchParams.get('lng'));
+    if (isNaN(lat) || isNaN(lng)) return { status:'success', vendors: [] };
+    const toRad = d => d * Math.PI / 180;
+    const haversineKm = (la1, ln1, la2, ln2) => {
+      const R = 6371, dLat = toRad(la2 - la1), dLng = toRad(ln2 - ln1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(la1)) * Math.cos(toRad(la2)) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+    const vs = (state.discoveryVendors || [])
+      .filter(v => v.listInDiscovery !== false && v.lat != null && v.lng != null)
+      .map(v => ({ ...v, distanceKm: Math.round(haversineKm(lat, lng, v.lat, v.lng) * 10) / 10 }))
+      .filter(v => v.distanceKm <= (v.deliveryRadiusKm || 4))
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+    return { status:'success', vendors: vs };
+  }
 
   return { status:'success' };
 }

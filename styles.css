@@ -991,6 +991,10 @@
     .dsc-ac small { font-size:10.5px; color:var(--muted); font-weight:700; }
     .dsc-ac.on { background:var(--danger); color:#fff; border-color:var(--danger); }
     .dsc-ac.on small { color:rgba(255,255,255,0.85); }
+    /* Near You — GPS radius (society-list/area-chips se ALAG, dono saath chalte hain) */
+    .zo-near-prompt { margin:2px 15px 10px; padding:12px 14px; border-radius:14px; background:var(--accent-soft); color:var(--accent-dark); font-size:12.5px; font-weight:800; text-align:center; cursor:pointer; }
+    .zo-near-wrap { padding:6px 15px 4px; }
+    .zo-near-wrap.hidden { display:none !important; }
     /* Body */
     .zo-body { padding:6px 15px 60px; }
     .zo-sec-title { font-size:15px; font-weight:900; color:var(--ink); margin:6px 2px 13px; }
