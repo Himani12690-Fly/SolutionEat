@@ -886,7 +886,7 @@ const SEND_EMAIL_PER_ORDER = false;
 
 const SESSION_DAYS = 3650;                // login yaad rahega jab tak user khud logout na kare (~10 saal)
 
-const ORDERS_SHEET='Orders', MENU_SHEET='Menu', USERS_SHEET='Users', SESS_SHEET='Sessions', AUDIT_SHEET='Audit', CONFIG_SHEET='Config', PUSH_SHEET='PushTokens';
+const ORDERS_SHEET='Orders', MENU_SHEET='Menu', USERS_SHEET='Users', SESS_SHEET='Sessions', AUDIT_SHEET='Audit', CONFIG_SHEET='Config', PUSH_SHEET='PushTokens', BULK_SHEET='BulkRequests';
 const TZ = 'Asia/Kolkata';
 const STATUS_COL = 19, DELDATE_COL = 20;
 const ADMIN_STATUS = ['Pending','Preparing','Delivered'];
@@ -1045,6 +1045,8 @@ function doPost(e) {
     if (action === 'resetpassword')  return json(resetPassword(p));
     if (action === 'logout')      return json(logoutUser(p));
     if (action === 'cancelorder') return json(cancelOrderAuthed(p));
+    if (action === 'submitbulkrequest') return json(submitBulkRequest(p));
+    if (action === 'mybulkrequests')    return json(myBulkRequests(p));
     if (action === 'savesub')     return json(saveSubAuthed(p));
     if (action === 'cancelsub')   return json(cancelSubAuthed(p));
     if (action === 'skipsub')     return json(skipSubAuthed(p));
@@ -1074,6 +1076,14 @@ function doPost(e) {
     if (action === 'setemergencyclose') {
       if (!checkAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
       return json(setEmergencyClose(p.closed === '1' || p.closed === true, p.msg, p.until));
+    }
+    if (action === 'listbulkrequests') {
+      if (!checkAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
+      return json({ status:'success', requests: listBulkRequests() });
+    }
+    if (action === 'respondbulkrequest') {
+      if (!checkAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
+      return json(respondBulkRequest(p));
     }
     if (action === 'savevariants') {
       if (!checkAuth(p.user, p.pass)) return json({ status:'error', message:'Invalid credentials' });
@@ -1250,6 +1260,7 @@ function usersSheet()   { return sheetWithHeaders(USERS_SHEET, ['Phone','Name','
 function sessionsSheet(){ return sheetWithHeaders(SESS_SHEET,  ['Token','Phone','Email','Created','Expires']); }
 function auditSheet()   { return sheetWithHeaders(AUDIT_SHEET, ['Time','Phone','Action','Details']); }
 function pushTokensSheet(){ return sheetWithHeaders(PUSH_SHEET, ['Phone','Token','Created']); }
+function bulkRequestsSheet(){ return sheetWithHeaders(BULK_SHEET, ['Id','Timestamp','Phone','Name','Meal','Qty','Date','Address','Notes','Status','ApprovedQty','ApprovedPrice','AdminNote','Updated']); }
 
 function audit(action, phone, details) {
   try { auditSheet().appendRow([new Date(), "'" + (phone || ''), action, details || '']); } catch (e) {}
@@ -2113,6 +2124,92 @@ function cancelDeadlinePassed(deliveryDate, createdVal) {
     if (!isNaN(created.getTime()) && (Date.now() - created.getTime()) <= 30 * 60000) passed = false;
   }
   return passed;
+}
+
+// ═══════════ BULK / PARTY ORDER REQUESTS ═══════════
+// Kitchen ki daily capacity limited hoti hai, isliye bulk order (10/20/50
+// tiffin) normal order ki tarah instant-guaranteed nahi ho sakta — vendor ko
+// confirm karna padta hai ki itna cook kar sakta hai ya nahi. Isliye ye ek
+// REQUEST hai jo admin ke naye "Bulk Requests" tab me pending aati hai —
+// vendor approve (qty/price adjust karke) ya decline karta hai, customer ko
+// dono cases me push notify hota hai.
+function bulkRowToObj(vals, row) {
+  return {
+    row: row, id: String(vals[0] || ''), timestamp: fmtDT(vals[1]), phone: cleanPhone(vals[2]),
+    name: String(vals[3] || ''), meal: String(vals[4] || ''), qty: Number(vals[5]) || 0,
+    date: ddStr(vals[6]), address: String(vals[7] || ''), notes: String(vals[8] || ''),
+    status: String(vals[9] || 'Pending'), approvedQty: vals[10] === '' ? null : Number(vals[10]),
+    approvedPrice: vals[11] === '' ? null : Number(vals[11]), adminNote: String(vals[12] || ''),
+    updated: fmtDT(vals[13])
+  };
+}
+function submitBulkRequest(p) {
+  const sess = getSessionCross(p.token, p.authVendorId);
+  if (!sess) return { status:'invalid_session' };
+  const qty = parseInt(p.qty, 10);
+  const meal = String(p.meal || '').trim();
+  const date = String(p.date || '').trim();
+  if (!meal || !qty || qty < 5) return { status:'error', message:'Please enter a valid meal and quantity (5+).' };
+  if (!date) return { status:'error', message:'Please pick a delivery date.' };
+  const id = Utilities.getUuid();
+  const now = new Date();
+  bulkRequestsSheet().appendRow([
+    id, now, "'" + sess.phone, sess.name, meal, qty, date,
+    String(p.address || '').trim(), String(p.notes || '').trim(),
+    'Pending', '', '', '', now
+  ]);
+  audit('BULK_REQUEST_SUBMITTED', sess.phone, meal + ' x' + qty + ' on ' + date);
+  return { status:'success', id: id };
+}
+function myBulkRequests(p) {
+  const sess = getSessionCross(p.token, p.authVendorId);
+  if (!sess) return { status:'invalid_session' };
+  const sh = bulkRequestsSheet();
+  const last = sh.getLastRow();
+  if (last < 2) return { status:'success', requests: [] };
+  const vals = sh.getRange(2, 1, last - 1, 14).getValues();
+  const mine = [];
+  vals.forEach((r, i) => { if (cleanPhone(r[2]) === sess.phone) mine.push(bulkRowToObj(r, i + 2)); });
+  mine.reverse();
+  return { status:'success', requests: mine };
+}
+function listBulkRequests() {
+  const sh = bulkRequestsSheet();
+  const last = sh.getLastRow();
+  if (last < 2) return [];
+  const vals = sh.getRange(2, 1, last - 1, 14).getValues();
+  return vals.map((r, i) => bulkRowToObj(r, i + 2)).reverse();
+}
+function respondBulkRequest(p) {
+  const sh = bulkRequestsSheet();
+  const row = parseInt(p.row, 10);
+  if (!row || row < 2 || row > sh.getLastRow()) return { status:'error', message:'Invalid request' };
+  const curStatus = sh.getRange(row, 10).getValue() || 'Pending';
+  if (curStatus !== 'Pending') return { status:'error', message:'This request has already been ' + String(curStatus).toLowerCase() + '.' };
+  const phone = cleanPhone(sh.getRange(row, 3).getValue());
+  const meal = sh.getRange(row, 5).getValue();
+  const origQty = sh.getRange(row, 6).getValue();
+  const decision = String(p.decision || '').toLowerCase();
+  if (decision === 'approve') {
+    const approvedQty = parseInt(p.approvedQty, 10) || origQty;
+    const approvedPrice = p.approvedPrice !== undefined && p.approvedPrice !== '' ? Number(p.approvedPrice) : '';
+    sh.getRange(row, 10).setValue('Approved');
+    sh.getRange(row, 11).setValue(approvedQty);
+    sh.getRange(row, 12).setValue(approvedPrice);
+    sh.getRange(row, 13).setValue(String(p.adminNote || ''));
+    sh.getRange(row, 14).setValue(new Date());
+    audit('BULK_REQUEST_APPROVED', phone, meal + ' x' + approvedQty);
+    notifyPhone(phone, '✅ Bulk order approved', 'Your ' + meal + ' x' + approvedQty + ' request has been approved.' + (approvedPrice ? ' Total: ₹' + approvedPrice : ''), { type:'bulk_request', id: String(sh.getRange(row,1).getValue()) });
+  } else if (decision === 'decline') {
+    sh.getRange(row, 10).setValue('Declined');
+    sh.getRange(row, 13).setValue(String(p.adminNote || ''));
+    sh.getRange(row, 14).setValue(new Date());
+    audit('BULK_REQUEST_DECLINED', phone, meal + ' x' + origQty);
+    notifyPhone(phone, '❌ Bulk order declined', 'Your ' + meal + ' x' + origQty + ' request could not be accommodated.' + (p.adminNote ? ' ' + p.adminNote : ''), { type:'bulk_request', id: String(sh.getRange(row,1).getValue()) });
+  } else {
+    return { status:'error', message:'Invalid decision' };
+  }
+  return { status:'success' };
 }
 
 // ═══════════ USERS (admin) ═══════════

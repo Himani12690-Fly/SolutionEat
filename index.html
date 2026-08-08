@@ -647,6 +647,11 @@
         <button class="add-cart-btn" style="margin-top:12px;" onclick="savePfAddr()" data-i="pfSave"></button>
       </div>
       <div class="lp-sec-t" data-i="pfQuick"></div>
+      <div class="pf-row" onclick="openBulkOrderSheet()"><span class="ic-tile tile-teal em">🎉</span><span data-i="bulkOrderRow">Bulk / Party Order</span><i>›</i></div>
+      <div id="pfBulkRequestsWrap" class="hidden">
+        <div class="lp-sec-t" data-i="bulkMyRequests">My Bulk Requests</div>
+        <div id="pfBulkRequestsList"></div>
+      </div>
       <div class="pf-row" id="pfBrowseKitchens" onclick="browseKitchens()"><span class="ic-tile tile-red"><svg class="ic"><use href="#ic-menu"/></svg></span><span data-i="browseKitchens">Browse Kitchens</span><i>›</i></div>
       <div class="pf-row" onclick="openShareKitchenSheet()"><span class="ic-tile tile-blue em">📤</span><span data-i="shareKitchen">Share this Kitchen</span><i>›</i></div>
       <div class="pf-row hidden" id="pfInstallApp" onclick="openInstallAppSheet()"><span class="ic-tile tile-purple em">📲</span><span data-i="installAppRow">Install App</span><i>›</i></div>
@@ -844,6 +849,12 @@
         </select>
         <div style="font-size:12.5px;color:#888;font-weight:700;margin-bottom:10px;" id="usersCount"></div>
         <div id="usersList"><div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>
+      </div>
+
+      <div id="aview-bulk" class="hidden">
+        <span class="refresh-link" onclick="loadBulkRequests()">🔄 Refresh</span>
+        <div class="section-title" style="margin-top:4px;">🎉 Bulk / Party Requests</div>
+        <div id="bulkReqList"><div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>
       </div>
 
       <div id="aview-menu" class="hidden">
@@ -1113,6 +1124,7 @@
         <div class="more-item" id="adr-users" onclick="adminBnGo('users')"><span class="di-icon">👥</span><span>Users</span></div>
         <div class="more-item" id="adr-variants" onclick="adminBnGo('variants')"><span class="di-icon">🍱</span><span>Variants</span></div>
         <div class="more-item" id="adr-promos" onclick="adminBnGo('promos')"><span class="di-icon">🎟️</span><span>Promos</span></div>
+        <div class="more-item" id="adr-bulk" onclick="adminBnGo('bulk')"><span class="di-icon">🎉</span><span>Bulk Requests</span><span class="more-item-badge hidden" id="bulkReqBadge"></span></div>
         <div class="more-item" id="adr-billing" onclick="adminBnGo('billing')"><span class="di-icon">💳</span><span>Subscription</span></div>
         <div style="padding:10px 14px 4px;">
           <div class="lp-sec-t">🌐 Language</div>
@@ -1205,7 +1217,8 @@
         <div style="font-size:40px;">🍱</div>
         <h3 style="font-size:17px;font-weight:900;margin-top:8px;" data-i="limitTitle"></h3>
         <p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:8px;" data-i="limitBody"></p>
-        <button class="add-cart-btn" style="margin-top:16px;" onclick="contactKitchen()" data-i="limitCta"></button>
+        <button class="add-cart-btn" style="margin-top:16px;" onclick="closeLimitPopup();openBulkOrderSheet()" data-i="limitBulkCta">🎉 Place a Bulk Order</button>
+        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="contactKitchen()" data-i="limitCta"></button>
         <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeLimitPopup()" data-i="limitClose"></button>
       </div>
     </div>
@@ -1278,6 +1291,40 @@
         <div id="scheduleWindow"></div>
         <button class="add-cart-btn" id="scheduleContinueBtn" style="margin-top:14px;" onclick="scheduleGoTo()" data-i="schedContinue">Continue to Menu</button>
         <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeScheduleSheet()" data-i="ratingNotNow">Abhi nahi</button>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-overlay hidden" id="exitConfirmSheet" onclick="if(event.target===this)closeExitConfirmSheet()">
+    <div class="sheet" style="max-width:380px;">
+      <div style="padding:22px 20px 20px;text-align:center;">
+        <div style="font-size:34px;">🚪</div>
+        <div style="font-size:15px;font-weight:900;margin-top:8px;" data-i="exitConfirmTitle">Exit App?</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:4px;" data-i="exitConfirmSub">You'll be logged out.</div>
+        <button class="add-cart-btn" style="margin-top:16px;background:var(--danger);" onclick="confirmExitApp()" data-i="exitConfirmBtn">Exit</button>
+        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeExitConfirmSheet()" data-i="ratingNotNow">Abhi nahi</button>
+      </div>
+    </div>
+  </div>
+  <div class="sheet-overlay hidden" id="bulkOrderSheet" onclick="if(event.target===this)closeBulkOrderSheet()">
+    <div class="sheet" style="max-width:420px;">
+      <div style="padding:22px 20px 20px;">
+        <div style="text-align:center;">
+          <div style="font-size:34px;">🎉</div>
+          <div style="font-size:15px;font-weight:900;margin-top:4px;" data-i="bulkTitle">Bulk / Party Order</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:3px;" data-i="bulkSub">Ordering for a group or event? Tell us the details — the kitchen will confirm availability &amp; price.</div>
+        </div>
+        <label class="sh-lbl" data-i="bulkMealLbl">Meal</label>
+        <select class="sh-select" id="bulkMeal"></select>
+        <label class="sh-lbl" data-i="bulkQtyLbl">How many tiffins? (min 5)</label>
+        <input class="sh-select" type="number" id="bulkQty" min="5" value="10">
+        <label class="sh-lbl" data-i="bulkDateLbl">Delivery date</label>
+        <input class="sh-select" type="date" id="bulkDate">
+        <label class="sh-lbl" data-i="bulkAddrLbl">Delivery address</label>
+        <input class="sh-select" id="bulkAddr" data-ph="bulkAddrPh" placeholder="Office / event address">
+        <label class="sh-lbl" data-i="bulkNotesLbl">Notes (optional)</label>
+        <input class="sh-select" id="bulkNotes" data-ph="bulkNotesPh" placeholder="Veg only, no onion, etc.">
+        <button class="add-cart-btn" id="bulkSubmitBtn" style="margin-top:16px;" onclick="submitBulkOrderFE()" data-i="bulkSubmit">Submit Bulk Request</button>
+        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeBulkOrderSheet()" data-i="ratingNotNow">Abhi nahi</button>
       </div>
     </div>
   </div>
@@ -1640,7 +1687,14 @@
       closedTomorrow:'Tomorrow\'s booking is closed (was open till 10:00 PM).',
       cancelClosed:'Cancellation window has been closed.',
       dupMsg:'An order already exists for this date. To make changes, please contact Store Support at 70434 91481.',
-      noUpcoming:'No upcoming orders yet. Add meals from the menu to place your first order.', noHistory:'No orders found for this date.', navHome:'Home', navCart:'Cart', navPast:'Past Orders', navAbout:'About Us', navSub:'Subscription', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navAiShort:'Ask AI', backAgainExit:'Press back again to exit', navOrdersShort:'Orders', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navOrdersShort:'Orders', navScheduleShort:'Schedule', schedTitle:'📅 Schedule Your Meal', schedSub:'Which day do you want to order for?', schedOrderingFor:'Ordering for', schedBackToday:'Back to Today', schedDayLbl:'Day', schedMealLbl:'Meal', schedContinue:'Continue to Menu', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Daily', onb1Body:'Cooked only after you order — never frozen, never stale.', onb2Title:'Home & Office Delivery', onb2Body:'Order for wherever you are — home or work.', onb3Title:'Order Today or Schedule Ahead', onb3Body:"Need tomorrow sorted? Use Schedule Your Meal from the bottom menu.", onb4Title:'Easy Payments', onb4Body:'Pay via UPI or simply Cash on Delivery — your choice.', onbGetStarted:'Get Started', subTitle:'🔁 Subscription', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subActive:'Active Plan', subDaysWeek:'din/hafta', subSkipped:'Skip kiye', subSkipBtn:'Din skip karein', subCancelBtn:'Plan Cancel', subEditNote:'Neeche edit karke Update dabayein', subPickMeals:'Meals chunein', subPickDays:'Din chunein', subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subDateRange:'Date range', subStart:'Shuru', subEnd:'Khatam', subDelivery:'Delivery', subUpdate:'Plan Update', subStart2:'Subscription Shuru', subAnySabzi:'Chef\'s choice', subSaved:'Subscription successfully save ho gaya.', subCancelled:'Subscription cancel ho gaya', subCancelConfirm:'Subscription cancel karein?', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subPickSkipDate:'Skip ke liye date chunein', subEndAfter:'End date start ke baad honi chahiye', subStartInfo:'Kal se aage', navSub:'Subscription', subTitle:'🔁 Subscription', subSub:'Set it once — your daily tiffin is placed automatically.', subActive:'Active Plan', subDaysWeek:'days/week', subSkipped:'Skipped', subSkipBtn:'Skip a day', subCancelBtn:'Cancel Plan', subEditNote:'Edit below & Update to change your plan', subPickMeals:'Pick meals', subPickDays:'Pick days', subWeekdays:'Mon–Fri', subAllDays:'All 7', subClear:'Clear', subDateRange:'Date range', subStart:'Start', subEnd:'End', subDelivery:'Delivery', subUpdate:'Update Plan', subStart2:'Start Subscription', subAnySabzi:'Chef\'s choice', subSaved:'Subscription saved successfully.', subCancelled:'Subscription cancelled', subCancelConfirm:'Cancel your subscription?', subSkipDone:'Day skipped', subUnskipDone:'Skip removed', subPickSkipDate:'Pick a date to skip', subEndAfter:'End date must be after start', subStartInfo:'From tomorrow onwards', navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai', contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time', navContact:'Contact Us', contactTitle:'📞 Contact Us', contactSub:'We would love to hear from you', contactInfoTitle:'ℹ️ Info', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Hours',
+      noUpcoming:'No upcoming orders yet. Add meals from the menu to place your first order.', noHistory:'No orders found for this date.', navHome:'Home', navCart:'Cart', navPast:'Past Orders', navAbout:'About Us', navSub:'Subscription', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navAiShort:'Ask AI', navOrdersShort:'Orders', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navOrdersShort:'Orders', navScheduleShort:'Schedule', schedTitle:'📅 Schedule Your Meal', schedSub:'Which day do you want to order for?', schedOrderingFor:'Ordering for', schedBackToday:'Back to Today', schedDayLbl:'Day', schedMealLbl:'Meal', schedContinue:'Continue to Menu', exitConfirmTitle:'Exit App?', exitConfirmSub:'You\'ll be logged out.', exitConfirmBtn:'Exit',
+      bulkOrderRow:'Bulk / Party Order', bulkMyRequests:'My Bulk Requests', bulkTitle:'🎉 Bulk / Party Order',
+      bulkSub:'Ordering for a group or event? Tell us the details — the kitchen will confirm availability & price.',
+      bulkMealLbl:'Meal', bulkQtyLbl:'How many tiffins? (min 5)', bulkDateLbl:'Delivery date', bulkAddrLbl:'Delivery address',
+      bulkAddrPh:'Office / event address', bulkNotesLbl:'Notes (optional)', bulkNotesPh:'Veg only, no onion, etc.',
+      bulkSubmit:'Submit Bulk Request', limitBulkCta:'🎉 Place a Bulk Order',
+      bulkErrQty:'Please enter at least 5 tiffins.', bulkErrDate:'Please pick a delivery date.',
+      bulkSubmitted:'Request sent — the kitchen will confirm shortly.', bulkApproved:'Approved', bulkDeclined:'Declined', bulkPending:'Pending', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Daily', onb1Body:'Cooked only after you order — never frozen, never stale.', onb2Title:'Home & Office Delivery', onb2Body:'Order for wherever you are — home or work.', onb3Title:'Order Today or Schedule Ahead', onb3Body:"Need tomorrow sorted? Use Schedule Your Meal from the bottom menu.", onb4Title:'Easy Payments', onb4Body:'Pay via UPI or simply Cash on Delivery — your choice.', onbGetStarted:'Get Started', subTitle:'🔁 Subscription', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subActive:'Active Plan', subDaysWeek:'din/hafta', subSkipped:'Skip kiye', subSkipBtn:'Din skip karein', subCancelBtn:'Plan Cancel', subEditNote:'Neeche edit karke Update dabayein', subPickMeals:'Meals chunein', subPickDays:'Din chunein', subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subDateRange:'Date range', subStart:'Shuru', subEnd:'Khatam', subDelivery:'Delivery', subUpdate:'Plan Update', subStart2:'Subscription Shuru', subAnySabzi:'Chef\'s choice', subSaved:'Subscription successfully save ho gaya.', subCancelled:'Subscription cancel ho gaya', subCancelConfirm:'Subscription cancel karein?', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subPickSkipDate:'Skip ke liye date chunein', subEndAfter:'End date start ke baad honi chahiye', subStartInfo:'Kal se aage', navSub:'Subscription', subTitle:'🔁 Subscription', subSub:'Set it once — your daily tiffin is placed automatically.', subActive:'Active Plan', subDaysWeek:'days/week', subSkipped:'Skipped', subSkipBtn:'Skip a day', subCancelBtn:'Cancel Plan', subEditNote:'Edit below & Update to change your plan', subPickMeals:'Pick meals', subPickDays:'Pick days', subWeekdays:'Mon–Fri', subAllDays:'All 7', subClear:'Clear', subDateRange:'Date range', subStart:'Start', subEnd:'End', subDelivery:'Delivery', subUpdate:'Update Plan', subStart2:'Start Subscription', subAnySabzi:'Chef\'s choice', subSaved:'Subscription saved successfully.', subCancelled:'Subscription cancelled', subCancelConfirm:'Cancel your subscription?', subSkipDone:'Day skipped', subUnskipDone:'Skip removed', subPickSkipDate:'Pick a date to skip', subEndAfter:'End date must be after start', subStartInfo:'From tomorrow onwards', navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai', contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time', navContact:'Contact Us', contactTitle:'📞 Contact Us', contactSub:'We would love to hear from you', contactInfoTitle:'ℹ️ Info', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Hours',
       aboutTitle:'ℹ️ About Us', aboutSub:'Why our tiffin is different', aboutSwipe:'← Swipe to see more →',
       aboutContact:'📞 Questions? We\'re just a call away.'
     },
@@ -1658,8 +1712,14 @@
       backToSignIn:'← Sign In par wapas', switchToSignIn:'Pehle se account hai? <b onclick="showAuthMode(\'signin\')">Sign In</b>', switchToSignUp:'Account nahi hai? <b onclick="showAuthMode(\'signup\')">Sign Up</b>',
       phoneDeliveryHint:'Delivery ke liye isi number par sampark karenge.',
       // ── Bottom nav ──
-      navHomeShort:'Home', navCartShort:'Cart', navOrdersShort:'Orders', navSub:'Subscription', navSubShort:'Subscribe', navScheduleShort:'Schedule', schedTitle:'📅 Meal Schedule Karo', schedSub:'Kis din ke liye order karna hai?', schedOrderingFor:'Order ho raha hai', schedBackToday:'Aaj pe wapas', schedDayLbl:'Din', schedMealLbl:'Meal', schedContinue:'Menu Par Jaayein', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Roz', onb1Body:'Order karne ke baad hi banta hai — na frozen, na baasi.', onb2Title:'Home aur Office Delivery', onb2Body:'Jahan bhi ho — ghar ya office, order karo.', onb3Title:'Aaj Order Karo ya Schedule Karo', onb3Body:'Kal ka tiffin plan karna hai? Neeche "Schedule Your Meal" use karo.', onb4Title:'Aasan Payment', onb4Body:'UPI se pay karo ya seedha Cash on Delivery — jo pasand ho.', onbGetStarted:'Shuru Karein', navAiShort:'AI Help', backAgainExit:'Exit karne ke liye phir se back dabao',
-      // ── Subscription ──
+      navHomeShort:'Home', navCartShort:'Cart', navOrdersShort:'Orders', navSub:'Subscription', navSubShort:'Subscribe', navScheduleShort:'Schedule', schedTitle:'📅 Meal Schedule Karo', schedSub:'Kis din ke liye order karna hai?', schedOrderingFor:'Order ho raha hai', schedBackToday:'Aaj pe wapas', schedDayLbl:'Din', schedMealLbl:'Meal', schedContinue:'Menu Par Jaayein', exitConfirmTitle:'App Band Karein?', exitConfirmSub:'Aap logout ho jayenge.', exitConfirmBtn:'Exit Karein',
+      bulkOrderRow:'Bulk / Party Order', bulkMyRequests:'Mere Bulk Requests', bulkTitle:'🎉 Bulk / Party Order',
+      bulkSub:'Group ya event ke liye order kar rahe ho? Details batao — kitchen availability aur price confirm karega.',
+      bulkMealLbl:'Meal', bulkQtyLbl:'Kitne tiffin chahiye? (min 5)', bulkDateLbl:'Delivery date', bulkAddrLbl:'Delivery address',
+      bulkAddrPh:'Office / event ka address', bulkNotesLbl:'Notes (optional)', bulkNotesPh:'Jaise, sirf veg, bina pyaz...',
+      bulkSubmit:'Bulk Request Bhejein', limitBulkCta:'🎉 Bulk Order Karein',
+      bulkErrQty:'Kam se kam 5 tiffin daaliye.', bulkErrDate:'Delivery date chuniye.',
+      bulkSubmitted:'Request bhej di gayi — kitchen jald confirm karega.', bulkApproved:'Approved', bulkDeclined:'Declined', bulkPending:'Pending', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Roz', onb1Body:'Order karne ke baad hi banta hai — na frozen, na baasi.', onb2Title:'Home aur Office Delivery', onb2Body:'Jahan bhi ho — ghar ya office, order karo.', onb3Title:'Aaj Order Karo ya Schedule Karo', onb3Body:'Kal ka tiffin plan karna hai? Neeche "Schedule Your Meal" use karo.', onb4Title:'Aasan Payment', onb4Body:'UPI se pay karo ya seedha Cash on Delivery — jo pasand ho.', onbGetStarted:'Shuru Karein', navAiShort:'AI Help',       // ── Subscription ──
       subTitle:'🔁 Subscription', subActive:'Active Plan', subPickMeals:'Meals chunein', subPickDays:'Din chunein',
       subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subAnySabzi:'Chef ki pasand',
       subStart:'Shuru', subEnd:'Khatam', subStart2:'Subscription Shuru Karein', subUpdate:'Plan Update Karein', subCancelBtn:'Plan Cancel Karein',
@@ -1732,7 +1792,14 @@
       closedTomorrow:'कल की बुकिंग बंद (10:00 PM तक थी)।',
       cancelClosed:'कैंसिलेशन का समय समाप्त हो गया है।',
       dupMsg:'इस तारीख़ के लिए ऑर्डर पहले से है। बदलाव के लिए स्टोर सपोर्ट को कॉल करें: 70434 91481।',
-      noUpcoming:'अभी कोई आगामी ऑर्डर नहीं है। मेनू से मील जोड़कर ऑर्डर करें।', noHistory:'इस तारीख़ पर कोई ऑर्डर नहीं मिला।', navHome:'होम', navCart:'कार्ट', navPast:'पुराने ऑर्डर', navAbout:'हमारे बारे में', navSub:'सब्सक्रिप्शन', navHomeShort:'होम', navCartShort:'कार्ट', navSubShort:'सब्सक्राइब', navScheduleShort:'शेड्यूल', schedTitle:'📅 मील शेड्यूल करें', schedSub:'किस दिन के लिए ऑर्डर करना है?', schedOrderingFor:'ऑर्डर हो रहा है', schedBackToday:'आज पर वापस', schedDayLbl:'दिन', schedMealLbl:'मील', schedContinue:'मेनू पर जाएं', onbSkip:'छोड़ें', onb1Title:'ताज़ा टिफ़िन, रोज़', onb1Body:'ऑर्डर के बाद ही बनता है — न फ़्रोज़न, न बासी।', onb2Title:'होम और ऑफिस डिलीवरी', onb2Body:'जहाँ भी हों — घर या ऑफिस, ऑर्डर करें।', onb3Title:'आज ऑर्डर करें या शेड्यूल करें', onb3Body:'कल का टिफ़िन प्लान करना है? नीचे "Schedule Your Meal" इस्तेमाल करें।', onb4Title:'आसान पेमेंट', onb4Body:'UPI से पे करें या सीधा कैश ऑन डिलीवरी — जो पसंद हो।', onbGetStarted:'शुरू करें', navAiShort:'AI मदद', backAgainExit:'बाहर निकलने के लिए फिर से बैक दबाएँ', navOrdersShort:'ऑर्डर', subTitle:'🔁 सब्सक्रिप्शन', subSub:'एक बार सेट करें — आपका डेली टिफ़िन अपने आप ऑर्डर हो जाएगा।', subActive:'चालू प्लान', subDaysWeek:'दिन/हफ़्ता', subSkipped:'स्किप किए', subSkipBtn:'दिन स्किप करें', subCancelBtn:'प्लान रद्द करें', subEditNote:'नीचे बदलकर अपडेट दबाएँ', subPickMeals:'मील चुनें', subPickDays:'दिन चुनें', subWeekdays:'सोम–शुक्र', subAllDays:'सातों दिन', subClear:'साफ़', subDateRange:'तारीख़ रेंज', subStart:'शुरू', subEnd:'ख़त्म', subDelivery:'डिलीवरी', subUpdate:'प्लान अपडेट', subStart2:'सब्सक्रिप्शन शुरू', subAnySabzi:'शेफ़ की पसंद', subSaved:'सब्सक्रिप्शन सफलतापूर्वक सेव हुआ।', subCancelled:'सब्सक्रिप्शन रद्द हुआ', subCancelConfirm:'सब्सक्रिप्शन रद्द करें?', subSkipDone:'दिन स्किप हुआ', subUnskipDone:'स्किप हटा', subPickSkipDate:'स्किप के लिए तारीख़ चुनें', subEndAfter:'एंड डेट स्टार्ट के बाद हो', subStartInfo:'कल से आगे', navContact:'संपर्क करें', contactTitle:'📞 संपर्क करें', contactSub:'आपकी बात सुनना हमें अच्छा लगता है', contactInfoTitle:'ℹ️ जानकारी', contactAddrLbl:'लोकेशन', contactAreaLbl:'डिलीवरी क्षेत्र', contactHoursLbl:'डिलीवरी समय',
+      noUpcoming:'अभी कोई आगामी ऑर्डर नहीं है। मेनू से मील जोड़कर ऑर्डर करें।', noHistory:'इस तारीख़ पर कोई ऑर्डर नहीं मिला।', navHome:'होम', navCart:'कार्ट', navPast:'पुराने ऑर्डर', navAbout:'हमारे बारे में', navSub:'सब्सक्रिप्शन', navHomeShort:'होम', navCartShort:'कार्ट', navSubShort:'सब्सक्राइब', navScheduleShort:'शेड्यूल', schedTitle:'📅 मील शेड्यूल करें', schedSub:'किस दिन के लिए ऑर्डर करना है?', schedOrderingFor:'ऑर्डर हो रहा है', schedBackToday:'आज पर वापस', schedDayLbl:'दिन', schedMealLbl:'मील', schedContinue:'मेनू पर जाएं', exitConfirmTitle:'ऐप बंद करें?', exitConfirmSub:'आप लॉगआउट हो जाएंगे।', exitConfirmBtn:'बाहर निकलें',
+      bulkOrderRow:'बल्क / पार्टी ऑर्डर', bulkMyRequests:'मेरे बल्क रिक्वेस्ट', bulkTitle:'🎉 बल्क / पार्टी ऑर्डर',
+      bulkSub:'ग्रुप या इवेंट के लिए ऑर्डर कर रहे हैं? विवरण बताएं — किचन उपलब्धता और कीमत कन्फर्म करेगा।',
+      bulkMealLbl:'मील', bulkQtyLbl:'कितने टिफ़िन चाहिए? (न्यूनतम 5)', bulkDateLbl:'डिलीवरी की तारीख', bulkAddrLbl:'डिलीवरी पता',
+      bulkAddrPh:'ऑफिस / इवेंट का पता', bulkNotesLbl:'नोट्स (वैकल्पिक)', bulkNotesPh:'जैसे, सिर्फ वेज, बिना प्याज़...',
+      bulkSubmit:'बल्क रिक्वेस्ट भेजें', limitBulkCta:'🎉 बल्क ऑर्डर करें',
+      bulkErrQty:'कम से कम 5 टिफ़िन डालें।', bulkErrDate:'डिलीवरी की तारीख चुनें।',
+      bulkSubmitted:'रिक्वेस्ट भेज दी गई — किचन जल्द कन्फर्म करेगा।', bulkApproved:'स्वीकृत', bulkDeclined:'अस्वीकृत', bulkPending:'लंबित', onbSkip:'छोड़ें', onb1Title:'ताज़ा टिफ़िन, रोज़', onb1Body:'ऑर्डर के बाद ही बनता है — न फ़्रोज़न, न बासी।', onb2Title:'होम और ऑफिस डिलीवरी', onb2Body:'जहाँ भी हों — घर या ऑफिस, ऑर्डर करें।', onb3Title:'आज ऑर्डर करें या शेड्यूल करें', onb3Body:'कल का टिफ़िन प्लान करना है? नीचे "Schedule Your Meal" इस्तेमाल करें।', onb4Title:'आसान पेमेंट', onb4Body:'UPI से पे करें या सीधा कैश ऑन डिलीवरी — जो पसंद हो।', onbGetStarted:'शुरू करें', navAiShort:'AI मदद', navOrdersShort:'ऑर्डर', subTitle:'🔁 सब्सक्रिप्शन', subSub:'एक बार सेट करें — आपका डेली टिफ़िन अपने आप ऑर्डर हो जाएगा।', subActive:'चालू प्लान', subDaysWeek:'दिन/हफ़्ता', subSkipped:'स्किप किए', subSkipBtn:'दिन स्किप करें', subCancelBtn:'प्लान रद्द करें', subEditNote:'नीचे बदलकर अपडेट दबाएँ', subPickMeals:'मील चुनें', subPickDays:'दिन चुनें', subWeekdays:'सोम–शुक्र', subAllDays:'सातों दिन', subClear:'साफ़', subDateRange:'तारीख़ रेंज', subStart:'शुरू', subEnd:'ख़त्म', subDelivery:'डिलीवरी', subUpdate:'प्लान अपडेट', subStart2:'सब्सक्रिप्शन शुरू', subAnySabzi:'शेफ़ की पसंद', subSaved:'सब्सक्रिप्शन सफलतापूर्वक सेव हुआ।', subCancelled:'सब्सक्रिप्शन रद्द हुआ', subCancelConfirm:'सब्सक्रिप्शन रद्द करें?', subSkipDone:'दिन स्किप हुआ', subUnskipDone:'स्किप हटा', subPickSkipDate:'स्किप के लिए तारीख़ चुनें', subEndAfter:'एंड डेट स्टार्ट के बाद हो', subStartInfo:'कल से आगे', navContact:'संपर्क करें', contactTitle:'📞 संपर्क करें', contactSub:'आपकी बात सुनना हमें अच्छा लगता है', contactInfoTitle:'ℹ️ जानकारी', contactAddrLbl:'लोकेशन', contactAreaLbl:'डिलीवरी क्षेत्र', contactHoursLbl:'डिलीवरी समय',
       aboutTitle:'ℹ️ हमारे बारे में', aboutSub:'हमारा टिफ़िन अलग क्यों है', aboutSwipe:'← आगे देखने के लिए स्वाइप करें →',
       aboutContact:'📞 कोई सवाल? हम एक कॉल दूर हैं।'
     },
@@ -1767,7 +1834,14 @@
       closedTomorrow:'આવતીકાલનું બુકિંગ બંધ (10:00 PM સુધી હતું).',
       cancelClosed:'રદ કરવાની સમયમર્યાદા પૂરી થઈ ગઈ છે.',
       dupMsg:'આ તારીખ માટે ઓર્ડર પહેલેથી છે. ફેરફાર માટે સ્ટોર સપોર્ટને કૉલ કરો: 70434 91481.',
-      noUpcoming:'હમણાં કોઈ આગામી ઓર્ડર નથી. મેનૂમાંથી મીલ ઉમેરીને ઓર્ડર કરો.', noHistory:'આ તારીખે કોઈ ઓર્ડર મળ્યો નથી.', navHome:'હોમ', navCart:'કાર્ટ', navPast:'જૂના ઓર્ડર', navAbout:'અમારા વિશે', navSub:'સબ્સ્ક્રિપ્શન', navHomeShort:'હોમ', navCartShort:'કાર્ટ', navSubShort:'સબ્સ્ક્રાઇબ', navScheduleShort:'શેડ્યૂલ', schedTitle:'📅 મીલ શેડ્યૂલ કરો', schedSub:'કયા દિવસ માટે ઓર્ડર કરવો છે?', schedOrderingFor:'ઓર્ડર થઈ રહ્યો છે', schedBackToday:'આજ પર પાછા', schedDayLbl:'દિવસ', schedMealLbl:'મીલ', schedContinue:'મેનૂ પર જાઓ', onbSkip:'છોડો', onb1Title:'તાજું ટિફિન, રોજ', onb1Body:'ઓર્ડર પછી જ બને છે — ન ફ્રોઝન, ન વાસી.', onb2Title:'હોમ અને ઓફિસ ડિલિવરી', onb2Body:'જ્યાં પણ હો — ઘરે કે ઓફિસે, ઓર્ડર કરો.', onb3Title:'આજે ઓર્ડર કરો અથવા શેડ્યૂલ કરો', onb3Body:'કાલનું ટિફિન પ્લાન કરવું છે? નીચે "Schedule Your Meal" વાપરો.', onb4Title:'સરળ પેમેન્ટ', onb4Body:'UPI થી પે કરો અથવા સીધું કેશ ઓન ડિલિવરી — જે પસંદ હોય.', onbGetStarted:'શરૂ કરો', navAiShort:'AI મદદ', backAgainExit:'બહાર નીકળવા માટે ફરી બેક દબાવો', navOrdersShort:'ઓર્ડર', subTitle:'🔁 સબ્સ્ક્રિપ્શન', subSub:'એક વાર સેટ કરો — તમારું ડેઇલી ટિફિન આપોઆપ ઓર્ડર થઈ જશે.', subActive:'ચાલુ પ્લાન', subDaysWeek:'દિવસ/અઠવાડિયું', subSkipped:'સ્કિપ કર્યા', subSkipBtn:'દિવસ સ્કિપ કરો', subCancelBtn:'પ્લાન રદ કરો', subEditNote:'નીચે બદલીને અપડેટ દબાવો', subPickMeals:'મીલ પસંદ કરો', subPickDays:'દિવસ પસંદ કરો', subWeekdays:'સોમ–શુક્ર', subAllDays:'સાતેય દિવસ', subClear:'સાફ', subDateRange:'તારીખ રેન્જ', subStart:'શરૂ', subEnd:'અંત', subDelivery:'ડિલિવરી', subUpdate:'પ્લાન અપડેટ', subStart2:'સબ્સ્ક્રિપ્શન શરૂ', subAnySabzi:'શેફની પસંદ', subSaved:'સબ્સ્ક્રિપ્શન સફળતાપૂર્વક સેવ થયું.', subCancelled:'સબ્સ્ક્રિપ્શન રદ થયું', subCancelConfirm:'સબ્સ્ક્રિપ્શન રદ કરો?', subSkipDone:'દિવસ સ્કિપ થયો', subUnskipDone:'સ્કિપ દૂર', subPickSkipDate:'સ્કિપ માટે તારીખ પસંદ કરો', subEndAfter:'એન્ડ ડેટ સ્ટાર્ટ પછી હોવી જોઈએ', subStartInfo:'કાલથી આગળ', navContact:'સંપર્ક કરો', contactTitle:'📞 સંપર્ક કરો', contactSub:'તમારી વાત સાંભળવી અમને ગમે છે', contactInfoTitle:'ℹ️ માહિતી', contactAddrLbl:'લોકેશન', contactAreaLbl:'ડિલિવરી વિસ્તાર', contactHoursLbl:'ડિલિવરી સમય',
+      noUpcoming:'હમણાં કોઈ આગામી ઓર્ડર નથી. મેનૂમાંથી મીલ ઉમેરીને ઓર્ડર કરો.', noHistory:'આ તારીખે કોઈ ઓર્ડર મળ્યો નથી.', navHome:'હોમ', navCart:'કાર્ટ', navPast:'જૂના ઓર્ડર', navAbout:'અમારા વિશે', navSub:'સબ્સ્ક્રિપ્શન', navHomeShort:'હોમ', navCartShort:'કાર્ટ', navSubShort:'સબ્સ્ક્રાઇબ', navScheduleShort:'શેડ્યૂલ', schedTitle:'📅 મીલ શેડ્યૂલ કરો', schedSub:'કયા દિવસ માટે ઓર્ડર કરવો છે?', schedOrderingFor:'ઓર્ડર થઈ રહ્યો છે', schedBackToday:'આજ પર પાછા', schedDayLbl:'દિવસ', schedMealLbl:'મીલ', schedContinue:'મેનૂ પર જાઓ', exitConfirmTitle:'ઍપ બંધ કરો?', exitConfirmSub:'તમે લૉગઆઉટ થઈ જશો.', exitConfirmBtn:'બહાર નીકળો',
+      bulkOrderRow:'બલ્ક / પાર્ટી ઓર્ડર', bulkMyRequests:'મારી બલ્ક રિક્વેસ્ટ', bulkTitle:'🎉 બલ્ક / પાર્ટી ઓર્ડર',
+      bulkSub:'ગ્રુપ કે ઇવેન્ટ માટે ઓર્ડર કરો છો? વિગતો જણાવો — કિચન ઉપલબ્ધતા અને ભાવ કન્ફર્મ કરશે.',
+      bulkMealLbl:'મીલ', bulkQtyLbl:'કેટલા ટિફિન જોઈએ? (ઓછામાં ઓછા 5)', bulkDateLbl:'ડિલિવરી તારીખ', bulkAddrLbl:'ડિલિવરી સરનામું',
+      bulkAddrPh:'ઓફિસ / ઇવેન્ટનું સરનામું', bulkNotesLbl:'નોંધ (વૈકલ્પિક)', bulkNotesPh:'દા.ત., ફક્ત વેજ, ડુંગળી વગર...',
+      bulkSubmit:'બલ્ક રિક્વેસ્ટ મોકલો', limitBulkCta:'🎉 બલ્ક ઓર્ડર કરો',
+      bulkErrQty:'ઓછામાં ઓછા 5 ટિફિન દાખલ કરો.', bulkErrDate:'ડિલિવરી તારીખ પસંદ કરો.',
+      bulkSubmitted:'રિક્વેસ્ટ મોકલાઈ — કિચન જલ્દી કન્ફર્મ કરશે.', bulkApproved:'મંજૂર', bulkDeclined:'નકારેલ', bulkPending:'બાકી', onbSkip:'છોડો', onb1Title:'તાજું ટિફિન, રોજ', onb1Body:'ઓર્ડર પછી જ બને છે — ન ફ્રોઝન, ન વાસી.', onb2Title:'હોમ અને ઓફિસ ડિલિવરી', onb2Body:'જ્યાં પણ હો — ઘરે કે ઓફિસે, ઓર્ડર કરો.', onb3Title:'આજે ઓર્ડર કરો અથવા શેડ્યૂલ કરો', onb3Body:'કાલનું ટિફિન પ્લાન કરવું છે? નીચે "Schedule Your Meal" વાપરો.', onb4Title:'સરળ પેમેન્ટ', onb4Body:'UPI થી પે કરો અથવા સીધું કેશ ઓન ડિલિવરી — જે પસંદ હોય.', onbGetStarted:'શરૂ કરો', navAiShort:'AI મદદ',  navOrdersShort:'ઓર્ડર', subTitle:'🔁 સબ્સ્ક્રિપ્શન', subSub:'એક વાર સેટ કરો — તમારું ડેઇલી ટિફિન આપોઆપ ઓર્ડર થઈ જશે.', subActive:'ચાલુ પ્લાન', subDaysWeek:'દિવસ/અઠવાડિયું', subSkipped:'સ્કિપ કર્યા', subSkipBtn:'દિવસ સ્કિપ કરો', subCancelBtn:'પ્લાન રદ કરો', subEditNote:'નીચે બદલીને અપડેટ દબાવો', subPickMeals:'મીલ પસંદ કરો', subPickDays:'દિવસ પસંદ કરો', subWeekdays:'સોમ–શુક્ર', subAllDays:'સાતેય દિવસ', subClear:'સાફ', subDateRange:'તારીખ રેન્જ', subStart:'શરૂ', subEnd:'અંત', subDelivery:'ડિલિવરી', subUpdate:'પ્લાન અપડેટ', subStart2:'સબ્સ્ક્રિપ્શન શરૂ', subAnySabzi:'શેફની પસંદ', subSaved:'સબ્સ્ક્રિપ્શન સફળતાપૂર્વક સેવ થયું.', subCancelled:'સબ્સ્ક્રિપ્શન રદ થયું', subCancelConfirm:'સબ્સ્ક્રિપ્શન રદ કરો?', subSkipDone:'દિવસ સ્કિપ થયો', subUnskipDone:'સ્કિપ દૂર', subPickSkipDate:'સ્કિપ માટે તારીખ પસંદ કરો', subEndAfter:'એન્ડ ડેટ સ્ટાર્ટ પછી હોવી જોઈએ', subStartInfo:'કાલથી આગળ', navContact:'સંપર્ક કરો', contactTitle:'📞 સંપર્ક કરો', contactSub:'તમારી વાત સાંભળવી અમને ગમે છે', contactInfoTitle:'ℹ️ માહિતી', contactAddrLbl:'લોકેશન', contactAreaLbl:'ડિલિવરી વિસ્તાર', contactHoursLbl:'ડિલિવરી સમય',
       aboutTitle:'ℹ️ અમારા વિશે', aboutSub:'અમારું ટિફિન કેમ અલગ છે', aboutSwipe:'← વધુ જોવા માટે સ્વાઇપ કરો →',
       aboutContact:'📞 કોઈ સવાલ? અમે એક કોલ દૂર છીએ.'
     }
@@ -2487,7 +2561,7 @@
   function removePromo(){ appliedPromo=null; renderCart(); if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); document.getElementById('barTotal2').textContent='₹'+cartTotalDisplay(); } }
 
   // ── Admin drawer (left slide menu) ──
-  const ADMIN_SECTIONS={orders:'🧾 Orders',users:'👥 Users',menu:'✏️ Menu',config:'⚙️ Setup',variants:'🍱 Variants',promos:'🎟️ Promos',stats:'📊 Stats',billing:'💳 Subscription'};
+  const ADMIN_SECTIONS={orders:'🧾 Orders',users:'👥 Users',menu:'✏️ Menu',config:'⚙️ Setup',variants:'🍱 Variants',promos:'🎟️ Promos',stats:'📊 Stats',billing:'💳 Subscription',bulk:'🎉 Bulk Requests'};
   function openAdminMore(){ document.getElementById('adminMoreOverlay').classList.remove('hidden'); }
   function closeAdminMore(){ document.getElementById('adminMoreOverlay').classList.add('hidden'); }
 
@@ -2982,6 +3056,7 @@
     const ts=document.getElementById('themeSelProfile'); if(ts) ts.value = readTheme();
     const bk=document.getElementById('pfBrowseKitchens'); if(bk) bk.classList.toggle('hidden', !shouldShowDiscoveryEscape());
     const ia=document.getElementById('pfInstallApp'); if(ia) ia.classList.toggle('hidden', !canShowInstallRow());
+    loadMyBulkRequests();
   }
   function savePfAddr(){
     const s=document.getElementById('pfSociety').value, f=document.getElementById('pfFlat').value.trim();
@@ -3638,7 +3713,7 @@
   // localStorage (500+ keys) par loop na lage (wahi hang ka kaaran tha).
   // Private keys = jo current vendor ke namespace me store hoti hain (storeDel un pe
   // apne-aap nsKey() laga deta hai) + cross-vendor shared session.
-  function logout() {
+  function logout(dest) {
     // 0. SESSION null karne se PEHLE token pakdo — backend ko batana hai ki isse invalidate kare
     const outToken = (SESSION && SESSION.token) || null;
     if (outToken) { apiPost({ action:'logout', token: outToken }).catch(()=>{}); }
@@ -3667,6 +3742,10 @@
     if (typeof resetMyRating === 'function') resetMyRating();
     if (typeof invalidateSubCache === 'function') invalidateSubCache();
 
+    // dest==='none' → exit-confirm flow ke liye (Home/Discovery se app band karte
+    // waqt): session saaf karo, par Discovery pe mat bhejo — app hi exit ho raha hai.
+    if (dest === 'none') return;
+
     // Logout ke baad user ko seedha KITCHEN LIST (browse kitchens) pe le jao — vendor ke
     // login page pe wapas mat atkao. openDiscovery() top-level list dikhata hai.
     __dscIsTop = true;
@@ -3674,6 +3753,22 @@
     else if (typeof showPublic === 'function') showPublic();
   }
   function forceLogout(){ gsiStopAutoSelect(); resetMyRating(); dbgLog({ev:'FORCE_LOGOUT', vid:VENDOR_ID}); SESSION=null; invalidateSubCache(); storeDel('fbt_session'); showToast(t('sessionExpired'),'warning'); showAuth(); }
+  // ═══════ EXIT-CONFIRM SHEET (mobile back button, top-level) ═══════
+  // Pehle "press back again to exit" (2s double-tap, toast-based) tha — na koi
+  // real confirmation dikhta tha, na exit karne par logout hota tha (agli baar
+  // app kholte hi wahi purana session mil jaata). Ab explicit "Exit App?" sheet
+  // hai — Exit dabane par pehle proper logout(), phir history.back().
+  function armExit(){
+    const el=document.getElementById('exitConfirmSheet'); if(el) el.classList.remove('hidden');
+  }
+  function closeExitConfirmSheet(){
+    const el=document.getElementById('exitConfirmSheet'); if(el) el.classList.add('hidden');
+  }
+  function confirmExitApp(){
+    closeExitConfirmSheet();
+    logout('none');
+    history.back();
+  }
   // ═══════ CENTRAL SESSION GUARD ═══════
   // Koi bhi endpoint 'invalid_session' bole to TURANT logout nahi karte. Pehle ek
   // dedicated 'me' call se confirm karte hain ki token sach me mar chuka hai.
@@ -4106,6 +4201,72 @@
   }
   function showLimitPopup(){ document.getElementById('limitModal').classList.remove('hidden'); }
   function closeLimitPopup(){ document.getElementById('limitModal').classList.add('hidden'); }
+
+  // ═══════ BULK / PARTY ORDER (vendor approval queue) ═══════
+  // Kitchen ki daily capacity limited hoti hai, isliye ye normal cart-checkout
+  // jaisa instant order nahi hai — ek REQUEST hai jo admin ke "Bulk Requests"
+  // tab me jaati hai. Vendor approve (qty/price adjust karke) ya decline karta
+  // hai, customer ko push notification + Profile ki "My Bulk Requests" list
+  // dono se pata chal jaata hai.
+  function openBulkOrderSheet(){
+    if(!isLoggedIn()){ showAuth(); return; }
+    const sel=document.getElementById('bulkMeal');
+    if(sel) sel.innerHTML = enabledMeals().map(m=>{ const mt=mealType(m); return mt ? `<option value="${m}">${mt.emoji||'🍽️'} ${mt.title||m}</option>` : ''; }).join('');
+    const dt=document.getElementById('bulkDate');
+    if(dt){ const min=dateWithOffsetStr(1); dt.min=min; if(!dt.value || dt.value<min) dt.value=min; }
+    const addr=document.getElementById('bulkAddr');
+    if(addr && !addr.value){ const saved=storeGet('fbt_addr')||{}; if(saved.society && saved.flatNo) addr.value=saved.flatNo+', '+saved.society; }
+    document.getElementById('bulkOrderSheet').classList.remove('hidden');
+  }
+  function closeBulkOrderSheet(){ document.getElementById('bulkOrderSheet').classList.add('hidden'); }
+  function submitBulkOrderFE(){
+    const meal=document.getElementById('bulkMeal').value;
+    const qty=parseInt(document.getElementById('bulkQty').value,10);
+    const date=document.getElementById('bulkDate').value;
+    const address=document.getElementById('bulkAddr').value.trim();
+    if(!qty || qty<5){ showToast('⚠️ '+(t('bulkErrQty')||'Please enter at least 5 tiffins.'),'warning'); return; }
+    if(!date){ showToast('⚠️ '+(t('bulkErrDate')||'Please pick a delivery date.'),'warning'); return; }
+    const btn=document.getElementById('bulkSubmitBtn'); btn.disabled=true; btn.textContent='⏳';
+    apiPost({ action:'submitbulkrequest', token:SESSION.token, meal:meal, qty:qty, date:date, address:address, notes:document.getElementById('bulkNotes').value.trim() })
+      .then(j=>{
+        btn.disabled=false; btn.textContent=t('bulkSubmit')||'Submit Bulk Request';
+        if(j.status==='success'){
+          closeBulkOrderSheet();
+          document.getElementById('bulkNotes').value='';
+          showToast('✅ '+(t('bulkSubmitted')||'Request sent — the kitchen will confirm shortly.'),'success');
+          loadMyBulkRequests();
+        } else showToast('❌ '+(j.message||'Failed'),'error');
+      })
+      .catch(()=>{ btn.disabled=false; btn.textContent=t('bulkSubmit')||'Submit Bulk Request'; showToast(t('errNetwork'),'error'); });
+  }
+  function bulkStatusChip(status){
+    const s=String(status||'Pending');
+    if(s==='Approved') return `<span style="background:var(--okbg);color:var(--ok);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">✓ ${t('bulkApproved')||'Approved'}</span>`;
+    if(s==='Declined') return `<span style="background:var(--dangerbg);color:var(--danger);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">✕ ${t('bulkDeclined')||'Declined'}</span>`;
+    return `<span style="background:var(--accent-soft);color:var(--accent-dark);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">⏳ ${t('bulkPending')||'Pending'}</span>`;
+  }
+  function loadMyBulkRequests(){
+    if(!isLoggedIn()) return;
+    apiPost({ action:'mybulkrequests', token:SESSION.token }).then(j=>{
+      const wrap=document.getElementById('pfBulkRequestsWrap'), list=document.getElementById('pfBulkRequestsList');
+      if(!wrap || !list) return;
+      const reqs=(j.status==='success') ? (j.requests||[]) : [];
+      wrap.classList.toggle('hidden', reqs.length===0);
+      if(!reqs.length) return;
+      list.innerHTML = reqs.map(r=>{
+        const mt=mealType(r.meal);
+        const qtyLine = (r.status==='Approved' && r.approvedQty) ? `${r.approvedQty} × ${(mt&&mt.title)||r.meal}` : `${r.qty} × ${(mt&&mt.title)||r.meal}`;
+        return `<div class="pf-box" style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13.5px;font-weight:800;">${qtyLine}</span>
+            ${bulkStatusChip(r.status)}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${r.date}${r.status==='Approved' && r.approvedPrice ? ' · ₹'+r.approvedPrice : ''}</div>
+          ${r.adminNote ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">💬 ${r.adminNote}</div>` : ''}
+        </div>`;
+      }).join('');
+    }).catch(()=>{});
+  }
 
   // ═══════ CUSTOM CONFIRM (native confirm() ki jagah — app jaisa dikhta hai) ═══════
   let __confirmResolve = null;
@@ -5193,7 +5354,75 @@
   function showAdminLogin(){ showView('adminLogin'); }
   function hideAdmin(){ exitAdminTheme(); if(storeGet('fbt_lang')) setLang(storeGet('fbt_lang')); isLoggedIn()?showLanding():showPublic(); }
   function adminLogout(){ adminCreds=null; adminCredsValidated=false; storeDel('fbt_admin'); stopAlertPolling(); stopRing(); hideAdmin(); }
-  function adminTab(tb){ ['orders','users','menu','config','stats','variants','promos','billing'].forEach(x=>{ const v=document.getElementById('aview-'+x); const b=document.getElementById('atab-'+x); if(v)v.classList.toggle('hidden',x!==tb); if(b)b.classList.toggle('active',x===tb); }); if(tb==='variants') openVariantsEditor(); if(tb==='promos') loadPromos(); if(tb==='billing') renderVendorBilling(); }
+  function adminTab(tb){ ['orders','users','menu','config','stats','variants','promos','billing','bulk'].forEach(x=>{ const v=document.getElementById('aview-'+x); const b=document.getElementById('atab-'+x); if(v)v.classList.toggle('hidden',x!==tb); if(b)b.classList.toggle('active',x===tb); }); if(tb==='variants') openVariantsEditor(); if(tb==='promos') loadPromos(); if(tb==='billing') renderVendorBilling(); if(tb==='bulk') loadBulkRequests(); }
+
+  // ═══════ ADMIN — BULK / PARTY REQUESTS ═══════
+  let adminBulkRequests=[];
+  function refreshBulkBadge(){
+    if(!adminCreds) return;
+    apiPost({action:'listbulkrequests', user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
+      if(j.status!=='success') return;
+      adminBulkRequests=j.requests||[];
+      const n=adminBulkRequests.filter(r=>r.status==='Pending').length;
+      const b=document.getElementById('bulkReqBadge');
+      if(b){ b.textContent=n; b.classList.toggle('hidden', n===0); }
+    }).catch(()=>{});
+  }
+  function loadBulkRequests(){
+    if(!adminCreds) return;
+    document.getElementById('bulkReqList').innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div>';
+    apiPost({action:'listbulkrequests', user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
+      if(j.status==='success'){ adminBulkRequests=j.requests||[]; renderBulkRequestsList(); const n=adminBulkRequests.filter(r=>r.status==='Pending').length; const b=document.getElementById('bulkReqBadge'); if(b){ b.textContent=n; b.classList.toggle('hidden', n===0); } }
+      else document.getElementById('bulkReqList').innerHTML='<p style="text-align:center;color:var(--danger);font-size:12px;">❌ '+(j.message||'Load failed — Refresh karo')+'</p>';
+    }).catch(()=>{ document.getElementById('bulkReqList').innerHTML='<p style="text-align:center;color:var(--muted);">Network error.</p>'; });
+  }
+  function renderBulkRequestsList(){
+    const box=document.getElementById('bulkReqList'); if(!box)return;
+    if(!adminBulkRequests.length){ box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12px;">Abhi koi bulk request nahi.</p>'; return; }
+    box.innerHTML=adminBulkRequests.map((r,i)=>{
+      const mt=mealType(r.meal);
+      const statusPill = r.status==='Pending'
+        ? `<span style="background:var(--warnbg);color:var(--warn);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">⏳ Pending</span>`
+        : (r.status==='Approved'
+          ? `<span style="background:var(--okbg);color:var(--ok);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">✓ Approved</span>`
+          : `<span style="background:var(--dangerbg);color:var(--danger);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">✕ Declined</span>`);
+      const actions = r.status==='Pending' ? `
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <input class="inp-mini" type="number" id="bulkAq-${i}" value="${r.qty}" min="1" style="width:60px;" title="Qty">
+            <input class="inp-mini" type="number" id="bulkAp-${i}" placeholder="₹ price" style="width:80px;" title="Price">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="inp-mini" style="cursor:pointer;font-weight:800;border-color:var(--ok);color:var(--ok);background:var(--okbg);flex:1;" onclick="approveBulkRequestFE(${i})">✓ Approve</button>
+            <button class="inp-mini" style="cursor:pointer;font-weight:800;border-color:var(--danger);color:var(--danger);flex:1;" onclick="declineBulkRequestFE(${i})">✕ Decline</button>
+          </div>` : (r.adminNote ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;">💬 ${r.adminNote}</div>` : '');
+      return `<div class="pf-box" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><b style="font-size:14px;">${r.qty} × ${(mt&&mt.title)||r.meal}</b><div style="font-size:10.5px;color:var(--muted);margin-top:2px;">${r.date} · ${r.name||r.phone}</div></div>
+          ${statusPill}
+        </div>
+        ${r.address ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;">📍 ${r.address}</div>` : ''}
+        ${r.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">📝 ${r.notes}</div>` : ''}
+        ${actions}
+      </div>`;
+    }).join('');
+  }
+  function approveBulkRequestFE(i){
+    const r=adminBulkRequests[i]; if(!r||!adminCreds)return;
+    const qty=document.getElementById('bulkAq-'+i).value;
+    const price=document.getElementById('bulkAp-'+i).value;
+    apiPost({action:'respondbulkrequest', user:adminCreds.user, pass:adminCreds.pass, row:r.row, decision:'approve', approvedQty:qty, approvedPrice:price})
+      .then(j=>{ if(j.status==='success'){ showToast('✅ Request approved','success'); loadBulkRequests(); } else showToast('❌ '+(j.message||'Failed'),'error'); })
+      .catch(()=>showToast(t('errNetwork'),'error'));
+  }
+  function declineBulkRequestFE(i){
+    const r=adminBulkRequests[i]; if(!r||!adminCreds)return;
+    showConfirm({icon:'✕', title:'Decline this request?', body:(r.qty+' × '+r.meal+' for '+r.date), yes:'Decline', no:'Cancel', danger:true}).then(ok=>{
+      if(!ok) return;
+      apiPost({action:'respondbulkrequest', user:adminCreds.user, pass:adminCreds.pass, row:r.row, decision:'decline'})
+        .then(j=>{ if(j.status==='success'){ showToast('Request declined',''); loadBulkRequests(); } else showToast('❌ '+(j.message||'Failed'),'error'); })
+        .catch(()=>showToast(t('errNetwork'),'error'));
+    });
+  }
 
   // ═══════ ADMIN PROMOS ═══════
   let adminPromos=[];
@@ -5653,6 +5882,7 @@
       step('adminStepsInit', adminStepsInit);
       step('fillStats', () => fillStats(j));
       step('alertToggleUI', updateAlertToggleUI);
+      step('bulkBadge', refreshBulkBadge);
       adminStep('stats','Stats','ok');
       adminLoadDataSequence(true);
     })
@@ -5696,6 +5926,7 @@
       stepR('initConfigEditor', initConfigEditor);
       stepR('adminOpenLastTab', adminOpenLastTab);
       stepR('alertToggleUI', updateAlertToggleUI);
+      stepR('bulkBadge', refreshBulkBadge);
       adminStep('stats','Stats','ok');
       adminLoadDataSequence(false);
     }).catch(()=>{
@@ -7341,7 +7572,6 @@
         }
 
         // ---------- Mobile back button handler ----------
-        let __exitArmed = false, __exitTimer = null;
         history.pushState({ fbt: true }, '');
         window.addEventListener('popstate', function () {
             const keep = () => history.pushState({ fbt: true }, '');
@@ -7355,17 +7585,10 @@
             if (adr && !adr.classList.contains('hidden')) { closeAdminMore(); keep(); return; }
             const qa = document.getElementById('qaView');
             if (qa && !qa.classList.contains('hidden')) { closeQA(); keep(); return; }
+            const exs = document.getElementById('exitConfirmSheet');
+            if (exs && !exs.classList.contains('hidden')) { closeExitConfirmSheet(); keep(); return; }
 
             const isOn = (id) => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); };
-            const armExit = () => {
-                if (__exitArmed) { __exitArmed = false; history.back(); return true; }
-                __exitArmed = true;
-                showToast(t('backAgainExit'), 'info');
-                clearTimeout(__exitTimer);
-                __exitTimer = setTimeout(() => { __exitArmed = false; }, 2000);
-                keep();
-                return true;
-            };
 
             const at = document.getElementById('authTransition');
             if (at && !at.classList.contains('hidden')) {
@@ -7390,7 +7613,15 @@
                 __dscIsTop = true; openDiscovery(); keep(); return;
             }
             if (isOn('homeView')) {
-                if (HAS_VENDOR_PARAM) { __dscIsTop = true; openDiscovery(); keep(); return; }
+                // ⚠️ Pehle yahan HAS_VENDOR_PARAM check hota tha — TRUE hota hai vendor
+                // ke apne direct link (?v=slug) aur Discovery se chune gaye vendor, DONO
+                // ke liye, isliye ek vendor ka apna customer bhi back-button se seedha
+                // shared Discovery list pe pahunch jaata tha (private-mode fix ko bypass
+                // karke — Browse Kitchens/All Kitchens to chhupa diye the, par ye back-
+                // button rasta reh gaya tha). shouldShowDiscoveryEscape() hi asli source
+                // of truth hai (wahi Browse Kitchens dikhane/chhupane ke liye bhi use hoti
+                // hai) — sirf Discovery se aaya session hi wapas Discovery pe jaayega.
+                if (shouldShowDiscoveryEscape()) { __dscIsTop = true; openDiscovery(); keep(); return; }
                 armExit(); return;
             }
             // ⚠️ Pehle adminLogin/superLogin ke liye koi explicit case nahi tha — koi
