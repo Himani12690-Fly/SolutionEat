@@ -5087,7 +5087,7 @@
     if(!navigator.geolocation){ fallbackToBrowse(); return; }
     navigator.geolocation.getCurrentPosition(pos=>{
       const lat=pos.coords.latitude, lng=pos.coords.longitude;
-      resolveDscAreaLabel(lat,lng);
+      resolveDscAreaLabel(lat,lng,pos.coords.accuracy);
       fetch(GOOGLE_SCRIPT_URL+'?action=nearbyvendors&lat='+lat+'&lng='+lng).then(r=>r.json()).then(j=>{
         const vendors=(j&&j.vendors)||[];
         if(vendors.length) renderDscNearby(vendors);
@@ -5099,8 +5099,15 @@
   // liye. Free reverse-geocoding (OpenStreetMap Nominatim, no API key/billing) —
   // sirf ek baar per location fetch hoti hai (cache), aur fail ho to chup-chaap
   // default text hi rehta hai (koi error UI nahi, kyunki yeh sirf cosmetic hai).
+  // accuracy (meters, browser deta hai) — indoors/weak-signal me GPS/WiFi
+  // location kai km tak off ho sakta hai; aisi halat me ek CONFIDENT par GALAT
+  // door ka area naam dikhana (jaise "Adalaj" jab customer asal me Godrej Garden
+  // City/Gota me ho) fake-precision hai. Bahut kharab accuracy pe label ko chhedo
+  // hi mat — default text hi behtar hai ek galat-specific naam se.
+  const AREA_LABEL_MAX_ACCURACY_M = 3000;
   let dscAreaLabelCache = null;
-  function resolveDscAreaLabel(lat,lng){
+  function resolveDscAreaLabel(lat,lng,accuracy){
+    if(accuracy!=null && accuracy>AREA_LABEL_MAX_ACCURACY_M) return;
     const key = lat.toFixed(3)+','+lng.toFixed(3);
     if(dscAreaLabelCache && dscAreaLabelCache.key===key){ setDscCityLabel(dscAreaLabelCache.label); return; }
     fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`)
