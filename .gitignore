@@ -7,6 +7,7 @@ playwright-report/
 
 # Backend — ISME SECRETS HAIN, kabhi commit mat karna
 apps-script*.js
+apps-script*.txt
 *.gs
 
 # OS

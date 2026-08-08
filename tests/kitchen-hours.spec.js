@@ -34,7 +34,12 @@ test.describe('Admin nav — Setup vs Users', () => {
 
 test.describe('Home page — time dropdown and date chips removed, timer banner added', () => {
   test('no time-slot <select> and no date-chip row on Home by default (today)', async ({ page }) => {
-    await openApp(page);
+    // ⚠️ Pehle koi istOverride nahi tha — real wall-clock IST time pe depend
+    // karta tha. Dinner ka cutoff (15:00) paar hote hi "today" par kuch bhi
+    // orderable nahi rehta, aur app sahi se "tomorrow" pe pickDefaultDate()
+    // se shift ho jaata hai (real bug nahi) — jisse ye test dopahar 3 baje ke
+    // baad chalne par hamesha fail hota. Fixed morning time se deterministic.
+    await openApp(page, { istOverride: '2026-08-04T08:00:00' });
     const selects = await page.locator('#menuDateTime select').count();
     expect(selects).toBe(0);
     await expect(page.locator('#menuDateTime .date-chips')).toHaveCount(0);
