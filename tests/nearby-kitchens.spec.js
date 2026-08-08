@@ -74,6 +74,13 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     // Fallback browsing (area chips/list) stays hidden once a near-you result renders.
     await expect(page.locator('#dscAreas')).toHaveClass(/hidden/);
     await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
+    // Top header shows the customer's own resolved locality, not a hardcoded city —
+    // and there's no second "Near You" label duplicating it above the list.
+    await expect(page.locator('#dscCity')).toHaveText('Bopal', { timeout: 10000 });
+    expect(text).not.toContain('Near You');
+    // "Own a kitchen?" CTA + footer removed from the Discovery page entirely.
+    await expect(page.locator('.dsc-vendor-cta')).toHaveCount(0);
+    await expect(page.locator('.dsc-foot')).toHaveCount(0);
   });
 
   test('zero nearby kitchens shows a clean empty state, not the fallback browse list', async ({ page, context }) => {
