@@ -3617,6 +3617,19 @@
       }
       if(at){ at.classList.add('gone'); setTimeout(()=>at.classList.add('hidden'),300); }
       if(j.status==='need_phone'){
+        // ⚠️ Redirect flow (googleRedirectLogin) me is point tak #authPage kabhi
+        // showView() se dikhaya hi nahi gaya tha — sirf #authTransition overlay
+        // upar tha, jo abhi hide ho gaya. Neeche #authPage abhi bhi "hidden" tha,
+        // isliye #googlePhoneBox unhide karne ke bawajood customer ko kuch nahi
+        // dikhta tha (khaali/boot-loader screen). Kuch der baad recoverIfBlank()
+        // "koi view visible nahi" dekh ke — is waqt tak Google ke redirect_uri
+        // constraint ki wajah se URL me ?v= bhi nahi tha — seedha Discovery (vendor
+        // list) pe bhej deta tha. Customer ko lagta login loop me fasa hai; asal me
+        // sirf phone-entry form kabhi dikha hi nahi. Fix: view yahin explicitly
+        // dikhao (showAuth() nahi — wo googleCredential reset kar deta, jo abhi
+        // finishGoogleLogin() ko chahiye).
+        showView('authPage');
+        const bl=document.getElementById('bootLoader'); if(bl){ bl.classList.add('gone'); setTimeout(()=>bl.remove(),300); }
         document.getElementById('googlePhoneBox').classList.remove('hidden');
         document.getElementById('authPhone').focus();
         showToast('📱 '+t('phoneFirstHint'),'warning');
@@ -3644,7 +3657,19 @@
       if(j.status!=='success'){ showToast('❌ '+(j.message||'Login failed'),'error'); return; }
       document.getElementById('googlePhoneBox').classList.add('hidden');
       SESSION={token:j.token,name:j.name,phone:(j.phone||(SESSION&&SESSION.phone)||"")}; storeSet('fbt_session',SESSION);
-      showToast(t('welcomeUser')+' '+j.name+'!','success'); enterApp();
+      showToast(t('welcomeUser')+' '+j.name+'!','success');
+      // ⚠️ Ye redirect-flow ka hi login hai (need_phone yahi se aaya) — VENDOR_ID
+      // abhi bhi DEFAULT vendor pe resolve ho raha hai kyunki Google redirect_uri
+      // se ?v= URL me nahi laut saka. onGoogleCredential() ka apna success path
+      // ye g_ret restore karta hai, par ye ALAG success path (phone-baad-me flow)
+      // wahi step miss kar raha tha — customer bina kisi error ke chup-chaap
+      // DEFAULT vendor ki kitchen me login ho jaata, jo vendor woh chahta tha
+      // wahan nahi. Same restore yahan bhi zaroori hai.
+      try{
+        const ret=sessionStorage.getItem('g_ret'); sessionStorage.removeItem('g_ret');
+        if(ret && ret!==location.search){ location.replace(location.pathname+ret); return; }
+      }catch(e){}
+      enterApp();
     }).catch(()=>{ btn.textContent=t('completeSignup'); btn.disabled=false; showToast(t('errNetwork'),'error'); });
   }
 

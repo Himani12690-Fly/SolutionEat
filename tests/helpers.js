@@ -154,6 +154,11 @@ function handlePost(state, body) {
       : { status:'error', code:'wrong_pw', message:'Incorrect password.' };
   if (action === 'demologin') return { status:'success', ...SESSION };
   if (action === 'logout')    return { status:'success' };
+  if (action === 'googlelogin') {
+    if (!p.credential) return { status:'error', message:'Missing credential' };
+    if (!p.phone) return { status:'need_phone' };
+    return { status:'success', token: SESSION.token, name: p.name || SESSION.name, phone: p.phone };
+  }
 
   // ── Wrapped-APK Google sign-in bounce-back (mirrors completePendingGoogleAuth/
   // checkPendingGoogleAuth in apps-script-v6.txt) ──
