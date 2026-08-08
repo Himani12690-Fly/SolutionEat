@@ -106,6 +106,7 @@
   <symbol id="ic-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h2.2l2.6 12.1a1.8 1.8 0 0 0 1.8 1.4h8.9a1.8 1.8 0 0 0 1.8-1.4L21 7H5.2"/></symbol>
   <symbol id="ic-orders" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1.2"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16.5h6"/></symbol>
   <symbol id="ic-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></symbol>
   <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 16.5V11"/><path d="M12 7.6h.01"/></symbol>
   <symbol id="ic-whatsapp" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4c1.4.8 3.1 1.3 4.8 1.3 5.5 0 10-4.5 10-10S17.5 2 12 2z"/><path fill="#fff" stroke="none" d="M9 8.4c.2-.4.5-.4.7-.4h.6c.2 0 .4 0 .6.4.3.6.8 1.8.8 1.9s0 .3-.1.4c-.2.3-.3.4-.5.6-.2.2-.4.3-.2.6.5.8 1 1.5 1.7 2 .4.3.6.2.8 0 .2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.3.1 1.7.8 2 1 .3.1.4.2.5.4.1.2.1.9-.3 1.7-.4.8-1.9 1.5-2.6 1.6-.6.1-1.3.2-4-.9-3.3-1.3-5.3-4.5-5.5-4.8-.2-.3-1.3-1.7-1.3-3.2s.8-2.2 1.1-2.6z"/></symbol>
 </svg>
@@ -138,6 +139,39 @@
 <div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t">Loading dashboard…</div><div class="al-sub" id="adminLoaderSub">Please wait</div><div class="al-steps" id="adminLoaderSteps"></div></div>
 <div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-spin"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
 <div class="container">
+
+  <!-- ══════ FIRST-RUN ONBOARDING (naye customer ke liye, sirf ek baar) ══════ -->
+  <div id="onboardOverlay" class="hidden" style="position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:flex-end;padding:14px 16px 0;">
+      <span onclick="finishOnboarding()" style="font-size:13px;font-weight:800;color:var(--muted);cursor:pointer;padding:6px 10px;" data-i="onbSkip">Skip</span>
+    </div>
+    <div class="about-slides" id="onboardSlides" style="flex:1;align-items:center;">
+      <div class="about-slide" style="background:linear-gradient(135deg,#6366f1,#4f52d8);display:flex;flex-direction:column;justify-content:center;">
+        <div class="as-icon">🍱</div>
+        <h3 data-i="onb1Title">Fresh Tiffin, Daily</h3>
+        <p data-i="onb1Body">Cooked only after you order — never frozen, never stale.</p>
+      </div>
+      <div class="about-slide" style="background:linear-gradient(135deg,#16a34a,#0d7a3d);display:flex;flex-direction:column;justify-content:center;">
+        <div class="as-icon">🏠🏢</div>
+        <h3 data-i="onb2Title">Home &amp; Office Delivery</h3>
+        <p data-i="onb2Body">Order for wherever you are — home or work.</p>
+      </div>
+      <div class="about-slide" style="background:linear-gradient(135deg,#c2760a,#a15f06);display:flex;flex-direction:column;justify-content:center;">
+        <div class="as-icon">📅</div>
+        <h3 data-i="onb3Title">Order Today or Schedule Ahead</h3>
+        <p data-i="onb3Body">Need tomorrow sorted? Use Schedule Your Meal from the bottom menu.</p>
+      </div>
+      <div class="about-slide" style="background:linear-gradient(135deg,#be185d,#9d1350);display:flex;flex-direction:column;justify-content:center;">
+        <div class="as-icon">💳</div>
+        <h3 data-i="onb4Title">Easy Payments</h3>
+        <p data-i="onb4Body">Pay via UPI or simply Cash on Delivery — your choice.</p>
+      </div>
+    </div>
+    <div id="onboardDots" style="display:flex;justify-content:center;gap:6px;padding:14px;"></div>
+    <div style="padding:0 20px 26px;">
+      <button class="add-cart-btn" onclick="finishOnboarding()" data-i="onbGetStarted">Get Started</button>
+    </div>
+  </div>
 
   <!-- ══════ ADMIN DRAWER ══════ -->
   <!-- ══════ AUTH ══════ -->
@@ -487,6 +521,7 @@
   <div class="bottom-nav hidden" id="bottomNav">
     <button class="bn-item" id="bn-land" onclick="navTo('land')"><svg class="ic bn-ic"><use href="#ic-home"/></svg><span class="bn-lbl" data-i="navHomeShort"></span></button>
     <button class="bn-item" id="bn-orders" onclick="navTo('orders')"><svg class="ic bn-ic"><use href="#ic-orders"/></svg><span class="bn-lbl" data-i="navOrdersShort"></span></button>
+    <button class="bn-item" id="bn-schedule" onclick="openScheduleSheet()"><svg class="ic bn-ic"><use href="#ic-calendar"/></svg><span class="bn-lbl" data-i="navScheduleShort"></span></button>
     <button class="bn-item" id="bn-sub" onclick="showSubPage()"><svg class="ic bn-ic"><use href="#ic-repeat"/></svg><span class="bn-lbl" data-i="navSubShort"></span></button>
     <button class="bn-item" id="bn-profile" onclick="navTo('profile')"><span class="bn-av" id="bnAvatar">?</span><span class="bn-lbl" data-i="navProfileShort"></span></button>
   </div>
@@ -1229,6 +1264,16 @@
       </div>
     </div>
   </div>
+  <div class="sheet-overlay hidden" id="scheduleSheet" onclick="if(event.target===this)closeScheduleSheet()">
+    <div class="sheet" style="max-width:380px;">
+      <div style="padding:22px 20px 20px;text-align:center;">
+        <div style="font-size:15px;font-weight:900;" data-i="schedTitle">📅 Schedule Your Meal</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:3px;" data-i="schedSub">Kis din ke liye order karna hai?</div>
+        <div id="scheduleOptions" style="display:flex;flex-direction:column;gap:8px;margin-top:16px;"></div>
+        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeScheduleSheet()" data-i="ratingNotNow">Abhi nahi</button>
+      </div>
+    </div>
+  </div>
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
@@ -1588,7 +1633,7 @@
       closedTomorrow:'Tomorrow\'s booking is closed (was open till 10:00 PM).',
       cancelClosed:'Cancellation window has been closed.',
       dupMsg:'An order already exists for this date. To make changes, please contact Store Support at 70434 91481.',
-      noUpcoming:'No upcoming orders yet. Add meals from the menu to place your first order.', noHistory:'No orders found for this date.', navHome:'Home', navCart:'Cart', navPast:'Past Orders', navAbout:'About Us', navSub:'Subscription', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navAiShort:'Ask AI', backAgainExit:'Press back again to exit', navOrdersShort:'Orders', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navOrdersShort:'Orders', subTitle:'🔁 Subscription', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subActive:'Active Plan', subDaysWeek:'din/hafta', subSkipped:'Skip kiye', subSkipBtn:'Din skip karein', subCancelBtn:'Plan Cancel', subEditNote:'Neeche edit karke Update dabayein', subPickMeals:'Meals chunein', subPickDays:'Din chunein', subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subDateRange:'Date range', subStart:'Shuru', subEnd:'Khatam', subDelivery:'Delivery', subUpdate:'Plan Update', subStart2:'Subscription Shuru', subAnySabzi:'Chef\'s choice', subSaved:'Subscription successfully save ho gaya.', subCancelled:'Subscription cancel ho gaya', subCancelConfirm:'Subscription cancel karein?', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subPickSkipDate:'Skip ke liye date chunein', subEndAfter:'End date start ke baad honi chahiye', subStartInfo:'Kal se aage', navSub:'Subscription', subTitle:'🔁 Subscription', subSub:'Set it once — your daily tiffin is placed automatically.', subActive:'Active Plan', subDaysWeek:'days/week', subSkipped:'Skipped', subSkipBtn:'Skip a day', subCancelBtn:'Cancel Plan', subEditNote:'Edit below & Update to change your plan', subPickMeals:'Pick meals', subPickDays:'Pick days', subWeekdays:'Mon–Fri', subAllDays:'All 7', subClear:'Clear', subDateRange:'Date range', subStart:'Start', subEnd:'End', subDelivery:'Delivery', subUpdate:'Update Plan', subStart2:'Start Subscription', subAnySabzi:'Chef\'s choice', subSaved:'Subscription saved successfully.', subCancelled:'Subscription cancelled', subCancelConfirm:'Cancel your subscription?', subSkipDone:'Day skipped', subUnskipDone:'Skip removed', subPickSkipDate:'Pick a date to skip', subEndAfter:'End date must be after start', subStartInfo:'From tomorrow onwards', navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai', contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time', navContact:'Contact Us', contactTitle:'📞 Contact Us', contactSub:'We would love to hear from you', contactInfoTitle:'ℹ️ Info', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Hours',
+      noUpcoming:'No upcoming orders yet. Add meals from the menu to place your first order.', noHistory:'No orders found for this date.', navHome:'Home', navCart:'Cart', navPast:'Past Orders', navAbout:'About Us', navSub:'Subscription', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navAiShort:'Ask AI', backAgainExit:'Press back again to exit', navOrdersShort:'Orders', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navOrdersShort:'Orders', navScheduleShort:'Schedule', schedTitle:'📅 Schedule Your Meal', schedSub:'Which day do you want to order for?', schedOrderingFor:'Ordering for', schedBackToday:'Back to Today', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Daily', onb1Body:'Cooked only after you order — never frozen, never stale.', onb2Title:'Home & Office Delivery', onb2Body:'Order for wherever you are — home or work.', onb3Title:'Order Today or Schedule Ahead', onb3Body:"Need tomorrow sorted? Use Schedule Your Meal from the bottom menu.", onb4Title:'Easy Payments', onb4Body:'Pay via UPI or simply Cash on Delivery — your choice.', onbGetStarted:'Get Started', subTitle:'🔁 Subscription', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subActive:'Active Plan', subDaysWeek:'din/hafta', subSkipped:'Skip kiye', subSkipBtn:'Din skip karein', subCancelBtn:'Plan Cancel', subEditNote:'Neeche edit karke Update dabayein', subPickMeals:'Meals chunein', subPickDays:'Din chunein', subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subDateRange:'Date range', subStart:'Shuru', subEnd:'Khatam', subDelivery:'Delivery', subUpdate:'Plan Update', subStart2:'Subscription Shuru', subAnySabzi:'Chef\'s choice', subSaved:'Subscription successfully save ho gaya.', subCancelled:'Subscription cancel ho gaya', subCancelConfirm:'Subscription cancel karein?', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subPickSkipDate:'Skip ke liye date chunein', subEndAfter:'End date start ke baad honi chahiye', subStartInfo:'Kal se aage', navSub:'Subscription', subTitle:'🔁 Subscription', subSub:'Set it once — your daily tiffin is placed automatically.', subActive:'Active Plan', subDaysWeek:'days/week', subSkipped:'Skipped', subSkipBtn:'Skip a day', subCancelBtn:'Cancel Plan', subEditNote:'Edit below & Update to change your plan', subPickMeals:'Pick meals', subPickDays:'Pick days', subWeekdays:'Mon–Fri', subAllDays:'All 7', subClear:'Clear', subDateRange:'Date range', subStart:'Start', subEnd:'End', subDelivery:'Delivery', subUpdate:'Update Plan', subStart2:'Start Subscription', subAnySabzi:'Chef\'s choice', subSaved:'Subscription saved successfully.', subCancelled:'Subscription cancelled', subCancelConfirm:'Cancel your subscription?', subSkipDone:'Day skipped', subUnskipDone:'Skip removed', subPickSkipDate:'Pick a date to skip', subEndAfter:'End date must be after start', subStartInfo:'From tomorrow onwards', navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai', contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time', navContact:'Contact Us', contactTitle:'📞 Contact Us', contactSub:'We would love to hear from you', contactInfoTitle:'ℹ️ Info', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Hours',
       aboutTitle:'ℹ️ About Us', aboutSub:'Why our tiffin is different', aboutSwipe:'← Swipe to see more →',
       aboutContact:'📞 Questions? We\'re just a call away.'
     },
@@ -1606,7 +1651,7 @@
       backToSignIn:'← Sign In par wapas', switchToSignIn:'Pehle se account hai? <b onclick="showAuthMode(\'signin\')">Sign In</b>', switchToSignUp:'Account nahi hai? <b onclick="showAuthMode(\'signup\')">Sign Up</b>',
       phoneDeliveryHint:'Delivery ke liye isi number par sampark karenge.',
       // ── Bottom nav ──
-      navHomeShort:'Home', navCartShort:'Cart', navOrdersShort:'Orders', navSub:'Subscription', navSubShort:'Subscribe', navAiShort:'AI Help', backAgainExit:'Exit karne ke liye phir se back dabao',
+      navHomeShort:'Home', navCartShort:'Cart', navOrdersShort:'Orders', navSub:'Subscription', navSubShort:'Subscribe', navScheduleShort:'Schedule', schedTitle:'📅 Meal Schedule Karo', schedSub:'Kis din ke liye order karna hai?', schedOrderingFor:'Order ho raha hai', schedBackToday:'Aaj pe wapas', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Roz', onb1Body:'Order karne ke baad hi banta hai — na frozen, na baasi.', onb2Title:'Home aur Office Delivery', onb2Body:'Jahan bhi ho — ghar ya office, order karo.', onb3Title:'Aaj Order Karo ya Schedule Karo', onb3Body:'Kal ka tiffin plan karna hai? Neeche "Schedule Your Meal" use karo.', onb4Title:'Aasan Payment', onb4Body:'UPI se pay karo ya seedha Cash on Delivery — jo pasand ho.', onbGetStarted:'Shuru Karein', navAiShort:'AI Help', backAgainExit:'Exit karne ke liye phir se back dabao',
       // ── Subscription ──
       subTitle:'🔁 Subscription', subActive:'Active Plan', subPickMeals:'Meals chunein', subPickDays:'Din chunein',
       subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subAnySabzi:'Chef ki pasand',
@@ -1680,7 +1725,7 @@
       closedTomorrow:'कल की बुकिंग बंद (10:00 PM तक थी)।',
       cancelClosed:'कैंसिलेशन का समय समाप्त हो गया है।',
       dupMsg:'इस तारीख़ के लिए ऑर्डर पहले से है। बदलाव के लिए स्टोर सपोर्ट को कॉल करें: 70434 91481।',
-      noUpcoming:'अभी कोई आगामी ऑर्डर नहीं है। मेनू से मील जोड़कर ऑर्डर करें।', noHistory:'इस तारीख़ पर कोई ऑर्डर नहीं मिला।', navHome:'होम', navCart:'कार्ट', navPast:'पुराने ऑर्डर', navAbout:'हमारे बारे में', navSub:'सब्सक्रिप्शन', navHomeShort:'होम', navCartShort:'कार्ट', navSubShort:'सब्सक्राइब', navAiShort:'AI मदद', backAgainExit:'बाहर निकलने के लिए फिर से बैक दबाएँ', navOrdersShort:'ऑर्डर', subTitle:'🔁 सब्सक्रिप्शन', subSub:'एक बार सेट करें — आपका डेली टिफ़िन अपने आप ऑर्डर हो जाएगा।', subActive:'चालू प्लान', subDaysWeek:'दिन/हफ़्ता', subSkipped:'स्किप किए', subSkipBtn:'दिन स्किप करें', subCancelBtn:'प्लान रद्द करें', subEditNote:'नीचे बदलकर अपडेट दबाएँ', subPickMeals:'मील चुनें', subPickDays:'दिन चुनें', subWeekdays:'सोम–शुक्र', subAllDays:'सातों दिन', subClear:'साफ़', subDateRange:'तारीख़ रेंज', subStart:'शुरू', subEnd:'ख़त्म', subDelivery:'डिलीवरी', subUpdate:'प्लान अपडेट', subStart2:'सब्सक्रिप्शन शुरू', subAnySabzi:'शेफ़ की पसंद', subSaved:'सब्सक्रिप्शन सफलतापूर्वक सेव हुआ।', subCancelled:'सब्सक्रिप्शन रद्द हुआ', subCancelConfirm:'सब्सक्रिप्शन रद्द करें?', subSkipDone:'दिन स्किप हुआ', subUnskipDone:'स्किप हटा', subPickSkipDate:'स्किप के लिए तारीख़ चुनें', subEndAfter:'एंड डेट स्टार्ट के बाद हो', subStartInfo:'कल से आगे', navContact:'संपर्क करें', contactTitle:'📞 संपर्क करें', contactSub:'आपकी बात सुनना हमें अच्छा लगता है', contactInfoTitle:'ℹ️ जानकारी', contactAddrLbl:'लोकेशन', contactAreaLbl:'डिलीवरी क्षेत्र', contactHoursLbl:'डिलीवरी समय',
+      noUpcoming:'अभी कोई आगामी ऑर्डर नहीं है। मेनू से मील जोड़कर ऑर्डर करें।', noHistory:'इस तारीख़ पर कोई ऑर्डर नहीं मिला।', navHome:'होम', navCart:'कार्ट', navPast:'पुराने ऑर्डर', navAbout:'हमारे बारे में', navSub:'सब्सक्रिप्शन', navHomeShort:'होम', navCartShort:'कार्ट', navSubShort:'सब्सक्राइब', navScheduleShort:'शेड्यूल', schedTitle:'📅 मील शेड्यूल करें', schedSub:'किस दिन के लिए ऑर्डर करना है?', schedOrderingFor:'ऑर्डर हो रहा है', schedBackToday:'आज पर वापस', onbSkip:'छोड़ें', onb1Title:'ताज़ा टिफ़िन, रोज़', onb1Body:'ऑर्डर के बाद ही बनता है — न फ़्रोज़न, न बासी।', onb2Title:'होम और ऑफिस डिलीवरी', onb2Body:'जहाँ भी हों — घर या ऑफिस, ऑर्डर करें।', onb3Title:'आज ऑर्डर करें या शेड्यूल करें', onb3Body:'कल का टिफ़िन प्लान करना है? नीचे "Schedule Your Meal" इस्तेमाल करें।', onb4Title:'आसान पेमेंट', onb4Body:'UPI से पे करें या सीधा कैश ऑन डिलीवरी — जो पसंद हो।', onbGetStarted:'शुरू करें', navAiShort:'AI मदद', backAgainExit:'बाहर निकलने के लिए फिर से बैक दबाएँ', navOrdersShort:'ऑर्डर', subTitle:'🔁 सब्सक्रिप्शन', subSub:'एक बार सेट करें — आपका डेली टिफ़िन अपने आप ऑर्डर हो जाएगा।', subActive:'चालू प्लान', subDaysWeek:'दिन/हफ़्ता', subSkipped:'स्किप किए', subSkipBtn:'दिन स्किप करें', subCancelBtn:'प्लान रद्द करें', subEditNote:'नीचे बदलकर अपडेट दबाएँ', subPickMeals:'मील चुनें', subPickDays:'दिन चुनें', subWeekdays:'सोम–शुक्र', subAllDays:'सातों दिन', subClear:'साफ़', subDateRange:'तारीख़ रेंज', subStart:'शुरू', subEnd:'ख़त्म', subDelivery:'डिलीवरी', subUpdate:'प्लान अपडेट', subStart2:'सब्सक्रिप्शन शुरू', subAnySabzi:'शेफ़ की पसंद', subSaved:'सब्सक्रिप्शन सफलतापूर्वक सेव हुआ।', subCancelled:'सब्सक्रिप्शन रद्द हुआ', subCancelConfirm:'सब्सक्रिप्शन रद्द करें?', subSkipDone:'दिन स्किप हुआ', subUnskipDone:'स्किप हटा', subPickSkipDate:'स्किप के लिए तारीख़ चुनें', subEndAfter:'एंड डेट स्टार्ट के बाद हो', subStartInfo:'कल से आगे', navContact:'संपर्क करें', contactTitle:'📞 संपर्क करें', contactSub:'आपकी बात सुनना हमें अच्छा लगता है', contactInfoTitle:'ℹ️ जानकारी', contactAddrLbl:'लोकेशन', contactAreaLbl:'डिलीवरी क्षेत्र', contactHoursLbl:'डिलीवरी समय',
       aboutTitle:'ℹ️ हमारे बारे में', aboutSub:'हमारा टिफ़िन अलग क्यों है', aboutSwipe:'← आगे देखने के लिए स्वाइप करें →',
       aboutContact:'📞 कोई सवाल? हम एक कॉल दूर हैं।'
     },
@@ -1715,7 +1760,7 @@
       closedTomorrow:'આવતીકાલનું બુકિંગ બંધ (10:00 PM સુધી હતું).',
       cancelClosed:'રદ કરવાની સમયમર્યાદા પૂરી થઈ ગઈ છે.',
       dupMsg:'આ તારીખ માટે ઓર્ડર પહેલેથી છે. ફેરફાર માટે સ્ટોર સપોર્ટને કૉલ કરો: 70434 91481.',
-      noUpcoming:'હમણાં કોઈ આગામી ઓર્ડર નથી. મેનૂમાંથી મીલ ઉમેરીને ઓર્ડર કરો.', noHistory:'આ તારીખે કોઈ ઓર્ડર મળ્યો નથી.', navHome:'હોમ', navCart:'કાર્ટ', navPast:'જૂના ઓર્ડર', navAbout:'અમારા વિશે', navSub:'સબ્સ્ક્રિપ્શન', navHomeShort:'હોમ', navCartShort:'કાર્ટ', navSubShort:'સબ્સ્ક્રાઇબ', navAiShort:'AI મદદ', backAgainExit:'બહાર નીકળવા માટે ફરી બેક દબાવો', navOrdersShort:'ઓર્ડર', subTitle:'🔁 સબ્સ્ક્રિપ્શન', subSub:'એક વાર સેટ કરો — તમારું ડેઇલી ટિફિન આપોઆપ ઓર્ડર થઈ જશે.', subActive:'ચાલુ પ્લાન', subDaysWeek:'દિવસ/અઠવાડિયું', subSkipped:'સ્કિપ કર્યા', subSkipBtn:'દિવસ સ્કિપ કરો', subCancelBtn:'પ્લાન રદ કરો', subEditNote:'નીચે બદલીને અપડેટ દબાવો', subPickMeals:'મીલ પસંદ કરો', subPickDays:'દિવસ પસંદ કરો', subWeekdays:'સોમ–શુક્ર', subAllDays:'સાતેય દિવસ', subClear:'સાફ', subDateRange:'તારીખ રેન્જ', subStart:'શરૂ', subEnd:'અંત', subDelivery:'ડિલિવરી', subUpdate:'પ્લાન અપડેટ', subStart2:'સબ્સ્ક્રિપ્શન શરૂ', subAnySabzi:'શેફની પસંદ', subSaved:'સબ્સ્ક્રિપ્શન સફળતાપૂર્વક સેવ થયું.', subCancelled:'સબ્સ્ક્રિપ્શન રદ થયું', subCancelConfirm:'સબ્સ્ક્રિપ્શન રદ કરો?', subSkipDone:'દિવસ સ્કિપ થયો', subUnskipDone:'સ્કિપ દૂર', subPickSkipDate:'સ્કિપ માટે તારીખ પસંદ કરો', subEndAfter:'એન્ડ ડેટ સ્ટાર્ટ પછી હોવી જોઈએ', subStartInfo:'કાલથી આગળ', navContact:'સંપર્ક કરો', contactTitle:'📞 સંપર્ક કરો', contactSub:'તમારી વાત સાંભળવી અમને ગમે છે', contactInfoTitle:'ℹ️ માહિતી', contactAddrLbl:'લોકેશન', contactAreaLbl:'ડિલિવરી વિસ્તાર', contactHoursLbl:'ડિલિવરી સમય',
+      noUpcoming:'હમણાં કોઈ આગામી ઓર્ડર નથી. મેનૂમાંથી મીલ ઉમેરીને ઓર્ડર કરો.', noHistory:'આ તારીખે કોઈ ઓર્ડર મળ્યો નથી.', navHome:'હોમ', navCart:'કાર્ટ', navPast:'જૂના ઓર્ડર', navAbout:'અમારા વિશે', navSub:'સબ્સ્ક્રિપ્શન', navHomeShort:'હોમ', navCartShort:'કાર્ટ', navSubShort:'સબ્સ્ક્રાઇબ', navScheduleShort:'શેડ્યૂલ', schedTitle:'📅 મીલ શેડ્યૂલ કરો', schedSub:'કયા દિવસ માટે ઓર્ડર કરવો છે?', schedOrderingFor:'ઓર્ડર થઈ રહ્યો છે', schedBackToday:'આજ પર પાછા', onbSkip:'છોડો', onb1Title:'તાજું ટિફિન, રોજ', onb1Body:'ઓર્ડર પછી જ બને છે — ન ફ્રોઝન, ન વાસી.', onb2Title:'હોમ અને ઓફિસ ડિલિવરી', onb2Body:'જ્યાં પણ હો — ઘરે કે ઓફિસે, ઓર્ડર કરો.', onb3Title:'આજે ઓર્ડર કરો અથવા શેડ્યૂલ કરો', onb3Body:'કાલનું ટિફિન પ્લાન કરવું છે? નીચે "Schedule Your Meal" વાપરો.', onb4Title:'સરળ પેમેન્ટ', onb4Body:'UPI થી પે કરો અથવા સીધું કેશ ઓન ડિલિવરી — જે પસંદ હોય.', onbGetStarted:'શરૂ કરો', navAiShort:'AI મદદ', backAgainExit:'બહાર નીકળવા માટે ફરી બેક દબાવો', navOrdersShort:'ઓર્ડર', subTitle:'🔁 સબ્સ્ક્રિપ્શન', subSub:'એક વાર સેટ કરો — તમારું ડેઇલી ટિફિન આપોઆપ ઓર્ડર થઈ જશે.', subActive:'ચાલુ પ્લાન', subDaysWeek:'દિવસ/અઠવાડિયું', subSkipped:'સ્કિપ કર્યા', subSkipBtn:'દિવસ સ્કિપ કરો', subCancelBtn:'પ્લાન રદ કરો', subEditNote:'નીચે બદલીને અપડેટ દબાવો', subPickMeals:'મીલ પસંદ કરો', subPickDays:'દિવસ પસંદ કરો', subWeekdays:'સોમ–શુક્ર', subAllDays:'સાતેય દિવસ', subClear:'સાફ', subDateRange:'તારીખ રેન્જ', subStart:'શરૂ', subEnd:'અંત', subDelivery:'ડિલિવરી', subUpdate:'પ્લાન અપડેટ', subStart2:'સબ્સ્ક્રિપ્શન શરૂ', subAnySabzi:'શેફની પસંદ', subSaved:'સબ્સ્ક્રિપ્શન સફળતાપૂર્વક સેવ થયું.', subCancelled:'સબ્સ્ક્રિપ્શન રદ થયું', subCancelConfirm:'સબ્સ્ક્રિપ્શન રદ કરો?', subSkipDone:'દિવસ સ્કિપ થયો', subUnskipDone:'સ્કિપ દૂર', subPickSkipDate:'સ્કિપ માટે તારીખ પસંદ કરો', subEndAfter:'એન્ડ ડેટ સ્ટાર્ટ પછી હોવી જોઈએ', subStartInfo:'કાલથી આગળ', navContact:'સંપર્ક કરો', contactTitle:'📞 સંપર્ક કરો', contactSub:'તમારી વાત સાંભળવી અમને ગમે છે', contactInfoTitle:'ℹ️ માહિતી', contactAddrLbl:'લોકેશન', contactAreaLbl:'ડિલિવરી વિસ્તાર', contactHoursLbl:'ડિલિવરી સમય',
       aboutTitle:'ℹ️ અમારા વિશે', aboutSub:'અમારું ટિફિન કેમ અલગ છે', aboutSwipe:'← વધુ જોવા માટે સ્વાઇપ કરો →',
       aboutContact:'📞 કોઈ સવાલ? અમે એક કોલ દૂર છીએ.'
     }
@@ -1763,26 +1808,37 @@
   // raw CFG.tempClosed nahi, warna ek "1 hour" quick-close ka time nikalne ke baad
   // bhi tab tak band rehta jab tak admin khud Setup me jaake checkbox UNCHECK na
   // kare (jabki poora point hi ye tha ki duration khatam hote hi apne aap khul jaye).
-  function isKitchenEmergencyClosed(){ return kitchenAvailabilityInfo().state==='emergency'; }
+  // Raw check, no dependency on mealsAvail()/kitchenAvailabilityInfo() — mealsAvail()
+  // itself calls isKitchenEmergencyClosed(), so if kitchenAvailabilityInfo() ever
+  // needs mealsAvail() (it does, below), the emergency check MUST stay self-contained
+  // or the two functions call each other forever.
+  function emergencyCloseState(){
+    if(!CFG.tempClosed) return null;
+    const untilMs = CFG.tempClosedUntil ? Date.parse(CFG.tempClosedUntil) : NaN;
+    const nowMs = getISTNow().getTime();
+    if(!isFinite(untilMs) || untilMs > nowMs) return { untilMs: isFinite(untilMs)?untilMs:null };
+    return null;   // duration beet chuka — auto-reopened maano
+  }
+  function isKitchenEmergencyClosed(){ return !!emergencyCloseState(); }
+  // "Open now, closes in X" ab SERVING WINDOW (windowStart/windowEnd) se nahi, balki
+  // asli ORDER CUTOFF (mealsAvail()) se aata hai — pehle breakfast ka 7-9 AM serving
+  // window abhi khatam nahi hua tha isliye "closes in 57m" dikhata tha, jabki
+  // breakfast ki booking khud raat 10 baje hi band ho chuki thi (cutoffAheadDay).
+  // Sirf AAJ ke liye abhi jo meal order ho sakta hai, uska sabse jaldi aane wala
+  // cutoff dikhate hain — kuch bhi order-yogya na ho to 'unknown' (koi message nahi).
   function kitchenAvailabilityInfo(){
-    if(CFG.tempClosed){
-      const untilMs = CFG.tempClosedUntil ? Date.parse(CFG.tempClosedUntil) : NaN;
-      const nowMs = getISTNow().getTime();
-      if(!isFinite(untilMs) || untilMs > nowMs) return { state:'emergency', untilMs: isFinite(untilMs)?untilMs:null };
-      // untilMs beet chuka — auto-reopened maano, neeche normal window-logic chalne do
-    }
-    const mts=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false);
-    if(!mts.length) return { state:'unknown' };
+    const emg=emergencyCloseState();
+    if(emg) return { state:'emergency', untilMs:emg.untilMs };
+    const avail=mealsAvail(0);
     const now=getISTNow(); const curMin=now.getHours()*60+now.getMinutes();
-    let openMt=null, nextMt=null, nextDiff=Infinity;
-    mts.forEach(mt=>{
-      const s=hhmmToMins(mt.windowStart), e=hhmmToMins(mt.windowEnd);
-      if(s===null||e===null) return;
-      if(e>s && curMin>=s && curMin<e){ if(!openMt || e>hhmmToMins(openMt.windowEnd)) openMt=mt; }
-      else { let diff=s-curMin; if(diff<0) diff+=1440; if(diff<nextDiff){ nextDiff=diff; nextMt=mt; } }
+    let soonest=null, soonestDiff=Infinity;
+    enabledMeals().forEach(function(key){
+      if(!avail[key] || !avail[key].ok) return;
+      const mt=mealType(key); if(!mt) return;
+      const diff=cutoffMins(key)-curMin;
+      if(diff<soonestDiff){ soonestDiff=diff; soonest=mt; }
     });
-    if(openMt){ let closesIn=hhmmToMins(openMt.windowEnd)-curMin; if(closesIn<0) closesIn+=1440; return { state:'open', mt:openMt, mins:closesIn }; }
-    if(nextMt) return { state:'closed', mt:nextMt, mins:nextDiff };
+    if(soonest) return { state:'open', mt:soonest, mins:soonestDiff };
     return { state:'unknown' };
   }
   function fmtDuration(mins){
@@ -1797,13 +1853,13 @@
   function aboutOpenStatus(){
     const info=kitchenAvailabilityInfo();
     if(info.state==='emergency') return `<span style="color:var(--danger);font-weight:800;">${t('abClosedNow')||'Closed now'}</span>`;
-    if(info.state==='open') return `<span style="color:var(--ok);font-weight:800;">${t('abOpenNow')||'Open now'}</span> · ${(t('abCloses')||'Closes')} ${formatMinutesAsClock(hhmmToMins(info.mt.windowEnd))}`;
-    if(info.state==='closed') return `<span style="color:var(--danger);font-weight:800;">${t('abClosedNow')||'Closed now'}</span> · ${(t('abOpensAt')||'Opens')} ${formatMinutesAsClock(hhmmToMins(info.mt.windowStart))}`;
-    return '';
+    if(info.state==='open') return `<span style="color:var(--ok);font-weight:800;">${t('abOpenNow')||'Open now'}</span> · ${info.mt.emoji||''} ${esc(info.mt.title||'')} ${(t('abCloses')||'closes')} ${formatMinutesAsClock(cutoffMins(info.mt.key))}`;
+    return '';   // aaj kuch order-yogya nahi bacha — koi status line nahi
   }
-  // Home page ke top par persistent timer/banner — "abhi open hai, X der me band
-  // hoga" ya "band hai, agla meal X der me" — customer ko baar-baar About page
-  // check kiye bina hi pata chal jaye.
+  // Home page ke top par persistent timer/banner — jo bhi meal ABHI order ho
+  // sakta hai, uska cutoff kitni der me aa raha hai wahi dikhate hain (breakfast
+  // jaisa cutoffAheadDay meal jo aaj order hi nahi ho sakta, kabhi is banner me
+  // nahi aayega). Aaj kuch bhi order-yogya na bacha ho to banner poora hide.
   function renderHomeAvailBanner(){
     const box=document.getElementById('kitchenAvailBanner'); if(!box) return;
     const info=kitchenAvailabilityInfo();
@@ -1818,10 +1874,7 @@
       }
     } else if(info.state==='open'){
       cls='kab-open';
-      html='🟢 <b>'+(t('abOpenNow')||'Open now')+'</b> — '+(info.mt.emoji||'')+' '+esc(info.mt.title||'')+' closes in <b>'+fmtDuration(info.mins)+'</b>';
-    } else if(info.state==='closed'){
-      cls='kab-closed';
-      html='🔔 Next: '+(info.mt.emoji||'')+' <b>'+esc(info.mt.title||'')+'</b> in '+fmtDuration(info.mins);
+      html='🟢 '+(info.mt.emoji||'')+' <b>'+esc(info.mt.title||'')+'</b> orders close in <b>'+fmtDuration(info.mins)+'</b>';
     } else {
       box.classList.add('hidden'); return;
     }
@@ -2673,8 +2726,11 @@
     bn.classList.toggle('hidden', !show);
     const cont=document.querySelector('.container'); if(cont) cont.classList.toggle('has-bottom-nav', show);
     if(show){
-      const active=BN_SCREENS[viewId];
-      ['land','orders','sub','profile'].forEach(k=>{ const el=document.getElementById('bn-'+k); if(el) el.classList.toggle('active', k===active); });
+      // Home dikh raha hai par "Schedule Your Meal" se aaye the (dateOffset!==0)
+      // to Schedule tab highlight hoga, Home nahi — customer ko clearly pata
+      // rahe ki wo abhi future-date order mode me hai, aaj wale mode me nahi.
+      const active = (viewId==='homeView' && dateOffset!==0) ? 'schedule' : BN_SCREENS[viewId];
+      ['land','orders','schedule','sub','profile'].forEach(k=>{ const el=document.getElementById('bn-'+k); if(el) el.classList.toggle('active', k===active); });
     }
   }
   function navTo(where){
@@ -2686,7 +2742,9 @@
     else if(where==='orders') showOrdersPage();
     else if(where==='profile') showProfilePage();
   }
-  function showLanding(){ showView('homeView'); renderHome(); }
+  // Home tab hamesha AAJ ka matlab hai — "Schedule Your Meal" se future date
+  // par gaye the to bhi, Home par wapas tap karte hi turant aaj pe reset.
+  function showLanding(){ if(dateOffset!==0){ dateOffset=0; builder=freshBuilder(); pickActiveMeal(); } showView('homeView'); refreshAvailability(); renderHome(); }
   function goOrderNow(){ if(isLoggedIn()) enterApp(); else showAuth(); }
   function showPublic(){
     // Logged-in user ko landing/login mat dikhao — seedha app
@@ -3731,19 +3789,82 @@
   function selectMeal(m){ activeMeal=m; renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
 
   // Date + Time row above tabs (applies to the whole order / active meal's time)
+  // Today/Tomorrow/Day-After chips yahan se hata diye — Home ab hamesha AAJ
+  // ka menu dikhata hai (showLanding() dateOffset ko 0 pe reset karta hai).
+  // Future date ke liye ab dedicated "Schedule Your Meal" nav hai (neeche),
+  // jo isi dateOffset/builder state ko reuse karta hai — sirf entry point
+  // alag hai. Jab dateOffset!==0 ho (Schedule se aaye), yahan chhota banner
+  // dikhta hai bata ke ki kis din ke liye order ho raha hai + "Aaj" pe wapas.
   function renderMenuDateTime(){
     const box=document.getElementById('menuDateTime'); if(!box)return;
+    if(dateOffset===0){ box.innerHTML=''; return; }
     const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
-    const dn=dayNames[LANG]||dayNames.en;
-    let dateChips=''; for(let o=0;o<=2;o++){ const open=anyAvail(o); dateChips+=`<button type="button" class="dchip ${o===dateOffset?'on':''}" ${open?'':'disabled'} onclick="menuChangeDate(${o})"><b>${dn[o]}</b><span>${fmtLabel(dateWithOffset(o))}</span>${open?'':'<i>✕</i>'}</button>`; }
-    // Time-slot dropdown yahan se hata diya — customer ko choose karne ki zaroorat nahi,
-    // builder[m].timeSlot ab bhi defaultTimeSlot() se silently seed hota hai (last-remembered
-    // ya slot[0]), cart/order/backend sab waisa hi chalta hai.
-    box.innerHTML=`<div class="menu-dt" style="flex-direction:column;align-items:stretch;">
-      <div class="mdt-cell"><span class="mdt-lbl">${t('deliveryDate')}</span><div class="date-chips">${dateChips}</div></div>
+    const dn=(dayNames[LANG]||dayNames.en)[dateOffset]||fmtLabel(dateWithOffset(dateOffset));
+    box.innerHTML=`<div class="sched-banner">
+      <span>📅 ${t('schedOrderingFor')||'Ordering for'} <b>${esc(dn)}</b>, ${fmtLabel(dateWithOffset(dateOffset))}</span>
+      <span class="sched-back" onclick="showLanding()">${t('schedBackToday')||'Back to Today'}</span>
     </div>`;
   }
   function menuChangeDate(v){ const off=parseInt(v,10)||0; if(!anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
+  // "Schedule Your Meal" — Tomorrow/Day After ke liye ORDER karne ka ekmatra
+  // rasta ab yehi hai (Home se date-chips hata diye). Sheet khulte hi live
+  // availability check karta hai (anyAvail) — band din disabled/greyed dikhta
+  // hai, tap nahi hota.
+  function openScheduleSheet(){
+    if(!isLoggedIn()){ showAuth(); return; }
+    const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
+    const dn=dayNames[LANG]||dayNames.en;
+    const box=document.getElementById('scheduleOptions');
+    if(box){
+      let html='';
+      for(let o=1;o<=2;o++){
+        const open=anyAvail(o);
+        html+=`<button type="button" class="add-cart-btn" style="background:${open?'var(--accent)':'var(--line)'};color:${open?'#fff':'var(--muted)'};" ${open?`onclick="scheduleGoTo(${o})"`:'disabled'}>${dn[o]} — ${fmtLabel(dateWithOffset(o))}${open?'':' ('+(t('lpClosed')||'Closed')+')'}</button>`;
+      }
+      box.innerHTML=html;
+    }
+    document.getElementById('scheduleSheet').classList.remove('hidden');
+  }
+  function closeScheduleSheet(){ document.getElementById('scheduleSheet').classList.add('hidden'); }
+  function scheduleGoTo(off){
+    closeScheduleSheet();
+    if(!anyAvail(off)) return;
+    dateOffset=off; builder=freshBuilder(); pickActiveMeal();
+    if(!statsCache[selDateStr()]) loadPublicStats(selDateStr());
+    showView('homeView'); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); renderHome();
+  }
+
+  // ═══════ FIRST-RUN ONBOARDING ═══════
+  // Android-app-jaisa swipeable walkthrough — sirf is device/browser par PEHLI
+  // baar (fbt_onboarded flag hamesha ke liye rok deta hai dobara aana). Overlay
+  // hai (position:fixed, sab kuch ke upar) — jo bhi view neeche decide ho chuka
+  // hai use disturb nahi karta, Skip/Get Started se bas hat jaata hai.
+  function maybeShowOnboarding(){
+    try{ if(storeGet('fbt_onboarded')) return; }catch(e){ return; }
+    const ov=document.getElementById('onboardOverlay'); if(!ov) return;
+    ov.classList.remove('hidden');
+    renderOnboardDots(0);
+    const sl=document.getElementById('onboardSlides');
+    if(sl) sl.addEventListener('scroll', onOnboardScroll, {passive:true});
+  }
+  function renderOnboardDots(active){
+    const box=document.getElementById('onboardDots'); if(!box) return;
+    box.innerHTML=[0,1,2,3].map(i=>`<span style="width:${i===active?18:7}px;height:7px;border-radius:4px;background:${i===active?'var(--accent)':'var(--line)'};transition:width .2s ease;"></span>`).join('');
+  }
+  let __onbScrollT=null;
+  function onOnboardScroll(){
+    clearTimeout(__onbScrollT);
+    __onbScrollT=setTimeout(()=>{
+      const sl=document.getElementById('onboardSlides'); if(!sl||!sl.firstElementChild) return;
+      const step=sl.firstElementChild.offsetWidth+14;
+      const idx=Math.round(sl.scrollLeft/step);
+      renderOnboardDots(Math.max(0,Math.min(3,idx)));
+    },80);
+  }
+  function finishOnboarding(){
+    try{ storeSet('fbt_onboarded',1); }catch(e){}
+    const ov=document.getElementById('onboardOverlay'); if(ov) ov.classList.add('hidden');
+  }
 
   // ═══════ MENU AS CARDS — sabhi meals ek saath (compact, no scroll) ═══════
   // Public wrapper — burst calls (availability + stats + images ek hi waqt) ko ek
@@ -3977,7 +4098,7 @@
   function shAddToCart(){
     const m=sheetMeal, b=builder[m];
     if(m!=='breakfast' && !b.sabzi){ showToast('⚠️ '+t('selectSabzi'),'warning'); return; }
-    if(capacityReached(m,selDateStr())){ showToast('🔴 '+t('soldOutTitle'),'error'); closeMealSheet(); renderMealPanel(); return; }
+    if(capacityReached(m,selDateStr())){ showToast('🔴 '+t('soldOutTitle'),'error'); closeMealSheet(); patchMealCard(m); return; }
     // Data ready hai → turant, koi spinner nahi
     if(orderedMapReady){
       const already=alreadyOrdered(selDateStr(), m);
@@ -4008,11 +4129,21 @@
     const idx=cart.findIndex(x=>x.id===item.id);
     if(idx>=0) cart[idx]=item; else cart.push(item);
     showToast('🛒 '+mealTitle(m)+' ('+v.name+') '+t('addedToCart'),'success');
-    closeMealSheet(); renderMealTabs(); renderMealPanel(); updateCartBadge(); renderCart();
+    // ⚠️ Yahan bhi pehle poora renderMealPanel() chalta tha — Customize sheet
+    // (variants wale meals, jaise lunch/dinner) se "Add to Cart" karna sabse
+    // common flow hai, isliye ye ek jagah quick-add stepper se bhi zyada
+    // flicker deta tha. patchMealCard() se sirf isi meal ka .c1-actions badalta
+    // hai, baaki cards/images bilkul untouched.
+    closeMealSheet(); renderMealTabs(); patchMealCard(m); updateCartBadge(); renderCart();
   }
 
   // ═══════ CART ═══════
-  function removeCart(id){ cart=cart.filter(x=>x.id!==id); renderMealTabs(); renderMealPanel(); updateCartBadge(); renderCart(); }
+  function removeCart(id){
+    const removed=cart.find(x=>x.id===id);
+    cart=cart.filter(x=>x.id!==id);
+    renderMealTabs(); updateCartBadge(); renderCart();
+    if(removed && removed.meal) patchMealCard(removed.meal); else renderMealPanel();
+  }
   function clearCart(){ if(!cart.length)return; cart=[]; appliedPromo=null; renderMealTabs(); renderMealPanel(); updateCartBadge(); renderCart(); }
 
   function cartLineDesc(it){
@@ -6863,7 +6994,8 @@
         nsKey('fbt_session'), nsKey('fbt_menu'), nsKey('fbt_cfg'), nsKey('fbt_brand'),
         nsKey('fbt_endpoint'), nsKey('fbt_lang'), nsKey('fbt_theme'),
         nsKey('fbt_timeprefs'), nsKey('fbt_addr'), nsKey('fbt_admin'), nsKey('fbt_super'),
-        nsKey('fbt_view'), nsKey('fbt_cart'), nsKey('fbt_promo'), nsKey('fbt_lastrow')
+        nsKey('fbt_view'), nsKey('fbt_cart'), nsKey('fbt_promo'), nsKey('fbt_lastrow'),
+        nsKey('fbt_onboarded')
       ]);
       const kill = [];
       for(let i=0;i<localStorage.length;i++){
@@ -7117,7 +7249,14 @@
         }
 
         // Admin restore
-        if (APK_MODE !== 'customer' && restoreAdmin()) {
+        const __adminRestored = (APK_MODE !== 'customer' && restoreAdmin());
+        // First-run onboarding — sirf naye (kabhi is device/browser pe na aaye)
+        // customer ke liye, admin/superadmin restore hone par bilkul nahi (wo
+        // vendor owner hai, "naya customer" nahi). Overlay hai — jo bhi view
+        // neeche decide ho raha hai usse chhupata nahi, bas upar dikh jaata hai
+        // aur Skip/Get Started dabate hi hamesha ke liye chala jaata hai.
+        if (!__adminRestored) maybeShowOnboarding();
+        if (__adminRestored) {
             // admin panel restore – skip customer auth
         }
         // ── Bina ?v= (installed app / platform main link) → HAMESHA discovery ──
@@ -7204,11 +7343,20 @@
                 if (HAS_VENDOR_PARAM) { __dscIsTop = true; openDiscovery(); keep(); return; }
                 armExit(); return;
             }
-            // ⚠️ Fallback path — koi view (jaise adminLogin) ke liye upar explicit case
-            // nahi hai. Pehle sirf renderHome() chalta tha; refreshAvailability() nahi,
-            // jo date/slot selection revalidate karta hai. Bug repro se match karta hai:
-            // ek round-trip (auth/admin-login se) ke baad Home wapas aata tha par meal
-            // panel khaali reh jaata — is se safe hai chahe asli trigger kuch aur ho.
+            // ⚠️ Pehle adminLogin/superLogin ke liye koi explicit case nahi tha — koi
+            // bhi popstate (kisi bhi wajah se: Android back-gesture edge-swipe, ya
+            // mobile browser ka apna history-normalize quirk jab history.pushState()
+            // baar-baar call ho — jaisa is exit-confirm pattern me har keep() pe hota
+            // hai) generic fallback me gir jaata, jo isLoggedIn()===false hone par
+            // openDiscovery() dikhata — customer "Admin dabate hi 1-2 sec me customer
+            // login pe wapas aa gaya" jaisa dikhta tha. Ab explicit route hai: seedha
+            // wahi customer screen jahan se Admin par gaye the.
+            if (isOn('adminLogin') || isOn('superLogin')) { hideAdmin(); keep(); return; }
+            // ⚠️ Fallback path — baaki koi bhi na-samjha-view. Pehle sirf renderHome()
+            // chalta tha; refreshAvailability() nahi, jo date/slot selection revalidate
+            // karta hai. Bug repro se match karta hai: ek round-trip (auth/admin-login
+            // se) ke baad Home wapas aata tha par meal panel khaali reh jaata — is se
+            // safe hai chahe asli trigger kuch aur ho.
             if (isLoggedIn()) { showView('homeView'); renderHome(); refreshAvailability(); }
             else { openDiscovery(); }
             keep();

@@ -433,16 +433,31 @@ async function openApp(page, opts = {}) {
 
   await mockBackend(page, state);
 
-  await page.addInitScript(({ session, theme, loggedIn, addr, istOverride }) => {
+  await page.addInitScript(({ session, theme, loggedIn, addr, istOverride, skipOnboarding, vendor }) => {
     if (loggedIn) localStorage.setItem('fbt_session', JSON.stringify(session));
     if (theme) localStorage.setItem('fbt_theme', JSON.stringify(theme));
     if (addr)  localStorage.setItem('fbt_addr', JSON.stringify(addr));
     localStorage.setItem('fbt_infostrip_x', JSON.stringify(1));
+    // Har existing test ek "returning" browser simulate karta hai (default) —
+    // warna first-run onboarding overlay (position:fixed, poori screen cover
+    // karta hai) har test me upar aa jaata, sab clicks intercept kar leta.
+    // Sirf onboarding-specific tests isse explicitly skipOnboarding:false karke off karte hain.
+    // ⚠️ App ka apna storeGet/storeSet non-default vendors ke liye key ko
+    // "<vendorId>_fbt_onboarded" namespace karta hai (nsKey()) — sirf raw
+    // 'fbt_onboarded' set karna default vendor ('nestandnosh') ke liye hi
+    // match karta, multi-vendor load tests (jo apna vendorId use karte hain)
+    // ke liye nahi. Dono key set kar do, harmless hai jo match na ho.
+    if (skipOnboarding) {
+      localStorage.setItem('fbt_onboarded', JSON.stringify(1));
+      if (vendor && vendor !== 'nestandnosh') localStorage.setItem(vendor + '_fbt_onboarded', JSON.stringify(1));
+    }
     if (istOverride) window.__TEST_IST_OVERRIDE = istOverride;   // app's getISTNow() reads this once at load
   }, { session:SESSION, theme:opts.theme,
        loggedIn: opts.loggedIn !== false,
        addr: opts.addr || { deliveryType:'home', society:'Vrindavan', flatNo:'D-706' },
-       istOverride: opts.istOverride || null });
+       istOverride: opts.istOverride || null,
+       skipOnboarding: opts.skipOnboarding !== false,
+       vendor: opts.vendor || null });
 
   // ⚠️ opts.vendor tha hi nahi yahan — callers (admin.spec.js, customer.spec.js)
   // ise pass karte the (?v=<vendor> se real bootstrap/CFG load karne ke liye,

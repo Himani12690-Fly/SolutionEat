@@ -7,6 +7,11 @@ function json(route, obj) {
 }
 
 async function mockBackend(page, handlers = {}) {
+  // Ye file apna alag/independent page-setup use karti hai (tests/helpers.js
+  // ka openApp() nahi) — first-run onboarding overlay (position:fixed, poori
+  // screen) ko yahan bhi seed karna zaroori hai, warna wo har click intercept
+  // kar leta (admin login form ke elements "obscured" reh jaate).
+  await page.addInitScript(() => { localStorage.setItem('fbt_onboarded', JSON.stringify(1)); });
   await page.route('**/*', async (route) => {
     const req = route.request();
     const url = req.url();
