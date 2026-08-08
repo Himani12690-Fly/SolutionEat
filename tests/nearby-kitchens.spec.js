@@ -58,28 +58,46 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     return state;
   }
 
-  test('shows only vendors within their own radius, with a distance label, nearest first', async ({ page, context }) => {
+  test('auto-requests location on open and shows only vendors within their own radius, with a distance label, nearest first', async ({ page, context }) => {
     const state = seedVendors();
     await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
     await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
     await openAppRaw(page, { state, loggedIn: false });
     await page.evaluate(() => window.openDiscovery());
-    await page.click('#dscNearPrompt');
-    await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/);
+    // No manual tap needed — the flow auto-triggers on open.
+    await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/, { timeout: 10000 });
     const text = await page.locator('#dscNearList').innerText();
     expect(text).toContain('Annapurna');
     expect(text).toContain('km away');
     expect(text).not.toContain('Far Kitchen');       // outside its own radius
     expect(text).not.toContain('No Location Kitchen'); // never configured a location
+    // Fallback browsing (area chips/list) stays hidden once a near-you result renders.
+    await expect(page.locator('#dscAreas')).toHaveClass(/hidden/);
+    await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
   });
 
-  test('the existing area-chip discovery is untouched and still works alongside it', async ({ page, context }) => {
-    const state = seedVendors();
+  test('zero nearby kitchens shows a clean empty state, not the fallback browse list', async ({ page, context }) => {
+    const state = freshState();
+    state.discoveryVendors = [
+      { vendorId: 'farkitchen', name: 'Far Kitchen', cuisine: 'Punjabi', lat: 23.2000, lng: 72.5714, deliveryRadiusKm: 4 }, // outside its own radius
+    ];
     await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
     await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
     await openAppRaw(page, { state, loggedIn: false });
     await page.evaluate(() => window.openDiscovery());
+    await expect(page.locator('#dscEmptyNear')).not.toHaveClass(/hidden/, { timeout: 10000 });
+    await expect(page.locator('#dscAreas')).toHaveClass(/hidden/);
+    await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
+  });
+
+  test('location denied falls back to the existing area-chip/full-list browsing', async ({ page, context }) => {
+    const state = seedVendors();
+    // No grantPermissions() call — geolocation stays denied, matching Chromium's default.
+    await openAppRaw(page, { state, loggedIn: false });
+    await page.evaluate(() => window.openDiscovery());
     await page.waitForFunction(() => document.querySelectorAll('#dscList .zrc').length > 0, { timeout: 15000 }).catch(() => {});
     await expect(page.locator('#dscAreas')).toBeVisible();
+    await expect(page.locator('#dscBrowseWrap')).toBeVisible();
+    await expect(page.locator('#dscNearWrap')).toHaveClass(/hidden/);
   });
 });
