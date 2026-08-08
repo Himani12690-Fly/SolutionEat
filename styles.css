@@ -292,13 +292,7 @@
     html[data-theme="dark"] .h1-picker.stuck { box-shadow:0 6px 16px -8px rgba(0,0,0,0.6); }
 
     /* Body */
-    /* ⚠️ Base padding (18px) + .container.has-bottom-nav's 88px sirf bottom-nav
-       ke liye kaafi tha — jab #helpTourBtn aaya (fixed, bottom:158px, corner
-       pe hamesha maujood) to woh reach karta hai ~204px tak, jo isse zyada
-       hai — aakhri meal card ka Customize/ADD+ button uske peeche dab jaata
-       (cart khaali ho, .with-bar na lage tab). 130px (jaisa #page1/#cartView
-       already use karte hain) is gap ko dobara safe bana deta hai. */
-    .h1-body { padding:2px 18px 130px; }
+    .h1-body { padding:2px 18px 18px; }
     /* Cart bar fixed hai (bottom:82px, ~60px tall → viewport bottom se 142px tak).
        Jab wo dikh raha ho to content ke neeche cartView jaisi hi jagah chhodo
        (.section.pad-sticky = 152px), warna last meal card bar ke peeche dab jaata hai.
@@ -877,20 +871,6 @@
     .about-slide p { font-size:13px; line-height:1.55; opacity:0.96; margin:0; }
     .about-hint { text-align:center; font-size:11.5px; color:var(--muted); margin:2px 0 18px; }
     .about-contact { margin:0 16px 18px; background:var(--accent-soft); border-radius:16px; padding:20px 18px; text-align:center; }
-    /* Onboarding tour — full-bleed vertical panels (own classes, not
-       .about-slides/.about-slide — those are a short horizontal card strip
-       meant to sit inside a normal scrolling page; reusing them here left the
-       onboarding overlay's short card floating in a mostly-empty full-screen
-       container). Each slide fills the whole overlay, one at a time. */
-    .onb-slides { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; flex:1; }
-    .onb-slides::-webkit-scrollbar { display:none; }
-    .onb-slide { scroll-snap-align:center; flex:0 0 100%; min-width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px 34px; color:#fff; box-sizing:border-box; }
-    .onb-slide .as-icon { font-size:66px; margin-bottom:22px; }
-    .onb-slide h3 { font-size:22px; font-weight:800; margin-bottom:12px; line-height:1.3; }
-    .onb-slide p { font-size:14.5px; line-height:1.6; opacity:0.96; margin:0; max-width:320px; }
-    .help-fab { position:fixed; right:16px; bottom:158px; z-index:130; width:46px; height:46px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:19px; font-weight:900; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,0.24); cursor:pointer; }
-    .help-fab.hidden { display:none !important; }
-    .help-fab:active { transform:scale(0.94); }
     .about-contact .ac-title { font-size:14px; font-weight:800; color:var(--ink); margin-bottom:14px; }
     .about-contact .ac-btns { display:flex; gap:10px; }
     .about-contact .ac-btn { flex:1; padding:13px 10px; border-radius:12px; font-weight:800; font-size:13.5px; text-decoration:none; display:block; }
@@ -992,9 +972,19 @@
     .dsc-ac.on { background:var(--danger); color:#fff; border-color:var(--danger); }
     .dsc-ac.on small { color:rgba(255,255,255,0.85); }
     /* Near You — GPS radius (society-list/area-chips se ALAG, dono saath chalte hain) */
-    .zo-near-prompt { margin:2px 15px 10px; padding:12px 14px; border-radius:14px; background:var(--accent-soft); color:var(--accent-dark); font-size:12.5px; font-weight:800; text-align:center; cursor:pointer; }
     .zo-near-wrap { padding:6px 15px 4px; }
-    .zo-near-wrap.hidden { display:none !important; }
+    /* Auto-search state — Discovery khulte hi location maangte/fetch karte waqt dikhta hai */
+    .zo-radar-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 24px 44px; gap:20px; }
+    .zo-radar { position:relative; width:90px; height:90px; display:flex; align-items:center; justify-content:center; }
+    .zo-radar-ring { position:absolute; inset:0; border-radius:50%; border:2px solid var(--accent); opacity:0; animation:zoRadarPulse 2.2s ease-out infinite; }
+    .zo-radar-ring.r2 { animation-delay:1.1s; }
+    .zo-radar-pin { position:relative; z-index:1; width:46px; height:46px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:21px; box-shadow:0 5px 16px var(--accent-glow); animation:zoRadarBounce 1.4s ease-in-out infinite; }
+    .zo-radar-text { font-size:13.5px; font-weight:800; color:var(--ink); text-align:center; }
+    @keyframes zoRadarPulse { 0% { transform:scale(0.55); opacity:.65; } 100% { transform:scale(2); opacity:0; } }
+    @keyframes zoRadarBounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+    @media (prefers-reduced-motion:reduce) { .zo-radar-ring, .zo-radar-pin { animation:none; } }
+    /* No kitchens within radius yet */
+    .zo-empty-near { padding:60px 26px 44px; text-align:center; }
     /* Body */
     .zo-body { padding:6px 15px 60px; }
     .zo-sec-title { font-size:15px; font-weight:900; color:var(--ink); margin:6px 2px 13px; }
