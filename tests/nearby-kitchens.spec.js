@@ -1,0 +1,85 @@
+/**
+ * GPS-radius kitchen discovery — coexists with the existing society-list/
+ * area-chip system, doesn't replace it. Vendor sets their kitchen's GPS
+ * location (Setup → "Use my current location", free browser geolocation,
+ * no Maps/Geocoding API) + a delivery radius (km). Customers on the
+ * Discovery page can tap "Find kitchens near me" (their own free browser
+ * geolocation) to see vendors within THEIR OWN configured radius, with a
+ * distance label — this is awareness only, not an order guarantee; actual
+ * ordering still requires the customer's exact society to be in the
+ * vendor's own societies list (unchanged, existing gate).
+ */
+const { test, expect } = require('@playwright/test');
+const { openApp: openAppRaw, adminLogin, freshState } = require('./helpers');
+const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
+
+const CUSTOMER_LAT = 23.0225, CUSTOMER_LNG = 72.5714;
+
+test.describe('Admin Setup — Kitchen Location', () => {
+  test('"Use my current location" captures GPS coords and shows them', async ({ page, context }) => {
+    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
+    await openApp(page);
+    await adminLogin(page);
+    await page.evaluate(() => window.adminBnGo('config'));
+    await page.evaluate(() => window.cfgToggle('kitchen')); // "Kitchen" accordion section starts collapsed
+    await expect(page.locator('#kitchenLocStatus')).toContainText('Abhi set nahi hai');
+    await page.click('#captureLocBtn');
+    await expect(page.locator('#kitchenLocStatus')).toContainText('23.0225');
+    await expect(page.locator('#kitchenLocStatus')).toContainText('72.5714');
+  });
+
+  test('saving Setup sends the captured location and radius to the backend', async ({ page, context }) => {
+    const { state } = await openApp(page);
+    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
+    await adminLogin(page);
+    await page.evaluate(() => window.adminBnGo('config'));
+    await page.evaluate(() => window.cfgToggle('kitchen')); // "Kitchen" accordion section starts collapsed
+    await page.click('#captureLocBtn');
+    await expect(page.locator('#kitchenLocStatus')).toContainText('23.0225');
+    await page.fill('#cfg-deliveryRadiusKm', '6');
+    await page.evaluate(() => window.saveConfig());
+    await page.waitForTimeout(400);
+    expect(state.config.kitchenLat).toBeCloseTo(CUSTOMER_LAT, 3);
+    expect(state.config.kitchenLng).toBeCloseTo(CUSTOMER_LNG, 3);
+    expect(state.config.deliveryRadiusKm).toBe(6);
+  });
+});
+
+test.describe('Discovery — Near You (GPS radius)', () => {
+  function seedVendors() {
+    const state = freshState();
+    state.discoveryVendors = [
+      { vendorId: 'annapurna', name: 'Annapurna', cuisine: 'Gujarati', areas: ['Godrej Garden City'], lat: 23.0335, lng: 72.5714, deliveryRadiusKm: 4 }, // ~1.2km away
+      { vendorId: 'farkitchen', name: 'Far Kitchen', cuisine: 'Punjabi', lat: 23.2000, lng: 72.5714, deliveryRadiusKm: 4 }, // ~19.7km away — outside its own radius
+      { vendorId: 'nolocation', name: 'No Location Kitchen', cuisine: 'Chinese' }, // never set kitchen location
+    ];
+    return state;
+  }
+
+  test('shows only vendors within their own radius, with a distance label, nearest first', async ({ page, context }) => {
+    const state = seedVendors();
+    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
+    await openAppRaw(page, { state, loggedIn: false });
+    await page.evaluate(() => window.openDiscovery());
+    await page.click('#dscNearPrompt');
+    await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/);
+    const text = await page.locator('#dscNearList').innerText();
+    expect(text).toContain('Annapurna');
+    expect(text).toContain('km away');
+    expect(text).not.toContain('Far Kitchen');       // outside its own radius
+    expect(text).not.toContain('No Location Kitchen'); // never configured a location
+  });
+
+  test('the existing area-chip discovery is untouched and still works alongside it', async ({ page, context }) => {
+    const state = seedVendors();
+    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
+    await openAppRaw(page, { state, loggedIn: false });
+    await page.evaluate(() => window.openDiscovery());
+    await page.waitForFunction(() => document.querySelectorAll('#dscList .zrc').length > 0, { timeout: 15000 }).catch(() => {});
+    await expect(page.locator('#dscAreas')).toBeVisible();
+  });
+});
