@@ -316,7 +316,14 @@
     .c1-img { width:76px; height:76px; border-radius:14px; object-fit:cover; flex-shrink:0;
       background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:32px;
       transition:transform .25s cubic-bezier(.2,.8,.2,1); }
-    .c1card.c1-open:active .c1-img { transform:scale(1.04); }
+    /* ⚠️ Pehle .c1card.c1-open:active tha (poore card pe) — :active CSS ke
+       upward-bubble ki wajah se, neeche wale ".c1-actions" ke andar "ADD +"
+       button dabate hi bhi ye match ho jaata tha (button parent card ke
+       andar hai), isliye Add tap karne par bhi photo achanak "pop" karti
+       thi. Ab sirf .c1-top (jo actually tap-to-open area hai) active hone
+       par hi zoom ho — Add+ button alag .c1-actions row me hai, wo iske
+       andar aata hi nahi. -->
+    .c1card.c1-open .c1-top:active .c1-img { transform:scale(1.04); }
     /* meal image load hone tak halka shimmer skeleton (default photo flash rokne ke liye) */
     .c1-imgskel { background:linear-gradient(100deg, var(--accent-soft) 30%, rgba(255,255,255,.55) 50%, var(--accent-soft) 70%);
       background-size:200% 100%; animation:c1shimmer 1.1s ease-in-out infinite; }
@@ -549,6 +556,28 @@
     .sh-qty button { width:36px; height:44px; border:none; background:var(--card); color:var(--accent-dark); font-size:20px; font-weight:900; cursor:pointer; }
     .sh-qty .qn { width:30px; text-align:center; font-size:15px; font-weight:800; }
     .sh-add { flex:1; background:var(--accent); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:900; cursor:pointer; }
+
+    /* Schedule Your Meal sheet — Zomato-style date strip + meal chips */
+    .sched-lbl { font-size:11.5px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px; }
+    .sched-lbl:first-of-type { margin-top:18px; }
+    .sched-daystrip { display:flex; gap:9px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
+    .sched-daystrip::-webkit-scrollbar { display:none; }
+    .sched-day { flex:0 0 auto; width:60px; padding:10px 0; border:1.5px solid var(--line); border-radius:14px; text-align:center; cursor:pointer; background:var(--card); }
+    .sched-day.sel { border-color:var(--accent); background:var(--accent-soft); }
+    .sched-day.off { opacity:0.4; cursor:not-allowed; }
+    .sched-day .sd-dow { font-size:10.5px; font-weight:800; color:var(--muted); text-transform:uppercase; }
+    .sched-day.sel .sd-dow { color:var(--accent-dark); }
+    .sched-day .sd-num { font-size:16px; font-weight:900; color:var(--ink); margin-top:3px; }
+    .sched-mealchips { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .sched-meal { display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 6px; border:1.5px solid var(--line); border-radius:14px; text-align:center; cursor:pointer; background:var(--card); }
+    .sched-meal.sel { border-color:var(--accent); background:var(--accent-soft); }
+    .sched-meal.off { opacity:0.4; cursor:not-allowed; }
+    .sched-meal .sm-ic { font-size:22px; }
+    .sched-meal .sm-name { font-size:11.5px; font-weight:800; color:var(--ink); }
+    .sched-meal.sel .sm-name { color:var(--accent-dark); }
+    .sched-window { display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:11px 13px; margin-top:14px; font-size:12px; font-weight:700; color:var(--muted); }
+    .sched-window b { font-size:13px; font-weight:900; color:var(--ink); }
+
     /* Admin variants editor */
     .var-meal-tabs { display:flex; gap:8px; margin-bottom:12px; }
     .var-meal-tabs button { flex:1; padding:9px 4px; border:1.5px solid var(--line); border-radius:10px; background:var(--card); font-size:12px; font-weight:800; color:var(--muted); cursor:pointer; }
@@ -1200,8 +1229,16 @@
   #bootLoader.gone{opacity:0;pointer-events:none;}
   #bootLoader .bl-logo img{width:76px;height:76px;display:block;animation:blPulse 1.6s ease-in-out infinite;}
   @keyframes blPulse{0%,100%{transform:scale(1);opacity:.92;}50%{transform:scale(1.08);opacity:1;}}
-  @media (prefers-reduced-motion: reduce){#bootLoader .bl-logo img,#authTransition .bl-logo img{animation:none;}}
-  #bootLoader .bl-spin{width:34px;height:34px;border:3.5px solid #e7e9f0;border-top-color:#6366f1;border-radius:50%;animation:blsp .8s linear infinite;}
+  @media (prefers-reduced-motion: reduce){#bootLoader .bl-logo img,#authTransition .bl-logo img,#bootLoader .bl-logo::after,#authTransition .bl-logo::after{animation:none;}}
+  /* ⚠️ Pehle logo ke neeche ek plain ghoomta ring (.bl-spin) tha, letter-avatar
+     (koi real logo na ho tab) ke saath mila ke static/basic dikhta tha. Ab
+     Home page ke meal-image loading jaisa hi shimmer-sweep logo ke UPAR
+     chalta hai (real photo ho ya letter-avatar, dono pe kaam karta hai) —
+     alag spinner ki zaroorat hi nahi. */
+  #bootLoader .bl-logo,#authTransition .bl-logo{position:relative;width:76px;height:76px;border-radius:50%;overflow:hidden;}
+  #bootLoader .bl-logo::after,#authTransition .bl-logo::after{content:'';position:absolute;inset:0;border-radius:50%;
+    background:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.6) 50%, transparent 70%);
+    background-size:200% 100%; animation:c1shimmer 1.1s ease-in-out infinite;}
   @keyframes blsp{to{transform:rotate(360deg)}}
   .mini-spin-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px 0;color:#9a9fb0;font-size:12.5px;font-weight:700;}
   .mini-spin{width:26px;height:26px;border:3px solid #e7e9f0;border-top-color:var(--accent);border-radius:50%;animation:blsp .7s linear infinite;}
@@ -1216,7 +1253,6 @@
   #authTransition.hidden{display:none;}
   #authTransition.gone{opacity:0;pointer-events:none;}
   #authTransition .bl-logo img{width:76px;height:76px;display:block;animation:blPulse 1.6s ease-in-out infinite;}
-  #authTransition .bl-spin{width:34px;height:34px;border:3.5px solid #e7e9f0;border-top-color:#6366f1;border-radius:50%;animation:blsp .8s linear infinite;}
   #authTransition .bl-t{font-size:15px;font-weight:800;color:var(--ink);}
   #authTransition .bl-t.welcome{color:var(--accent);font-size:17px;}
   /* Admin full-screen loading overlay (login ke baad / data fetch ke waqt) */

@@ -110,7 +110,7 @@
   <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 16.5V11"/><path d="M12 7.6h.01"/></symbol>
   <symbol id="ic-whatsapp" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4c1.4.8 3.1 1.3 4.8 1.3 5.5 0 10-4.5 10-10S17.5 2 12 2z"/><path fill="#fff" stroke="none" d="M9 8.4c.2-.4.5-.4.7-.4h.6c.2 0 .4 0 .6.4.3.6.8 1.8.8 1.9s0 .3-.1.4c-.2.3-.3.4-.5.6-.2.2-.4.3-.2.6.5.8 1 1.5 1.7 2 .4.3.6.2.8 0 .2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.3.1 1.7.8 2 1 .3.1.4.2.5.4.1.2.1.9-.3 1.7-.4.8-1.9 1.5-2.6 1.6-.6.1-1.3.2-4-.9-3.3-1.3-5.3-4.5-5.5-4.8-.2-.3-1.3-1.7-1.3-3.2s.8-2.2 1.1-2.6z"/></symbol>
 </svg>
-<div id="bootLoader"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Loading"></div><div class="bl-spin"></div><div class="bl-t" data-i="loadingEllipsis">Loading…</div></div>
+<div id="bootLoader"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Loading"></div><div class="bl-t" data-i="loadingEllipsis">Loading…</div></div>
 <script>
 /* Boot loader ka logo TURANT sahi karo — main script (body ke end me) chalne se pehle,
    warna vendor page pe pehle Nest & Nosh ka default logo flash hota hai. */
@@ -137,7 +137,7 @@
 })();
 </script>
 <div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t">Loading dashboard…</div><div class="al-sub" id="adminLoaderSub">Please wait</div><div class="al-steps" id="adminLoaderSteps"></div></div>
-<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-spin"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
+<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
 <div class="container">
 
   <!-- ══════ FIRST-RUN ONBOARDING (naye customer ke liye, sirf ek baar) ══════ -->
@@ -1266,10 +1266,17 @@
   </div>
   <div class="sheet-overlay hidden" id="scheduleSheet" onclick="if(event.target===this)closeScheduleSheet()">
     <div class="sheet" style="max-width:380px;">
-      <div style="padding:22px 20px 20px;text-align:center;">
-        <div style="font-size:15px;font-weight:900;" data-i="schedTitle">📅 Schedule Your Meal</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-top:3px;" data-i="schedSub">Kis din ke liye order karna hai?</div>
-        <div id="scheduleOptions" style="display:flex;flex-direction:column;gap:8px;margin-top:16px;"></div>
+      <div style="padding:22px 20px 20px;text-align:left;">
+        <div style="text-align:center;">
+          <div style="font-size:15px;font-weight:900;" data-i="schedTitle">📅 Schedule Your Meal</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:3px;" data-i="schedSub">Kis din ke liye order karna hai?</div>
+        </div>
+        <div class="sched-lbl" data-i="schedDayLbl">Day</div>
+        <div id="scheduleDateStrip" class="sched-daystrip"></div>
+        <div class="sched-lbl" data-i="schedMealLbl">Meal</div>
+        <div id="scheduleMealChips" class="sched-mealchips"></div>
+        <div id="scheduleWindow"></div>
+        <button class="add-cart-btn" id="scheduleContinueBtn" style="margin-top:14px;" onclick="scheduleGoTo()" data-i="schedContinue">Continue to Menu</button>
         <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeScheduleSheet()" data-i="ratingNotNow">Abhi nahi</button>
       </div>
     </div>
@@ -1633,7 +1640,7 @@
       closedTomorrow:'Tomorrow\'s booking is closed (was open till 10:00 PM).',
       cancelClosed:'Cancellation window has been closed.',
       dupMsg:'An order already exists for this date. To make changes, please contact Store Support at 70434 91481.',
-      noUpcoming:'No upcoming orders yet. Add meals from the menu to place your first order.', noHistory:'No orders found for this date.', navHome:'Home', navCart:'Cart', navPast:'Past Orders', navAbout:'About Us', navSub:'Subscription', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navAiShort:'Ask AI', backAgainExit:'Press back again to exit', navOrdersShort:'Orders', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navOrdersShort:'Orders', navScheduleShort:'Schedule', schedTitle:'📅 Schedule Your Meal', schedSub:'Which day do you want to order for?', schedOrderingFor:'Ordering for', schedBackToday:'Back to Today', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Daily', onb1Body:'Cooked only after you order — never frozen, never stale.', onb2Title:'Home & Office Delivery', onb2Body:'Order for wherever you are — home or work.', onb3Title:'Order Today or Schedule Ahead', onb3Body:"Need tomorrow sorted? Use Schedule Your Meal from the bottom menu.", onb4Title:'Easy Payments', onb4Body:'Pay via UPI or simply Cash on Delivery — your choice.', onbGetStarted:'Get Started', subTitle:'🔁 Subscription', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subActive:'Active Plan', subDaysWeek:'din/hafta', subSkipped:'Skip kiye', subSkipBtn:'Din skip karein', subCancelBtn:'Plan Cancel', subEditNote:'Neeche edit karke Update dabayein', subPickMeals:'Meals chunein', subPickDays:'Din chunein', subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subDateRange:'Date range', subStart:'Shuru', subEnd:'Khatam', subDelivery:'Delivery', subUpdate:'Plan Update', subStart2:'Subscription Shuru', subAnySabzi:'Chef\'s choice', subSaved:'Subscription successfully save ho gaya.', subCancelled:'Subscription cancel ho gaya', subCancelConfirm:'Subscription cancel karein?', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subPickSkipDate:'Skip ke liye date chunein', subEndAfter:'End date start ke baad honi chahiye', subStartInfo:'Kal se aage', navSub:'Subscription', subTitle:'🔁 Subscription', subSub:'Set it once — your daily tiffin is placed automatically.', subActive:'Active Plan', subDaysWeek:'days/week', subSkipped:'Skipped', subSkipBtn:'Skip a day', subCancelBtn:'Cancel Plan', subEditNote:'Edit below & Update to change your plan', subPickMeals:'Pick meals', subPickDays:'Pick days', subWeekdays:'Mon–Fri', subAllDays:'All 7', subClear:'Clear', subDateRange:'Date range', subStart:'Start', subEnd:'End', subDelivery:'Delivery', subUpdate:'Update Plan', subStart2:'Start Subscription', subAnySabzi:'Chef\'s choice', subSaved:'Subscription saved successfully.', subCancelled:'Subscription cancelled', subCancelConfirm:'Cancel your subscription?', subSkipDone:'Day skipped', subUnskipDone:'Skip removed', subPickSkipDate:'Pick a date to skip', subEndAfter:'End date must be after start', subStartInfo:'From tomorrow onwards', navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai', contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time', navContact:'Contact Us', contactTitle:'📞 Contact Us', contactSub:'We would love to hear from you', contactInfoTitle:'ℹ️ Info', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Hours',
+      noUpcoming:'No upcoming orders yet. Add meals from the menu to place your first order.', noHistory:'No orders found for this date.', navHome:'Home', navCart:'Cart', navPast:'Past Orders', navAbout:'About Us', navSub:'Subscription', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navAiShort:'Ask AI', backAgainExit:'Press back again to exit', navOrdersShort:'Orders', navHomeShort:'Home', navCartShort:'Cart', navSubShort:'Subscribe', navOrdersShort:'Orders', navScheduleShort:'Schedule', schedTitle:'📅 Schedule Your Meal', schedSub:'Which day do you want to order for?', schedOrderingFor:'Ordering for', schedBackToday:'Back to Today', schedDayLbl:'Day', schedMealLbl:'Meal', schedContinue:'Continue to Menu', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Daily', onb1Body:'Cooked only after you order — never frozen, never stale.', onb2Title:'Home & Office Delivery', onb2Body:'Order for wherever you are — home or work.', onb3Title:'Order Today or Schedule Ahead', onb3Body:"Need tomorrow sorted? Use Schedule Your Meal from the bottom menu.", onb4Title:'Easy Payments', onb4Body:'Pay via UPI or simply Cash on Delivery — your choice.', onbGetStarted:'Get Started', subTitle:'🔁 Subscription', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subActive:'Active Plan', subDaysWeek:'din/hafta', subSkipped:'Skip kiye', subSkipBtn:'Din skip karein', subCancelBtn:'Plan Cancel', subEditNote:'Neeche edit karke Update dabayein', subPickMeals:'Meals chunein', subPickDays:'Din chunein', subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subDateRange:'Date range', subStart:'Shuru', subEnd:'Khatam', subDelivery:'Delivery', subUpdate:'Plan Update', subStart2:'Subscription Shuru', subAnySabzi:'Chef\'s choice', subSaved:'Subscription successfully save ho gaya.', subCancelled:'Subscription cancel ho gaya', subCancelConfirm:'Subscription cancel karein?', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subPickSkipDate:'Skip ke liye date chunein', subEndAfter:'End date start ke baad honi chahiye', subStartInfo:'Kal se aage', navSub:'Subscription', subTitle:'🔁 Subscription', subSub:'Set it once — your daily tiffin is placed automatically.', subActive:'Active Plan', subDaysWeek:'days/week', subSkipped:'Skipped', subSkipBtn:'Skip a day', subCancelBtn:'Cancel Plan', subEditNote:'Edit below & Update to change your plan', subPickMeals:'Pick meals', subPickDays:'Pick days', subWeekdays:'Mon–Fri', subAllDays:'All 7', subClear:'Clear', subDateRange:'Date range', subStart:'Start', subEnd:'End', subDelivery:'Delivery', subUpdate:'Update Plan', subStart2:'Start Subscription', subAnySabzi:'Chef\'s choice', subSaved:'Subscription saved successfully.', subCancelled:'Subscription cancelled', subCancelConfirm:'Cancel your subscription?', subSkipDone:'Day skipped', subUnskipDone:'Skip removed', subPickSkipDate:'Pick a date to skip', subEndAfter:'End date must be after start', subStartInfo:'From tomorrow onwards', navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai', contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time', navContact:'Contact Us', contactTitle:'📞 Contact Us', contactSub:'We would love to hear from you', contactInfoTitle:'ℹ️ Info', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Hours',
       aboutTitle:'ℹ️ About Us', aboutSub:'Why our tiffin is different', aboutSwipe:'← Swipe to see more →',
       aboutContact:'📞 Questions? We\'re just a call away.'
     },
@@ -1651,7 +1658,7 @@
       backToSignIn:'← Sign In par wapas', switchToSignIn:'Pehle se account hai? <b onclick="showAuthMode(\'signin\')">Sign In</b>', switchToSignUp:'Account nahi hai? <b onclick="showAuthMode(\'signup\')">Sign Up</b>',
       phoneDeliveryHint:'Delivery ke liye isi number par sampark karenge.',
       // ── Bottom nav ──
-      navHomeShort:'Home', navCartShort:'Cart', navOrdersShort:'Orders', navSub:'Subscription', navSubShort:'Subscribe', navScheduleShort:'Schedule', schedTitle:'📅 Meal Schedule Karo', schedSub:'Kis din ke liye order karna hai?', schedOrderingFor:'Order ho raha hai', schedBackToday:'Aaj pe wapas', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Roz', onb1Body:'Order karne ke baad hi banta hai — na frozen, na baasi.', onb2Title:'Home aur Office Delivery', onb2Body:'Jahan bhi ho — ghar ya office, order karo.', onb3Title:'Aaj Order Karo ya Schedule Karo', onb3Body:'Kal ka tiffin plan karna hai? Neeche "Schedule Your Meal" use karo.', onb4Title:'Aasan Payment', onb4Body:'UPI se pay karo ya seedha Cash on Delivery — jo pasand ho.', onbGetStarted:'Shuru Karein', navAiShort:'AI Help', backAgainExit:'Exit karne ke liye phir se back dabao',
+      navHomeShort:'Home', navCartShort:'Cart', navOrdersShort:'Orders', navSub:'Subscription', navSubShort:'Subscribe', navScheduleShort:'Schedule', schedTitle:'📅 Meal Schedule Karo', schedSub:'Kis din ke liye order karna hai?', schedOrderingFor:'Order ho raha hai', schedBackToday:'Aaj pe wapas', schedDayLbl:'Din', schedMealLbl:'Meal', schedContinue:'Menu Par Jaayein', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Roz', onb1Body:'Order karne ke baad hi banta hai — na frozen, na baasi.', onb2Title:'Home aur Office Delivery', onb2Body:'Jahan bhi ho — ghar ya office, order karo.', onb3Title:'Aaj Order Karo ya Schedule Karo', onb3Body:'Kal ka tiffin plan karna hai? Neeche "Schedule Your Meal" use karo.', onb4Title:'Aasan Payment', onb4Body:'UPI se pay karo ya seedha Cash on Delivery — jo pasand ho.', onbGetStarted:'Shuru Karein', navAiShort:'AI Help', backAgainExit:'Exit karne ke liye phir se back dabao',
       // ── Subscription ──
       subTitle:'🔁 Subscription', subActive:'Active Plan', subPickMeals:'Meals chunein', subPickDays:'Din chunein',
       subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subAnySabzi:'Chef ki pasand',
@@ -1725,7 +1732,7 @@
       closedTomorrow:'कल की बुकिंग बंद (10:00 PM तक थी)।',
       cancelClosed:'कैंसिलेशन का समय समाप्त हो गया है।',
       dupMsg:'इस तारीख़ के लिए ऑर्डर पहले से है। बदलाव के लिए स्टोर सपोर्ट को कॉल करें: 70434 91481।',
-      noUpcoming:'अभी कोई आगामी ऑर्डर नहीं है। मेनू से मील जोड़कर ऑर्डर करें।', noHistory:'इस तारीख़ पर कोई ऑर्डर नहीं मिला।', navHome:'होम', navCart:'कार्ट', navPast:'पुराने ऑर्डर', navAbout:'हमारे बारे में', navSub:'सब्सक्रिप्शन', navHomeShort:'होम', navCartShort:'कार्ट', navSubShort:'सब्सक्राइब', navScheduleShort:'शेड्यूल', schedTitle:'📅 मील शेड्यूल करें', schedSub:'किस दिन के लिए ऑर्डर करना है?', schedOrderingFor:'ऑर्डर हो रहा है', schedBackToday:'आज पर वापस', onbSkip:'छोड़ें', onb1Title:'ताज़ा टिफ़िन, रोज़', onb1Body:'ऑर्डर के बाद ही बनता है — न फ़्रोज़न, न बासी।', onb2Title:'होम और ऑफिस डिलीवरी', onb2Body:'जहाँ भी हों — घर या ऑफिस, ऑर्डर करें।', onb3Title:'आज ऑर्डर करें या शेड्यूल करें', onb3Body:'कल का टिफ़िन प्लान करना है? नीचे "Schedule Your Meal" इस्तेमाल करें।', onb4Title:'आसान पेमेंट', onb4Body:'UPI से पे करें या सीधा कैश ऑन डिलीवरी — जो पसंद हो।', onbGetStarted:'शुरू करें', navAiShort:'AI मदद', backAgainExit:'बाहर निकलने के लिए फिर से बैक दबाएँ', navOrdersShort:'ऑर्डर', subTitle:'🔁 सब्सक्रिप्शन', subSub:'एक बार सेट करें — आपका डेली टिफ़िन अपने आप ऑर्डर हो जाएगा।', subActive:'चालू प्लान', subDaysWeek:'दिन/हफ़्ता', subSkipped:'स्किप किए', subSkipBtn:'दिन स्किप करें', subCancelBtn:'प्लान रद्द करें', subEditNote:'नीचे बदलकर अपडेट दबाएँ', subPickMeals:'मील चुनें', subPickDays:'दिन चुनें', subWeekdays:'सोम–शुक्र', subAllDays:'सातों दिन', subClear:'साफ़', subDateRange:'तारीख़ रेंज', subStart:'शुरू', subEnd:'ख़त्म', subDelivery:'डिलीवरी', subUpdate:'प्लान अपडेट', subStart2:'सब्सक्रिप्शन शुरू', subAnySabzi:'शेफ़ की पसंद', subSaved:'सब्सक्रिप्शन सफलतापूर्वक सेव हुआ।', subCancelled:'सब्सक्रिप्शन रद्द हुआ', subCancelConfirm:'सब्सक्रिप्शन रद्द करें?', subSkipDone:'दिन स्किप हुआ', subUnskipDone:'स्किप हटा', subPickSkipDate:'स्किप के लिए तारीख़ चुनें', subEndAfter:'एंड डेट स्टार्ट के बाद हो', subStartInfo:'कल से आगे', navContact:'संपर्क करें', contactTitle:'📞 संपर्क करें', contactSub:'आपकी बात सुनना हमें अच्छा लगता है', contactInfoTitle:'ℹ️ जानकारी', contactAddrLbl:'लोकेशन', contactAreaLbl:'डिलीवरी क्षेत्र', contactHoursLbl:'डिलीवरी समय',
+      noUpcoming:'अभी कोई आगामी ऑर्डर नहीं है। मेनू से मील जोड़कर ऑर्डर करें।', noHistory:'इस तारीख़ पर कोई ऑर्डर नहीं मिला।', navHome:'होम', navCart:'कार्ट', navPast:'पुराने ऑर्डर', navAbout:'हमारे बारे में', navSub:'सब्सक्रिप्शन', navHomeShort:'होम', navCartShort:'कार्ट', navSubShort:'सब्सक्राइब', navScheduleShort:'शेड्यूल', schedTitle:'📅 मील शेड्यूल करें', schedSub:'किस दिन के लिए ऑर्डर करना है?', schedOrderingFor:'ऑर्डर हो रहा है', schedBackToday:'आज पर वापस', schedDayLbl:'दिन', schedMealLbl:'मील', schedContinue:'मेनू पर जाएं', onbSkip:'छोड़ें', onb1Title:'ताज़ा टिफ़िन, रोज़', onb1Body:'ऑर्डर के बाद ही बनता है — न फ़्रोज़न, न बासी।', onb2Title:'होम और ऑफिस डिलीवरी', onb2Body:'जहाँ भी हों — घर या ऑफिस, ऑर्डर करें।', onb3Title:'आज ऑर्डर करें या शेड्यूल करें', onb3Body:'कल का टिफ़िन प्लान करना है? नीचे "Schedule Your Meal" इस्तेमाल करें।', onb4Title:'आसान पेमेंट', onb4Body:'UPI से पे करें या सीधा कैश ऑन डिलीवरी — जो पसंद हो।', onbGetStarted:'शुरू करें', navAiShort:'AI मदद', backAgainExit:'बाहर निकलने के लिए फिर से बैक दबाएँ', navOrdersShort:'ऑर्डर', subTitle:'🔁 सब्सक्रिप्शन', subSub:'एक बार सेट करें — आपका डेली टिफ़िन अपने आप ऑर्डर हो जाएगा।', subActive:'चालू प्लान', subDaysWeek:'दिन/हफ़्ता', subSkipped:'स्किप किए', subSkipBtn:'दिन स्किप करें', subCancelBtn:'प्लान रद्द करें', subEditNote:'नीचे बदलकर अपडेट दबाएँ', subPickMeals:'मील चुनें', subPickDays:'दिन चुनें', subWeekdays:'सोम–शुक्र', subAllDays:'सातों दिन', subClear:'साफ़', subDateRange:'तारीख़ रेंज', subStart:'शुरू', subEnd:'ख़त्म', subDelivery:'डिलीवरी', subUpdate:'प्लान अपडेट', subStart2:'सब्सक्रिप्शन शुरू', subAnySabzi:'शेफ़ की पसंद', subSaved:'सब्सक्रिप्शन सफलतापूर्वक सेव हुआ।', subCancelled:'सब्सक्रिप्शन रद्द हुआ', subCancelConfirm:'सब्सक्रिप्शन रद्द करें?', subSkipDone:'दिन स्किप हुआ', subUnskipDone:'स्किप हटा', subPickSkipDate:'स्किप के लिए तारीख़ चुनें', subEndAfter:'एंड डेट स्टार्ट के बाद हो', subStartInfo:'कल से आगे', navContact:'संपर्क करें', contactTitle:'📞 संपर्क करें', contactSub:'आपकी बात सुनना हमें अच्छा लगता है', contactInfoTitle:'ℹ️ जानकारी', contactAddrLbl:'लोकेशन', contactAreaLbl:'डिलीवरी क्षेत्र', contactHoursLbl:'डिलीवरी समय',
       aboutTitle:'ℹ️ हमारे बारे में', aboutSub:'हमारा टिफ़िन अलग क्यों है', aboutSwipe:'← आगे देखने के लिए स्वाइप करें →',
       aboutContact:'📞 कोई सवाल? हम एक कॉल दूर हैं।'
     },
@@ -1760,7 +1767,7 @@
       closedTomorrow:'આવતીકાલનું બુકિંગ બંધ (10:00 PM સુધી હતું).',
       cancelClosed:'રદ કરવાની સમયમર્યાદા પૂરી થઈ ગઈ છે.',
       dupMsg:'આ તારીખ માટે ઓર્ડર પહેલેથી છે. ફેરફાર માટે સ્ટોર સપોર્ટને કૉલ કરો: 70434 91481.',
-      noUpcoming:'હમણાં કોઈ આગામી ઓર્ડર નથી. મેનૂમાંથી મીલ ઉમેરીને ઓર્ડર કરો.', noHistory:'આ તારીખે કોઈ ઓર્ડર મળ્યો નથી.', navHome:'હોમ', navCart:'કાર્ટ', navPast:'જૂના ઓર્ડર', navAbout:'અમારા વિશે', navSub:'સબ્સ્ક્રિપ્શન', navHomeShort:'હોમ', navCartShort:'કાર્ટ', navSubShort:'સબ્સ્ક્રાઇબ', navScheduleShort:'શેડ્યૂલ', schedTitle:'📅 મીલ શેડ્યૂલ કરો', schedSub:'કયા દિવસ માટે ઓર્ડર કરવો છે?', schedOrderingFor:'ઓર્ડર થઈ રહ્યો છે', schedBackToday:'આજ પર પાછા', onbSkip:'છોડો', onb1Title:'તાજું ટિફિન, રોજ', onb1Body:'ઓર્ડર પછી જ બને છે — ન ફ્રોઝન, ન વાસી.', onb2Title:'હોમ અને ઓફિસ ડિલિવરી', onb2Body:'જ્યાં પણ હો — ઘરે કે ઓફિસે, ઓર્ડર કરો.', onb3Title:'આજે ઓર્ડર કરો અથવા શેડ્યૂલ કરો', onb3Body:'કાલનું ટિફિન પ્લાન કરવું છે? નીચે "Schedule Your Meal" વાપરો.', onb4Title:'સરળ પેમેન્ટ', onb4Body:'UPI થી પે કરો અથવા સીધું કેશ ઓન ડિલિવરી — જે પસંદ હોય.', onbGetStarted:'શરૂ કરો', navAiShort:'AI મદદ', backAgainExit:'બહાર નીકળવા માટે ફરી બેક દબાવો', navOrdersShort:'ઓર્ડર', subTitle:'🔁 સબ્સ્ક્રિપ્શન', subSub:'એક વાર સેટ કરો — તમારું ડેઇલી ટિફિન આપોઆપ ઓર્ડર થઈ જશે.', subActive:'ચાલુ પ્લાન', subDaysWeek:'દિવસ/અઠવાડિયું', subSkipped:'સ્કિપ કર્યા', subSkipBtn:'દિવસ સ્કિપ કરો', subCancelBtn:'પ્લાન રદ કરો', subEditNote:'નીચે બદલીને અપડેટ દબાવો', subPickMeals:'મીલ પસંદ કરો', subPickDays:'દિવસ પસંદ કરો', subWeekdays:'સોમ–શુક્ર', subAllDays:'સાતેય દિવસ', subClear:'સાફ', subDateRange:'તારીખ રેન્જ', subStart:'શરૂ', subEnd:'અંત', subDelivery:'ડિલિવરી', subUpdate:'પ્લાન અપડેટ', subStart2:'સબ્સ્ક્રિપ્શન શરૂ', subAnySabzi:'શેફની પસંદ', subSaved:'સબ્સ્ક્રિપ્શન સફળતાપૂર્વક સેવ થયું.', subCancelled:'સબ્સ્ક્રિપ્શન રદ થયું', subCancelConfirm:'સબ્સ્ક્રિપ્શન રદ કરો?', subSkipDone:'દિવસ સ્કિપ થયો', subUnskipDone:'સ્કિપ દૂર', subPickSkipDate:'સ્કિપ માટે તારીખ પસંદ કરો', subEndAfter:'એન્ડ ડેટ સ્ટાર્ટ પછી હોવી જોઈએ', subStartInfo:'કાલથી આગળ', navContact:'સંપર્ક કરો', contactTitle:'📞 સંપર્ક કરો', contactSub:'તમારી વાત સાંભળવી અમને ગમે છે', contactInfoTitle:'ℹ️ માહિતી', contactAddrLbl:'લોકેશન', contactAreaLbl:'ડિલિવરી વિસ્તાર', contactHoursLbl:'ડિલિવરી સમય',
+      noUpcoming:'હમણાં કોઈ આગામી ઓર્ડર નથી. મેનૂમાંથી મીલ ઉમેરીને ઓર્ડર કરો.', noHistory:'આ તારીખે કોઈ ઓર્ડર મળ્યો નથી.', navHome:'હોમ', navCart:'કાર્ટ', navPast:'જૂના ઓર્ડર', navAbout:'અમારા વિશે', navSub:'સબ્સ્ક્રિપ્શન', navHomeShort:'હોમ', navCartShort:'કાર્ટ', navSubShort:'સબ્સ્ક્રાઇબ', navScheduleShort:'શેડ્યૂલ', schedTitle:'📅 મીલ શેડ્યૂલ કરો', schedSub:'કયા દિવસ માટે ઓર્ડર કરવો છે?', schedOrderingFor:'ઓર્ડર થઈ રહ્યો છે', schedBackToday:'આજ પર પાછા', schedDayLbl:'દિવસ', schedMealLbl:'મીલ', schedContinue:'મેનૂ પર જાઓ', onbSkip:'છોડો', onb1Title:'તાજું ટિફિન, રોજ', onb1Body:'ઓર્ડર પછી જ બને છે — ન ફ્રોઝન, ન વાસી.', onb2Title:'હોમ અને ઓફિસ ડિલિવરી', onb2Body:'જ્યાં પણ હો — ઘરે કે ઓફિસે, ઓર્ડર કરો.', onb3Title:'આજે ઓર્ડર કરો અથવા શેડ્યૂલ કરો', onb3Body:'કાલનું ટિફિન પ્લાન કરવું છે? નીચે "Schedule Your Meal" વાપરો.', onb4Title:'સરળ પેમેન્ટ', onb4Body:'UPI થી પે કરો અથવા સીધું કેશ ઓન ડિલિવરી — જે પસંદ હોય.', onbGetStarted:'શરૂ કરો', navAiShort:'AI મદદ', backAgainExit:'બહાર નીકળવા માટે ફરી બેક દબાવો', navOrdersShort:'ઓર્ડર', subTitle:'🔁 સબ્સ્ક્રિપ્શન', subSub:'એક વાર સેટ કરો — તમારું ડેઇલી ટિફિન આપોઆપ ઓર્ડર થઈ જશે.', subActive:'ચાલુ પ્લાન', subDaysWeek:'દિવસ/અઠવાડિયું', subSkipped:'સ્કિપ કર્યા', subSkipBtn:'દિવસ સ્કિપ કરો', subCancelBtn:'પ્લાન રદ કરો', subEditNote:'નીચે બદલીને અપડેટ દબાવો', subPickMeals:'મીલ પસંદ કરો', subPickDays:'દિવસ પસંદ કરો', subWeekdays:'સોમ–શુક્ર', subAllDays:'સાતેય દિવસ', subClear:'સાફ', subDateRange:'તારીખ રેન્જ', subStart:'શરૂ', subEnd:'અંત', subDelivery:'ડિલિવરી', subUpdate:'પ્લાન અપડેટ', subStart2:'સબ્સ્ક્રિપ્શન શરૂ', subAnySabzi:'શેફની પસંદ', subSaved:'સબ્સ્ક્રિપ્શન સફળતાપૂર્વક સેવ થયું.', subCancelled:'સબ્સ્ક્રિપ્શન રદ થયું', subCancelConfirm:'સબ્સ્ક્રિપ્શન રદ કરો?', subSkipDone:'દિવસ સ્કિપ થયો', subUnskipDone:'સ્કિપ દૂર', subPickSkipDate:'સ્કિપ માટે તારીખ પસંદ કરો', subEndAfter:'એન્ડ ડેટ સ્ટાર્ટ પછી હોવી જોઈએ', subStartInfo:'કાલથી આગળ', navContact:'સંપર્ક કરો', contactTitle:'📞 સંપર્ક કરો', contactSub:'તમારી વાત સાંભળવી અમને ગમે છે', contactInfoTitle:'ℹ️ માહિતી', contactAddrLbl:'લોકેશન', contactAreaLbl:'ડિલિવરી વિસ્તાર', contactHoursLbl:'ડિલિવરી સમય',
       aboutTitle:'ℹ️ અમારા વિશે', aboutSub:'અમારું ટિફિન કેમ અલગ છે', aboutSwipe:'← વધુ જોવા માટે સ્વાઇપ કરો →',
       aboutContact:'📞 કોઈ સવાલ? અમે એક કોલ દૂર છીએ.'
     }
@@ -3806,30 +3813,73 @@
     </div>`;
   }
   function menuChangeDate(v){ const off=parseInt(v,10)||0; if(!anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
-  // "Schedule Your Meal" — Tomorrow/Day After ke liye ORDER karne ka ekmatra
-  // rasta ab yehi hai (Home se date-chips hata diye). Sheet khulte hi live
-  // availability check karta hai (anyAvail) — band din disabled/greyed dikhta
+  // "Schedule Your Meal" — Zomato-style: date-strip + meal chips + delivery
+  // window + single Continue button. Sheet khulte hi live availability check
+  // karta hai (anyAvail/mealsAvail) — band din/meal disabled/greyed dikhta
   // hai, tap nahi hota.
+  let __schedOffset = 1, __schedMeal = null;
   function openScheduleSheet(){
     if(!isLoggedIn()){ showAuth(); return; }
-    const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
-    const dn=dayNames[LANG]||dayNames.en;
-    const box=document.getElementById('scheduleOptions');
-    if(box){
-      let html='';
-      for(let o=1;o<=2;o++){
-        const open=anyAvail(o);
-        html+=`<button type="button" class="add-cart-btn" style="background:${open?'var(--accent)':'var(--line)'};color:${open?'#fff':'var(--muted)'};" ${open?`onclick="scheduleGoTo(${o})"`:'disabled'}>${dn[o]} — ${fmtLabel(dateWithOffset(o))}${open?'':' ('+(t('lpClosed')||'Closed')+')'}</button>`;
-      }
-      box.innerHTML=html;
-    }
+    __schedOffset = anyAvail(1) ? 1 : (anyAvail(2) ? 2 : 1);
+    __schedMeal = null;
+    renderScheduleSheet();
     document.getElementById('scheduleSheet').classList.remove('hidden');
   }
   function closeScheduleSheet(){ document.getElementById('scheduleSheet').classList.add('hidden'); }
-  function scheduleGoTo(off){
-    closeScheduleSheet();
+  function scheduleSelectDate(off){
     if(!anyAvail(off)) return;
-    dateOffset=off; builder=freshBuilder(); pickActiveMeal();
+    __schedOffset = off;
+    __schedMeal = null;
+    renderScheduleSheet();
+  }
+  function scheduleSelectMeal(m){
+    const av=mealsAvail(__schedOffset)[m];
+    if(!av || !av.ok) return;
+    __schedMeal = m;
+    renderScheduleSheet();
+  }
+  function renderScheduleSheet(){
+    const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
+    const dn=dayNames[LANG]||dayNames.en;
+    const dowNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let dateHtml='';
+    for(let o=0;o<=2;o++){
+      const d=dateWithOffset(o);
+      const open=anyAvail(o);
+      const sel=(o===__schedOffset);
+      dateHtml+=`<div class="sched-day ${sel?'sel':''} ${open?'':'off'}" ${open&&o>0?`onclick="scheduleSelectDate(${o})"`:''}>
+        <div class="sd-dow">${o===0?dn[0]:dowNames[d.getDay()]}</div>
+        <div class="sd-num">${String(d.getDate()).padStart(2,'0')}</div>
+      </div>`;
+    }
+    const avail = mealsAvail(__schedOffset);
+    if(!__schedMeal || !avail[__schedMeal] || !avail[__schedMeal].ok){
+      __schedMeal = enabledMeals().find(m=>avail[m] && avail[m].ok) || null;
+    }
+    let mealHtml='';
+    enabledMeals().forEach(m=>{
+      const mt=mealType(m); if(!mt) return;
+      const av=avail[m]||{ok:false};
+      const sel=(m===__schedMeal);
+      mealHtml+=`<div class="sched-meal ${sel?'sel':''} ${av.ok?'':'off'}" ${av.ok?`onclick="scheduleSelectMeal('${m}')"`:''}>
+        <span class="sm-ic">${mt.emoji||'🍽️'}</span><span class="sm-name">${mt.title||m}</span>
+      </div>`;
+    });
+    let windowHtml='';
+    if(__schedMeal){
+      const mt=mealType(__schedMeal);
+      if(mt) windowHtml=`<div class="sched-window"><span>${t('deliveryTime')||'Delivery window'}</span><b>${mt.windowStart}–${mt.windowEnd}</b></div>`;
+    }
+    document.getElementById('scheduleDateStrip').innerHTML = dateHtml;
+    document.getElementById('scheduleMealChips').innerHTML = mealHtml;
+    document.getElementById('scheduleWindow').innerHTML = windowHtml;
+    const btn=document.getElementById('scheduleContinueBtn');
+    if(btn) btn.disabled = !__schedMeal;
+  }
+  function scheduleGoTo(){
+    if(!__schedMeal || !anyAvail(__schedOffset)) return;
+    closeScheduleSheet();
+    dateOffset=__schedOffset; builder=freshBuilder(); activeMeal=__schedMeal;
     if(!statsCache[selDateStr()]) loadPublicStats(selDateStr());
     showView('homeView'); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); renderHome();
   }
