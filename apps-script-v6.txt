@@ -1774,16 +1774,24 @@ function placeOrderAuthed(p) {
 
     const isEdit = !!p.editRow;
     let oldPaidVal = '';
-    // 1:1:1 rule — ek din me har meal ka max 1 tiffin
-    const qB = parseInt(p.breakfastQty, 10) || 0;
-    const qL = parseInt(p.lunchQty, 10) || 0;
-    const qD = parseInt(p.dinnerQty, 10) || 0;
-    if (qB > 1 || qL > 1 || qD > 1) {
-      return { status:'error', code:'qty_limit', message:'You can order 1 tiffin per meal per day. For larger quantities, please contact the kitchen.' };
-    }
+    // ⚠️ Pehle sirf breakfast/lunch/dinner (flat qty fields) pe hardcoded "max 1"
+    // check tha — admin-added meals (meal4, aur JSON wale) is check se poori
+    // tarah bach jaate the, koi bhi qty le lete the. Ab mealQtys()/allMealKeys()
+    // se SAB meals cover hote hain, aur limit har meal ki apni maxQtyPerOrder
+    // (Setup se vendor-configurable, default 1 — purana behaviour) se aati hai.
+    const cfgQ = readConfig();
+    const qtysNow = mealQtys(p);
+    const usedMealKeys = allMealKeys(cfgQ).filter(function (k) { return qtysNow[k] > 0; });
     // Ek order = ek meal. Ek payload me 2+ meal aaye to reject (frontend har meal alag bhejta hai).
-    if ((qB>0?1:0)+(qL>0?1:0)+(qD>0?1:0) > 1) {
+    if (usedMealKeys.length > 1) {
       return { status:'error', code:'one_meal', message:'Please place one order per meal.' };
+    }
+    if (usedMealKeys.length === 1) {
+      const mtNow = mealTypeMap(cfgQ)[usedMealKeys[0]];
+      let maxQ = mtNow && parseInt(mtNow.maxQtyPerOrder, 10); if (!maxQ || maxQ < 1) maxQ = 1;
+      if (qtysNow[usedMealKeys[0]] > maxQ) {
+        return { status:'error', code:'qty_limit', message:'You can order up to ' + maxQ + ' tiffin' + (maxQ === 1 ? '' : 's') + ' per meal per day. For larger quantities, please use Bulk Order.' };
+      }
     }
     const thisMeal = orderMealOf(p);
     // ── Delivery type: home (society+flat) ya office (company + employee id) ──
@@ -3161,9 +3169,9 @@ function sanitizeVariants(v, keys, mealTypes) {
 // fallback kar deta tha aur sab meals wapas ON (checked) dikhte the.
 function defaultMealTypes() {
   return [
-    { key:'breakfast', title:'Breakfast', emoji:'🌅', price:80, capacity:0, windowStart:'07:00', windowEnd:'09:00', cutoff:'22:00', cutoffAheadDay:true,  enabled:true, core:true, hasVariants:false },
-    { key:'lunch',     title:'Lunch',     emoji:'☀️', price:80, capacity:0, windowStart:'12:00', windowEnd:'14:00', cutoff:'09:00', cutoffAheadDay:false, enabled:true, core:true, hasVariants:true  },
-    { key:'dinner',    title:'Dinner',    emoji:'🌙', price:80, capacity:0, windowStart:'19:00', windowEnd:'21:00', cutoff:'15:00', cutoffAheadDay:false, enabled:true, core:true, hasVariants:true  }
+    { key:'breakfast', title:'Breakfast', emoji:'🌅', price:80, capacity:0, windowStart:'07:00', windowEnd:'09:00', cutoff:'22:00', cutoffAheadDay:true,  enabled:true, core:true, hasVariants:false, maxQtyPerOrder:1 },
+    { key:'lunch',     title:'Lunch',     emoji:'☀️', price:80, capacity:0, windowStart:'12:00', windowEnd:'14:00', cutoff:'09:00', cutoffAheadDay:false, enabled:true, core:true, hasVariants:true,  maxQtyPerOrder:1 },
+    { key:'dinner',    title:'Dinner',    emoji:'🌙', price:80, capacity:0, windowStart:'19:00', windowEnd:'21:00', cutoff:'15:00', cutoffAheadDay:false, enabled:true, core:true, hasVariants:true,  maxQtyPerOrder:1 }
   ];
 }
 function sanitizeMealTypes(arr) {
@@ -3178,6 +3186,13 @@ function sanitizeMealTypes(arr) {
     seen[key] = 1;
     let price = parseInt(x.price, 10); if (isNaN(price) || price < 0) price = 0;
     let cap = parseInt(x.capacity, 10); if (isNaN(cap) || cap < 0) cap = 0;
+    // ⚠️ Pehle "max 1 tiffin per meal per day" hardcoded tha, poore platform ke
+    // liye — koi vendor apni marzi se limit change nahi kar sakta tha. Ab
+    // per-meal, vendor-configurable (default 1, jaisa pehle hardcoded tha —
+    // purane saved configs jinme ye field hi nahi hai unka behaviour badalta
+    // nahi). Isse zyada order karne ki koshish par customer ko Bulk Order ka
+    // CTA dikhta hai (frontend showLimitPopup()).
+    let maxQty = parseInt(x.maxQtyPerOrder, 10); if (isNaN(maxQty) || maxQty < 1) maxQty = 1;
     return {
       key: key,
       title: title,
@@ -3192,7 +3207,8 @@ function sanitizeMealTypes(arr) {
       // configs (jinme key hi nahi hai) sab meals OFF kar dete.
       enabled: (x.enabled !== false),
       core: (x.core === true),
-      hasVariants: (x.hasVariants !== false)
+      hasVariants: (x.hasVariants !== false),
+      maxQtyPerOrder: Math.min(999, maxQty)
     };
   // Cap 12. Legacy 4 ke apne sheet columns hain, baaki sab col36 ke JSON me
   // jaate hain (dekho LEGACY_MEAL_COLS / EXTRA_MEALS_COL).

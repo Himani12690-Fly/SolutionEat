@@ -381,8 +381,12 @@ function handlePost(state, body) {
   if (p.token !== SESSION.token) return { status:'invalid_session' };
   const meal = ['breakfast','lunch','dinner'].find(m => Number(p[m+'Qty']) > 0);
   if (!meal) return { status:'error', code:'no_meal', message:'Your order is empty' };
-  if (Number(p[meal+'Qty']) > 1)
-    return { status:'error', code:'qty_limit', message:'1 tiffin per meal per day' };
+  // Vendor-configurable per-meal limit (mirrors apps-script-v6.txt) — default 1
+  // when a meal type has no maxQtyPerOrder set, matching the old hardcoded rule.
+  const mtCfg = (state.config.mealTypes || []).find(x => x.key === meal);
+  const maxQty = (mtCfg && parseInt(mtCfg.maxQtyPerOrder, 10)) || 1;
+  if (Number(p[meal+'Qty']) > maxQty)
+    return { status:'error', code:'qty_limit', message:'You can order up to ' + maxQty + ' tiffin(s) per meal per day.' };
   if (state.orders.some(o => o.deliveryDate === p.deliveryDate &&
         o.meal === meal && o.status !== 'Cancelled' && o.phone === SESSION.phone))
     return { status:'duplicate', code:'dup_date', message:'You already have an order for this date.' };
