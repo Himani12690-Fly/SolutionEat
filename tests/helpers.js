@@ -486,6 +486,11 @@ async function mockBackend(page, state) {
   // QR image
   await page.route('**/api.qrserver.com/**', r =>
     r.fulfill({ status:200, contentType:'image/png', body:'' }));
+  // Reverse geocoding (Discovery's top location label) — free, no API key, but
+  // network se mat lao in tests, taaki offline/deterministic rahe.
+  await page.route('**/nominatim.openstreetmap.org/**', r =>
+    r.fulfill({ status:200, contentType:'application/json',
+                body: JSON.stringify({ address: { suburb: 'Bopal', city: 'Ahmedabad' } }) }));
 }
 
 // ── App open karo (guest ya logged-in) ──
