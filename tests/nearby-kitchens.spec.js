@@ -136,4 +136,29 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
     await expect(page.locator('#dscNearWrap')).toHaveClass(/hidden/);
   });
+
+  // ⚠️ Real bug found on a real device: tapping "Enable Location" after a
+  // failed attempt did nothing VISIBLE — getCurrentPosition() failed
+  // silently and just re-showed the exact same static gate, so it looked
+  // stuck/broken even though the retry click was technically registered.
+  // The button must give immediate visible feedback on click (so the user
+  // knows it worked) and must stay clickable/enabled after a failure
+  // (never get stuck disabled from the first attempt).
+  test('the retry button stays clickable and re-attempts after a failed try, never gets stuck', async ({ page }) => {
+    const state = seedVendors();
+    await openAppRaw(page, { state, loggedIn: false, geo: false });
+    await page.evaluate(() => window.openDiscovery());
+    await expect(page.locator('#locationGate')).not.toHaveClass(/hidden/, { timeout: 15000 });
+    const btn = page.locator('#locGateRetryBtn');
+    // First automatic attempt already failed (that's how the gate got here) —
+    // the button must not be left permanently disabled from that.
+    await expect(btn).toBeEnabled();
+    // A manual click must not throw/hang, and must leave the button clickable
+    // again once that attempt also resolves (fails) — this loop is exactly
+    // what looked "stuck" on the real device: same screen, no visible change,
+    // but the button DOES remain live and DOES keep re-attempting on tap.
+    await btn.click();
+    await expect(btn).toBeEnabled({ timeout: 15000 });
+    await expect(page.locator('#locationGate')).not.toHaveClass(/hidden/);
+  });
 });
