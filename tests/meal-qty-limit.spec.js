@@ -92,10 +92,11 @@ test.describe('Home page — open meals sorted first', () => {
     expect(dinnerIdx).toBeLessThan(lunchIdx); // dinner (open) sorted above lunch (closed)
   });
 
-  test('a closed meal card offers a Schedule link that opens the sheet pre-picked to that meal', async ({ page }) => {
+  test('a closed meal card jumps Home straight to the next available date for that meal', async ({ page }) => {
     await openApp(page, { istOverride: '2026-08-04T10:00:00' }); // lunch closed for today
     await page.click('#mc-lunch .c1-cust');
-    await expect(page.locator('#scheduleSheet')).not.toHaveClass(/hidden/);
-    await expect(page.locator('#scheduleMealChips .sched-meal.sel')).toContainText('Lunch');
+    await page.waitForTimeout(300);
+    await expect(page.locator('#menuDateTime .dt-chip').nth(1)).toHaveClass(/sel/); // switched to Tomorrow
+    await expect(page.locator('#mc-lunch')).toHaveClass(/c1-open/); // lunch now orderable on the new date
   });
 });

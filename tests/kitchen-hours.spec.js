@@ -32,8 +32,8 @@ test.describe('Admin nav — Setup vs Users', () => {
   });
 });
 
-test.describe('Home page — time dropdown and date chips removed, timer banner added', () => {
-  test('no time-slot <select> and no date-chip row on Home by default (today)', async ({ page }) => {
+test.describe('Home page — time dropdown removed, date chips + timer banner present', () => {
+  test('no time-slot <select> on Home, but Today/Tomorrow/Day After chips are there', async ({ page }) => {
     // ⚠️ Pehle koi istOverride nahi tha — real wall-clock IST time pe depend
     // karta tha. Dinner ka cutoff (15:00) paar hote hi "today" par kuch bhi
     // orderable nahi rehta, aur app sahi se "tomorrow" pe pickDefaultDate()
@@ -42,8 +42,9 @@ test.describe('Home page — time dropdown and date chips removed, timer banner 
     await openApp(page, { istOverride: '2026-08-04T08:00:00' });
     const selects = await page.locator('#menuDateTime select').count();
     expect(selects).toBe(0);
-    await expect(page.locator('#menuDateTime .date-chips')).toHaveCount(0);
-    await expect(page.locator('#menuDateTime')).toBeEmpty();
+    const chips = page.locator('#menuDateTime .dt-chip');
+    await expect(chips).toHaveCount(3);
+    await expect(chips.nth(0)).toHaveClass(/sel/);
   });
 
   // Banner now reads the real ORDER CUTOFF (mealsAvail), not the serving
@@ -70,63 +71,40 @@ test.describe('Home page — time dropdown and date chips removed, timer banner 
   });
 });
 
-test.describe('Schedule Your Meal', () => {
-  test('bottom nav has a Schedule tab between Orders and Subscribe', async ({ page }) => {
-    await openApp(page);
-    await expect(page.locator('#bn-schedule')).toBeVisible();
+// Schedule Your Meal (dedicated sheet/nav-tab) reverted back to how it worked
+// before — Today/Tomorrow/Day After chips inline on Home (see #menuDateTime's
+// renderMenuDateTime()), not a separate sheet. Bulk/Party Order now takes the
+// bottom-nav slot Schedule used to occupy (covered in bulk-order.spec.js).
+test.describe('Home date chips — Today/Tomorrow/Day After', () => {
+  test('tapping Tomorrow switches Home to that date and highlights the chip', async ({ page }) => {
+    await openApp(page, { istOverride: '2026-08-04T10:00:00' });
+    const tomorrowChip = page.locator('#menuDateTime .dt-chip').nth(1);
+    await expect(tomorrowChip).toContainText('Tomorrow');
+    await tomorrowChip.click();
+    await page.waitForTimeout(200);
+    await expect(tomorrowChip).toHaveClass(/sel/);
+    await expect(page.locator('#menuDateTime .dt-chip').nth(0)).not.toHaveClass(/sel/);
   });
 
-  // Zomato-style sheet: horizontal date strip (Today/Tomorrow/Day After) +
-  // meal chips (breakfast/lunch/dinner) + delivery window + Continue button.
-  // Defaults to Tomorrow pre-selected (Today isn't scheduleable) with its
-  // first available meal auto-picked.
-  test('opens a sheet with a 3-day date strip and meal chips, defaulting to Tomorrow', async ({ page }) => {
+  test('tapping Today resets Home back after viewing a future date', async ({ page }) => {
     await openApp(page, { istOverride: '2026-08-04T10:00:00' });
-    await page.click('#bn-schedule');
-    await expect(page.locator('#scheduleSheet')).not.toHaveClass(/hidden/);
-    await expect(page.locator('#scheduleDateStrip .sched-day')).toHaveCount(3);
-    await expect(page.locator('#scheduleMealChips .sched-meal')).toHaveCount(3);
-    await expect(page.locator('#scheduleDateStrip .sched-day.sel')).toHaveCount(1);
-    await expect(page.locator('#scheduleDateStrip .sched-day').nth(1)).toHaveClass(/sel/);
-    await expect(page.locator('#scheduleMealChips .sched-meal.sel')).toHaveCount(1);
-    await expect(page.locator('#scheduleContinueBtn')).toBeEnabled();
-  });
-
-  test('picking a day + meal then Continue switches Home to that date/meal and shows the "ordering for" banner', async ({ page }) => {
-    await openApp(page, { istOverride: '2026-08-04T10:00:00' });
-    await page.click('#bn-schedule');
-    await page.locator('#scheduleDateStrip .sched-day').nth(2).click(); // Day After
-    await page.locator('#scheduleMealChips .sched-meal').filter({ hasText: 'Dinner' }).click();
-    await expect(page.locator('#scheduleWindow')).toContainText('19:00');
-    await page.click('#scheduleContinueBtn');
+    await page.locator('#menuDateTime .dt-chip').nth(1).click();
     await page.waitForTimeout(200);
-    await expect(page.locator('#homeView')).not.toHaveClass(/hidden/);
-    await expect(page.locator('#menuDateTime')).toContainText('Ordering for');
-    await expect(page.locator('#menuDateTime')).toContainText('Back to Today');
-    await expect(page.locator('#bn-schedule')).toHaveClass(/active/);
-  });
-
-  test('"Back to Today" resets Home to today and clears the banner', async ({ page }) => {
-    await openApp(page, { istOverride: '2026-08-04T10:00:00' });
-    await page.click('#bn-schedule');
-    await page.click('#scheduleContinueBtn');
+    await page.locator('#menuDateTime .dt-chip').nth(0).click();
     await page.waitForTimeout(200);
-    await page.click('text=Back to Today');
-    await page.waitForTimeout(200);
-    await expect(page.locator('#menuDateTime')).toBeEmpty();
+    await expect(page.locator('#menuDateTime .dt-chip').nth(0)).toHaveClass(/sel/);
     await expect(page.locator('#bn-land')).toHaveClass(/active/);
   });
 
-  test('tapping a closed date/meal does nothing — only enabled options are selectable', async ({ page }) => {
-    // Breakfast has cutoffAheadDay:true, cutoff 22:00 — at 23:00 today, ordering
-    // breakfast for Tomorrow (off=1) is already closed (mins>=cutoff), so it
-    // must render greyed-out (.off) and be untappable.
-    await openApp(page, { istOverride: '2026-08-04T23:00:00' });
-    await page.click('#bn-schedule');
-    const breakfastChip = page.locator('#scheduleMealChips .sched-meal').filter({ hasText: 'Breakfast' });
-    await expect(breakfastChip).toHaveClass(/off/);
-    await breakfastChip.click();
-    await expect(breakfastChip).not.toHaveClass(/sel/);
+  test('a fully-closed future day greys out its chip — tapping it does nothing', async ({ page }) => {
+    const state = freshState();
+    state.config.closedDates = ['2026-08-05'];   // "tomorrow" relative to the istOverride below
+    await openApp(page, { state, istOverride: '2026-08-04T10:00:00' });
+    const tomorrowChip = page.locator('#menuDateTime .dt-chip').nth(1);
+    await expect(tomorrowChip).toHaveClass(/off/);
+    await tomorrowChip.click();
+    await page.waitForTimeout(200);
+    await expect(tomorrowChip).not.toHaveClass(/sel/);
   });
 });
 

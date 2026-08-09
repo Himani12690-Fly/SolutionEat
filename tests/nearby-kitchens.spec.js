@@ -108,7 +108,7 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     await page.evaluate(() => window.openDiscovery());
     // The actual nearby-vendor match still runs fine — only the cosmetic label is gated.
     await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/, { timeout: 10000 });
-    await expect(page.locator('#dscCity')).toHaveText('Ahmedabad'); // untouched default, not a reverse-geocoded guess
+    await expect(page.locator('#dscCity')).toHaveText('Your Area'); // untouched default, not a reverse-geocoded guess
   });
 
   test('location denied falls back to the existing area-chip/full-list browsing', async ({ page, context }) => {

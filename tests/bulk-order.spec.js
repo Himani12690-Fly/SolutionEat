@@ -11,10 +11,9 @@ const { openApp: openAppRaw, adminLogin } = require('./helpers');
 const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
 
 test.describe('Customer — Bulk Order sheet', () => {
-  test('Profile has a Bulk / Party Order row that opens the sheet', async ({ page }) => {
+  test('bottom nav has a Bulk Order tab that opens the sheet', async ({ page }) => {
     await openApp(page);
-    await page.evaluate(() => window.showProfilePage());
-    await page.click('text=Bulk / Party Order');
+    await page.click('#bn-bulk');
     await expect(page.locator('#bulkOrderSheet')).not.toHaveClass(/hidden/);
   });
 
