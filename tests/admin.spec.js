@@ -223,21 +223,21 @@ test.describe('Admin menu & config', () => {
   // config.spec.js), kyunki Home/Office toggle aur Companies vendor Setup se
   // hata diye gaye hain.
 
-  test('closed date add / remove', async ({ page }) => {
-    await openApp(page);
+  // Planned closed dates ab Setup ka hissa nahi — "Close Kitchen" sheet me hain
+  // (More menu), aur turant save hote hain (koi "Save Setup" wait nahi).
+  test('closed date add / remove (Close Kitchen sheet)', async ({ page }) => {
+    const { state } = await openApp(page);
     await adminLogin(page);
-    await page.evaluate(() => window.adminBnGo('config'));
-    await page.waitForTimeout(300);
-    await page.evaluate(() => window.cfgOpen('timing'));
+    await page.evaluate(() => window.openEmergencySheet());
     await page.fill('#closedDateInput', '2026-01-26');
-    // "text=+ Add" now also matches the Meal Types section's "+ Add Meal"
-    // button (substring match) — target the closed-date button precisely.
     await page.click('button[onclick="addClosedDate()"]');
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(300);
     await expect(page.locator('#closedDatesList .oc')).toHaveCount(1);
+    expect(state.config.closedDates).toEqual(['2026-01-26']);
     await page.click('text=✖ Remove');
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(300);
     await expect(page.locator('#closedDatesList')).toContainText('No closed dates');
+    expect(state.config.closedDates).toEqual([]);
   });
 });
 

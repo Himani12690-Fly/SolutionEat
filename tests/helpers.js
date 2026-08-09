@@ -398,6 +398,11 @@ function handlePost(state, body) {
     state.config.tempClosedUntil = closed ? String(p.until || '') : '';
     return { status:'success', tempClosed: state.config.tempClosed, tempClosedUntil: state.config.tempClosedUntil, tempClosedMsg: state.config.tempClosedMsg };
   }
+  if (action === 'setcloseddates') {
+    if (!adminOK) return denied;
+    state.config.closedDates = Array.isArray(p.dates) ? p.dates : [];
+    return { status:'success', closedDates: state.config.closedDates };
+  }
   if (action === 'savevariants') {
     if (!adminOK) return denied;
     state.config.variants = p.variants;
