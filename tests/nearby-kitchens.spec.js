@@ -139,4 +139,22 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     await expect(page.locator('#dscBrowseWrap')).toBeVisible();
     await expect(page.locator('#dscNearWrap')).toHaveClass(/hidden/);
   });
+
+  // Browser permission denial persists across visits — without an in-app way
+  // back, a customer who denied once (even by accident) would see the
+  // fallback list forever, with no obvious path back to "near you" even
+  // after they've since fixed it in their browser settings.
+  test('the fallback view offers a non-blocking way to try location again', async ({ page, context }) => {
+    const state = seedVendors();
+    await openAppRaw(page, { state, loggedIn: false, geo: false });
+    await page.evaluate(() => window.openDiscovery());
+    await expect(page.locator('#dscLocRetry')).toBeVisible({ timeout: 15000 });
+    // Simulate the customer having since fixed it in their browser/site
+    // settings, then tapping "Try location again".
+    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
+    await page.locator('#dscLocRetry').click();
+    await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/, { timeout: 15000 });
+    await expect(page.locator('#dscLocRetry')).toHaveClass(/hidden/);
+  });
 });

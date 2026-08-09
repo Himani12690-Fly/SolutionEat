@@ -934,6 +934,10 @@
     .zo-lang { border:1.5px solid var(--line); border-radius:9px; padding:6px 7px; font-size:11px;
       font-weight:800; background:var(--bg); color:var(--ink); }
     .zo-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line); }
+    /* Non-blocking "try location again" — fallback-browse state only */
+    .zo-loc-retry { margin:10px 15px 0; display:flex; align-items:center; gap:8px; background:var(--accent-soft);
+      border:1.5px dashed var(--accent); border-radius:12px; padding:10px 13px; font-size:12px; font-weight:800;
+      color:var(--accent-dark); cursor:pointer; }
     /* Search */
     .zo-search-wrap { padding:12px 15px 8px; background:var(--body-bg); }
     html[data-theme="dark"] .zo-search-wrap { background:var(--bg); }
