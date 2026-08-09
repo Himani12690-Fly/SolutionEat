@@ -25,7 +25,8 @@ function freshState() {
     // hamesha "jis vendor se abhi login hai" ke liye hain, ye targetVendorId -> data
     // hai (Super Admin doosre vendor ki config/users chhoo raha hai, apni nahi).
     vendorConfigs: {}, // targetVendorId -> config object
-    vendorUsers: {}    // targetVendorId -> users array
+    vendorUsers: {},   // targetVendorId -> users array
+    notifications: []  // { time, audience:'vendor'|phone, title, body, type, relatedRow } — bell feed
   };
 }
 
@@ -34,6 +35,20 @@ function todayIST(offset = 0) {
   const d = new Date(n.getFullYear(), n.getMonth(), n.getDate() + offset);
   const p = x => String(x).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+
+// Mirrors apps-script-v6.txt's logNotification() — audience is 'vendor' or a
+// customer phone number.
+function logNotif(state, audience, title, body, type, relatedRow) {
+  state.notifications.push({ time: new Date().toISOString(), audience: String(audience || ''),
+    title: title || '', body: body || '', type: type || '', relatedRow: relatedRow || '' });
+}
+// Mirrors apps-script-v6.txt's orderStatusPushText().
+function orderStatusText(status) {
+  if (status === 'Preparing') return { title: '👨‍🍳 Order Update', body: 'Your order is being prepared!' };
+  if (status === 'Delivered') return { title: '✅ Order Delivered', body: 'Your order has been delivered. Enjoy your meal!' };
+  if (status === 'Cancelled') return { title: '❌ Order Cancelled', body: 'Your order was cancelled by the kitchen.' };
+  return null;
 }
 
 // GET handler — bootstrap/config/menu/myorders/mysub/me/publicstats
@@ -74,6 +89,11 @@ function handleGet(state, url) {
   if (action === 'mysub')
     return token === SESSION.token ? { status:'success', sub:null }
                                    : { status:'invalid_session' };
+
+  if (action === 'mynotifications') {
+    if (token !== SESSION.token) return { status:'invalid_session' };
+    return { status:'success', notifications: state.notifications.filter(n => n.audience === SESSION.phone).slice().reverse().slice(0, 50) };
+  }
 
   // Discovery/marketplace (no ?v= vendor) — volume tests seed state.discoveryVendors;
   // default [] keeps every existing test (which never sets it) unaffected.
@@ -287,11 +307,18 @@ function handlePost(state, body) {
       r.approvedQty = parseInt(p.approvedQty, 10) || r.qty;
       r.approvedPrice = (p.approvedPrice !== undefined && p.approvedPrice !== '') ? Number(p.approvedPrice) : null;
       r.adminNote = p.adminNote || '';
+      logNotif(state, r.phone, '✅ Bulk order approved', r.meal + ' x' + r.approvedQty, 'bulk_request_approved', r.row);
     } else if (decision === 'decline') {
       r.status = 'Declined';
       r.adminNote = p.adminNote || '';
+      logNotif(state, r.phone, '❌ Bulk order declined', r.meal + ' x' + r.qty, 'bulk_request_declined', r.row);
     } else return { status:'error', message:'Invalid decision' };
     return { status:'success' };
+  }
+
+  if (action === 'vendornotifications') {
+    if (!adminOK) return denied;
+    return { status:'success', notifications: state.notifications.filter(n => n.audience === 'vendor').slice().reverse().slice(0, 50) };
   }
 
   // ── Admin reads ──
@@ -326,25 +353,38 @@ function handlePost(state, body) {
     if (!o) return { status:'error', message:'Invalid row' };
     if (['Pending','Preparing','Delivered'].indexOf(p.status) < 0)
       return { status:'error', message:'Invalid status' };
+    const prev = o.status;
     o.status = p.status;
     o.mealStatus = { breakfast:p.status, lunch:p.status, dinner:p.status };
+    const txt = orderStatusText(p.status);
+    if (txt && p.status !== prev) logNotif(state, o.phone, txt.title, txt.body, 'order_status', o.row);
     return { status:'success' };
   }
   if (action === 'setmealstatus') {
     if (!adminOK) return denied;
     const o = state.orders.find(x => x.row === parseInt(p.row, 10));
     if (!o) return { status:'error', message:'Invalid row' };
+    const prev = o.status;
     o.mealStatus = Object.assign({}, o.mealStatus, { [p.meal]: p.status });
     const active = ['breakfast','lunch','dinner'].filter(m => Number(o[m+'Qty']) > 0);
     const live = active.map(m => o.mealStatus[m]);
     o.status = live.every(s => s === 'Delivered') ? 'Delivered'
              : live.some(s => s === 'Preparing')  ? 'Preparing' : 'Pending';
+    const txt = orderStatusText(o.status);
+    if (txt && o.status !== prev) logNotif(state, o.phone, txt.title, txt.body, 'order_status', o.row);
     return { status:'success', mealStatus:o.mealStatus, orderStatus:o.status };
   }
   if (action === 'setstatusbulk') {
     if (!adminOK) return denied;
     const rows = (p.rows || []).map(Number);
-    state.orders.forEach(o => { if (rows.includes(o.row)) o.status = p.status; });
+    const txt = orderStatusText(p.status);
+    state.orders.forEach(o => {
+      if (rows.includes(o.row)) {
+        const prev = o.status;
+        o.status = p.status;
+        if (txt && p.status !== prev) logNotif(state, o.phone, txt.title, txt.body, 'order_status', o.row);
+      }
+    });
     return { status:'success', updated: rows.length, statusVal: p.status };
   }
   if (action === 'setpaid') {
@@ -419,6 +459,7 @@ function handlePost(state, body) {
     if (o.status === 'Cancelled')
       return { status:'error', code:'already_cancelled', message:'already cancelled' };
     o.status = 'Cancelled';
+    logNotif(state, 'vendor', '🚫 Order cancelled — ' + (o.name || SESSION.name), o.deliveryDate, 'order_cancelled', o.row);
     return { status:'success' };
   }
   if (action === 'submitbulkrequest') {
@@ -430,6 +471,7 @@ function handlePost(state, body) {
     state.bulkRequests.push({ row, id:'bulk'+row, phone:SESSION.phone, name:SESSION.name,
       meal:p.meal, qty, date:p.date, address:p.address || '', notes:p.notes || '',
       status:'Pending', approvedQty:null, approvedPrice:null, adminNote:'' });
+    logNotif(state, 'vendor', '🎉 Bulk order request — ' + SESSION.name, p.meal + ' x' + qty + ' on ' + p.date, 'bulk_request_submitted', row);
     return { status:'success', id:'bulk'+row };
   }
   if (action === 'mybulkrequests') {
@@ -505,6 +547,7 @@ function handlePost(state, body) {
     note:p.note||'', deliveryType:p.deliveryType||'home',
     time:'01/01 10:00 AM', day:p.day||'', createdIso:new Date().toISOString().slice(0,16)
   });
+  logNotif(state, 'vendor', '🧾 New order — ' + (p.name || SESSION.name), p.deliveryDate + ' · ₹' + total, 'new_order', row);
   return { status:'success', total, promo:promoStr, couponRejected };
 }
 
