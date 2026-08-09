@@ -7,7 +7,7 @@
  * kitchen out of appearing in Discovery altogether.
  */
 const { test, expect } = require('@playwright/test');
-const { openApp: openAppRaw, adminLogin, freshState } = require('./helpers');
+const { openApp: openAppRaw, freshState } = require('./helpers');
 const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
 
 test.describe('Private mode — direct vendor link', () => {
@@ -105,15 +105,7 @@ test.describe('Discovery opt-out toggle', () => {
     expect(text).not.toContain('Kitchen B');
   });
 
-  test('Setup toggle round-trips through saveConfig', async ({ page }) => {
-    const { state } = await openApp(page);
-    await adminLogin(page);
-    await page.evaluate(() => window.adminTab && window.adminTab('config'));
-    const before = await page.evaluate(() => document.getElementById('cfg-listInDiscovery') ? document.getElementById('cfg-listInDiscovery').checked : null);
-    expect(before).toBe(true); // default ON
-    await page.evaluate(() => { document.getElementById('cfg-listInDiscovery').checked = false; });
-    await page.evaluate(() => window.saveConfig());
-    await page.waitForTimeout(400);
-    expect(state.config.listInDiscovery).toBe(false);
-  });
+  // "Setup toggle round-trips through saveConfig" — Discovery on/off ab vendor
+  // Setup me nahi, Super Admin ke Delivery Setup group me hai (tests/super-
+  // vendor-config.spec.js me cover hota hai).
 });
