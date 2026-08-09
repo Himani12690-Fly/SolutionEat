@@ -121,44 +121,22 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     await expect(page.locator('#dscCity')).toHaveText('Your Area'); // untouched default, not a reverse-geocoded guess
   });
 
-  // Location is now mandatory app-wide — a denied/unavailable location no
-  // longer falls back to an unfiltered "browse everything" list (that was
-  // itself a privacy/relevance concern). It shows the same blocking
-  // location-permission gate used everywhere else, with a retry.
-  test('location denied shows the mandatory location gate, not a fallback list', async ({ page }) => {
+  // ⚠️ Location was briefly made a hard, full-screen mandatory gate (no way
+  // through without granting it) — a real device hit a genuine dead end:
+  // once the browser denies the permission, JS can never re-trigger the
+  // native prompt, so the customer was stuck forever with no way to order.
+  // Reverted: location is requested and preferred, but a denied/unavailable
+  // location falls back to the existing area-chip/full-list browsing —
+  // the app is never unusable just because permission was denied.
+  test('location denied falls back to the existing area-chip/full-list browsing', async ({ page }) => {
     const state = seedVendors();
     // geo:false — skip openApp()'s default grant/position, geolocation stays
     // denied, matching Chromium's default.
     await openAppRaw(page, { state, loggedIn: false, geo: false });
     await page.evaluate(() => window.openDiscovery());
-    await expect(page.locator('#locationGate')).not.toHaveClass(/hidden/, { timeout: 15000 });
-    await expect(page.locator('#dscAreas')).toHaveClass(/hidden/);
-    await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
+    await page.waitForFunction(() => document.querySelectorAll('#dscList .zrc').length > 0, { timeout: 15000 }).catch(() => {});
+    await expect(page.locator('#dscAreas')).toBeVisible();
+    await expect(page.locator('#dscBrowseWrap')).toBeVisible();
     await expect(page.locator('#dscNearWrap')).toHaveClass(/hidden/);
-  });
-
-  // ⚠️ Real bug found on a real device: tapping "Enable Location" after a
-  // failed attempt did nothing VISIBLE — getCurrentPosition() failed
-  // silently and just re-showed the exact same static gate, so it looked
-  // stuck/broken even though the retry click was technically registered.
-  // The button must give immediate visible feedback on click (so the user
-  // knows it worked) and must stay clickable/enabled after a failure
-  // (never get stuck disabled from the first attempt).
-  test('the retry button stays clickable and re-attempts after a failed try, never gets stuck', async ({ page }) => {
-    const state = seedVendors();
-    await openAppRaw(page, { state, loggedIn: false, geo: false });
-    await page.evaluate(() => window.openDiscovery());
-    await expect(page.locator('#locationGate')).not.toHaveClass(/hidden/, { timeout: 15000 });
-    const btn = page.locator('#locGateRetryBtn');
-    // First automatic attempt already failed (that's how the gate got here) —
-    // the button must not be left permanently disabled from that.
-    await expect(btn).toBeEnabled();
-    // A manual click must not throw/hang, and must leave the button clickable
-    // again once that attempt also resolves (fails) — this loop is exactly
-    // what looked "stuck" on the real device: same screen, no visible change,
-    // but the button DOES remain live and DOES keep re-attempting on tap.
-    await btn.click();
-    await expect(btn).toBeEnabled({ timeout: 15000 });
-    await expect(page.locator('#locationGate')).not.toHaveClass(/hidden/);
   });
 });

@@ -1258,10 +1258,3 @@
   #adminLoader .al-spin{width:34px;height:34px;border:3.5px solid #e7e9f0;border-top-color:var(--accent);border-radius:50%;animation:blsp .8s linear infinite;}
   #adminLoader .al-t{font-size:14px;font-weight:800;color:var(--ink);}
   html[data-theme="dark"] #adminLoader .al-spin,html[data-theme="dark"] .mini-spin,html[data-theme="dark"] .bl-spin{border-color:#2a2d3d;border-top-color:var(--accent);}
-  /* Mandatory location-permission gate — blocks the whole app until granted */
-  #locationGate{position:fixed;inset:0;background:var(--bg);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;font-family:'Segoe UI',system-ui,sans-serif;}
-  #locationGate:not(.hidden){display:flex;}
-  #locationGate .lg-icon{font-size:44px;}
-  #locationGate .lg-t{font-size:17px;font-weight:900;color:var(--ink);}
-  #locationGate .lg-s{font-size:13px;color:var(--muted);max-width:320px;line-height:1.5;}
-  #locationGate .btn-primary{margin-top:8px;max-width:280px;}
