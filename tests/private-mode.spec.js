@@ -10,13 +10,16 @@ const { test, expect } = require('@playwright/test');
 const { openApp: openAppRaw, freshState } = require('./helpers');
 const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
 
-test.describe('Private mode — direct vendor link', () => {
-  test('profile page hides Browse Kitchens for a direct ?v= link', async ({ page }) => {
-    await openApp(page);
-    await page.evaluate(() => window.showProfilePage());
-    await expect(page.locator('#pfBrowseKitchens')).toHaveClass(/hidden/);
-  });
+// Browse Kitchens (the Profile Quick Link that opened Discovery) has been
+// removed entirely — there's no longer a per-scenario show/hide to test,
+// it's just gone regardless of how the customer arrived.
+test('Browse Kitchens has been removed from Profile entirely', async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => window.showProfilePage());
+  await expect(page.locator('#pfBrowseKitchens')).toHaveCount(0);
+});
 
+test.describe('Private mode — direct vendor link', () => {
   test('auth page hides "All Kitchens" for a direct ?v= link', async ({ page }) => {
     await openApp(page, { loggedIn: false });
     await page.evaluate(() => window.showAuth());
@@ -25,29 +28,11 @@ test.describe('Private mode — direct vendor link', () => {
 });
 
 test.describe('Private mode — arrived via Discovery', () => {
-  test('profile page still shows Browse Kitchens after picking a vendor from Discovery', async ({ page }) => {
-    // goToVendor() sets this in sessionStorage right before its full-page
-    // reload to ?v=<id> — simulate that reload having already happened.
-    await page.addInitScript(() => { try { sessionStorage.setItem('fbt_from_discovery', '1'); } catch (e) {} });
-    await openApp(page);
-    await page.evaluate(() => window.showProfilePage());
-    await expect(page.locator('#pfBrowseKitchens')).not.toHaveClass(/hidden/);
-  });
-
   test('auth page still shows "All Kitchens" after picking a vendor from Discovery', async ({ page }) => {
     await page.addInitScript(() => { try { sessionStorage.setItem('fbt_from_discovery', '1'); } catch (e) {} });
     await openApp(page, { loggedIn: false });
     await page.evaluate(() => window.showAuth());
     await expect(page.locator('#authBackKitchens')).not.toHaveClass(/hidden/);
-  });
-});
-
-test.describe('Private mode — no vendor param (bare platform link)', () => {
-  test('Discovery escape hatches are never hidden without a ?v= at all', async ({ page }) => {
-    const state = freshState();
-    await openAppRaw(page, { state }); // no vendor -> no ?v= param
-    await page.evaluate(() => window.showProfilePage());
-    await expect(page.locator('#pfBrowseKitchens')).not.toHaveClass(/hidden/);
   });
 });
 

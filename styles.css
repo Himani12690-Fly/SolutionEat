@@ -565,26 +565,11 @@
     .sh-qty .qn { width:30px; text-align:center; font-size:15px; font-weight:800; }
     .sh-add { flex:1; background:var(--accent); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:900; cursor:pointer; }
 
-    /* Schedule Your Meal sheet — Zomato-style date strip + meal chips */
-    .sched-lbl { font-size:11.5px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px; }
-    .sched-lbl:first-of-type { margin-top:18px; }
-    .sched-daystrip { display:flex; gap:9px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; }
-    .sched-daystrip::-webkit-scrollbar { display:none; }
-    .sched-day { flex:0 0 auto; width:60px; padding:10px 0; border:1.5px solid var(--line); border-radius:14px; text-align:center; cursor:pointer; background:var(--card); }
-    .sched-day.sel { border-color:var(--accent); background:var(--accent-soft); }
-    .sched-day.off { opacity:0.4; cursor:not-allowed; }
-    .sched-day .sd-dow { font-size:10.5px; font-weight:800; color:var(--muted); text-transform:uppercase; }
-    .sched-day.sel .sd-dow { color:var(--accent-dark); }
-    .sched-day .sd-num { font-size:16px; font-weight:900; color:var(--ink); margin-top:3px; }
-    .sched-mealchips { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-    .sched-meal { display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 6px; border:1.5px solid var(--line); border-radius:14px; text-align:center; cursor:pointer; background:var(--card); }
-    .sched-meal.sel { border-color:var(--accent); background:var(--accent-soft); }
-    .sched-meal.off { opacity:0.4; cursor:not-allowed; }
-    .sched-meal .sm-ic { font-size:22px; }
-    .sched-meal .sm-name { font-size:11.5px; font-weight:800; color:var(--ink); }
-    .sched-meal.sel .sm-name { color:var(--accent-dark); }
-    .sched-window { display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:11px 13px; margin-top:14px; font-size:12px; font-weight:700; color:var(--muted); }
-    .sched-window b { font-size:13px; font-weight:900; color:var(--ink); }
+    /* Home date row — Today/Tomorrow/Day After chips */
+    .dt-chips { display:flex; gap:8px; }
+    .dt-chip { flex:1; text-align:center; padding:9px 0; border:1.5px solid var(--line); border-radius:12px; font-size:12.5px; font-weight:800; color:var(--ink); background:var(--card); cursor:pointer; }
+    .dt-chip.sel { border-color:var(--accent); background:var(--accent-soft); color:var(--accent-dark); }
+    .dt-chip.off { opacity:0.4; cursor:not-allowed; }
 
     /* Admin variants editor */
     .var-meal-tabs { display:flex; gap:8px; margin-bottom:12px; }
@@ -1109,12 +1094,6 @@
       display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--accent-dark); }
     /* Admin drawer active item */
     #adminPanel .back-link, #adminPanel .alert-toggle { font-size:11px; }
-    /* Home ka date-chip row hata diya (ab hamesha aaj hi dikhta hai) — future
-       date sirf "Schedule Your Meal" se aati hai, ye banner tabhi dikhta hai. */
-    .sched-banner { display:flex; align-items:center; justify-content:space-between; gap:10px;
-      background:var(--accent-soft); border-radius:12px; padding:9px 13px; font-size:12px;
-      font-weight:600; color:var(--accent-dark); margin-top:5px; }
-    .sched-back { font-weight:800; white-space:nowrap; cursor:pointer; text-decoration:underline; }
     .chip { display:inline-block; padding:7px 12px; border-radius:20px; background:var(--line); color:var(--muted); font-size:11.5px; font-weight:800; cursor:pointer; margin:0 6px 8px 0; }
     .chip.sel { background:var(--accent); color:#fff; }
     #filterChips { display:flex; flex-wrap:nowrap; overflow-x:auto; gap:0; padding-bottom:2px; }
@@ -1276,10 +1255,4 @@
   #adminLoader .al-logo img{width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;animation:blPulse 1.6s ease-in-out infinite;}
   #adminLoader .al-spin{width:34px;height:34px;border:3.5px solid #e7e9f0;border-top-color:var(--accent);border-radius:50%;animation:blsp .8s linear infinite;}
   #adminLoader .al-t{font-size:14px;font-weight:800;color:var(--ink);}
-  #adminLoader .al-sub{font-size:12px;font-weight:600;color:var(--muted);margin-top:-8px;}
-  #adminLoader .al-steps{display:flex;flex-direction:column;gap:7px;margin-top:10px;min-width:172px;}
-  #adminLoader .al-step{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px;transition:color .2s;}
-  #adminLoader .al-step.done{color:var(--accent-dark);}
-  #adminLoader .al-step.fail{color:var(--danger);}
-  #adminLoader .al-step .als-ic{font-size:13px;width:16px;text-align:center;}
   html[data-theme="dark"] #adminLoader .al-spin,html[data-theme="dark"] .mini-spin,html[data-theme="dark"] .bl-spin{border-color:#2a2d3d;border-top-color:var(--accent);}
