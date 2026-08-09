@@ -58,7 +58,7 @@ test.describe('Discovery — Near You (GPS radius)', () => {
   function seedVendors() {
     const state = freshState();
     state.discoveryVendors = [
-      { vendorId: 'annapurna', name: 'Annapurna', cuisine: 'Gujarati', areas: ['Godrej Garden City'], lat: 23.0335, lng: 72.5714, deliveryRadiusKm: 4 }, // ~1.2km away
+      { vendorId: 'annapurna', name: 'Annapurna', cuisine: 'Gujarati', areas: ['Godrej Garden City'], township: 'Godrej Garden City', lat: 23.0335, lng: 72.5714, deliveryRadiusKm: 4 }, // ~1.2km away
       { vendorId: 'farkitchen', name: 'Far Kitchen', cuisine: 'Punjabi', lat: 23.2000, lng: 72.5714, deliveryRadiusKm: 4 }, // ~19.7km away — outside its own radius
       { vendorId: 'nolocation', name: 'No Location Kitchen', cuisine: 'Chinese' }, // never set kitchen location
     ];
@@ -76,6 +76,8 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     const text = await page.locator('#dscNearList').innerText();
     expect(text).toContain('Annapurna');
     expect(text).toContain('km away');
+    // Vendor's own configured township shows in brackets right after distance.
+    expect(text).toContain('km away (Godrej Garden City)');
     expect(text).not.toContain('Far Kitchen');       // outside its own radius
     expect(text).not.toContain('No Location Kitchen'); // never configured a location
     // Fallback browsing (area chips/list) stays hidden once a near-you result renders.

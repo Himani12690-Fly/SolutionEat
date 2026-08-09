@@ -5263,7 +5263,7 @@
             <div class="zrc-hb">
               <div class="zrc-top"><div class="zrc-n">${esc(v.name)}</div>${rateHtml}</div>
               ${cuisine?`<div class="zrc-c">${esc(cuisine)}</div>`:''}
-              <div class="zrc-meta">📍 ${v.distanceKm} km away</div>
+              <div class="zrc-meta">📍 ${v.distanceKm} km away${v.township?' ('+esc(v.township)+')':''}</div>
             </div>
           </div>
         </div>
