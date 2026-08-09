@@ -747,24 +747,16 @@
 
       <div class="pf-box">
         <div style="font-size:14px;font-weight:900;margin-bottom:12px;" id="svFormTitle">➕ Naya Vendor Add Karo</div>
-        <div class="form-group"><label>Business Naam</label><input type="text" id="svName" placeholder="e.g. Rasoi Express"></div>
+
+        <div class="cfg-acc" id="svfa-identity">
+          <div class="cfg-acc-hd" onclick="svFormToggle('identity')">
+            <span class="cfg-acc-ic">🏢</span>
+            <span class="cfg-acc-tx"><b>Business Info</b><i>Naam, areas, cuisine, logo</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svfp-identity">
+        <div class="form-group" style="margin-top:16px;"><label>Business Naam</label><input type="text" id="svName" placeholder="e.g. Rasoi Express"></div>
         <div class="form-group"><label>Vendor Slug — sirf chhota naam, poora URL nahi</label><input type="text" id="svId" placeholder="shyamrasoi"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Sirf naam likho — jaise <b>shyamrasoi</b>. (<b>?v=</b> mat likhna, wo apne aap lagta hai)</div></div>
-        <div class="form-group"><label>Google Sheet ID</label><input type="text" id="svSheetId" placeholder="1T6tTy_I-C8VH8JKOsB8...."><div style="font-size:10.5px;color:var(--muted);margin-top:4px;"><b>Blank</b> nayi Google Sheet banao (sheets.new) aur uska URL yahan paste kar do — tabs, menu, settings sab apne aap ban jayenge.</div></div>
-        <div class="form-group"><label>Apps Script URL — <span style="color:var(--ok);">optional, khaali chhod do</span></label><input type="text" id="svScriptUrl" placeholder="khaali = shared deployment (theek hai)"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Sirf tab bharo jab is vendor ka apna alag deployment ho (25+ vendors ke baad zaroori hota hai).</div></div>
-        <div class="form-group"><label>Admin Username</label><input type="text" id="svAdminUser"></div>
-        <div class="form-group"><label>Admin Password</label><input type="text" id="svAdminPass"></div>
-        <div class="form-group"><label>Notify Email (order alerts)</label><input type="email" id="svEmail" placeholder="owner@example.com"></div>
-        <div class="form-group"><label>WhatsApp (optional)</label><input type="text" id="svWhatsapp" placeholder="9XXXXXXXXX"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Customer ka "order via WhatsApp" message isi number pe jaata hai. <b>Khaali chhodo to sab orders owner ke default number pe jayenge</b> — har vendor ka apna number yahan zaroor daalo.</div></div>
-        <div class="form-group">
-          <label>📲 Telegram Bot Token <span id="svTgStatus" style="font-size:10.5px;font-weight:700;"></span></label>
-          <input type="text" id="svTgToken" placeholder="Edit mode me khaali = purana wahi rakho" autocomplete="off">
-          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;">1) Telegram me <b>@BotFather</b> kholo → <b>/newbot</b> → jo TOKEN mile yahan paste karo.</div>
-        </div>
-        <div class="form-group">
-          <label>📲 Telegram Chat ID</label>
-          <input type="text" id="svTgChat" placeholder="Edit mode me khaali = purana wahi rakho" autocomplete="off">
-          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;">2) Naye bot ko Telegram me kholo, koi bhi message bhejo (jaise "hi"). 3) Browser me kholo: <span style="word-break:break-all;">https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</span> → jo <b>"chat":{"id": ...}</b> milega wahi number yahan paste karo.</div>
-        </div>
         <div class="form-group"><label>📍 Areas — discovery me yahi dikhega</label><input type="text" id="svAreas" placeholder="Gota, Chandkheda, Vastrapur"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Comma se alag karo. Customer isi se apne area ki kitchens dhoondega.</div></div>
         <div class="form-group"><label>🍽️ Cuisine (optional)</label><input type="text" id="svCuisine" placeholder="Gujarati, Punjabi, Home-style"></div>
         <div class="form-group">
@@ -778,7 +770,46 @@
           <div style="font-size:10.5px;color:var(--muted);margin-top:4px;">JPG/PNG/WebP — automatically compressed to ~400-500KB.</div>
         </div>
         <div class="form-group"><label>💰 Min Order ₹ (optional)</label><input type="number" id="svMinOrder" placeholder="150"></div>
-        <button class="admin-btn" id="svSaveBtn" onclick="saveVendorFE()">✅ Vendor Create Karo</button>
+          </div>
+        </div>
+
+        <div class="cfg-acc" id="svfa-technical">
+          <div class="cfg-acc-hd" onclick="svFormToggle('technical')">
+            <span class="cfg-acc-ic">🔧</span>
+            <span class="cfg-acc-tx"><b>Technical Setup</b><i>Sheet ID, deployment, admin login</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svfp-technical">
+        <div class="form-group" style="margin-top:16px;"><label>Google Sheet ID</label><input type="text" id="svSheetId" placeholder="1T6tTy_I-C8VH8JKOsB8...."><div style="font-size:10.5px;color:var(--muted);margin-top:4px;"><b>Blank</b> nayi Google Sheet banao (sheets.new) aur uska URL yahan paste kar do — tabs, menu, settings sab apne aap ban jayenge.</div></div>
+        <div class="form-group"><label>Apps Script URL — <span style="color:var(--ok);">optional, khaali chhod do</span></label><input type="text" id="svScriptUrl" placeholder="khaali = shared deployment (theek hai)"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Sirf tab bharo jab is vendor ka apna alag deployment ho (25+ vendors ke baad zaroori hota hai).</div></div>
+        <div class="form-group"><label>Admin Username</label><input type="text" id="svAdminUser"></div>
+        <div class="form-group"><label>Admin Password</label><input type="text" id="svAdminPass"></div>
+          </div>
+        </div>
+
+        <div class="cfg-acc" id="svfa-notify">
+          <div class="cfg-acc-hd" onclick="svFormToggle('notify')">
+            <span class="cfg-acc-ic">🔔</span>
+            <span class="cfg-acc-tx"><b>Notifications</b><i>Email, WhatsApp, Telegram</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svfp-notify">
+        <div class="form-group" style="margin-top:16px;"><label>Notify Email (order alerts)</label><input type="email" id="svEmail" placeholder="owner@example.com"></div>
+        <div class="form-group"><label>WhatsApp (optional)</label><input type="text" id="svWhatsapp" placeholder="9XXXXXXXXX"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Customer ka "order via WhatsApp" message isi number pe jaata hai. <b>Khaali chhodo to sab orders owner ke default number pe jayenge</b> — har vendor ka apna number yahan zaroor daalo.</div></div>
+        <div class="form-group">
+          <label>📲 Telegram Bot Token <span id="svTgStatus" style="font-size:10.5px;font-weight:700;"></span></label>
+          <input type="text" id="svTgToken" placeholder="Edit mode me khaali = purana wahi rakho" autocomplete="off">
+          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;">1) Telegram me <b>@BotFather</b> kholo → <b>/newbot</b> → jo TOKEN mile yahan paste karo.</div>
+        </div>
+        <div class="form-group">
+          <label>📲 Telegram Chat ID</label>
+          <input type="text" id="svTgChat" placeholder="Edit mode me khaali = purana wahi rakho" autocomplete="off">
+          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;">2) Naye bot ko Telegram me kholo, koi bhi message bhejo (jaise "hi"). 3) Browser me kholo: <span style="word-break:break-all;">https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</span> → jo <b>"chat":{"id": ...}</b> milega wahi number yahan paste karo.</div>
+        </div>
+          </div>
+        </div>
+
+        <button class="admin-btn" id="svSaveBtn" style="margin-top:16px;" onclick="saveVendorFE()">✅ Vendor Create Karo</button>
       </div>
 
       <!-- ══════ VENDOR KI TARAF SE — rare/risky/setup-once settings, jo vendor
@@ -878,7 +909,6 @@
         <span class="atb-dot">·</span>
         <span class="atb-sect" id="adminSectionTitle">🧾 Orders</span>
       </div>
-      <span class="emg-toggle" id="emgToggle" title="Emergency Close" onclick="openEmergencySheet()">🚨</span>
       <span class="alert-toggle" id="alertToggle" onclick="toggleAlerts()">🔕 OFF</span>
     </div>
     <div class="section" style="padding-bottom:110px;">
@@ -954,16 +984,9 @@
       </div>
 
       <div id="aview-config" class="hidden">
-        <div style="border:2px solid var(--danger);background:var(--dangerbg);border-radius:14px;padding:14px;margin-bottom:18px;">
-          <label class="cfg-chk" style="background:transparent;border:none;padding:0;margin-bottom:8px;">
-            <input type="checkbox" id="cfg-tempClosed" onchange="document.getElementById('tempClosedMsgWrap').classList.toggle('hidden', !this.checked)">
-            <span style="font-weight:900;color:var(--danger);">🚨 Emergency Close — kitchen band karo ABHI</span>
-          </label>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">Planned closedDates se ALAG — ye turant, HAAMESHA-ON-tak (aaj + future sab), sab ordering pause kar deta hai. Jab kitchen wapas khule to yahi checkbox UNCHECK karo.</div>
-          <div id="tempClosedMsgWrap" class="hidden">
-            <input type="text" id="cfg-tempClosedMsg" placeholder="Customer ko dikhne waali wajah (optional) — e.g. Kitchen band hai due to maintenance" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);">
-          </div>
-        </div>
+        <!-- Emergency Close (instant) aur planned Closed Dates dono ab "Close
+             Kitchen" me hain — bottom nav ka More menu ("🚨 Close Kitchen"),
+             ek hi jagah, Setup ka hissa nahi. -->
 
         <div class="cfg-acc" id="cfga-kitchen">
           <div class="cfg-acc-hd" onclick="cfgToggle('kitchen')">
@@ -1007,27 +1030,6 @@
 
         <div class="section-title" style="margin-top:20px;">💰 Add-on Prices</div>
         <div id="priceEditor"></div>
-          </div>
-        </div>
-
-        <div class="cfg-acc" id="cfga-timing">
-          <div class="cfg-acc-hd" onclick="cfgToggle('timing')">
-            <span class="cfg-acc-ic">🕒</span>
-            <span class="cfg-acc-tx"><b>Timing & Capacity</b><i>Cut-offs, closed dates, capacity</i></span>
-            <span class="cfg-acc-car"></span>
-          </div>
-          <div class="cfg-acc-bd hidden" id="cfgp-timing">
-        <!-- Order cut-off times aur daily capacity ab "Meal Types" section me,
-             har meal ke apne card ke andar hai (title/window ke saath) — yahan
-             alag se duplicate karne ki zaroorat nahi. -->
-        <div class="section-title" style="margin-top:20px;">🔒 Kitchen Closed Dates</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">No orders will be accepted for these dates (holidays, off-days).</div>
-        <div class="dt-row" style="margin:0 0 10px;">
-          <input type="date" id="closedDateInput" style="flex:1;padding:11px;border:1.5px solid var(--line);border-radius:11px;background:var(--card);color:var(--ink);">
-          <button class="admin-btn" style="width:auto;padding:11px 18px;margin:0;" onclick="addClosedDate()">+ Add</button>
-        </div>
-        <div id="closedDatesList"></div>
-
           </div>
         </div>
 
@@ -1145,6 +1147,12 @@
 
     <div class="sheet-overlay hidden" id="adminMoreOverlay" onclick="if(event.target===this)closeAdminMore()">
       <div class="admin-more-sheet" id="adminMoreSheet">
+        <!-- Pehle Emergency Close ke 3 alag-alag jagah the (topbar icon, Setup ka
+             red box, Setup ke andar planned Closed Dates) — confusing tha kaunsa
+             kab use karo. Ab sab ek hi "Close Kitchen" sheet me hai (instant +
+             planned dono), aur pahunchne ka ek hi raasta: yahan, sabse upar,
+             taaki turant mil jaaye jab zaroorat ho. -->
+        <div class="more-item danger" id="adr-closekitchen" onclick="closeAdminMore();openEmergencySheet()"><span class="di-icon">🚨</span><span>Close Kitchen</span></div>
         <div class="more-item" id="adr-users" onclick="adminBnGo('users')"><span class="di-icon">👥</span><span>Users</span></div>
         <div class="more-item" id="adr-variants" onclick="adminBnGo('variants')"><span class="di-icon">🍱</span><span>Variants</span></div>
         <div class="more-item" id="adr-promos" onclick="adminBnGo('promos')"><span class="di-icon">🎟️</span><span>Promos</span></div>
@@ -1163,8 +1171,10 @@
         <div class="more-item danger" onclick="closeAdminMore();adminLogout()"><span class="di-icon">🚪</span><span>Logout</span></div>
       </div>
     </div>
-    <!-- Emergency Close quick-action — topbar 🚨 se, kisi bhi admin tab se pahunch
-         sakte hain, Setup ke accordion me dhoondhne ki zaroorat nahi. -->
+    <!-- Close Kitchen — ek hi jagah, instant band karna AUR future ke planned
+         closed-dates dono. Pehle ye 3 alag jagah (topbar icon, Setup ka red box,
+         Setup ke andar Closed Dates) bikhre the — More menu ("🚨 Close Kitchen")
+         se hi ab yahan pahunchte hain. -->
     <div class="sheet-overlay hidden" id="emergencySheet" onclick="if(event.target===this)closeEmergencySheet()">
       <div class="sheet" style="max-width:380px;">
         <div style="padding:22px 20px 20px;">
@@ -1180,15 +1190,23 @@
             </div>
             <input type="text" id="emgMsgInput" placeholder="Wajah (optional) — e.g. Maintenance" style="width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);margin-top:14px;">
             <button class="admin-btn" style="background:var(--danger);margin-top:14px;" onclick="confirmEmergencyClose()">🚨 Close Kitchen Now</button>
-            <button class="admin-btn sec" style="margin-top:8px;" onclick="closeEmergencySheet()">Cancel</button>
           </div>
           <div id="emgClosedBlock" class="hidden" style="text-align:center;">
             <div style="font-size:34px;">😴</div>
             <div style="font-size:15px;font-weight:900;margin-top:8px;">Kitchen is Closed</div>
             <div id="emgClosedDetail" style="font-size:12.5px;color:var(--muted);margin-top:6px;"></div>
             <button class="admin-btn" style="margin-top:18px;" onclick="reopenKitchenNow()">✅ Reopen Now</button>
-            <button class="admin-btn sec" style="margin-top:8px;" onclick="closeEmergencySheet()">Close</button>
           </div>
+          <div style="border-top:1.5px solid var(--line);margin-top:18px;padding-top:16px;">
+            <div style="font-weight:800;font-size:12px;">📅 Planned Closed Dates</div>
+            <div style="font-size:11px;color:var(--muted);margin:4px 0 10px;">Aage ki koi tareekh off rakhni ho (holiday, off-day) — turant band karne se ALAG, ye sirf un dates par order accept nahi honge.</div>
+            <div class="dt-row" style="margin:0 0 10px;">
+              <input type="date" id="closedDateInput" style="flex:1;padding:11px;border:1.5px solid var(--line);border-radius:11px;background:var(--card);color:var(--ink);">
+              <button class="admin-btn" style="width:auto;padding:11px 18px;margin:0;" onclick="addClosedDate()">+ Add</button>
+            </div>
+            <div id="closedDatesList"></div>
+          </div>
+          <button class="admin-btn sec" style="margin-top:16px;" onclick="closeEmergencySheet()">Close</button>
         </div>
       </div>
     </div>
@@ -2589,16 +2607,12 @@
   function openAdminMore(){ document.getElementById('adminMoreOverlay').classList.remove('hidden'); }
   function closeAdminMore(){ document.getElementById('adminMoreOverlay').classList.add('hidden'); }
 
-  // ═══════ Emergency Close — admin topbar quick-action ═══════
-  // Setup ke andar checkbox pehle se hai (indefinite close, koi duration nahi
-  // poochhta) — ye alag, chhota flow hai jo topbar se kabhi bhi reachable hai
-  // aur "kitne der ke liye" poochhta hai taaki customer ko exact reopen time
-  // dikhaya ja sake (Home page ka timer banner).
+  // ═══════ Close Kitchen — instant + planned dates, ek hi sheet, More menu se ═══════
+  // Pehle 3 alag jagah thi (topbar icon, Setup ka red box, Setup ke andar
+  // Closed Dates) — ab sab yahin ek sheet me: "kitne der ke liye" (instant,
+  // reopen time customer ko Home page ke timer banner me dikhta hai) + aage ki
+  // planned off-dates, dono saath.
   let __emgSelectedMins = 0;   // 0 = "Until I Reopen" (indefinite), default selection
-  function updateEmergencyToggleUI(){
-    const el=document.getElementById('emgToggle'); if(!el) return;
-    el.classList.toggle('on', CFG.tempClosed===true);
-  }
   function openEmergencySheet(){
     const openBlock=document.getElementById('emgOpenBlock'), closedBlock=document.getElementById('emgClosedBlock');
     if(CFG.tempClosed){
@@ -2616,6 +2630,8 @@
       document.querySelectorAll('#emgDurationOpts .pay-opt').forEach(el=>el.classList.toggle('sel', el.dataset.mins==='0'));
       const mi=document.getElementById('emgMsgInput'); if(mi) mi.value='';
     }
+    workingClosedDates=(CFG.closedDates||[]).slice();
+    renderClosedDatesList();
     document.getElementById('emergencySheet').classList.remove('hidden');
   }
   function closeEmergencySheet(){ document.getElementById('emergencySheet').classList.add('hidden'); }
@@ -2630,7 +2646,6 @@
       if(j.status!=='success'){ showToast('❌ '+(j.message||'Failed'),'error'); return; }
       CFG.tempClosed=true; CFG.tempClosedMsg=j.tempClosedMsg||msg; CFG.tempClosedUntil=j.tempClosedUntil||until;
       storeSet('fbt_cfg',CFG);
-      updateEmergencyToggleUI();
       closeEmergencySheet();
       showToast('🚨 Kitchen closed','success');
     }).catch(()=>showToast('❌ Network error','error'));
@@ -2640,7 +2655,6 @@
       if(j.status!=='success'){ showToast('❌ '+(j.message||'Failed'),'error'); return; }
       CFG.tempClosed=false; CFG.tempClosedMsg=''; CFG.tempClosedUntil='';
       storeSet('fbt_cfg',CFG);
-      updateEmergencyToggleUI();
       closeEmergencySheet();
       showToast('✅ Kitchen reopened','success');
     }).catch(()=>showToast('❌ Network error','error'));
@@ -5789,6 +5803,7 @@
       document.getElementById('svSaveBtn').textContent='✅ Vendor Create Karo';
       billBox.classList.add('hidden'); danger.classList.add('hidden');
       if(cfgSec) cfgSec.classList.add('hidden');
+      svFormOpenAll();   // naya vendor — sab fields ek saath dikhein, chhupi hui zaroori field na chhoote
       return;
     }
     __svCurName=v.name||'';
@@ -5825,9 +5840,32 @@
       document.getElementById('svToggleBtn').textContent = v.status==='Active' ? '⏸️ Band karo' : '▶️ Chalu karo';
     }
     if(cfgSec) cfgSec.classList.remove('hidden');
+    svFormCloseAll();   // existing vendor — bas ek category peek karni hoti hai, sab kholna nahi
     svCfgCloseAll();
     svLoadConfig();
     document.getElementById('svUsersList').innerHTML='<p style="font-size:12px;color:var(--muted);">Tap 🔄 Refresh to load.</p>';
+  }
+  // ═══════ Business Info / Technical Setup / Notifications — vendor ki registry
+  // form ke top section ke apne accordions (Vendor Settings wale se ALAG group,
+  // dono independently open/close ho sakte). ═══════
+  const SVF_TABS=['identity','technical','notify'];
+  function svFormCloseAll(){
+    SVF_TABS.forEach(function(k){
+      const pane=document.getElementById('svfp-'+k); if(pane) pane.classList.add('hidden');
+      const wrap=document.getElementById('svfa-'+k); if(wrap) wrap.classList.remove('open');
+    });
+  }
+  function svFormOpenAll(){
+    SVF_TABS.forEach(function(k){
+      const pane=document.getElementById('svfp-'+k); if(pane) pane.classList.remove('hidden');
+      const wrap=document.getElementById('svfa-'+k); if(wrap) wrap.classList.add('open');
+    });
+  }
+  function svFormToggle(t){
+    const pane=document.getElementById('svfp-'+t);
+    const wasOpen = pane && !pane.classList.contains('hidden');
+    svFormCloseAll();
+    if(!wasOpen && pane){ pane.classList.remove('hidden'); const wrap=document.getElementById('svfa-'+t); if(wrap) wrap.classList.add('open'); }
   }
   // ═══════ VENDOR KI TARAF SE (Super Admin acting on their behalf) ═══════
   const SVC_TABS=['legal','delivery','alerts','meals','users'];
@@ -7269,7 +7307,7 @@
   }
 
   // == Setup page accordion ==
-  const CFG_TABS = ['kitchen','meals','timing','delivery'];
+  const CFG_TABS = ['kitchen','meals','delivery'];
   // Ek section force-kholo (baaki band). Validation jump isko use karta hai.
   function cfgOpen(t){
     if(CFG_TABS.indexOf(t)<0) t='kitchen';
@@ -7332,11 +7370,9 @@
     // Deep-copy so edits (incl. Add/Remove Meal) are a draft until Save Config.
     workingMealTypes=JSON.parse(JSON.stringify((CFG.mealTypes&&CFG.mealTypes.length)?CFG.mealTypes:defaultMealTypes()));
     renderMealTypeEditor();
-    workingClosedDates=(CFG.closedDates||[]).slice();
-    renderClosedDatesList();
-    const tc=document.getElementById('cfg-tempClosed'); if(tc) tc.checked=(CFG.tempClosed===true);
-    const tcm=document.getElementById('cfg-tempClosedMsg'); if(tcm) tcm.value=CFG.tempClosedMsg||'';
-    const tcWrap=document.getElementById('tempClosedMsgWrap'); if(tcWrap) tcWrap.classList.toggle('hidden', CFG.tempClosed!==true);
+    // Emergency close (instant) aur Closed Dates (planned) dono ab "Close Kitchen"
+    // sheet me hain (More menu), Setup ka hissa nahi rahe — openEmergencySheet()
+    // apna state khud load karta hai jab khulta hai.
     const lastAcc=storeGet('fbt_cfg_open');
     if(lastAcc) cfgOpen(lastAcc); else cfgCloseAll();   // kuch khula nahi tha -> overview
   }
@@ -7345,15 +7381,27 @@
     if(!workingClosedDates.length){ box.innerHTML='<div style="font-size:12.5px;color:var(--muted);">No closed dates set.</div>'; return; }
     box.innerHTML=workingClosedDates.slice().sort().map(d=>`<div class="oc" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:6px;"><span style="font-weight:800;">📅 ${fmtDateStr(d)}</span><span style="color:var(--danger);font-weight:800;cursor:pointer;" onclick="removeClosedDate('${d}')">✖ Remove</span></div>`).join('');
   }
+  // Setup form ka hissa nahi rahe (poore form ka "Save Setup" wait nahi karna) —
+  // "Close Kitchen" sheet me hi turant save ho jaate hain, apna dedicated action.
   function addClosedDate(){
     const v=document.getElementById('closedDateInput').value;
     if(!v){ showToast('⚠️ Pick a date first.','warning'); return; }
     if(workingClosedDates.indexOf(v)>=0){ showToast('⚠️ Already added.','warning'); return; }
-    workingClosedDates.push(v);
-    document.getElementById('closedDateInput').value='';
-    renderClosedDatesList();
+    saveClosedDatesNow(workingClosedDates.concat([v]));
   }
-  function removeClosedDate(d){ workingClosedDates=workingClosedDates.filter(x=>x!==d); renderClosedDatesList(); }
+  function removeClosedDate(d){ saveClosedDatesNow(workingClosedDates.filter(x=>x!==d)); }
+  function saveClosedDatesNow(next){
+    if(!adminCreds) return;
+    apiPost({action:'setcloseddates', user:adminCreds.user, pass:adminCreds.pass, dates:next}).then(j=>{
+      if(j.status!=='success'){ showToast('❌ '+(j.message||'Save failed'),'error'); return; }
+      workingClosedDates=j.closedDates||next;
+      CFG.closedDates=workingClosedDates;
+      storeSet('fbt_cfg',CFG);
+      document.getElementById('closedDateInput').value='';
+      renderClosedDatesList();
+      showToast('✅ Saved!','success');
+    }).catch(()=>showToast(t('errNetwork'),'error'));
+  }
   function saveConfig(){
     const prices={}; const addonsEnabled={}; let bad=false;
     Object.keys(PRICE_LABELS).forEach(k=>{ const v=parseInt(document.getElementById('pr-'+k).value,10); if(isNaN(v)||v<0){bad=true;} prices[k]=v; const enEl=document.getElementById('pren-'+k); addonsEnabled[k]=enEl?enEl.checked:true; });
@@ -7375,11 +7423,13 @@
     const deliveryFar=parseInt(document.getElementById('cfg-deliveryFar')?document.getElementById('cfg-deliveryFar').value:20,10);
     if(deliveryEnabled&&(isNaN(deliveryNear)||deliveryNear<0||isNaN(deliveryFar)||deliveryFar<0)){ cfgFail('delivery','⚠️ Enter valid delivery fees (₹0 or more).'); return; }
     const farSocieties=(document.getElementById('cfg-farSocieties')?document.getElementById('cfg-farSocieties').value:'').split('\n').map(s=>s.trim()).filter(Boolean);
-    const tempClosed=document.getElementById('cfg-tempClosed')?document.getElementById('cfg-tempClosed').checked:false;
-    const tempClosedMsg=document.getElementById('cfg-tempClosedMsg')?document.getElementById('cfg-tempClosedMsg').value.trim():'';
     let deliveryRadiusKm=parseFloat(document.getElementById('cfg-deliveryRadiusKm')?document.getElementById('cfg-deliveryRadiusKm').value:4);
     if(isNaN(deliveryRadiusKm)||deliveryRadiusKm<=0) deliveryRadiusKm=4;
-    const cfg={ prices, addonsEnabled, mealTypes, township:CFG.township, societies:CFG.societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:workingClosedDates, tempClosed:tempClosed, tempClosedMsg:tempClosedMsg, companies:CFG.companies, homeEnabled:CFG.homeEnabled, officeEnabled:CFG.officeEnabled, listInDiscovery:CFG.listInDiscovery, kitchenLat:workingKitchenLat, kitchenLng:workingKitchenLng, deliveryRadiusKm:deliveryRadiusKm, whatsappAuto:CFG.whatsappAuto,
+    // tempClosed/tempClosedMsg/closedDates ab "Close Kitchen" sheet apna alag
+    // action (setemergencyclose/setclosedDates) se turant save karta hai — Setup
+    // save inhe as-is CFG se hi wapas bhejta hai, apne DOM se nahi (wo fields ab
+    // yahan hain hi nahi), warna har Setup save silently reopen/wipe kar deta.
+    const cfg={ prices, addonsEnabled, mealTypes, township:CFG.township, societies:CFG.societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:CFG.closedDates, tempClosed:CFG.tempClosed, tempClosedMsg:CFG.tempClosedMsg, tempClosedUntil:CFG.tempClosedUntil, companies:CFG.companies, homeEnabled:CFG.homeEnabled, officeEnabled:CFG.officeEnabled, listInDiscovery:CFG.listInDiscovery, kitchenLat:workingKitchenLat, kitchenLng:workingKitchenLng, deliveryRadiusKm:deliveryRadiusKm, whatsappAuto:CFG.whatsappAuto,
       upiId:CFG.upiId, upiName:CFG.upiName, fssai:CFG.fssai, legalName:CFG.legalName, gstNumber:CFG.gstNumber };
     const btn=document.getElementById('saveConfigBtn'); btn.textContent='⏳ Saving...'; btn.disabled=true;
     apiPost({action:'saveConfig',user:adminCreds.user,pass:adminCreds.pass,config:cfg}).then(j=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; if(j.status==='success'){ cfg.variants=CFG.variants; cfg.banners=CFG.banners; CFG=cfg; storeSet('fbt_cfg',CFG); applyConfigToUI(); refreshAvailability(); showToast('✅ Setup saved!','success'); } else showToast('❌ '+(j.message||'Save failed'),'error'); }).catch(()=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; showToast(t('errNetwork'),'error'); }); }
@@ -7394,7 +7444,6 @@
     // try/catch me + har CFG.xxx read `||[]`/`||''` ke saath defensive.
     try{
     renderVendorQr();   // admin-only element, no-ops on customer-facing loads
-    updateEmergencyToggleUI();   // admin-only element, no-ops on customer-facing loads
     MEALS=(CFG.mealTypes||[]).map(mt=>mt.key);
     TIME_SLOTS={}; (CFG.mealTypes||[]).forEach(mt=>{ TIME_SLOTS[mt.key]=generateTimeSlots(mt.windowStart,mt.windowEnd); });
     MEAL_ORDER={}; MEALS.forEach((k,i)=>{ MEAL_ORDER[k]=i; });

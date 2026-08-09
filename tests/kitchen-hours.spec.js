@@ -131,18 +131,21 @@ test.describe('Schedule Your Meal', () => {
 });
 
 test.describe('Emergency Close — admin quick action with duration', () => {
-  test('topbar icon opens the sheet, picking a duration and confirming closes the kitchen', async ({ page }) => {
+  // "Close Kitchen" ab More menu se khulta hai (ek hi jagah — pehle topbar icon +
+  // Setup ke 2 alag jagah bikhra hua tha), instant close + planned dates dono
+  // isi sheet me.
+  test('opens from the More menu, picking a duration and confirming closes the kitchen', async ({ page }) => {
     const state = freshState();
     await openApp(page, { state });
     await adminLogin(page);
-    await page.click('#emgToggle');
+    await page.evaluate(() => window.openAdminMore());
+    await page.click('#adr-closekitchen');
     await expect(page.locator('#emergencySheet')).not.toHaveClass(/hidden/);
     await page.click('[data-mins="60"]');
     await page.click('text=🚨 Close Kitchen Now');
     await page.waitForTimeout(300);
     expect(state.config.tempClosed).toBe(true);
     expect(state.config.tempClosedUntil).toBeTruthy();
-    await expect(page.locator('#emgToggle')).toHaveClass(/on/);
   });
 
   test('customer sees the reopen countdown on Home once closed', async ({ page }) => {
@@ -173,11 +176,11 @@ test.describe('Emergency Close — admin quick action with duration', () => {
     state.config.tempClosedUntil = new Date(Date.now() + 30 * 60000).toISOString();
     await openApp(page, { state });
     await adminLogin(page);
-    await page.click('#emgToggle');
+    await page.evaluate(() => window.openAdminMore());
+    await page.click('#adr-closekitchen');
     await expect(page.locator('#emgClosedBlock')).not.toHaveClass(/hidden/);
     await page.click('text=✅ Reopen Now');
     await page.waitForTimeout(300);
     expect(state.config.tempClosed).toBe(false);
-    await expect(page.locator('#emgToggle')).not.toHaveClass(/on/);
   });
 });
