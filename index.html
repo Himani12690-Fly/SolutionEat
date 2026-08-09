@@ -138,12 +138,6 @@
 </script>
 <div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t" data-i="loadingEllipsis">Loading…</div></div>
 <div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
-<div id="locationGate" class="hidden">
-  <div class="lg-icon">📍</div>
-  <div class="lg-t" data-i="locGateTitle">Location zaroori hai</div>
-  <div class="lg-s" id="locGateMsg" data-i="locGateSub">Aapke aas-paas ki kitchens dikhane ke liye location permission chahiye — bina iske app aage nahi badhega.</div>
-  <button class="btn-primary" id="locGateRetryBtn" data-i="locGateBtn">📍 Enable Location</button>
-</div>
 <div class="container">
 
   <!-- ══════ FIRST-RUN ONBOARDING (naye customer ke liye, sirf ek baar) ══════ -->
@@ -3455,68 +3449,26 @@
     const aal=document.getElementById('authAdminLink'); if(aal) aal.classList.toggle('hidden', APK_MODE==='customer');
     initGoogleButton();
   }
-  // ═══════ MANDATORY LOCATION GATE (customer) ═══════
-  // Poora app ab location permission ke bina use nahi hota — chahe customer
-  // kisi vendor ke direct ?v= link se aaya ho ya Discovery se, jab tak
-  // permission grant na ho, Home/Cart/Orders kuch bhi nahi khulta. Ek baar
-  // grant ho jaaye to browser khud yaad rakhta hai (permission state
-  // persist), dobara nahi poochta — sirf denied/abhi-tak-na-diya state pe
-  // hi ye gate dikhta hai. Discovery ka apna location flow (startDiscoveryFlow)
-  // isi gate ko reuse karta hai jab location fail/deny ho.
-  // ⚠️ REAL BUG (device par mila): "Enable Location" tap karne par kuch nahi
-  // hota tha jab permission browser-level pe already DENIED thi ya phone ka
-  // GPS/Location system-wide OFF tha — dono cases me getCurrentPosition() ne
-  // silently fail kiya, wahi gate dobara dikha diya, koi feedback nahi tha
-  // (button ne "kaam kiya" par user ko koi farak nahi dikha, isliye "stuck"
-  // lagta tha). Ab teeno cases alag dikhte hain: (1) pehli baar/"prompt" —
-  // normal button, native prompt khulega; (2) browser me explicitly DENIED —
-  // JS se dobara native prompt kabhi nahi khul sakta (browser security), isliye
-  // site-settings me jaake allow karne ka clear instruction; (3) POSITION_
-  // UNAVAILABLE (permission hai par phone ka GPS/Location system-wide OFF) —
-  // phone settings me Location ON karne ka instruction.
-  function showLocationGate(retryFn, mode){
-    const el=document.getElementById('locationGate'); if(!el) return;
-    el.classList.remove('hidden');
-    const msg=document.getElementById('locGateMsg');
-    const btn=document.getElementById('locGateRetryBtn');
-    if(msg){
-      if(mode==='denied') msg.textContent = t('locGateDeniedSub') || 'Location is blocked for this site. Tap the 🔒/ⓘ icon next to the address bar → Permissions → Location → Allow, then tap Retry.';
-      else if(mode==='unavailable') msg.textContent = t('locGateUnavailSub') || 'Permission is fine, but your phone\'s Location/GPS is turned off. Turn it on in your phone settings, then tap Retry.';
-      else msg.textContent = t('locGateSub') || 'We need your location to show nearby kitchens — the app won\'t work without it.';
-    }
-    if(btn){
-      btn.disabled=false;
-      btn.textContent = mode ? (t('locGateRetryBtn')||'🔄 Retry') : (t('locGateBtn')||'📍 Enable Location');
-      btn.onclick = retryFn;
-    }
-  }
-  function hideLocationGate(){
-    const el=document.getElementById('locationGate'); if(el) el.classList.add('hidden');
-  }
+  // ═══════ LOCATION (customer) — asked for, never a blocker ═══════
+  // ⚠️ Pehle ye ek MANDATORY full-screen gate tha — jab tak grant na ho, app
+  // hi nahi khulti thi. Real device pe iska ek genuine dead-end nikla: agar
+  // browser me permission ek baar denied ho jaaye (ya phone ka GPS off ho),
+  // JS se dobara native prompt kabhi nahi khul sakta (browser security) —
+  // to "Enable Location" button tap karne se kuch hota hua nahi dikhta, aur
+  // customer HAMESHA ke liye stuck ho jaata (koi bhi kitchen order nahi kar
+  // paata). Ek permission dialog wrong-tap se app permanently unusable ho
+  // jaana bahut bada risk hai. Ab: location try karo (native prompt khud
+  // khulega agar abhi tak decide nahi hua), jo bhi ho — mil jaaye ya na
+  // mile — app turant aage badh jaata hai. Location milne par GPS-based
+  // "near you" Discovery aur behtar area-label milta hai; na milne par
+  // Discovery apne purane area-chip/browse system pe fall back karta hai
+  // (fallbackToBrowse) — app kabhi bhi kisi ke liye completely band nahi
+  // hota.
   function ensureLocationThen(onGranted){
-    if(!navigator.geolocation){ onGranted(); return; }   // browser support hi nahi to gate mat lagao
-    const askNow = () => {
-      // Click ka turant visible response — warna "kuch nahi hua" jaisa lagta
-      // hai jab tak getCurrentPosition() resolve/reject na ho (kabhi 10s tak).
-      const btn=document.getElementById('locGateRetryBtn');
-      if(btn){ btn.disabled=true; btn.textContent=t('locGateChecking')||'⏳ Checking…'; }
-      navigator.geolocation.getCurrentPosition(
-        () => { hideLocationGate(); onGranted(); },
-        (err) => {
-          // err.code: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
-          const mode = (err && err.code===1) ? 'denied' : (err && err.code===2) ? 'unavailable' : null;
-          showLocationGate(askNow, mode);
-        },
-        { timeout:10000, maximumAge:0 }
-      );
-    };
-    if(navigator.permissions && navigator.permissions.query){
-      navigator.permissions.query({ name:'geolocation' }).then(res=>{
-        if(res.state==='granted') askNow();
-        else if(res.state==='prompt'){ showLocationGate(askNow); askNow(); }
-        else showLocationGate(askNow, 'denied');   // denied — wait for manual retry (after settings change)
-      }).catch(askNow);
-    } else askNow();
+    if(!navigator.geolocation){ onGranted(); return; }
+    let done=false;
+    const proceed=()=>{ if(done)return; done=true; onGranted(); };
+    navigator.geolocation.getCurrentPosition(proceed, proceed, { timeout:8000 });
   }
   // ⚠️ enterApp() har customer login path (email/Google/demo/restore) ke ek
   // hi shared .then() ke andar, unprotected, call hota hai — isme se KOI EK
@@ -5203,20 +5155,19 @@
   // poora 3s wait nahi karna.
   function startDiscoveryFlow(){
     dscShowOnly(['dscRadarState']);
-    if(!navigator.geolocation){ showLocationGate(startDiscoveryFlow); return; }
+    if(!navigator.geolocation){ fallbackToBrowse(); return; }
     let best=null, watchId=null, done=false;
     function useBest(){
       if(done) return; done=true;
       if(watchId!=null) navigator.geolocation.clearWatch(watchId);
-      if(!best){ showLocationGate(startDiscoveryFlow); return; }
-      hideLocationGate();
+      if(!best){ fallbackToBrowse(); return; }
       const lat=best.coords.latitude, lng=best.coords.longitude;
       resolveDscAreaLabel(lat,lng,best.coords.accuracy);
       fetch(GOOGLE_SCRIPT_URL+'?action=nearbyvendors&lat='+lat+'&lng='+lng).then(r=>r.json()).then(j=>{
         const vendors=(j&&j.vendors)||[];
         if(vendors.length) renderDscNearby(vendors);
         else dscShowOnly(['dscEmptyNear']);
-      }).catch(()=>{ showLocationGate(startDiscoveryFlow); });
+      }).catch(()=>{ fallbackToBrowse(); });
     }
     watchId = navigator.geolocation.watchPosition(pos=>{
       if(!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
@@ -5224,7 +5175,7 @@
     }, ()=>{
       if(done) return; done=true;
       if(watchId!=null) navigator.geolocation.clearWatch(watchId);
-      showLocationGate(startDiscoveryFlow);
+      fallbackToBrowse();
     }, { enableHighAccuracy:true, timeout:10000 });
     setTimeout(useBest, 3000);
   }
@@ -5618,7 +5569,7 @@
   // chala gaya, gate (full-screen overlay, sabse upar) admin login form ke
   // clicks intercept kar leta tha, login hi impossible ho jaata. Admin route
   // pe jaate hi gate hata do.
-  function showAdminLogin(){ hideLocationGate(); showView('adminLogin'); }
+  function showAdminLogin(){ showView('adminLogin'); }
   function hideAdmin(){ exitAdminTheme(); if(storeGet('fbt_lang')) setLang(storeGet('fbt_lang')); isLoggedIn()?showLanding():showPublic(); }
   function adminLogout(){ adminCreds=null; adminCredsValidated=false; storeDel('fbt_admin'); stopAlertPolling(); stopRing(); if(vendorNotifTimer){ clearInterval(vendorNotifTimer); vendorNotifTimer=null; } hideAdmin(); }
   function adminTab(tb){ ['orders','users','menu','config','stats','variants','promos','billing','bulk'].forEach(x=>{ const v=document.getElementById('aview-'+x); const b=document.getElementById('atab-'+x); if(v)v.classList.toggle('hidden',x!==tb); if(b)b.classList.toggle('active',x===tb); }); if(tb==='variants') openVariantsEditor(); if(tb==='promos') loadPromos(); if(tb==='billing') renderVendorBilling(); if(tb==='bulk') loadBulkRequests(); }
