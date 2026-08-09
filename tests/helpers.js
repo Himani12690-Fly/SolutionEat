@@ -587,6 +587,20 @@ async function openApp(page, opts = {}) {
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
 
+  // Location permission is now mandatory app-wide (index.html's
+  // ensureLocationThen/showLocationGate) — grant it by default so existing
+  // tests aren't all blocked behind the gate. Tests that specifically want
+  // to exercise the denied/blocked state pass { geo: false }.
+  if (opts.geo !== false) {
+    try {
+      const origin = new URL(APP_URL).origin;
+      await page.context().grantPermissions(['geolocation'], { origin });
+      await page.context().setGeolocation(
+        (opts.geo && typeof opts.geo === 'object') ? opts.geo : { latitude: 23.0225, longitude: 72.5714 }
+      );
+    } catch (e) {}
+  }
+
   await mockBackend(page, state);
 
   await page.addInitScript(({ session, theme, loggedIn, addr, istOverride, skipOnboarding, vendor }) => {

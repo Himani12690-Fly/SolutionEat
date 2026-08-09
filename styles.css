@@ -273,8 +273,8 @@
       .h1-top.h1-centered .h1-logo-wrap::before { animation:none; opacity:0.28; }
     }
     .h1-top.h1-centered .h1-tt { flex:none; width:100%; }
-    /* Kitchen ka aggregate rating — hero ke top-right corner me (ref image jaisa) */
-    .h1-rate { position:absolute; top:16px; right:16px; display:flex; flex-direction:column;
+    /* Kitchen ka aggregate rating — hero ke top-left corner me (bell top-right leta hai) */
+    .h1-rate { position:absolute; top:16px; left:16px; display:flex; flex-direction:column;
       align-items:center; gap:3px; z-index:2; }
     .h1-rate-pill { display:inline-flex; align-items:center; gap:4px; background:#267e3e; color:#fff;
       font-size:15px; font-weight:900; padding:5px 11px; border-radius:9px; line-height:1;
@@ -283,8 +283,8 @@
       border-bottom:1.5px dotted var(--line); padding-bottom:1px; }
     .h1-top.h1-centered .h1-name { font-size:22px; white-space:normal; }
     .h1-top.h1-centered .h1-loc { font-size:13px; margin-top:4px; white-space:normal; }
-    /* Notification bell — hero ke top-left corner me (h1-rate top-right leta hai) */
-    .h1-bell { position:absolute; top:16px; left:16px; z-index:2; width:38px; height:38px;
+    /* Notification bell — hero ke top-right corner me */
+    .h1-bell { position:absolute; top:16px; right:16px; z-index:2; width:38px; height:38px;
       border-radius:50%; background:var(--card); border:1.5px solid var(--line); display:flex;
       align-items:center; justify-content:center; font-size:17px; cursor:pointer;
       box-shadow:0 2px 8px rgba(0,0,0,0.08); }
@@ -642,9 +642,11 @@
                   padding:6px 5px; z-index:150; box-shadow:0 8px 26px rgba(0,0,0,0.16); }
     .abn-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 3px 6px; cursor:pointer; border-radius:20px; transition:background .18s; }
     .abn-item.active { background:var(--accent-soft); }
-    .abn-item .abn-ic { font-size:19px; line-height:1; }
+    .abn-item .abn-ic { position:relative; font-size:19px; line-height:1; }
     .abn-item span:last-child { font-size:9.5px; font-weight:800; color:var(--muted); }
     .abn-item.active span:last-child { color:var(--accent-dark); }
+    .abn-item.danger span:last-child { color:var(--danger); }
+    .abn-item .abn-badge { position:absolute; top:-6px; right:-9px; margin-left:0; min-width:15px; height:15px; font-size:8.5px; padding:0 3px; box-shadow:0 0 0 2px var(--card); }
     .admin-more-sheet { width:calc(100% - 26px); max-width:404px; margin-bottom:92px;
                   background:var(--card); border:1px solid var(--line); border-radius:18px;
                   box-shadow:0 -6px 24px rgba(0,0,0,0.16); padding:6px; }
@@ -1256,3 +1258,10 @@
   #adminLoader .al-spin{width:34px;height:34px;border:3.5px solid #e7e9f0;border-top-color:var(--accent);border-radius:50%;animation:blsp .8s linear infinite;}
   #adminLoader .al-t{font-size:14px;font-weight:800;color:var(--ink);}
   html[data-theme="dark"] #adminLoader .al-spin,html[data-theme="dark"] .mini-spin,html[data-theme="dark"] .bl-spin{border-color:#2a2d3d;border-top-color:var(--accent);}
+  /* Mandatory location-permission gate — blocks the whole app until granted */
+  #locationGate{position:fixed;inset:0;background:var(--bg);z-index:99999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px;text-align:center;font-family:'Segoe UI',system-ui,sans-serif;}
+  #locationGate:not(.hidden){display:flex;}
+  #locationGate .lg-icon{font-size:44px;}
+  #locationGate .lg-t{font-size:17px;font-weight:900;color:var(--ink);}
+  #locationGate .lg-s{font-size:13px;color:var(--muted);max-width:320px;line-height:1.5;}
+  #locationGate .btn-primary{margin-top:8px;max-width:280px;}

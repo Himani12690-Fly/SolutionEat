@@ -138,6 +138,12 @@
 </script>
 <div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t" data-i="loadingEllipsis">Loading…</div></div>
 <div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
+<div id="locationGate" class="hidden">
+  <div class="lg-icon">📍</div>
+  <div class="lg-t" data-i="locGateTitle">Location zaroori hai</div>
+  <div class="lg-s" data-i="locGateSub">Aapke aas-paas ki kitchens dikhane ke liye location permission chahiye — bina iske app aage nahi badhega.</div>
+  <button class="btn-primary" id="locGateRetryBtn" data-i="locGateBtn">📍 Enable Location</button>
+</div>
 <div class="container">
 
   <!-- ══════ FIRST-RUN ONBOARDING (naye customer ke liye, sirf ek baar) ══════ -->
@@ -983,8 +989,19 @@
 
       <div id="aview-config" class="hidden">
         <!-- Emergency Close (instant) aur planned Closed Dates dono ab "Close
-             Kitchen" me hain — bottom nav ka More menu ("🚨 Close Kitchen"),
-             ek hi jagah, Setup ka hissa nahi. -->
+             Kitchen" me hain — bottom nav me seedha, Setup ka hissa nahi. -->
+
+        <!-- Menu (roz ka sabzi/roti content) apna alag top-level tab nahi raha —
+             ab yahin Setup ke andar se khulta hai. Ye row baaki accordions jaisi
+             dikhti hai par toggle nahi karti, seedha Menu tab pe le jaati hai
+             (Menu ka apna page bahut bada/complex hai, inline fit nahi hota). -->
+        <div class="cfg-acc" id="cfga-menu">
+          <div class="cfg-acc-hd" onclick="adminBnGo('menu')">
+            <span class="cfg-acc-ic">📝</span>
+            <span class="cfg-acc-tx"><b>Menu</b><i>Roz ka sabzi/roti/tiffin content</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+        </div>
 
         <div class="cfg-acc" id="cfga-kitchen">
           <div class="cfg-acc-hd" onclick="cfgToggle('kitchen')">
@@ -1145,16 +1162,13 @@
 
     <div class="sheet-overlay hidden" id="adminMoreOverlay" onclick="if(event.target===this)closeAdminMore()">
       <div class="admin-more-sheet" id="adminMoreSheet">
-        <!-- Pehle Emergency Close ke 3 alag-alag jagah the (topbar icon, Setup ka
-             red box, Setup ke andar planned Closed Dates) — confusing tha kaunsa
-             kab use karo. Ab sab ek hi "Close Kitchen" sheet me hai (instant +
-             planned dono), aur pahunchne ka ek hi raasta: yahan, sabse upar,
-             taaki turant mil jaaye jab zaroorat ho. -->
-        <div class="more-item danger" id="adr-closekitchen" onclick="closeAdminMore();openEmergencySheet()"><span class="di-icon">🚨</span><span>Close Kitchen</span></div>
+        <!-- Close Kitchen aur Bulk Requests ab bottom nav me seedhe hain (time-
+             critical/actionable, turant chahiye) — More sirf occasional lookups
+             ke liye reh gaya hai. -->
+        <div class="more-item" id="adr-stats" onclick="adminBnGo('stats')"><span class="di-icon">📊</span><span>Stats</span></div>
         <div class="more-item" id="adr-users" onclick="adminBnGo('users')"><span class="di-icon">👥</span><span>Users</span></div>
         <div class="more-item" id="adr-variants" onclick="adminBnGo('variants')"><span class="di-icon">🍱</span><span>Variants</span></div>
         <div class="more-item" id="adr-promos" onclick="adminBnGo('promos')"><span class="di-icon">🎟️</span><span>Promos</span></div>
-        <div class="more-item" id="adr-bulk" onclick="adminBnGo('bulk')"><span class="di-icon">🎉</span><span>Bulk Requests</span><span class="more-item-badge hidden" id="bulkReqBadge"></span></div>
         <div class="more-item" id="adr-billing" onclick="adminBnGo('billing')"><span class="di-icon">💳</span><span>Subscription</span></div>
         <div style="padding:10px 14px 4px;">
           <div class="lp-sec-t">🌐 Language</div>
@@ -1222,8 +1236,8 @@
     <div class="admin-bottom-nav">
       <div class="abn-item" id="abn-orders" onclick="adminBnGo('orders')"><span class="abn-ic">🧾</span><span>Orders</span></div>
       <div class="abn-item" id="abn-config" onclick="adminBnGo('config')"><span class="abn-ic">⚙️</span><span>Setup</span></div>
-      <div class="abn-item" id="abn-menu" onclick="adminBnGo('menu')"><span class="abn-ic">✏️</span><span>Menu</span></div>
-      <div class="abn-item" id="abn-stats" onclick="adminBnGo('stats')"><span class="abn-ic">📊</span><span>Stats</span></div>
+      <div class="abn-item danger" id="abn-closekitchen" onclick="openEmergencySheet()"><span class="abn-ic">🚨</span><span>Close</span></div>
+      <div class="abn-item" id="abn-bulk" onclick="adminBnGo('bulk')"><span class="abn-ic">🎉<span class="more-item-badge abn-badge hidden" id="bulkReqBadge"></span></span><span>Bulk</span></div>
       <div class="abn-item" id="abn-more" onclick="openAdminMore()"><span class="abn-ic">⋯</span><span>More</span></div>
     </div>
   </div>
@@ -1741,7 +1755,7 @@
       bulkErrQty:'Please enter at least 5 tiffins.', bulkErrDate:'Please pick a delivery date.',
       bulkSubmitted:'Request sent — the kitchen will confirm shortly.', bulkApproved:'Approved', bulkDeclined:'Declined', bulkPending:'Pending', scheduleBtn:'Schedule', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Daily', onb1Body:'Cooked only after you order — never frozen, never stale.', onb2Title:'Home & Office Delivery', onb2Body:'Order for wherever you are — home or work.', onb3Title:'Order Today or Schedule Ahead', onb3Body:"Need tomorrow sorted? Use Schedule Your Meal from the bottom menu.", onb4Title:'Easy Payments', onb4Body:'Pay via UPI or simply Cash on Delivery — your choice.', onbGetStarted:'Get Started', subTitle:'🔁 Subscription', subSub:'Ek baar set karein — aapka daily tiffin apne aap order ho jayega.', subActive:'Active Plan', subDaysWeek:'din/hafta', subSkipped:'Skip kiye', subSkipBtn:'Din skip karein', subCancelBtn:'Plan Cancel', subEditNote:'Neeche edit karke Update dabayein', subPickMeals:'Meals chunein', subPickDays:'Din chunein', subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subDateRange:'Date range', subStart:'Shuru', subEnd:'Khatam', subDelivery:'Delivery', subUpdate:'Plan Update', subStart2:'Subscription Shuru', subAnySabzi:'Chef\'s choice', subSaved:'Subscription successfully save ho gaya.', subCancelled:'Subscription cancel ho gaya', subCancelConfirm:'Subscription cancel karein?', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subPickSkipDate:'Skip ke liye date chunein', subEndAfter:'End date start ke baad honi chahiye', subStartInfo:'Kal se aage', navSub:'Subscription', subTitle:'🔁 Subscription', subSub:'Set it once — your daily tiffin is placed automatically.', subActive:'Active Plan', subDaysWeek:'days/week', subSkipped:'Skipped', subSkipBtn:'Skip a day', subCancelBtn:'Cancel Plan', subEditNote:'Edit below & Update to change your plan', subPickMeals:'Pick meals', subPickDays:'Pick days', subWeekdays:'Mon–Fri', subAllDays:'All 7', subClear:'Clear', subDateRange:'Date range', subStart:'Start', subEnd:'End', subDelivery:'Delivery', subUpdate:'Update Plan', subStart2:'Start Subscription', subAnySabzi:'Chef\'s choice', subSaved:'Subscription saved successfully.', subCancelled:'Subscription cancelled', subCancelConfirm:'Cancel your subscription?', subSkipDone:'Day skipped', subUnskipDone:'Skip removed', subPickSkipDate:'Pick a date to skip', subEndAfter:'End date must be after start', subStartInfo:'From tomorrow onwards', navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai', contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time', navContact:'Contact Us', contactTitle:'📞 Contact Us', contactSub:'We would love to hear from you', contactInfoTitle:'ℹ️ Info', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Hours',
       aboutTitle:'ℹ️ About Us', aboutSub:'Why our tiffin is different', aboutSwipe:'← Swipe to see more →',
-      aboutContact:'📞 Questions? We\'re just a call away.'
+      aboutContact:'📞 Questions? We\'re just a call away.', locGateTitle:"Location Required", locGateSub:"We need your location to show nearby kitchens — the app won't work without it.", locGateBtn:"📍 Enable Location"
     },
     hinglish: {
       loadingEllipsis:'Loading…', signingIn:'Sign in ho raha hai…', waitingInBrowser:'Aapke browser me sign-in ka wait ho raha hai…', shareKitchen:'Share this Kitchen', shareKitchenTitle:'Share this Kitchen', shareKitchenSub:'Dosto ko ye link bhejo ya QR scan karwao', shareKitchenBtn:'📤 Share Karo', installAppRow:'App Install Karo', installAppTitle:'App Install Karo', installAppSub:'Home screen par add karo — ek tap me order karo, browser ki zaroorat nahi.', installAppIosTitle:'iPhone/iPad par Install karein', installAppIosSteps:'Neeche Share icon par tap karo, phir "Add to Home Screen" chuno.', installAppBtn:'📲 Install Karo', installAppInstalled:'✅ App install ho gayi!', allKitchensBack:'‹ All Kitchens', demoModeTitle:'🎬 Demo Mode', demoModeDesc:'Signup ki zaroorat nahi — ek tap me andar aa jaao aur poora customer experience dekho.', demoLoginBtn2:'🚀 Demo Customer se Login', demoLoggingIn:'⏳ Andar le ja rahe hain…', dscTagline:'Fresh home-style meals near you', dscYourArea:'Your Area', dscAvailableKitchens:'Available kitchens', dscSearchingNear:'Aapke paas kitchens dhoondi ja rahi hain…', dscNoNearby:'Aapke delivery radius me abhi koi kitchen nahi mili', browseKitchens:'Browse Kitchens', themeLabel:'🎨 Theme', themeSystem:'📱 System Default', themeLight:'☀️ Light', themeDark:'🌙 Dark', ratingTapStars:'Tap karke stars chuniye', ratingCommentPh:'Kuch likhna chahein? (optional)', ratingSubmitBtn:'Rating bhejein', ratingNotNow:'Abhi nahi', demoGlobalBanner:'🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai', dscLoaderTitle:'Finding kitchens near you…', dscLoaderSub:'Fresh home-style meals, loading up', couldNotLoadOrders:'Orders load nahi ho paaye.', networkErrorShort:'Network error.', retryBtn:'🔄 Retry', lblVariant:'Variant', lblSabzi:'Sabzi', lblRoti:'Roti', topRatedBadge:'★ TOP RATED', newBadge:'🆕 NEW', newTag:'New', noReviewsYet:'Abhi koi review nahi', couponNotApplied:'Coupon apply nahi hua', amountChargedLbl:'Amount charged:', legalNameLbl:'Legal Name', gstNumberLbl:'GST Number', fssaiLbl:'FSSAI Lic No', menuLoadFailed:'Menu load nahi ho paaya', totalLbl:'Total', ordersPlacedOne:'Aapka order successfully place ho gaya hai.', ordersPlacedMany:'Aapke {n} order successfully place ho gaye hain.', ordersDupSuffix:' {n} date par pehle se order maujood tha.',
@@ -1804,7 +1818,7 @@
       dupMsg:'Is date ke liye order pehle se hai. Change ke liye Store Support ko call karein: 70434 91481.',
       noUpcoming:'Abhi koi upcoming order nahi hai. Menu se meals add karke order place karein.', noHistory:'Is date par koi order nahi mila.', navHome:'Home', navCart:'Cart', navPast:'Purane Orders', navAbout:'About Us',
       aboutTitle:'ℹ️ About Us', aboutSub:'Hamara tiffin alag kyun hai', aboutSwipe:'← Aage dekhne ke liye swipe karein →',
-      aboutContact:'📞 Koi sawaal ho to humein call karein.'
+      aboutContact:'📞 Koi sawaal ho to humein call karein.', locGateTitle:"Location Zaroori Hai", locGateSub:"Aas-paas ki kitchens dikhane ke liye location chahiye — iske bina app kaam nahi karega.", locGateBtn:"📍 Location On Karein"
     },
     hi: {
       loadingEllipsis:'लोड हो रहा है…', signingIn:'साइन इन हो रहा है…', waitingInBrowser:'आपके ब्राउज़र में साइन-इन का इंतज़ार हो रहा है…', shareKitchen:'यह किचन शेयर करें', shareKitchenTitle:'यह किचन शेयर करें', shareKitchenSub:'दोस्तों को यह लिंक भेजें या QR स्कैन करवाएं', shareKitchenBtn:'📤 शेयर करें', installAppRow:'ऐप इंस्टॉल करें', installAppTitle:'ऐप इंस्टॉल करें', installAppSub:'होम स्क्रीन पर जोड़ें — एक टैप में ऑर्डर करें, ब्राउज़र की ज़रूरत नहीं।', installAppIosTitle:'iPhone/iPad पर इंस्टॉल करें', installAppIosSteps:'नीचे Share आइकन पर टैप करें, फिर "Add to Home Screen" चुनें।', installAppBtn:'📲 इंस्टॉल करें', installAppInstalled:'✅ ऐप इंस्टॉल हो गई!', allKitchensBack:'‹ सभी किचन', demoModeTitle:'🎬 डेमो मोड', demoModeDesc:'साइनअप की ज़रूरत नहीं — एक टैप में अंदर जाएं और पूरा कस्टमर अनुभव देखें।', demoLoginBtn2:'🚀 डेमो कस्टमर से लॉगिन करें', demoLoggingIn:'⏳ अंदर ले जा रहे हैं…', dscTagline:'आपके पास ताज़ा घर-जैसा खाना', dscYourArea:'आपका इलाका', dscAvailableKitchens:'उपलब्ध किचन', dscSearchingNear:'आपके पास किचन ढूंढी जा रही है…', dscNoNearby:'आपके डिलीवरी रेडियस में अभी कोई किचन नहीं मिली', browseKitchens:'किचन ब्राउज़ करें', themeLabel:'🎨 थीम', themeSystem:'📱 सिस्टम डिफ़ॉल्ट', themeLight:'☀️ लाइट', themeDark:'🌙 डार्क', ratingTapStars:'स्टार चुनने के लिए टैप करें', ratingCommentPh:'कुछ लिखना चाहेंगे? (वैकल्पिक)', ratingSubmitBtn:'रेटिंग भेजें', ratingNotNow:'अभी नहीं', demoGlobalBanner:'🎬 डेमो — जो चाहे कर सकते हैं, डेटा रोज़ रात को रीसेट हो जाता है', dscLoaderTitle:'आपके पास किचन ढूंढ रहे हैं…', dscLoaderSub:'ताज़ा घर-जैसा खाना लोड हो रहा है', couldNotLoadOrders:'ऑर्डर लोड नहीं हो पाए।', networkErrorShort:'नेटवर्क में समस्या।', retryBtn:'🔄 फिर कोशिश करें', lblVariant:'वैरिएंट', lblSabzi:'सब्ज़ी', lblRoti:'रोटी', topRatedBadge:'★ टॉप रेटेड', newBadge:'🆕 नया', newTag:'नया', noReviewsYet:'अभी कोई रिव्यू नहीं', couponNotApplied:'कूपन लागू नहीं हुआ', amountChargedLbl:'चार्ज की गई राशि:', legalNameLbl:'कानूनी नाम', gstNumberLbl:'GST नंबर', fssaiLbl:'FSSAI लाइसेंस नंबर', menuLoadFailed:'मेन्यू लोड नहीं हो पाया', totalLbl:'कुल', ordersPlacedOne:'आपका ऑर्डर सफलतापूर्वक प्लेस हो गया है।', ordersPlacedMany:'आपके {n} ऑर्डर सफलतापूर्वक प्लेस हो गए हैं।', ordersDupSuffix:' {n} तारीख़(ों) पर पहले से ऑर्डर मौजूद था।',
@@ -1846,7 +1860,7 @@
       bulkErrQty:'कम से कम 5 टिफ़िन डालें।', bulkErrDate:'डिलीवरी की तारीख चुनें।',
       bulkSubmitted:'रिक्वेस्ट भेज दी गई — किचन जल्द कन्फर्म करेगा।', bulkApproved:'स्वीकृत', bulkDeclined:'अस्वीकृत', bulkPending:'लंबित', scheduleBtn:'शेड्यूल करें', onbSkip:'छोड़ें', onb1Title:'ताज़ा टिफ़िन, रोज़', onb1Body:'ऑर्डर के बाद ही बनता है — न फ़्रोज़न, न बासी।', onb2Title:'होम और ऑफिस डिलीवरी', onb2Body:'जहाँ भी हों — घर या ऑफिस, ऑर्डर करें।', onb3Title:'आज ऑर्डर करें या शेड्यूल करें', onb3Body:'कल का टिफ़िन प्लान करना है? नीचे "Schedule Your Meal" इस्तेमाल करें।', onb4Title:'आसान पेमेंट', onb4Body:'UPI से पे करें या सीधा कैश ऑन डिलीवरी — जो पसंद हो।', onbGetStarted:'शुरू करें', navAiShort:'AI मदद', navOrdersShort:'ऑर्डर', subTitle:'🔁 सब्सक्रिप्शन', subSub:'एक बार सेट करें — आपका डेली टिफ़िन अपने आप ऑर्डर हो जाएगा।', subActive:'चालू प्लान', subDaysWeek:'दिन/हफ़्ता', subSkipped:'स्किप किए', subSkipBtn:'दिन स्किप करें', subCancelBtn:'प्लान रद्द करें', subEditNote:'नीचे बदलकर अपडेट दबाएँ', subPickMeals:'मील चुनें', subPickDays:'दिन चुनें', subWeekdays:'सोम–शुक्र', subAllDays:'सातों दिन', subClear:'साफ़', subDateRange:'तारीख़ रेंज', subStart:'शुरू', subEnd:'ख़त्म', subDelivery:'डिलीवरी', subUpdate:'प्लान अपडेट', subStart2:'सब्सक्रिप्शन शुरू', subAnySabzi:'शेफ़ की पसंद', subSaved:'सब्सक्रिप्शन सफलतापूर्वक सेव हुआ।', subCancelled:'सब्सक्रिप्शन रद्द हुआ', subCancelConfirm:'सब्सक्रिप्शन रद्द करें?', subSkipDone:'दिन स्किप हुआ', subUnskipDone:'स्किप हटा', subPickSkipDate:'स्किप के लिए तारीख़ चुनें', subEndAfter:'एंड डेट स्टार्ट के बाद हो', subStartInfo:'कल से आगे', navContact:'संपर्क करें', contactTitle:'📞 संपर्क करें', contactSub:'आपकी बात सुनना हमें अच्छा लगता है', contactInfoTitle:'ℹ️ जानकारी', contactAddrLbl:'लोकेशन', contactAreaLbl:'डिलीवरी क्षेत्र', contactHoursLbl:'डिलीवरी समय',
       aboutTitle:'ℹ️ हमारे बारे में', aboutSub:'हमारा टिफ़िन अलग क्यों है', aboutSwipe:'← आगे देखने के लिए स्वाइप करें →',
-      aboutContact:'📞 कोई सवाल? हम एक कॉल दूर हैं।'
+      aboutContact:'📞 कोई सवाल? हम एक कॉल दूर हैं।', locGateTitle:"लोकेशन ज़रूरी है", locGateSub:"आस-पास की किचन दिखाने के लिए लोकेशन चाहिए — इसके बिना ऐप काम नहीं करेगा।", locGateBtn:"📍 लोकेशन ऑन करें"
     },
     gu: {
       loadingEllipsis:'લોડ થઈ રહ્યું છે…', signingIn:'સાઇન ઇન થઈ રહ્યું છે…', waitingInBrowser:'તમારા બ્રાઉઝરમાં સાઇન-ઇનની રાહ જોવાઈ રહી છે…', shareKitchen:'આ કિચન શેર કરો', shareKitchenTitle:'આ કિચન શેર કરો', shareKitchenSub:'મિત્રોને આ લિંક મોકલો અથવા QR સ્કેન કરાવો', shareKitchenBtn:'📤 શેર કરો', installAppRow:'એપ ઇન્સ્ટોલ કરો', installAppTitle:'એપ ઇન્સ્ટોલ કરો', installAppSub:'હોમ સ્ક્રીન પર ઉમેરો — એક ટેપમાં ઓર્ડર કરો, બ્રાઉઝરની જરૂર નથી.', installAppIosTitle:'iPhone/iPad પર ઇન્સ્ટોલ કરો', installAppIosSteps:'નીચે Share આઇકન પર ટેપ કરો, પછી "Add to Home Screen" પસંદ કરો.', installAppBtn:'📲 ઇન્સ્ટોલ કરો', installAppInstalled:'✅ એપ ઇન્સ્ટોલ થઈ ગઈ!', allKitchensBack:'‹ બધા કિચન', demoModeTitle:'🎬 ડેમો મોડ', demoModeDesc:'સાઇનઅપની જરૂર નથી — એક ટેપમાં અંદર જાઓ અને પૂરો કસ્ટમર અનુભવ જુઓ.', demoLoginBtn2:'🚀 ડેમો કસ્ટમરથી લૉગિન કરો', demoLoggingIn:'⏳ અંદર લઈ જઈ રહ્યા છીએ…', dscTagline:'તમારી નજીક તાજું ઘર-જેવું ભોજન', dscYourArea:'તમારો વિસ્તાર', dscAvailableKitchens:'ઉપલબ્ધ કિચન', dscSearchingNear:'તમારી નજીકના કિચન શોધાઈ રહ્યા છે…', dscNoNearby:'તમારા ડિલિવરી રેડિયસમાં હજુ કોઈ કિચન મળ્યું નથી', browseKitchens:'કિચન બ્રાઉઝ કરો', themeLabel:'🎨 થીમ', themeSystem:'📱 સિસ્ટમ ડિફૉલ્ટ', themeLight:'☀️ લાઇટ', themeDark:'🌙 ડાર્ક', ratingTapStars:'સ્ટાર પસંદ કરવા ટેપ કરો', ratingCommentPh:'કંઈક લખવા માંગો છો? (વૈકલ્પિક)', ratingSubmitBtn:'રેટિંગ મોકલો', ratingNotNow:'હમણાં નહીં', demoGlobalBanner:'🎬 ડેમો — જે ઈચ્છો તે કરી શકો છો, ડેટા દરરોજ રાત્રે રીસેટ થાય છે', dscLoaderTitle:'તમારી નજીક કિચન શોધી રહ્યા છીએ…', dscLoaderSub:'તાજું ઘર-જેવું ભોજન લોડ થઈ રહ્યું છે', couldNotLoadOrders:'ઓર્ડર લોડ થઈ શક્યા નહીં.', networkErrorShort:'નેટવર્ક ભૂલ.', retryBtn:'🔄 ફરી પ્રયત્ન કરો', lblVariant:'વેરિઅન્ટ', lblSabzi:'શાક', lblRoti:'રોટલી', topRatedBadge:'★ ટોપ રેટેડ', newBadge:'🆕 નવું', newTag:'નવું', noReviewsYet:'હજુ કોઈ રિવ્યૂ નથી', couponNotApplied:'કૂપન લાગુ થયું નથી', amountChargedLbl:'ચાર્જ થયેલી રકમ:', legalNameLbl:'કાનૂની નામ', gstNumberLbl:'GST નંબર', fssaiLbl:'FSSAI લાઇસન્સ નંબર', menuLoadFailed:'મેનૂ લોડ થઈ શક્યું નહીં', totalLbl:'કુલ', ordersPlacedOne:'તમારો ઓર્ડર સફળતાપૂર્વક પ્લેસ થયો છે.', ordersPlacedMany:'તમારા {n} ઓર્ડર સફળતાપૂર્વક પ્લેસ થયા છે.', ordersDupSuffix:' {n} તારીખ(તારીખો) પર પહેલેથી ઓર્ડર હતો.',
@@ -1888,7 +1902,7 @@
       bulkErrQty:'ઓછામાં ઓછા 5 ટિફિન દાખલ કરો.', bulkErrDate:'ડિલિવરી તારીખ પસંદ કરો.',
       bulkSubmitted:'રિક્વેસ્ટ મોકલાઈ — કિચન જલ્દી કન્ફર્મ કરશે.', bulkApproved:'મંજૂર', bulkDeclined:'નકારેલ', bulkPending:'બાકી', scheduleBtn:'શેડ્યૂલ કરો', onbSkip:'છોડો', onb1Title:'તાજું ટિફિન, રોજ', onb1Body:'ઓર્ડર પછી જ બને છે — ન ફ્રોઝન, ન વાસી.', onb2Title:'હોમ અને ઓફિસ ડિલિવરી', onb2Body:'જ્યાં પણ હો — ઘરે કે ઓફિસે, ઓર્ડર કરો.', onb3Title:'આજે ઓર્ડર કરો અથવા શેડ્યૂલ કરો', onb3Body:'કાલનું ટિફિન પ્લાન કરવું છે? નીચે "Schedule Your Meal" વાપરો.', onb4Title:'સરળ પેમેન્ટ', onb4Body:'UPI થી પે કરો અથવા સીધું કેશ ઓન ડિલિવરી — જે પસંદ હોય.', onbGetStarted:'શરૂ કરો', navAiShort:'AI મદદ',  navOrdersShort:'ઓર્ડર', subTitle:'🔁 સબ્સ્ક્રિપ્શન', subSub:'એક વાર સેટ કરો — તમારું ડેઇલી ટિફિન આપોઆપ ઓર્ડર થઈ જશે.', subActive:'ચાલુ પ્લાન', subDaysWeek:'દિવસ/અઠવાડિયું', subSkipped:'સ્કિપ કર્યા', subSkipBtn:'દિવસ સ્કિપ કરો', subCancelBtn:'પ્લાન રદ કરો', subEditNote:'નીચે બદલીને અપડેટ દબાવો', subPickMeals:'મીલ પસંદ કરો', subPickDays:'દિવસ પસંદ કરો', subWeekdays:'સોમ–શુક્ર', subAllDays:'સાતેય દિવસ', subClear:'સાફ', subDateRange:'તારીખ રેન્જ', subStart:'શરૂ', subEnd:'અંત', subDelivery:'ડિલિવરી', subUpdate:'પ્લાન અપડેટ', subStart2:'સબ્સ્ક્રિપ્શન શરૂ', subAnySabzi:'શેફની પસંદ', subSaved:'સબ્સ્ક્રિપ્શન સફળતાપૂર્વક સેવ થયું.', subCancelled:'સબ્સ્ક્રિપ્શન રદ થયું', subCancelConfirm:'સબ્સ્ક્રિપ્શન રદ કરો?', subSkipDone:'દિવસ સ્કિપ થયો', subUnskipDone:'સ્કિપ દૂર', subPickSkipDate:'સ્કિપ માટે તારીખ પસંદ કરો', subEndAfter:'એન્ડ ડેટ સ્ટાર્ટ પછી હોવી જોઈએ', subStartInfo:'કાલથી આગળ', navContact:'સંપર્ક કરો', contactTitle:'📞 સંપર્ક કરો', contactSub:'તમારી વાત સાંભળવી અમને ગમે છે', contactInfoTitle:'ℹ️ માહિતી', contactAddrLbl:'લોકેશન', contactAreaLbl:'ડિલિવરી વિસ્તાર', contactHoursLbl:'ડિલિવરી સમય',
       aboutTitle:'ℹ️ અમારા વિશે', aboutSub:'અમારું ટિફિન કેમ અલગ છે', aboutSwipe:'← વધુ જોવા માટે સ્વાઇપ કરો →',
-      aboutContact:'📞 કોઈ સવાલ? અમે એક કોલ દૂર છીએ.'
+      aboutContact:'📞 કોઈ સવાલ? અમે એક કોલ દૂર છીએ.', locGateTitle:"લોકેશન જરૂરી છે", locGateSub:"નજીકના કિચન બતાવવા માટે લોકેશન જોઈએ — તેના વગર એપ કામ નહીં કરે.", locGateBtn:"📍 લોકેશન ચાલુ કરો"
     }
   };
   let LANG = 'en';
@@ -2665,7 +2679,9 @@
   let adminCurTab='orders';
   // Users occasional lookup hai (dispute/block ke waqt), Setup me Emergency Close jaisa
   // time-critical toggle hai — isliye Setup primary bar me, Users "More" me shift kiya.
-  const ADMIN_BN_TABS=['orders','config','menu','stats'];   // ye 4 seedhe bottom nav mein; baaki "More" sheet mein
+  // Close Kitchen apna alag "tab" nahi hai (seedha sheet kholta hai, koi view nahi) —
+  // isliye is list me nahi, sirf 'bulk' naya add hua hai jo persistent view hai.
+  const ADMIN_BN_TABS=['orders','config','bulk'];   // ye seedhe bottom nav mein; baaki "More" sheet ya Setup ke andar se
   function adminOpenLastTab(){
     let tab='orders';
     try{ const s=storeGet('fbt_admin_tab'); if(s && ADMIN_SECTIONS[s]) tab=s; }catch(e){}
@@ -2940,13 +2956,18 @@
   // VENDOR karta hai (status change, bulk approve/decline) yahan aati hai.
   // Unread state client-side hai (last-seen timestamp) — backend kisi row ko
   // "read" mark karne ke liye alag se likhta nahi, sirf history deta hai.
-  let notifCache=[];
+  let notifCache=[], notifTimer=null;
   function loadNotifications(){
     if(!isLoggedIn()) return;
     const url=GOOGLE_SCRIPT_URL+'?action=mynotifications&token='+encodeURIComponent(SESSION.token)+'&vendorId='+VENDOR_ID+'&authVendorId='+((SESSION&&SESSION.vid)||VENDOR_ID);
     fetch(url).then(r=>r.json()).then(j=>{
       if(j.status==='success'){ notifCache=j.notifications||[]; renderNotifBadge(); }
     }).catch(()=>{});
+    // Boot-time fetch + push-triggered refresh ke bharose mat raho — FCM
+    // foreground push reliably fire nahi karta (permission denied/background
+    // tab/etc), jisse naya notification sirf manual refresh pe hi dikhta tha.
+    // Vendor bell jaisa hi 60s poll (mirrors loadVendorNotifications()).
+    if(!notifTimer) notifTimer=setInterval(()=>{ if(isLoggedIn()) loadNotifications(); }, 60000);
   }
   function notifSeenKey(){ return 'fbt_notif_seen'; }
   function renderNotifBadge(){
@@ -3434,6 +3455,40 @@
     const aal=document.getElementById('authAdminLink'); if(aal) aal.classList.toggle('hidden', APK_MODE==='customer');
     initGoogleButton();
   }
+  // ═══════ MANDATORY LOCATION GATE (customer) ═══════
+  // Poora app ab location permission ke bina use nahi hota — chahe customer
+  // kisi vendor ke direct ?v= link se aaya ho ya Discovery se, jab tak
+  // permission grant na ho, Home/Cart/Orders kuch bhi nahi khulta. Ek baar
+  // grant ho jaaye to browser khud yaad rakhta hai (permission state
+  // persist), dobara nahi poochta — sirf denied/abhi-tak-na-diya state pe
+  // hi ye gate dikhta hai. Discovery ka apna location flow (startDiscoveryFlow)
+  // isi gate ko reuse karta hai jab location fail/deny ho.
+  function showLocationGate(retryFn){
+    const el=document.getElementById('locationGate'); if(!el) return;
+    el.classList.remove('hidden');
+    const btn=document.getElementById('locGateRetryBtn');
+    if(btn) btn.onclick = retryFn;
+  }
+  function hideLocationGate(){
+    const el=document.getElementById('locationGate'); if(el) el.classList.add('hidden');
+  }
+  function ensureLocationThen(onGranted){
+    if(!navigator.geolocation){ onGranted(); return; }   // browser support hi nahi to gate mat lagao
+    const askNow = () => {
+      navigator.geolocation.getCurrentPosition(
+        () => { hideLocationGate(); onGranted(); },
+        () => { showLocationGate(askNow); },
+        { timeout:10000 }
+      );
+    };
+    if(navigator.permissions && navigator.permissions.query){
+      navigator.permissions.query({ name:'geolocation' }).then(res=>{
+        if(res.state==='granted') askNow();
+        else if(res.state==='prompt'){ showLocationGate(askNow); askNow(); }
+        else showLocationGate(askNow);   // denied — wait for manual retry (after settings change)
+      }).catch(askNow);
+    } else askNow();
+  }
   // ⚠️ enterApp() har customer login path (email/Google/demo/restore) ke ek
   // hi shared .then() ke andar, unprotected, call hota hai — isme se KOI EK
   // call throw kare (jaise kisi vendor ka data-shape ajeeb ho) to caller ka
@@ -3441,6 +3496,9 @@
   // (jaise showLanding()/renderCart()) kabhi chalte hi nahi — poora login
   // adhoora reh jaata. Har step isolate karo (adminLogin() jaisa hi pattern).
   function enterApp(restore){
+    ensureLocationThen(() => enterAppInner(restore));
+  }
+  function enterAppInner(restore){
     const step = (name, fn) => {
       try { fn(); }
       catch (e) { dbgLog({ ev:'enterApp_step_fail', step:name, err:String((e&&e.message)||e).slice(0,140) }); }
@@ -3855,6 +3913,7 @@
 
     // 1. In-memory user state clear
     for (let key in statsCache) delete statsCache[key];
+    if (notifTimer) { clearInterval(notifTimer); notifTimer = null; }
     SESSION = null;
     cart = [];
     appliedPromo = null;
@@ -3887,7 +3946,7 @@
     if (typeof openDiscovery === 'function') openDiscovery();
     else if (typeof showPublic === 'function') showPublic();
   }
-  function forceLogout(){ gsiStopAutoSelect(); resetMyRating(); dbgLog({ev:'FORCE_LOGOUT', vid:VENDOR_ID}); SESSION=null; invalidateSubCache(); storeDel('fbt_session'); showToast(t('sessionExpired'),'warning'); showAuth(); }
+  function forceLogout(){ gsiStopAutoSelect(); resetMyRating(); dbgLog({ev:'FORCE_LOGOUT', vid:VENDOR_ID}); if(notifTimer){ clearInterval(notifTimer); notifTimer=null; } SESSION=null; invalidateSubCache(); storeDel('fbt_session'); showToast(t('sessionExpired'),'warning'); showAuth(); }
   // ═══════ EXIT-CONFIRM SHEET (mobile back button, top-level) ═══════
   // Pehle "press back again to exit" (2s double-tap, toast-based) tha — na koi
   // real confirmation dikhta tha, na exit karne par logout hota tha (agli baar
@@ -5115,19 +5174,20 @@
   // poora 3s wait nahi karna.
   function startDiscoveryFlow(){
     dscShowOnly(['dscRadarState']);
-    if(!navigator.geolocation){ fallbackToBrowse(); return; }
+    if(!navigator.geolocation){ showLocationGate(startDiscoveryFlow); return; }
     let best=null, watchId=null, done=false;
     function useBest(){
       if(done) return; done=true;
       if(watchId!=null) navigator.geolocation.clearWatch(watchId);
-      if(!best){ fallbackToBrowse(); return; }
+      if(!best){ showLocationGate(startDiscoveryFlow); return; }
+      hideLocationGate();
       const lat=best.coords.latitude, lng=best.coords.longitude;
       resolveDscAreaLabel(lat,lng,best.coords.accuracy);
       fetch(GOOGLE_SCRIPT_URL+'?action=nearbyvendors&lat='+lat+'&lng='+lng).then(r=>r.json()).then(j=>{
         const vendors=(j&&j.vendors)||[];
         if(vendors.length) renderDscNearby(vendors);
         else dscShowOnly(['dscEmptyNear']);
-      }).catch(()=>{ fallbackToBrowse(); });
+      }).catch(()=>{ showLocationGate(startDiscoveryFlow); });
     }
     watchId = navigator.geolocation.watchPosition(pos=>{
       if(!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
@@ -5135,7 +5195,7 @@
     }, ()=>{
       if(done) return; done=true;
       if(watchId!=null) navigator.geolocation.clearWatch(watchId);
-      fallbackToBrowse();
+      showLocationGate(startDiscoveryFlow);
     }, { enableHighAccuracy:true, timeout:10000 });
     setTimeout(useBest, 3000);
   }
@@ -5524,7 +5584,12 @@
   // Vendor ki apni PLATFORM subscription — 'stats' response me aata hai (admin login
   // ke ek hi round-trip me), Billing tab khulte hi renderVendorBilling() isse dikhata hai.
   let vendorBilling=null, platformPaymentInfo=null, vendorBillingHistory=null;
-  function showAdminLogin(){ showView('adminLogin'); }
+  // ⚠️ Location gate customer-only hai (Discovery/enterApp) — agar Discovery
+  // location fail hone par gate dikha raha tha aur usi waqt user "Admin" pe
+  // chala gaya, gate (full-screen overlay, sabse upar) admin login form ke
+  // clicks intercept kar leta tha, login hi impossible ho jaata. Admin route
+  // pe jaate hi gate hata do.
+  function showAdminLogin(){ hideLocationGate(); showView('adminLogin'); }
   function hideAdmin(){ exitAdminTheme(); if(storeGet('fbt_lang')) setLang(storeGet('fbt_lang')); isLoggedIn()?showLanding():showPublic(); }
   function adminLogout(){ adminCreds=null; adminCredsValidated=false; storeDel('fbt_admin'); stopAlertPolling(); stopRing(); if(vendorNotifTimer){ clearInterval(vendorNotifTimer); vendorNotifTimer=null; } hideAdmin(); }
   function adminTab(tb){ ['orders','users','menu','config','stats','variants','promos','billing','bulk'].forEach(x=>{ const v=document.getElementById('aview-'+x); const b=document.getElementById('atab-'+x); if(v)v.classList.toggle('hidden',x!==tb); if(b)b.classList.toggle('active',x===tb); }); if(tb==='variants') openVariantsEditor(); if(tb==='promos') loadPromos(); if(tb==='billing') renderVendorBilling(); if(tb==='bulk') loadBulkRequests(); }
@@ -7435,6 +7500,11 @@
       if(hhmmToMins(mt.windowStart)===null||hhmmToMins(mt.windowEnd)===null){ cfgFail('meals','⚠️ '+mt.title+' — serving window (start/end) set karo.'); return; }
       if(hhmmToMins(mt.cutoff)===null){ cfgFail('meals','⚠️ '+mt.title+' — order cut-off set karo.'); return; }
     }
+    // Kitchen location ab mandatory hai — GPS-radius discovery isi pe depend
+    // karta hai, aur customer-side location gate ke saath consistent rehne
+    // ke liye vendor bhi apni kitchen ki jagah set kiye bina Setup save nahi
+    // kar sakta.
+    if(workingKitchenLat==null || workingKitchenLng==null){ cfgFail('kitchen','⚠️ Pehle "Use my current location" se apni kitchen ki location set karein.'); return; }
     const mealTypes=JSON.parse(JSON.stringify(workingMealTypes));
     // Township/societies/discovery-toggle/home-office-mode/companies/UPI/legal-GST/
     // WhatsApp-toggle ab Super Admin ke paas hain (vendor Setup se hataye gaye —

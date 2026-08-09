@@ -40,12 +40,20 @@ function seedOrder(state, over = {}) {
 
 test.describe('Discovery — many vendors', () => {
   test(`${N_VENDORS} vendors discovery page pe lag ke bina render hote hain`, async ({ page }) => {
+    // Location is now mandatory app-wide — Discovery's ONLY path is the GPS
+    // "near you" one (openApp() grants geolocation by default); the old
+    // area-chip/full-browse fallback this test used to measure no longer
+    // exists in the normal flow. Seed vendors with lat/lng near the default
+    // granted position instead, so this still measures render-at-scale
+    // performance through the path that's actually reachable.
+    const CUSTOMER_LAT = 23.0225, CUSTOMER_LNG = 72.5714;
     const state = freshState();
     state.discoveryVendors = Array.from({ length: N_VENDORS }, (_, i) => ({
       vendorId: 'kitchen' + i,
       name: 'Kitchen ' + i,
       cuisine: i % 2 ? 'Gujarati' : 'Punjabi',
       areas: [AREAS[i % AREAS.length]],
+      lat: CUSTOMER_LAT + (i % 5) * 0.001, lng: CUSTOMER_LNG + (i % 5) * 0.001, deliveryRadiusKm: 50,
       logo: '',
       minOrder: 100,
       ratingCount: i % 4,
@@ -55,12 +63,9 @@ test.describe('Discovery — many vendors', () => {
 
     const t0 = Date.now();
     await page.evaluate(() => window.openDiscovery());
-    // loadDscAreas() auto-picks dscAreas[0] as the default area (dscArea/dscAreas
-    // are page-scoped `let`, not window-exposed) — only that one area's vendors
-    // render, evenly distributed across AREAS.length. Card class is `.zrc`
-    // (Zomato-style redesign), not the older `.kit` this test previously targeted.
-    const expectedInArea = Math.ceil(N_VENDORS / AREAS.length);
-    await expect(page.locator('#dscList .zrc')).toHaveCount(expectedInArea, { timeout: 15000 });
+    // Card class is `.zrc` (Zomato-style redesign), not the older `.kit`
+    // this test previously targeted.
+    await expect(page.locator('#dscNearList .zrc')).toHaveCount(N_VENDORS, { timeout: 15000 });
     const elapsed = Date.now() - t0;
     console.log(`Discovery render (${N_VENDORS} total vendors): ${elapsed}ms`);
     expect(elapsed).toBeLessThan(8000);
