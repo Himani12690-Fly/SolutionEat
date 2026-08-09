@@ -157,4 +157,35 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/, { timeout: 15000 });
     await expect(page.locator('#dscLocRetry')).toHaveClass(/hidden/);
   });
+
+  // ⚠️ Real bug found on a real device: tapping "Try location again" while
+  // the browser had genuinely, permanently denied the site's permission just
+  // flickered the radar-spinner for an instant and landed back on the exact
+  // same fallback screen — no popup, no explanation, looked completely dead.
+  // That's not a bug in the app: once denied, NO website's JS can force the
+  // native prompt to reopen (hard browser security rule). Playwright can't
+  // simulate a genuine "denied" permissions state (only "granted" or the
+  // default "prompt"), so stub navigator.permissions.query directly to
+  // exercise that branch — the fix must recognize "denied" and explain it via
+  // a toast instead of silently re-attempting and going nowhere.
+  test('a genuinely denied permission explains itself via a toast instead of silently flickering', async ({ page }) => {
+    const state = seedVendors();
+    await page.addInitScript(() => {
+      const real = navigator.permissions && navigator.permissions.query;
+      if (navigator.permissions) {
+        navigator.permissions.query = (opts) => {
+          if (opts && opts.name === 'geolocation') return Promise.resolve({ state: 'denied' });
+          return real.call(navigator.permissions, opts);
+        };
+      }
+    });
+    await openAppRaw(page, { state, loggedIn: false, geo: false });
+    await page.evaluate(() => window.openDiscovery());
+    await expect(page.locator('#dscLocRetry')).toBeVisible({ timeout: 15000 });
+    await page.locator('#dscLocRetry').click();
+    await expect(page.locator('#toast')).toContainText('blocked', { timeout: 3000 });
+    // Never silently flickers into the radar-spinner state for a denied permission.
+    await expect(page.locator('#dscRadarState')).toHaveClass(/hidden/);
+    await expect(page.locator('#dscLocRetry')).toBeVisible();
+  });
 });
