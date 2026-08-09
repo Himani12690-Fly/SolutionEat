@@ -283,6 +283,14 @@
       border-bottom:1.5px dotted var(--line); padding-bottom:1px; }
     .h1-top.h1-centered .h1-name { font-size:22px; white-space:normal; }
     .h1-top.h1-centered .h1-loc { font-size:13px; margin-top:4px; white-space:normal; }
+    /* Notification bell — hero ke top-left corner me (h1-rate top-right leta hai) */
+    .h1-bell { position:absolute; top:16px; left:16px; z-index:2; width:38px; height:38px;
+      border-radius:50%; background:var(--card); border:1.5px solid var(--line); display:flex;
+      align-items:center; justify-content:center; font-size:17px; cursor:pointer;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+    .h1-bell-badge { position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px;
+      border-radius:9px; background:var(--danger); color:#fff; font-size:9.5px; font-weight:900;
+      display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--card); }
 
     /* Sticky date + time picker */
     .h1-picker { padding:0 18px 12px; position:sticky; top:0; z-index:6;
@@ -1091,6 +1099,14 @@
     .cfg-flash { animation:cfgFlash 1.2s ease; }
     @keyframes cfgFlash { 0%,100%{ box-shadow:none; } 30%{ box-shadow:0 0 0 3px var(--danger); } }
     .admin-topbar .alert-toggle { float:none; font-size:10.5px; font-weight:800; background:rgba(255,255,255,.18); color:#fff; border-radius:16px; padding:6px 12px; cursor:pointer; }
+    /* Vendor ka notification bell — mandatory/always-on, koi ON/OFF state nahi
+       (alert-toggle se ALAG cheez hai — wo panel-khula-rehte sound alert hai). */
+    .admin-bell { position:relative; flex:none; width:30px; height:30px; border-radius:9px;
+      background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center;
+      font-size:15px; cursor:pointer; }
+    .admin-bell-badge { position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 3px;
+      border-radius:8px; background:#fff; color:var(--danger); font-size:9px; font-weight:900;
+      display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--accent-dark); }
     /* Admin drawer active item */
     #adminPanel .back-link, #adminPanel .alert-toggle { font-size:11px; }
     /* Home ka date-chip row hata diya (ab hamesha aaj hi dikhta hai) — future
