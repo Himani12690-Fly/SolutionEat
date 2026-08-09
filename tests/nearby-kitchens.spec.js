@@ -17,9 +17,16 @@ const CUSTOMER_LAT = 23.0225, CUSTOMER_LNG = 72.5714;
 
 test.describe('Admin Setup — Kitchen Location', () => {
   test('"Use my current location" captures GPS coords and shows them', async ({ page, context }) => {
+    // freshState()'s CONFIG now defaults to an already-set kitchen location
+    // (see fixtures.js — needed so Setup-save tests aren't all forced to
+    // capture location first) — explicitly clear it here since this test's
+    // whole point is the "not set yet" → capture flow.
+    const state = freshState();
+    state.config.kitchenLat = null;
+    state.config.kitchenLng = null;
     await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
     await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
-    await openApp(page);
+    await openApp(page, { state });
     await adminLogin(page);
     await page.evaluate(() => window.adminBnGo('config'));
     await page.evaluate(() => window.cfgToggle('kitchen')); // "Kitchen" accordion section starts collapsed
@@ -97,28 +104,36 @@ test.describe('Discovery — Near You (GPS radius)', () => {
     await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
   });
 
-  test('poor GPS accuracy skips the resolved locality label — no confidently-wrong far-away place name', async ({ page, context }) => {
+  test('poor GPS accuracy skips the resolved locality label — no confidently-wrong far-away place name', async ({ page }) => {
     const state = seedVendors();
-    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    // Bare platform link (no ?v=) auto-triggers Discovery's own geolocation
+    // flow at boot, INSIDE openAppRaw()'s page.goto() — before any test code
+    // after openAppRaw() returns gets a chance to run. Setting geolocation
+    // afterward is too late (the label would already be resolved+cached from
+    // that first automatic attempt); pass the low-accuracy position through
+    // opts.geo so it's in effect from that very first attempt.
     // 5km accuracy radius — device only knows it's SOMEWHERE in a 5km circle, so
     // naming a specific locality (which may be km away from where the customer
     // actually is) would be confidently wrong, not just imprecise.
-    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG, accuracy: 5000 });
-    await openAppRaw(page, { state, loggedIn: false });
-    await page.evaluate(() => window.openDiscovery());
+    await openAppRaw(page, { state, loggedIn: false, geo: { latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG, accuracy: 5000 } });
     // The actual nearby-vendor match still runs fine — only the cosmetic label is gated.
     await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/, { timeout: 10000 });
     await expect(page.locator('#dscCity')).toHaveText('Your Area'); // untouched default, not a reverse-geocoded guess
   });
 
-  test('location denied falls back to the existing area-chip/full-list browsing', async ({ page, context }) => {
+  // Location is now mandatory app-wide — a denied/unavailable location no
+  // longer falls back to an unfiltered "browse everything" list (that was
+  // itself a privacy/relevance concern). It shows the same blocking
+  // location-permission gate used everywhere else, with a retry.
+  test('location denied shows the mandatory location gate, not a fallback list', async ({ page }) => {
     const state = seedVendors();
-    // No grantPermissions() call — geolocation stays denied, matching Chromium's default.
-    await openAppRaw(page, { state, loggedIn: false });
+    // geo:false — skip openApp()'s default grant/position, geolocation stays
+    // denied, matching Chromium's default.
+    await openAppRaw(page, { state, loggedIn: false, geo: false });
     await page.evaluate(() => window.openDiscovery());
-    await page.waitForFunction(() => document.querySelectorAll('#dscList .zrc').length > 0, { timeout: 15000 }).catch(() => {});
-    await expect(page.locator('#dscAreas')).toBeVisible();
-    await expect(page.locator('#dscBrowseWrap')).toBeVisible();
+    await expect(page.locator('#locationGate')).not.toHaveClass(/hidden/, { timeout: 15000 });
+    await expect(page.locator('#dscAreas')).toHaveClass(/hidden/);
+    await expect(page.locator('#dscBrowseWrap')).toHaveClass(/hidden/);
     await expect(page.locator('#dscNearWrap')).toHaveClass(/hidden/);
   });
 });

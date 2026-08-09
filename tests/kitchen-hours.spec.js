@@ -109,15 +109,14 @@ test.describe('Home date chips — Today/Tomorrow/Day After', () => {
 });
 
 test.describe('Emergency Close — admin quick action with duration', () => {
-  // "Close Kitchen" ab More menu se khulta hai (ek hi jagah — pehle topbar icon +
-  // Setup ke 2 alag jagah bikhra hua tha), instant close + planned dates dono
-  // isi sheet me.
-  test('opens from the More menu, picking a duration and confirming closes the kitchen', async ({ page }) => {
+  // "Close Kitchen" ab bottom nav me seedha hai (ek hi jagah — pehle topbar icon +
+  // Setup ke 2 alag jagah bikhra hua tha, phir kuch waqt More menu me tha), instant
+  // close + planned dates dono isi sheet me.
+  test('opens from the bottom nav, picking a duration and confirming closes the kitchen', async ({ page }) => {
     const state = freshState();
     await openApp(page, { state });
     await adminLogin(page);
-    await page.evaluate(() => window.openAdminMore());
-    await page.click('#adr-closekitchen');
+    await page.click('#abn-closekitchen');
     await expect(page.locator('#emergencySheet')).not.toHaveClass(/hidden/);
     await page.click('[data-mins="60"]');
     await page.click('text=🚨 Close Kitchen Now');
@@ -154,8 +153,7 @@ test.describe('Emergency Close — admin quick action with duration', () => {
     state.config.tempClosedUntil = new Date(Date.now() + 30 * 60000).toISOString();
     await openApp(page, { state });
     await adminLogin(page);
-    await page.evaluate(() => window.openAdminMore());
-    await page.click('#adr-closekitchen');
+    await page.click('#abn-closekitchen');
     await expect(page.locator('#emgClosedBlock')).not.toHaveClass(/hidden/);
     await page.click('text=✅ Reopen Now');
     await page.waitForTimeout(300);

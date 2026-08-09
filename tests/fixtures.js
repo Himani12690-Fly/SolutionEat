@@ -34,7 +34,12 @@ const CONFIG = {
   upiId: '7043491481@ybl', upiName: 'Nest & Nosh', fssai: '20724XXXXXXXXXX',
   whatsappAuto: false,
   mealsEnabled: { breakfast:true, lunch:true, dinner:true },
-  homeEnabled: true, officeEnabled: false, companies: []
+  homeEnabled: true, officeEnabled: false, companies: [],
+  // Kitchen location is now mandatory to save Setup (see index.html's
+  // saveConfig()) — default every test's vendor to already having it set
+  // (Ahmedabad coords, matching nearby-kitchens.spec.js's CUSTOMER_LAT/LNG),
+  // so existing Setup-save tests aren't all forced to capture location first.
+  kitchenLat: 23.0225, kitchenLng: 72.5714, deliveryRadiusKm: 4
 };
 
 const DAY = {

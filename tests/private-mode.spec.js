@@ -76,16 +76,20 @@ test.describe('Private mode — hardware back button', () => {
 });
 
 test.describe('Discovery opt-out toggle', () => {
-  test('vendor with listInDiscovery=false is excluded from discover/areas', async ({ page }) => {
+  test('vendor with listInDiscovery=false is excluded from nearby vendors', async ({ page }) => {
+    // Location is now mandatory app-wide — Discovery's only path is GPS
+    // "near you" (openApp() grants geolocation by default), so vendors need
+    // lat/lng to be discoverable at all, matching the mock's nearbyvendors filter.
+    const CUSTOMER_LAT = 23.0225, CUSTOMER_LNG = 72.5714;
     const state = freshState();
     state.discoveryVendors = [
-      { vendorId: 'kitchenA', name: 'Kitchen A', areas: ['Gota'], cuisine: 'Gujarati' },
-      { vendorId: 'kitchenB', name: 'Kitchen B', areas: ['Gota'], cuisine: 'Punjabi', listInDiscovery: false },
+      { vendorId: 'kitchenA', name: 'Kitchen A', areas: ['Gota'], cuisine: 'Gujarati', lat: CUSTOMER_LAT, lng: CUSTOMER_LNG, deliveryRadiusKm: 10 },
+      { vendorId: 'kitchenB', name: 'Kitchen B', areas: ['Gota'], cuisine: 'Punjabi', lat: CUSTOMER_LAT, lng: CUSTOMER_LNG, deliveryRadiusKm: 10, listInDiscovery: false },
     ];
     await openAppRaw(page, { state, loggedIn: false });
     await page.evaluate(() => window.openDiscovery());
-    await page.waitForFunction(() => document.querySelectorAll('#dscList .zrc').length > 0, { timeout: 15000 }).catch(() => {});
-    const text = await page.locator('#dscList').innerText();
+    await expect(page.locator('#dscNearWrap')).not.toHaveClass(/hidden/, { timeout: 15000 });
+    const text = await page.locator('#dscNearList').innerText();
     expect(text).toContain('Kitchen A');
     expect(text).not.toContain('Kitchen B');
   });
