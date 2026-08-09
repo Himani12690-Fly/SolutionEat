@@ -20,7 +20,12 @@ function freshState() {
     menu: JSON.parse(JSON.stringify(MENU)),
     nextRow: 2,
     bulkRequests: [],  // { row, id, phone, name, meal, qty, date, address, notes, status, approvedQty, approvedPrice, adminNote }
-    calls: []          // audit trail — tests isse assert karte hain
+    calls: [],         // audit trail — tests isse assert karte hain
+    // Super Admin cross-tenant actions ka apna alag store — state.config/state.users
+    // hamesha "jis vendor se abhi login hai" ke liye hain, ye targetVendorId -> data
+    // hai (Super Admin doosre vendor ki config/users chhoo raha hai, apni nahi).
+    vendorConfigs: {}, // targetVendorId -> config object
+    vendorUsers: {}    // targetVendorId -> users array
   };
 }
 
@@ -162,6 +167,40 @@ function handlePost(state, body) {
   }
   if (action === 'uploadplatformqr' || action === 'uploadvendorlogo')
     return superOK ? { status:'success', url:'https://example.test/img.jpg', id:'x1' } : denied;
+
+  // ── Super Admin acting on behalf of a specific vendor ──
+  if (['supergetvendorconfig', 'supersavevendorconfig', 'superaddmealtype', 'superlistusers', 'supersetuserstatus', 'superresetuser'].includes(action)) {
+    if (!superOK) return denied;
+    const tid = String(p.targetVendorId || '').trim().toLowerCase();
+    if (!state.vendors.some(v => v.vendorId === tid)) return { status:'error', message:'Vendor not found' };
+    if (!state.vendorConfigs[tid]) state.vendorConfigs[tid] = JSON.parse(JSON.stringify(CONFIG));
+    if (!state.vendorUsers[tid]) state.vendorUsers[tid] = [];
+
+    if (action === 'supergetvendorconfig') return { status:'success', config: state.vendorConfigs[tid] };
+    if (action === 'supersavevendorconfig') {
+      Object.assign(state.vendorConfigs[tid], p.patch || {});
+      return { status:'success', config: state.vendorConfigs[tid] };
+    }
+    if (action === 'superaddmealtype') {
+      const list = state.vendorConfigs[tid].mealTypes || [];
+      if (!p.mealType || !p.mealType.key || !p.mealType.title) return { status:'error', message:'Meal key aur title zaroori hain' };
+      if (list.some(m => m.key === p.mealType.key)) return { status:'error', message:'Ye meal key already maujood hai' };
+      list.push(p.mealType);
+      state.vendorConfigs[tid].mealTypes = list;
+      return { status:'success', config: state.vendorConfigs[tid] };
+    }
+    if (action === 'superlistusers') return { status:'success', users: state.vendorUsers[tid] };
+    if (action === 'supersetuserstatus') {
+      const u = state.vendorUsers[tid].find(x => x.phone === p.phone);
+      if (!u) return { status:'error', message:'User not found.' };
+      u.status = p.status;
+      return { status:'success' };
+    }
+    if (action === 'superresetuser') {
+      state.vendorUsers[tid] = state.vendorUsers[tid].filter(x => x.phone !== p.phone);
+      return { status:'success' };
+    }
+  }
 
   // ── Customer session ──
   if (action === 'emaillogin')

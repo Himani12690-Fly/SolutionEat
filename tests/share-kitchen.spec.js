@@ -8,7 +8,7 @@
  *   word-of-mouth referral.
  */
 const { test, expect } = require('@playwright/test');
-const { openApp: openAppRaw, adminLogin } = require('./helpers');
+const { openApp: openAppRaw, adminLogin, freshState } = require('./helpers');
 const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
 
 test.describe('Admin — kitchen QR', () => {
@@ -28,13 +28,13 @@ test.describe('Admin — kitchen QR', () => {
   });
 
   test('link stays correct even with Discovery opted out', async ({ page }) => {
-    const { state } = await openApp(page);
+    // Discovery toggle ab Super Admin ke paas hai (vendor Setup se nahi) —
+    // seedha state seed karke us halat ko simulate karte hain.
+    const state = freshState();
+    state.config.listInDiscovery = false;
+    await openApp(page, { state });
     await adminLogin(page);
     await page.evaluate(() => window.adminTab('config'));
-    await page.evaluate(() => { document.getElementById('cfg-listInDiscovery').checked = false; });
-    await page.evaluate(() => window.saveConfig());
-    await page.waitForTimeout(400);
-    expect(state.config.listInDiscovery).toBe(false);
     const linkText = await page.evaluate(() => document.getElementById('vendorLinkText').textContent);
     expect(linkText).toContain('?v=nestandnosh');
   });

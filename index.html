@@ -781,6 +781,87 @@
         <button class="admin-btn" id="svSaveBtn" onclick="saveVendorFE()">✅ Vendor Create Karo</button>
       </div>
 
+      <!-- ══════ VENDOR KI TARAF SE — rare/risky/setup-once settings, jo vendor
+           apne Setup se khud nahi badal sakta. Vendor request kare (WhatsApp/call),
+           Super Admin yahan se karta hai. Sirf existing vendor pe dikhta hai. ══════ -->
+      <div class="pf-box" id="svConfigSection" style="margin-top:14px;">
+        <div style="font-size:14px;font-weight:900;margin-bottom:4px;">🔧 Vendor Settings <span style="font-size:10.5px;color:var(--muted);font-weight:600;">— unki request par</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Ye sab vendor apne Setup se nahi badal sakta — simple rakhne ke liye yahan move kiya gaya hai.</div>
+
+        <div class="cfg-acc" id="svca-legal">
+          <div class="cfg-acc-hd" onclick="svCfgToggle('legal')">
+            <span class="cfg-acc-ic">🏛️</span>
+            <span class="cfg-acc-tx"><b>Legal & Payments</b><i>FSSAI, GST, UPI</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svcp-legal">
+            <div class="form-group"><label>FSSAI Registration No.</label><input type="text" id="svcFssai" placeholder="e.g. 20724XXXXXXXXXX"></div>
+            <div class="form-group"><label>Legal Business Name</label><input type="text" id="svcLegalName" placeholder="Registered name"></div>
+            <div class="form-group"><label>GST Number</label><input type="text" id="svcGst" placeholder="e.g. 24XXXXXXXXXX1ZY"></div>
+            <div class="form-group"><label>UPI ID</label><input type="text" id="svcUpiId" placeholder="yourname@bank"></div>
+            <div class="form-group"><label>UPI Payee Name</label><input type="text" id="svcUpiName" placeholder="Payee name"></div>
+            <button class="admin-btn" onclick="svSaveConfigGroup('legal')">💾 Save Legal & Payments</button>
+          </div>
+        </div>
+
+        <div class="cfg-acc" id="svca-delivery">
+          <div class="cfg-acc-hd" onclick="svCfgToggle('delivery')">
+            <span class="cfg-acc-ic">🚚</span>
+            <span class="cfg-acc-tx"><b>Delivery Setup</b><i>Societies, Home/Office, Companies</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svcp-delivery">
+            <div class="form-group"><label>Township Name</label><input type="text" id="svcTownship"></div>
+            <div class="form-group"><label>Societies <span style="font-size:11px;color:var(--muted);font-weight:600;">(one per line)</span></label><textarea id="svcSocieties" rows="4" placeholder="Vrindavan&#10;Eden"></textarea></div>
+            <label class="cfg-chk"><input type="checkbox" id="svcHomeEnabled"> 🏠 Home delivery (Society / Flat)</label>
+            <label class="cfg-chk"><input type="checkbox" id="svcOfficeEnabled"> 🏢 Office delivery (Company / Employee ID)</label>
+            <div class="form-group"><label>Companies <span style="font-size:11px;color:var(--muted);font-weight:600;">(Name | Building | Fee ₹, one per line)</span></label><textarea id="svcCompanies" rows="4" placeholder="MoneyPlant Fintech | Tower B | 20"></textarea></div>
+            <label class="cfg-chk"><input type="checkbox" id="svcListInDiscovery"> 🔍 Discovery me dikhna hai</label>
+            <button class="admin-btn" onclick="svSaveConfigGroup('delivery')">💾 Save Delivery Setup</button>
+          </div>
+        </div>
+
+        <div class="cfg-acc" id="svca-alerts">
+          <div class="cfg-acc-hd" onclick="svCfgToggle('alerts')">
+            <span class="cfg-acc-ic">💬</span>
+            <span class="cfg-acc-tx"><b>Alerts</b><i>WhatsApp auto-open</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svcp-alerts">
+            <label class="cfg-chk"><input type="checkbox" id="svcWhatsappAuto"> 💬 Order place hote hi WhatsApp auto-open karo</label>
+            <button class="admin-btn" onclick="svSaveConfigGroup('alerts')">💾 Save Alerts</button>
+          </div>
+        </div>
+
+        <div class="cfg-acc" id="svca-meals">
+          <div class="cfg-acc-hd" onclick="svCfgToggle('meals')">
+            <span class="cfg-acc-ic">🍽️</span>
+            <span class="cfg-acc-tx"><b>Add Meal Type</b><i>Naya meal type (structural)</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svcp-meals">
+            <div id="svCurrentMealTypes" style="font-size:11.5px;color:var(--muted);margin-bottom:12px;"></div>
+            <div class="form-group"><label>Meal Key <span style="font-size:11px;color:var(--muted);font-weight:600;">(unique, no spaces)</span></label><input type="text" id="svmKey" placeholder="e.g. eveningsnacks"></div>
+            <div class="form-group"><label>Title</label><input type="text" id="svmTitle" placeholder="e.g. Evening Snacks"></div>
+            <div class="form-group"><label>Emoji</label><input type="text" id="svmEmoji" placeholder="🍿"></div>
+            <div class="form-group"><label>Price ₹</label><input type="number" id="svmPrice" placeholder="60"></div>
+            <button class="admin-btn" onclick="svAddMealType()">➕ Add Meal Type</button>
+          </div>
+        </div>
+
+        <div class="cfg-acc" id="svca-users">
+          <div class="cfg-acc-hd" onclick="svCfgToggle('users')">
+            <span class="cfg-acc-ic">👥</span>
+            <span class="cfg-acc-tx"><b>Users</b><i>Block/unblock, reset</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svcp-users">
+            <span class="refresh-link" onclick="svLoadUsers()">🔄 Refresh</span>
+            <div id="svUsersList" style="margin-top:10px;"><p style="font-size:12px;color:var(--muted);">Tap 🔄 Refresh to load.</p></div>
+          </div>
+        </div>
+      </div>
+
       <div id="svDangerZone" style="display:flex;gap:8px;margin-top:14px;">
         <button class="vd-btn" id="svToggleBtn" onclick="toggleVendorFE(__svCurId,this)">⏸️ Band karo</button>
         <button class="vd-btn danger" id="svDeleteBtn" onclick="deleteVendorFE(__svCurId,__svCurName,this)">🗑️ Delete</button>
@@ -887,19 +968,11 @@
         <div class="cfg-acc" id="cfga-kitchen">
           <div class="cfg-acc-hd" onclick="cfgToggle('kitchen')">
             <span class="cfg-acc-ic">🏪</span>
-            <span class="cfg-acc-tx"><b>Kitchen</b><i>Township, societies, FSSAI</i></span>
+            <span class="cfg-acc-tx"><b>Kitchen</b><i>Location, delivery radius, QR</i></span>
             <span class="cfg-acc-car"></span>
           </div>
           <div class="cfg-acc-bd hidden" id="cfgp-kitchen">
-        <div class="section-title" style="margin-top:20px;">🏢 Township Name</div>
-        <input type="text" class="search-box" id="cfg-township" placeholder="Township name">
-        <div class="section-title" style="margin-top:8px;">🏘️ Societies <span style="font-size:11px;color:var(--muted);font-weight:600;">(one per line)</span></div>
-        <textarea id="cfg-societies" rows="4" placeholder="Vrindavan&#10;Eden"></textarea>
-
-        <div class="section-title" style="margin-top:20px;">📍 Discovery</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">ON rakhoge to aapke area ke naye customers aapko dhoondh sakte hain, bina aapke link ke bhi. OFF karoge to aap discovery me nahi dikhoge — sirf aapka apna link (?v=) hi kaam karega.</div>
-        <label class="cfg-chk"><input type="checkbox" id="cfg-listInDiscovery" checked> 🔍 Discovery me dikhna hai</label>
-
+        <div style="font-size:11.5px;color:var(--muted);margin-top:20px;margin-bottom:8px;">Township/societies, Discovery on-off aur legal/payment info ab Super Admin ke paas hai — request karke badlwao.</div>
         <div class="section-title" style="margin-top:20px;">🎯 Kitchen Location (Nearby Radius)</div>
         <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Society-list ke alawa — apni kitchen ka GPS location set karo, taaki radius ke andar wale customers bhi aapko dhoondh sakein, chahe unki building list me na ho. (Radius ke andar dikhna sirf awareness ke liye hai — order tabhi hoga jab customer ki exact society upar wali list me ho.)</div>
         <div id="kitchenLocStatus" style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;">📍 Abhi set nahi hai</div>
@@ -918,18 +991,6 @@
           <div id="vendorLinkText" style="font-size:10.5px;color:var(--muted);margin-top:10px;word-break:break-all;"></div>
         </div>
 
-        <div class="section-title" style="margin-top:20px;">🏛️ FSSAI Registration No.</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Footer mein customers ko dikhega — trust ke liye. Khaali chhodo to nahi dikhega.</div>
-        <input type="text" class="search-box" id="cfg-fssai" placeholder="e.g. 20724XXXXXXXXXX">
-
-        <div class="section-title" style="margin-top:20px;">📜 Legal Name <span style="font-size:11px;color:var(--muted);font-weight:600;">(optional)</span></div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Registered business name — About page pe dikhega. Khaali chhodo to nahi dikhega.</div>
-        <input type="text" class="search-box" id="cfg-legalName" placeholder="e.g. Nutnbolt Business Solution Private Limited">
-
-        <div class="section-title" style="margin-top:20px;">🧾 GST Number <span style="font-size:11px;color:var(--muted);font-weight:600;">(optional)</span></div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Khaali chhodo to nahi dikhega.</div>
-        <input type="text" class="search-box" id="cfg-gstNumber" placeholder="e.g. 24XXXXXXXXXX1ZY">
-
           </div>
         </div>
 
@@ -941,9 +1002,8 @@
           </div>
           <div class="cfg-acc-bd hidden" id="cfgp-meals">
         <div class="section-title" style="margin-top:20px;">🍽️ Meal Types</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Har meal ka naam, emoji, serving window (isi se delivery time-slots banti hain), order cut-off, price aur daily capacity yahin set karo. Breakfast/Lunch/Dinner hata nahi sakte (sirf OFF kar sakte ho) — neeche se koi bhi extra meal type add karo (jaise "Evening Snacks").</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Har meal ka naam, emoji, serving window (isi se delivery time-slots banti hain), order cut-off, price aur daily capacity yahin set karo. Naya meal type add karwana ho (jaise "Evening Snacks") to Super Admin ko request karo.</div>
         <div id="mealTypeEditor"></div>
-        <button class="admin-btn" style="width:auto;padding:11px 18px;margin-top:2px;" onclick="addMealTypeFE()">+ Add Meal</button>
 
         <div class="section-title" style="margin-top:20px;">💰 Add-on Prices</div>
         <div id="priceEditor"></div>
@@ -974,15 +1034,11 @@
         <div class="cfg-acc" id="cfga-delivery">
           <div class="cfg-acc-hd" onclick="cfgToggle('delivery')">
             <span class="cfg-acc-ic">🚚</span>
-            <span class="cfg-acc-tx"><b>Delivery</b><i>Home/office modes, companies</i></span>
+            <span class="cfg-acc-tx"><b>Delivery</b><i>Delivery charges</i></span>
             <span class="cfg-acc-car"></span>
           </div>
           <div class="cfg-acc-bd hidden" id="cfgp-delivery">
-        <div class="section-title" style="margin-top:20px;">🚚 Delivery Modes</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Kaunsa delivery mode customer ko dikhe. Dono ON honge to checkout pe Home/Office ka toggle aayega.</div>
-        <label class="cfg-chk"><input type="checkbox" id="cfg-homeEnabled" checked> 🏠 Home delivery (Society / Flat)</label>
-        <label class="cfg-chk"><input type="checkbox" id="cfg-officeEnabled"> 🏢 Office delivery (Company / Employee ID)</label>
-
+        <div style="font-size:11.5px;color:var(--muted);margin-top:20px;margin-bottom:8px;">Home/Office delivery mode aur Companies list ab Super Admin ke paas hai — request karke badlwao.</div>
         <div class="section-title" style="margin-top:20px;">💰 Delivery Charges <span style="font-size:11px;color:var(--muted);font-weight:600;">(home delivery)</span></div>
         <label class="cfg-chk"><input type="checkbox" id="cfg-deliveryEnabled" checked onchange="document.getElementById('deliveryFeeWrap').classList.toggle('hidden', !this.checked)"> 🛵 Charge delivery fee (OFF = free delivery for everyone)</label>
         <div id="deliveryFeeWrap">
@@ -999,33 +1055,6 @@
           <div style="font-size:11.5px;color:var(--muted);margin:10px 0 4px;">Far societies (ek line ek naam) — inhe "far" fee lagega, baaki sab "near" fee. Khaali chhodo to sabko near fee lagega.</div>
           <textarea id="cfg-farSocieties" rows="3" placeholder="Eden&#10;Harihar"></textarea>
         </div>
-
-        <div class="section-title" style="margin-top:20px;">🏢 Companies <span style="font-size:11px;color:var(--muted);font-weight:600;">(office delivery)</span></div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Har line: <b>Company name | Building (optional) | Delivery fee ₹</b><br>Jaise: <code>MoneyPlant Fintech | Tower B | 20</code><br>Employee ID har office order pe zaroori hoti hai.</div>
-        <textarea id="cfg-companies" rows="4" placeholder="MoneyPlant Fintech | Tower B | 20&#10;Zydus Corporate Park | Wing 2 | 20"></textarea>
-
-          </div>
-        </div>
-
-        <div class="cfg-acc" id="cfga-payments">
-          <div class="cfg-acc-hd" onclick="cfgToggle('payments')">
-            <span class="cfg-acc-ic">💳</span>
-            <span class="cfg-acc-tx"><b>Payments & Alerts</b><i>UPI, WhatsApp, push test</i></span>
-            <span class="cfg-acc-car"></span>
-          </div>
-          <div class="cfg-acc-bd hidden" id="cfgp-payments">
-        <div class="section-title" style="margin-top:20px;">💳 Online UPI Payment</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Apni UPI ID daalo (jaise 7043491481@ybl). Customer ko success screen pe "Pay Now via UPI" button milega. Khaali chhodo to online pay option nahi dikhega.</div>
-        <input type="text" class="search-box" id="cfg-upiId" placeholder="yourname@bank / 9999999999@ybl" style="margin-bottom:8px;">
-        <input type="text" class="search-box" id="cfg-upiName" placeholder="Payee name (e.g. Your Kitchen Name)">
-
-        <div class="section-title" style="margin-top:20px;">💬 WhatsApp Order Message</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">ON: order place hote hi customer ka WhatsApp khud khul jayega (order detail ke saath). OFF: WhatsApp apne aap nahi khulega — customer ko success screen pe "Send on WhatsApp" ka button milega jo wo chahe to daba sakta hai.</div>
-        <label class="cfg-chk"><input type="checkbox" id="cfg-whatsappAuto"> 💬 Order place hote hi WhatsApp auto-open karo</label>
-
-        <div class="section-title" style="margin-top:4px;">🔔 Push Notifications</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Emergency close/reopen, order status (Preparing/Delivered), price/timing badalne par (automatic), aur (opt-in checkbox se) menu content updates par customers ko automatic push jaata hai (agar setup hai). App khula ho tab bhi turant refresh ho jaata hai. Test karne ke liye:</div>
-        <button class="admin-btn" id="testPushBtn" onclick="sendTestPushFE()" style="margin-bottom:16px;">🔔 Send Test Notification</button>
 
           </div>
         </div>
@@ -5748,8 +5777,9 @@
     window.scrollTo(0,0);
     const v = id ? superVendors.find(x=>x.vendorId===id) : null;
     const billBox=document.getElementById('svBillingBox'), danger=document.getElementById('svDangerZone');
+    const cfgSec=document.getElementById('svConfigSection');
     if(!v){
-      // Naya vendor — abhi exist hi nahi karta, billing/band-delete dikhane ka matlab nahi.
+      // Naya vendor — abhi exist hi nahi karta, billing/band-delete/settings dikhane ka matlab nahi.
       document.getElementById('superTopTitle').textContent='➕ Naya Vendor';
       document.getElementById('svFormTitle').textContent='➕ Naya Vendor Add Karo';
       ['svName','svId','svSheetId','svScriptUrl','svAdminUser','svAdminPass','svEmail','svWhatsapp','svTgToken','svTgChat','svAreas','svCuisine','svLogo','svMinOrder'].forEach(fid=>{ const el=document.getElementById(fid); if(el)el.value=''; });
@@ -5758,6 +5788,7 @@
       const tgSt0=document.getElementById('svTgStatus'); if(tgSt0) tgSt0.textContent='';
       document.getElementById('svSaveBtn').textContent='✅ Vendor Create Karo';
       billBox.classList.add('hidden'); danger.classList.add('hidden');
+      if(cfgSec) cfgSec.classList.add('hidden');
       return;
     }
     __svCurName=v.name||'';
@@ -5793,6 +5824,134 @@
       renderBillingBox(v);
       document.getElementById('svToggleBtn').textContent = v.status==='Active' ? '⏸️ Band karo' : '▶️ Chalu karo';
     }
+    if(cfgSec) cfgSec.classList.remove('hidden');
+    svCfgCloseAll();
+    svLoadConfig();
+    document.getElementById('svUsersList').innerHTML='<p style="font-size:12px;color:var(--muted);">Tap 🔄 Refresh to load.</p>';
+  }
+  // ═══════ VENDOR KI TARAF SE (Super Admin acting on their behalf) ═══════
+  const SVC_TABS=['legal','delivery','alerts','meals','users'];
+  function svCfgCloseAll(){
+    SVC_TABS.forEach(function(k){
+      const pane=document.getElementById('svcp-'+k); if(pane) pane.classList.add('hidden');
+      const wrap=document.getElementById('svca-'+k); if(wrap) wrap.classList.remove('open');
+    });
+  }
+  function svCfgToggle(t){
+    const pane=document.getElementById('svcp-'+t);
+    const wasOpen = pane && !pane.classList.contains('hidden');
+    svCfgCloseAll();
+    if(!wasOpen && pane){ pane.classList.remove('hidden'); const wrap=document.getElementById('svca-'+t); if(wrap) wrap.classList.add('open'); }
+  }
+  let svCurConfig=null;
+  function svLoadConfig(){
+    if(!superCreds||!__svCurId) return;
+    apiPost({action:'supergetvendorconfig', user:superCreds.user, pass:superCreds.pass, targetVendorId:__svCurId}).then(j=>{
+      if(j.status!=='success'){ showToast('❌ '+(j.message||'Config load nahi hui'),'error'); return; }
+      svCurConfig=j.config;
+      document.getElementById('svcFssai').value=svCurConfig.fssai||'';
+      document.getElementById('svcLegalName').value=svCurConfig.legalName||'';
+      document.getElementById('svcGst').value=svCurConfig.gstNumber||'';
+      document.getElementById('svcUpiId').value=svCurConfig.upiId||'';
+      document.getElementById('svcUpiName').value=svCurConfig.upiName||'';
+      document.getElementById('svcTownship').value=svCurConfig.township||'';
+      document.getElementById('svcSocieties').value=(svCurConfig.societies||[]).join('\n');
+      document.getElementById('svcHomeEnabled').checked=(svCurConfig.homeEnabled!==false);
+      document.getElementById('svcOfficeEnabled').checked=(svCurConfig.officeEnabled===true);
+      document.getElementById('svcCompanies').value=(svCurConfig.companies||[]).map(c=>[c.name,c.building||'',c.fee].join(' | ')).join('\n');
+      document.getElementById('svcListInDiscovery').checked=(svCurConfig.listInDiscovery!==false);
+      document.getElementById('svcWhatsappAuto').checked=(svCurConfig.whatsappAuto!==false);
+      const mtBox=document.getElementById('svCurrentMealTypes');
+      if(mtBox) mtBox.textContent='Abhi ke meals: '+(svCurConfig.mealTypes||[]).map(m=>m.title).join(', ');
+    }).catch(()=>{ showToast(t('errNetwork'),'error'); });
+  }
+  function svSaveConfigGroup(group){
+    if(!superCreds||!__svCurId) return;
+    let patch={};
+    if(group==='legal'){
+      patch={ fssai:document.getElementById('svcFssai').value.trim(),
+              legalName:document.getElementById('svcLegalName').value.trim(),
+              gstNumber:document.getElementById('svcGst').value.trim(),
+              upiId:document.getElementById('svcUpiId').value.trim(),
+              upiName:document.getElementById('svcUpiName').value.trim() };
+    } else if(group==='delivery'){
+      const societies=document.getElementById('svcSocieties').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      const companies=document.getElementById('svcCompanies').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+        const parts=l.split('|').map(x=>x.trim());
+        let fee=parseInt(parts[2],10); if(isNaN(fee)||fee<0) fee=10;
+        return { name:parts[0], building:parts[1]||'', fee:fee };
+      }).filter(c=>c.name);
+      const homeEnabled=document.getElementById('svcHomeEnabled').checked;
+      const officeEnabled=document.getElementById('svcOfficeEnabled').checked;
+      if(!homeEnabled&&!officeEnabled){ showToast('⚠️ Kam se kam ek delivery mode ON rakho.','warning'); return; }
+      if(officeEnabled&&!companies.length){ showToast('⚠️ Office delivery ke liye kam se kam ek company add karo.','warning'); return; }
+      patch={ township:document.getElementById('svcTownship').value.trim(), societies:societies,
+              homeEnabled:homeEnabled, officeEnabled:officeEnabled, companies:companies,
+              listInDiscovery:document.getElementById('svcListInDiscovery').checked };
+    } else if(group==='alerts'){
+      patch={ whatsappAuto:document.getElementById('svcWhatsappAuto').checked };
+    }
+    apiPost({action:'supersavevendorconfig', user:superCreds.user, pass:superCreds.pass, targetVendorId:__svCurId, patch:patch}).then(j=>{
+      if(j.status==='success'){ showToast('✅ Saved!','success'); svCurConfig=j.config; }
+      else showToast('❌ '+(j.message||'Save nahi hua'),'error');
+    }).catch(()=>{ showToast(t('errNetwork'),'error'); });
+  }
+  function svAddMealType(){
+    if(!superCreds||!__svCurId) return;
+    const key=document.getElementById('svmKey').value.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+    const title=document.getElementById('svmTitle').value.trim();
+    const emoji=document.getElementById('svmEmoji').value.trim()||'🍽️';
+    const price=parseInt(document.getElementById('svmPrice').value,10)||0;
+    if(!key||!title){ showToast('⚠️ Meal key aur title zaroori hain.','warning'); return; }
+    apiPost({action:'superaddmealtype', user:superCreds.user, pass:superCreds.pass, targetVendorId:__svCurId,
+             mealType:{ key:key, title:title, emoji:emoji, price:price, capacity:0, windowStart:'12:00', windowEnd:'14:00', cutoff:'09:00', enabled:true, hasVariants:true }})
+      .then(j=>{
+        if(j.status==='success'){
+          showToast('✅ Meal type add ho gaya!','success'); svCurConfig=j.config;
+          document.getElementById('svmKey').value=''; document.getElementById('svmTitle').value='';
+          document.getElementById('svmEmoji').value=''; document.getElementById('svmPrice').value='';
+          const mtBox=document.getElementById('svCurrentMealTypes');
+          if(mtBox) mtBox.textContent='Abhi ke meals: '+(svCurConfig.mealTypes||[]).map(m=>m.title).join(', ');
+        } else showToast('❌ '+(j.message||'Add nahi hua'),'error');
+      }).catch(()=>{ showToast(t('errNetwork'),'error'); });
+  }
+  let svUsersCache=[];
+  function svLoadUsers(){
+    if(!superCreds||!__svCurId) return;
+    document.getElementById('svUsersList').innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading…</span></div>';
+    apiPost({action:'superlistusers', user:superCreds.user, pass:superCreds.pass, targetVendorId:__svCurId}).then(j=>{
+      if(j.status!=='success'){ showToast('❌ '+(j.message||'Users load nahi hue'),'error'); return; }
+      svUsersCache=j.users||[];
+      renderSvUsersList();
+    }).catch(()=>{ showToast(t('errNetwork'),'error'); });
+  }
+  function renderSvUsersList(){
+    const box=document.getElementById('svUsersList'); if(!box) return;
+    if(!svUsersCache.length){ box.innerHTML='<p style="font-size:12px;color:var(--muted);">Koi users nahi.</p>'; return; }
+    box.innerHTML=svUsersCache.map(u=>`
+      <div class="oc" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin-bottom:6px;gap:8px;">
+        <div style="min-width:0;">
+          <div style="font-weight:800;font-size:12.5px;">${esc(u.name||u.phone)}${u.status==='Blocked'?' <span style="color:var(--danger);font-size:10.5px;">(Blocked)</span>':''}</div>
+          <div style="font-size:11px;color:var(--muted);">${esc(u.phone)} · ${u.orders||0} orders</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="admin-btn" style="width:auto;padding:7px 10px;font-size:11px;margin:0;${u.status==='Blocked'?'':'background:var(--danger);'}" onclick="svToggleUserStatus('${esc(u.phone).replace(/'/g,"")}','${u.status==='Blocked'?'Active':'Blocked'}')">${u.status==='Blocked'?'✅ Unblock':'🚫 Block'}</button>
+          <button class="admin-btn" style="width:auto;padding:7px 10px;font-size:11px;margin:0;background:var(--muted);" onclick="svResetUserFE('${esc(u.phone).replace(/'/g,"")}')">🗑️ Reset</button>
+        </div>
+      </div>`).join('');
+  }
+  function svToggleUserStatus(phone,status){
+    apiPost({action:'supersetuserstatus', user:superCreds.user, pass:superCreds.pass, targetVendorId:__svCurId, phone:phone, status:status}).then(j=>{
+      if(j.status==='success'){ showToast('✅ Updated!','success'); svLoadUsers(); }
+      else showToast('❌ '+(j.message||'Update nahi hua'),'error');
+    }).catch(()=>{ showToast(t('errNetwork'),'error'); });
+  }
+  function svResetUserFE(phone){
+    if(!confirm('Ye user ka SAARA data mita dega (orders bhi). Pakka?')) return;
+    apiPost({action:'superresetuser', user:superCreds.user, pass:superCreds.pass, targetVendorId:__svCurId, phone:phone}).then(j=>{
+      if(j.status==='success'){ showToast('✅ Reset ho gaya!','success'); svLoadUsers(); }
+      else showToast('❌ '+(j.message||'Reset nahi hua'),'error');
+    }).catch(()=>{ showToast(t('errNetwork'),'error'); });
   }
   function renderBillingBox(v){
     document.getElementById('svBillAmount').textContent = v.subAmount || 499;
@@ -6487,59 +6646,13 @@
       const ghost=!u.orders;
       return `<div class="oc"><div class="oc-top"><span>👤 ${esc(u.name)}</span>${ghost?'<span class="ghost-badge">👻 No orders yet</span>':`<span class="oc-status st-${u.status}">${u.status}</span>`}</div>
       <div class="oc-sub">📞 <a href="tel:+91${u.phone}">${u.phone}</a>${u.email?' · ✉️ '+u.email:''} · <span class="${u.orders?'oc-orders-link':''}" ${u.orders?`onclick="goToCustOrders('${u.phone}','${nm}')"`:''}>🧾 ${u.orders} orders</span></div>
-      <div class="oc-sub" style="font-size:11px;opacity:0.75;">Joined ${u.created} · Last login ${u.lastLogin}</div>
-      <div class="u-manage-toggle" onclick="this.nextElementSibling.classList.toggle('show')">⚙️ Manage user</div>
-      <div class="u-actions" id="u-act-${i}">
-        <button class="block-btn ${u.status==='Blocked'?'un':''}" onclick="toggleUserBlock('${u.phone}','${u.status==='Blocked'?'Active':'Blocked'}',this)">${u.status==='Blocked'?'✅ Unblock':'🚫 Block'}</button>
-        <button class="reset-btn" onclick="resetUserData('${u.phone}','${nm}',${u.orders},this)">♻️ Reset (delete all data)</button>
-      </div></div>`;
+      <div class="oc-sub" style="font-size:11px;opacity:0.75;">Joined ${u.created} · Last login ${u.lastLogin}</div></div>`;
     }).join('');
   }
-  // Isliye do-step confirm: pehle chetavni, phir number type karna padta hai.
-  function resetUserData(phone, name, orders, btn){
-    if(!adminCreds) return;
-    const warn = '♻️ RESET — ' + name + ' (' + phone + ')\n\n'
-      + 'Ye sab HAMESHA ke liye delete ho jayega:\n'
-      + '  • ' + (orders||0) + ' order(s) — inka revenue stats se bhi nikal jayega\n'
-      + '  • Login sessions (user logout ho jayega)\n'
-      + '  • Subscription\n'
-      + '  • Coupon usage history\n'
-      + '  • User account khud\n\n'
-      + 'Ye WAPAS NAHI aayega. Aage badhein?';
-    if(!confirm(warn)) return;
-
-    const typed = prompt('Pakka karne ke liye pura mobile number type karein:\n' + phone);
-    if(typed === null) return;
-    if(String(typed).replace(/\D/g,'') !== String(phone)){
-      showToast('❌ Number match nahi hua — reset cancel','error'); return;
-    }
-
-    if(btn){ btn.disabled=true; btn.dataset.oldText=btn.textContent; btn.textContent='⏳ Reset ho raha hai…'; }
-    showToast('♻️ Reset ho raha hai…','warning');
-    apiPost({ action:'resetuser', user:adminCreds.user, pass:adminCreds.pass, phone:phone })
-      .then(j=>{
-        if(j.status==='success'){
-          const cn=j.counts||{};
-          showToast('✅ Reset done — '+(cn.orders||0)+' orders, '+(cn.sessions||0)+' sessions hataye','success');
-          loadUsers(); loadOrders();   // list re-render ho jayegi, button apne aap fresh state me aa jayega
-        } else { if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast('❌ '+(j.message||'Reset failed'),'error'); }
-      })
-      .catch(()=>{ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast(t('errNetwork'),'error'); });
-  }
-  function toggleUserBlock(phone,ns,btn){ if(!adminCreds)return; if(!confirm((ns==='Blocked'?'Block':'Unblock')+' '+phone+'?'))return;
-    if(btn){ btn.disabled=true; btn.dataset.oldText=btn.textContent; btn.textContent='⏳'; }
-    apiPost({action:'setUserStatus',user:adminCreds.user,pass:adminCreds.pass,phone:phone,status:ns}).then(j=>{ if(j.status==='success'){ const u=adminUsers.find(x=>x.phone===phone); if(u)u.status=ns; renderUsers(); showToast('✅ Updated.','success'); } else { if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast('❌ '+(j.message||'Failed'),'error'); } }).catch(()=>{ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast(t('errNetwork'),'error'); }); }
+  // Block/unblock aur reset ab Super Admin ke paas hain (vendor request kare) —
+  // account-level consequence wale rare operations hain, isliye yahan se hataye.
 
   function loadStats(){ if(!adminCreds)return; apiPost({action:'stats', user:adminCreds.user, pass:adminCreds.pass}).then(j=>{ if(j.status==='success'){ fillStats(j); showToast('🔄 Refreshed.','success'); } else showToast('❌ '+(j.message||'Refresh failed.'),'error'); }).catch(()=>showToast('❌ Refresh failed.','error')); }
-  function sendTestPushFE(){
-    if(!adminCreds) return;
-    const btn=document.getElementById('testPushBtn'); const old=btn.textContent; btn.disabled=true; btn.textContent='⏳ Sending...';
-    apiPost({action:'testpush', user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
-      btn.disabled=false; btn.textContent=old;
-      if(j.status==='success') showToast('✅ Test push bhej diya — subscribed devices check karo.','success');
-      else showToast('❌ '+(j.message||'Failed — pehle Firebase setup karo (AGENTS.md dekho).'),'error');
-    }).catch(()=>{ btn.disabled=false; btn.textContent=old; showToast(t('errNetwork'),'error'); });
-  }
   function fillStats(j){
     vendorBilling=j.vendorBilling||null; platformPaymentInfo=j.platformPayment||null; vendorBillingHistory=j.vendorBillingHistory||[];
     document.getElementById('st-todayCount').textContent=j.today.count; document.getElementById('st-todayRev').textContent='₹'+j.today.revenue; document.getElementById('st-weekCount').textContent=j.week.count; document.getElementById('st-totalCount').textContent=j.total.count;
@@ -6957,10 +7070,6 @@
     else if(field==='maxQtyPerOrder') workingMealTypes[i][field]=Math.max(1,parseInt(val,10)||1);
     else workingMealTypes[i][field]=val;
   }
-  function addMealTypeFE(){
-    workingMealTypes.push({ key:'meal_'+Date.now(), title:'', emoji:'🍽️', price:60, capacity:0, windowStart:'16:00', windowEnd:'18:00', cutoff:'12:00', cutoffAheadDay:false, enabled:true, core:false, hasVariants:true, maxQtyPerOrder:1 });
-    renderMealTypeEditor();
-  }
   function removeMealTypeFE(i){
     if(workingMealTypes[i] && workingMealTypes[i].core) return;   // core meals hata nahi sakte
     workingMealTypes.splice(i,1);
@@ -7160,7 +7269,7 @@
   }
 
   // == Setup page accordion ==
-  const CFG_TABS = ['kitchen','meals','timing','delivery','payments'];
+  const CFG_TABS = ['kitchen','meals','timing','delivery'];
   // Ek section force-kholo (baaki band). Validation jump isko use karta hai.
   function cfgOpen(t){
     if(CFG_TABS.indexOf(t)<0) t='kitchen';
@@ -7208,31 +7317,21 @@
       const on=!(CFG.addonsEnabled && CFG.addonsEnabled[k]===false);
       return `<div class="price-row"><label>${PRICE_LABELS[k]}</label><div class="inp">₹<input type="number" id="pr-${k}" value="${(CFG.prices&&CFG.prices[k]!=null)?CFG.prices[k]:0}" min="0" max="2000"></div><label class="cfg-chk" style="margin:0 0 0 8px;white-space:nowrap;"><input type="checkbox" id="pren-${k}" ${on?'checked':''}> ON</label></div>`;
     }).join('');
-    const twEl2=document.getElementById('cfg-township'); if(twEl2) twEl2.value=CFG.township||'';
-    document.getElementById('cfg-societies').value=(CFG.societies||[]).join('\n');
-    const lid=document.getElementById('cfg-listInDiscovery'); if(lid) lid.checked=(CFG.listInDiscovery!==false);
+    // Township/societies/discovery-toggle/home-office/companies/UPI/legal-GST/
+    // WhatsApp-toggle fields Setup se hata diye gaye (ab Super Admin ke paas) —
+    // unke DOM elements ab exist hi nahi karte, isliye yahan populate nahi karte.
     workingKitchenLat=(typeof CFG.kitchenLat==='number')?CFG.kitchenLat:null;
     workingKitchenLng=(typeof CFG.kitchenLng==='number')?CFG.kitchenLng:null;
     renderKitchenLocStatus();
     const rk=document.getElementById('cfg-deliveryRadiusKm'); if(rk) rk.value=CFG.deliveryRadiusKm||4;
-    const ce=document.getElementById('cfg-companies');
-    if(ce) ce.value=(CFG.companies||[]).map(c=>[c.name,c.building||'',c.fee].join(' | ')).join('\n');
-    const he=document.getElementById('cfg-homeEnabled'); if(he) he.checked=(CFG.homeEnabled!==false);
-    const oe=document.getElementById('cfg-officeEnabled'); if(oe) oe.checked=(CFG.officeEnabled===true);
     const de=document.getElementById('cfg-deliveryEnabled'); if(de) de.checked=(CFG.deliveryEnabled!==false);
     const dn=document.getElementById('cfg-deliveryNear'); if(dn) dn.value=(CFG.deliveryNear!=null?CFG.deliveryNear:10);
     const df=document.getElementById('cfg-deliveryFar'); if(df) df.value=(CFG.deliveryFar!=null?CFG.deliveryFar:20);
     const fs=document.getElementById('cfg-farSocieties'); if(fs) fs.value=(CFG.farSocieties||[]).join('\n');
     const dfWrap=document.getElementById('deliveryFeeWrap'); if(dfWrap) dfWrap.classList.toggle('hidden', CFG.deliveryEnabled===false);
-    const wa=document.getElementById('cfg-whatsappAuto'); if(wa) wa.checked=(CFG.whatsappAuto!==false);
     // Deep-copy so edits (incl. Add/Remove Meal) are a draft until Save Config.
     workingMealTypes=JSON.parse(JSON.stringify((CFG.mealTypes&&CFG.mealTypes.length)?CFG.mealTypes:defaultMealTypes()));
     renderMealTypeEditor();
-    const uid=document.getElementById('cfg-upiId'); if(uid)uid.value=CFG.upiId||'';
-    const unm=document.getElementById('cfg-upiName'); if(unm)unm.value=CFG.upiName||'';
-    const ufs=document.getElementById('cfg-fssai'); if(ufs)ufs.value=CFG.fssai||'';
-    const uln=document.getElementById('cfg-legalName'); if(uln)uln.value=CFG.legalName||'';
-    const ugn=document.getElementById('cfg-gstNumber'); if(ugn)ugn.value=CFG.gstNumber||'';
     workingClosedDates=(CFG.closedDates||[]).slice();
     renderClosedDatesList();
     const tc=document.getElementById('cfg-tempClosed'); if(tc) tc.checked=(CFG.tempClosed===true);
@@ -7267,20 +7366,10 @@
       if(hhmmToMins(mt.cutoff)===null){ cfgFail('meals','⚠️ '+mt.title+' — order cut-off set karo.'); return; }
     }
     const mealTypes=JSON.parse(JSON.stringify(workingMealTypes));
-    const township=document.getElementById('cfg-township').value.trim();
-    if(!township){ cfgFail('kitchen','⚠️ Apna area/township ka naam daalein.'); return; }
-    const societies=document.getElementById('cfg-societies').value.split('\n').map(s=>s.trim()).filter(Boolean);
-    if(!societies.length){ cfgFail('kitchen','⚠️ Add at least one society.'); return; }
-    // Companies: "Name | Building | Fee" per line
-    const companies=(document.getElementById('cfg-companies')?document.getElementById('cfg-companies').value:'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
-      const p=l.split('|').map(x=>x.trim());
-      let fee=parseInt(p[2],10); if(isNaN(fee)||fee<0) fee=CFG.deliveryNear||10;
-      return { name:p[0], building:p[1]||'', fee:fee };
-    }).filter(c=>c.name);
-    const homeEnabled=document.getElementById('cfg-homeEnabled')?document.getElementById('cfg-homeEnabled').checked:true;
-    const officeEnabled=document.getElementById('cfg-officeEnabled')?document.getElementById('cfg-officeEnabled').checked:false;
-    if(!homeEnabled&&!officeEnabled){ cfgFail('delivery','⚠️ Keep at least one delivery mode ON.'); return; }
-    if(officeEnabled&&!companies.length){ cfgFail('delivery','⚠️ Add at least one company for office delivery.'); return; }
+    // Township/societies/discovery-toggle/home-office-mode/companies/UPI/legal-GST/
+    // WhatsApp-toggle ab Super Admin ke paas hain (vendor Setup se hataye gaye —
+    // simple rakhne ke liye). Yahan koi UI/validation nahi — jo CFG me load hua tha
+    // wahi as-is wapas bhejte hain, taaki Setup save unhe silently reset na kar de.
     const deliveryEnabled=document.getElementById('cfg-deliveryEnabled')?document.getElementById('cfg-deliveryEnabled').checked:true;
     const deliveryNear=parseInt(document.getElementById('cfg-deliveryNear')?document.getElementById('cfg-deliveryNear').value:10,10);
     const deliveryFar=parseInt(document.getElementById('cfg-deliveryFar')?document.getElementById('cfg-deliveryFar').value:20,10);
@@ -7288,11 +7377,10 @@
     const farSocieties=(document.getElementById('cfg-farSocieties')?document.getElementById('cfg-farSocieties').value:'').split('\n').map(s=>s.trim()).filter(Boolean);
     const tempClosed=document.getElementById('cfg-tempClosed')?document.getElementById('cfg-tempClosed').checked:false;
     const tempClosedMsg=document.getElementById('cfg-tempClosedMsg')?document.getElementById('cfg-tempClosedMsg').value.trim():'';
-    const listInDiscovery=document.getElementById('cfg-listInDiscovery')?document.getElementById('cfg-listInDiscovery').checked:true;
     let deliveryRadiusKm=parseFloat(document.getElementById('cfg-deliveryRadiusKm')?document.getElementById('cfg-deliveryRadiusKm').value:4);
     if(isNaN(deliveryRadiusKm)||deliveryRadiusKm<=0) deliveryRadiusKm=4;
-    const cfg={ prices, addonsEnabled, mealTypes, township, societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:workingClosedDates, tempClosed:tempClosed, tempClosedMsg:tempClosedMsg, companies:companies, homeEnabled:homeEnabled, officeEnabled:officeEnabled, listInDiscovery:listInDiscovery, kitchenLat:workingKitchenLat, kitchenLng:workingKitchenLng, deliveryRadiusKm:deliveryRadiusKm, whatsappAuto:(document.getElementById('cfg-whatsappAuto')?document.getElementById('cfg-whatsappAuto').checked:true),
-      upiId:(document.getElementById('cfg-upiId')?document.getElementById('cfg-upiId').value.trim():CFG.upiId), upiName:(document.getElementById('cfg-upiName')?document.getElementById('cfg-upiName').value.trim():CFG.upiName), fssai:(document.getElementById('cfg-fssai')?document.getElementById('cfg-fssai').value.trim():CFG.fssai), legalName:(document.getElementById('cfg-legalName')?document.getElementById('cfg-legalName').value.trim():CFG.legalName), gstNumber:(document.getElementById('cfg-gstNumber')?document.getElementById('cfg-gstNumber').value.trim():CFG.gstNumber) };
+    const cfg={ prices, addonsEnabled, mealTypes, township:CFG.township, societies:CFG.societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:workingClosedDates, tempClosed:tempClosed, tempClosedMsg:tempClosedMsg, companies:CFG.companies, homeEnabled:CFG.homeEnabled, officeEnabled:CFG.officeEnabled, listInDiscovery:CFG.listInDiscovery, kitchenLat:workingKitchenLat, kitchenLng:workingKitchenLng, deliveryRadiusKm:deliveryRadiusKm, whatsappAuto:CFG.whatsappAuto,
+      upiId:CFG.upiId, upiName:CFG.upiName, fssai:CFG.fssai, legalName:CFG.legalName, gstNumber:CFG.gstNumber };
     const btn=document.getElementById('saveConfigBtn'); btn.textContent='⏳ Saving...'; btn.disabled=true;
     apiPost({action:'saveConfig',user:adminCreds.user,pass:adminCreds.pass,config:cfg}).then(j=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; if(j.status==='success'){ cfg.variants=CFG.variants; cfg.banners=CFG.banners; CFG=cfg; storeSet('fbt_cfg',CFG); applyConfigToUI(); refreshAvailability(); showToast('✅ Setup saved!','success'); } else showToast('❌ '+(j.message||'Save failed'),'error'); }).catch(()=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; showToast(t('errNetwork'),'error'); }); }
 

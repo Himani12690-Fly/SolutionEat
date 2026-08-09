@@ -170,55 +170,9 @@ test.describe('Admin users', () => {
     await expect(page.locator('#usersList .oc')).toHaveCount(1);
   });
 
-  test('block / unblock', async ({ page }) => {
-    const state = freshState();
-    await openApp(page, { state });
-    await adminLogin(page);
-    await page.evaluate(() => window.adminBnGo('users'));
-    await page.waitForTimeout(500);
-    page.on('dialog', d => d.accept());
-    await page.evaluate(() => window.toggleUserBlock('9876543210', 'Blocked'));
-    await page.waitForTimeout(400);
-    expect(state.users[0].status).toBe('Blocked');
-  });
-
-  test('reset user tabhi chalta hai jab number sahi type ho', async ({ page }) => {
-    const state = freshState();
-    seedOrder(state);
-    await openApp(page, { state });
-    await adminLogin(page);
-    await page.evaluate(() => window.adminBnGo('users'));
-    await page.waitForTimeout(500);
-
-    // resetUserData() ek hi synchronous call me confirm() FIR prompt() dono
-    // chalata hai. Do stacked page.once('dialog',...) handlers ek dusre se race
-    // kar sakte hain ("Cannot accept dialog which is already handled!") — ek hi
-    // persistent page.on('dialog',...) jo dialog TYPE dekh ke jawab de, isse
-    // deterministic hai chahe dono dialogs kitni bhi jaldi aayein.
-    const answerWith = (typedValue) => {
-      const handler = (dialog) => {
-        if (dialog.type() === 'prompt') dialog.accept(typedValue);
-        else dialog.accept();
-      };
-      page.on('dialog', handler);
-      return () => page.off('dialog', handler);
-    };
-
-    // Pehle galat number — reset nahi hona chahiye
-    let stopListening = answerWith('1111111111');
-    await page.evaluate(() => window.resetUserData('9876543210', 'Test User', 1));
-    await page.waitForTimeout(400);
-    stopListening();
-    expect(state.users.length).toBe(1);
-
-    // Ab sahi number
-    stopListening = answerWith('9876543210');
-    await page.evaluate(() => window.resetUserData('9876543210', 'Test User', 1));
-    await page.waitForTimeout(600);
-    stopListening();
-    expect(state.users.length).toBe(0);
-    expect(state.orders.length).toBe(0);
-  });
+  // Block/unblock aur reset ab Super Admin ke paas hain (tests/super-vendor-
+  // config.spec.js me cover hote hain) — vendor apni Users tab se sirf list
+  // dekh sakta hai, ab koi manage action yahan nahi bacha.
 });
 
 test.describe('Admin menu & config', () => {
@@ -264,31 +218,10 @@ test.describe('Admin menu & config', () => {
     expect(lunch.price).toBe(95);
   });
 
-  test('dono delivery mode band nahi ho sakte', async ({ page }) => {
-    await openApp(page);
-    await adminLogin(page);
-    await page.evaluate(() => window.adminBnGo('config'));
-    await page.waitForTimeout(300);
-    await page.evaluate(() => window.cfgOpen('delivery'));
-    await page.uncheck('#cfg-homeEnabled');
-    await page.uncheck('#cfg-officeEnabled');
-    await page.click('#saveConfigBtn');
-    await page.waitForTimeout(300);
-    await expect(page.locator('#toast')).toContainText('at least one delivery mode');
-  });
-
-  test('office ON par company zaroori', async ({ page }) => {
-    await openApp(page);
-    await adminLogin(page);
-    await page.evaluate(() => window.adminBnGo('config'));
-    await page.waitForTimeout(300);
-    await page.evaluate(() => window.cfgOpen('delivery'));
-    await page.check('#cfg-officeEnabled');
-    await page.fill('#cfg-companies', '');
-    await page.click('#saveConfigBtn');
-    await page.waitForTimeout(300);
-    await expect(page.locator('#toast')).toContainText('at least one company');
-  });
+  // "dono delivery mode band nahi ho sakte" / "office ON par company zaroori" —
+  // ab Super Admin Delivery Setup group ki validation hai (tests/super-vendor-
+  // config.spec.js), kyunki Home/Office toggle aur Companies vendor Setup se
+  // hata diye gaye hain.
 
   test('closed date add / remove', async ({ page }) => {
     await openApp(page);
