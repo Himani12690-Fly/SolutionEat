@@ -2901,8 +2901,18 @@
   // Date row above tabs — Today/Tomorrow/Day After chips, always visible on
   // Home (no separate Schedule sheet/nav). Tapping a chip switches the whole
   // Home menu to that date, same as it worked before the Schedule Your Meal
-  // detour. Today is always tappable (goes back via showLanding()); Tomorrow/
-  // Day After grey out (no onclick) when nothing's orderable that day.
+  // detour. Today is always tappable; Tomorrow/Day After grey out (no
+  // onclick) when nothing's orderable that day.
+  // ⚠️ Today chip pehle showLanding() call karti thi — jo showView('homeView')
+  // (jisme HAMESHA window.scrollTo(0,0) hai, chahe pehle se homeView khuli ho)
+  // + poora renderHome() dobara chalata hai. Ye chip khud #homeView ke ANDAR
+  // hi hai (isliye tabhi dikhti/clickable hai jab user pehle se Home par ho) —
+  // isliye ye extra "showView"/scroll-jump/double-render kaam bilkul faltu
+  // tha, aur Tomorrow/Day After (jo seedha lightweight menuChangeDate() use
+  // karte the) ke muqable Today par hi ek achanak scroll-jump + heavier
+  // re-render dikhta — yahi "Today↔Tomorrow switch par flicker, par
+  // Tomorrow↔Day After bilkul smooth" wali report ka asli sabab tha. Ab Today
+  // bhi wahi lightweight menuChangeDate(0) use karta hai jaisa baaki dono.
   function renderMenuDateTime(){
     const box=document.getElementById('menuDateTime'); if(!box)return;
     const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
@@ -2911,12 +2921,15 @@
     for(let o=0;o<=2;o++){
       const open = o===0 ? true : anyAvail(o);
       const sel = (o===dateOffset);
-      const click = o===0 ? 'showLanding()' : `menuChangeDate(${o})`;
-      html+=`<div class="dt-chip ${sel?'sel':''} ${open?'':'off'}" ${open?`onclick="${click}"`:''}>${esc(dn[o])}</div>`;
+      html+=`<div class="dt-chip ${sel?'sel':''} ${open?'':'off'}" ${open?`onclick="menuChangeDate(${o})"`:''}>${esc(dn[o])}</div>`;
     }
     box.innerHTML = html+'</div>';
   }
-  function menuChangeDate(v){ const off=parseInt(v,10)||0; if(!anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
+  // Today (off===0) hamesha allowed — chip khud hamesha tappable render hoti
+  // hai (upar `open = o===0 ? true : ...`), chahe aaj ke saare meals cutoff ke
+  // baad band ho chuke ho ("sorry closed" cards dikhni chahiye, silent no-op
+  // nahi). Tomorrow/Day After ke liye anyAvail() guard waisa hi rehta hai.
+  function menuChangeDate(v){ const off=parseInt(v,10)||0; if(off!==0 && !anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
   // Ek specific (aaj band ho chuke) meal ke Home card se — seedha usi meal ke
   // jald wale available din pe switch kar deta hai (Tomorrow/Day After me
   // jo bhi pehle khula ho), koi alag sheet ki zaroorat nahi.
