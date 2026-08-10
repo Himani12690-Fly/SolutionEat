@@ -310,11 +310,18 @@
     /* ── Meal card: photo + price + ADD, one compact unit ── */
     .c1card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px;
       margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 6px 16px -10px rgba(0,0,0,0.12);
-      transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease;
-      animation:c1in .32s cubic-bezier(.2,.8,.2,1) both; }
+      transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease; }
     html[data-theme="dark"] .c1card { box-shadow:0 1px 3px rgba(0,0,0,0.3), 0 6px 16px -10px rgba(0,0,0,0.5); }
-    .c1card:nth-child(2) { animation-delay:.05s; }
-    .c1card:nth-child(3) { animation-delay:.1s; }
+    /* ⚠️ Entrance animation sirf #mealPanel ke pehle real paint par — is class ke
+       bina .c1card animate nahi karta. Pehle animation hamesha .c1card par lagi
+       thi, isliye har re-render (meal-tab switch, date switch, live stats/image
+       load) par saare cards phir se fade+slide karte — poora panel "flicker"
+       jaisa lagta tha. Ab #mealPanel.mp-anim sirf pehli baar (skeleton se asli
+       menu tak) lagti hai, JS usse turant hata deta hai — baad ke updates
+       silently DOM replace karte hain, koi replay nahi. */
+    #mealPanel.mp-anim .c1card { animation:c1in .32s cubic-bezier(.2,.8,.2,1) both; }
+    #mealPanel.mp-anim .c1card:nth-child(2) { animation-delay:.05s; }
+    #mealPanel.mp-anim .c1card:nth-child(3) { animation-delay:.1s; }
     @keyframes c1in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
     .c1card.c1-open:active { transform:scale(0.985); box-shadow:0 1px 2px rgba(0,0,0,0.04); }
     .c1card.c1-closed { opacity:0.55; box-shadow:none; }

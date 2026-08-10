@@ -2938,6 +2938,11 @@
   // MENU ka "Roti(5)·Daal·Chawal ₹80" flash aata tha. Bina ?v= (default/discovery) pe
   // ye hamesha true — wahan koi vendor gating nahi.
   let __vendorReady = !HAS_VENDOR_PARAM;
+  // Pehli baar #mealPanel me asli cards paint hote hi true ho jaata hai — CSS
+  // entrance animation (.mp-anim) sirf usi ek paint ke liye lagti hai, baad ke
+  // sabhi re-renders (meal-tab/date switch, stats/image update) bina replay
+  // ke chupchap DOM replace karte hain (dekho renderMealPanelNow()).
+  let __mpEverPainted = false;
   function renderMealPanel(){
     clearTimeout(__mpTimer);
     __mpTimer=setTimeout(()=>{ __mpTimer=null; renderMealPanelNow(); }, 50);
@@ -3033,6 +3038,11 @@
       // bilkul same hai to DOM ko chhedo hi nahi — blink khatam.
       if(box.__lastHtml === __html) return;
       box.__lastHtml = __html;
+      // Sirf pehle real paint par entrance-animation class — meal-tab ya date
+      // switch (ya koi bhi baad ka data update) par cards silently replace
+      // hote hain, fade/slide replay nahi hota (wahi asli "flicker" tha).
+      if(!__mpEverPainted){ __mpEverPainted=true; box.classList.add('mp-anim'); setTimeout(()=>box.classList.remove('mp-anim'),450); }
+      else box.classList.remove('mp-anim');
       box.innerHTML = __html;
     }catch(err){
       try{ console.error('renderMealPanelNow failed', err); }catch(e){}
