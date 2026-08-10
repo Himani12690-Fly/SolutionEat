@@ -679,6 +679,7 @@ async function openApp(page, opts = {}) {
   const qs = new URLSearchParams();
   if (opts.vendor) qs.set('v', opts.vendor);
   if (opts.mode) qs.set('mode', opts.mode);   // APK mode split testing — 'admin' | 'customer'
+  if (opts.admin) qs.set('Admin', opts.admin);   // sole admin-login entry point — no UI link exists anymore
   const url = qs.toString() ? `${APP_URL}?${qs.toString()}` : APP_URL;
   await page.goto(url);
   await page.waitForSelector('#bootLoader.gone', { timeout:15000 }).catch(() => {});
