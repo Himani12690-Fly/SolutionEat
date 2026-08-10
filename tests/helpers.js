@@ -3,12 +3,15 @@ const { CONFIG, MENU, PROMOS, SESSION } = require('./fixtures');
 const APP_URL = process.env.APP_URL || 'http://localhost:8080/index.html';
 const SCRIPT_HOST = 'script.google.com';
 
-// Phase 2 (customer-only file split): most tests should keep hitting index.html
-// exactly as before (default, opts unset) — this only swaps the filename when a
-// caller explicitly opts in, e.g. openApp(page, { file: 'customer.html' }) or
-// openApp(page, { role: 'customer' }). Never changes APP_URL itself.
+// Phase 2 (customer-only file split) / Phase 3 (admin + superadmin file split):
+// most tests should keep hitting index.html exactly as before (default, opts
+// unset) — this only swaps the filename when a caller explicitly opts in, e.g.
+// openApp(page, { file: 'customer.html' }) or openApp(page, { role: 'customer' })
+// (also role: 'admin' -> admin.html, role: 'superadmin' -> superadmin.html).
+// Never changes APP_URL itself.
+const ROLE_FILES = { customer: 'customer.html', admin: 'admin.html', superadmin: 'superadmin.html' };
 function resolveAppUrl(opts) {
-  const file = (opts && opts.file) || ((opts && opts.role === 'customer') ? 'customer.html' : null);
+  const file = (opts && opts.file) || (opts && ROLE_FILES[opts.role]) || null;
   if (!file) return APP_URL;
   return APP_URL.replace(/[^/]+$/, file);
 }
@@ -716,7 +719,16 @@ async function adminLogin(page, user = 'demo', pass = 'demo123') {
 }
 
 async function superLogin(page, user = 'yuvraj_owner', pass = 'ChangeThisSuperPassword!123') {
-  await page.evaluate(() => window.showView('superLogin'));
+  // superadmin.html (phase 3 split) boots straight to #superLogin by default —
+  // no query-param gate, no showView('superLogin') needed first. index.html
+  // (and admin.html, which has no super-admin UI at all) still land elsewhere
+  // by default, so keep the explicit showView() call for those — only skip it
+  // when the login form is already the visible view.
+  const alreadyShown = await page.evaluate(() => {
+    const el = document.getElementById('superLogin');
+    return !!el && !el.classList.contains('hidden');
+  });
+  if (!alreadyShown) await page.evaluate(() => window.showView('superLogin'));
   await page.fill('#superUser', user);
   await page.fill('#superPass', pass);
   await page.click('#superLoginBtn');

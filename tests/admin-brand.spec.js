@@ -1,6 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
-const APP = 'http://127.0.0.1:8080/index.html';
+// Phase 3 split: admin UI now lives in its own dedicated file.
+const APP = process.env.ADMIN_BRAND_APP_URL || 'http://127.0.0.1:8080/admin.html';
 
 function json(route, obj) {
   return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(obj) });
