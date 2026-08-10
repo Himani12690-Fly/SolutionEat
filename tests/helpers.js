@@ -3,6 +3,16 @@ const { CONFIG, MENU, PROMOS, SESSION } = require('./fixtures');
 const APP_URL = process.env.APP_URL || 'http://localhost:8080/index.html';
 const SCRIPT_HOST = 'script.google.com';
 
+// Phase 2 (customer-only file split): most tests should keep hitting index.html
+// exactly as before (default, opts unset) — this only swaps the filename when a
+// caller explicitly opts in, e.g. openApp(page, { file: 'customer.html' }) or
+// openApp(page, { role: 'customer' }). Never changes APP_URL itself.
+function resolveAppUrl(opts) {
+  const file = (opts && opts.file) || ((opts && opts.role === 'customer') ? 'customer.html' : null);
+  if (!file) return APP_URL;
+  return APP_URL.replace(/[^/]+$/, file);
+}
+
 // ── Mutable server state — har test se pehle reset ──
 function freshState() {
   return {
@@ -623,6 +633,7 @@ async function mockBackend(page, state) {
 // ── App open karo (guest ya logged-in) ──
 async function openApp(page, opts = {}) {
   const state = opts.state || freshState();
+  const baseUrl = resolveAppUrl(opts);
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
@@ -633,7 +644,7 @@ async function openApp(page, opts = {}) {
   // to exercise the denied/blocked state pass { geo: false }.
   if (opts.geo !== false) {
     try {
-      const origin = new URL(APP_URL).origin;
+      const origin = new URL(baseUrl).origin;
       await page.context().grantPermissions(['geolocation'], { origin });
       await page.context().setGeolocation(
         (opts.geo && typeof opts.geo === 'object') ? opts.geo : { latitude: 23.0225, longitude: 72.5714 }
@@ -680,7 +691,7 @@ async function openApp(page, opts = {}) {
   if (opts.vendor) qs.set('v', opts.vendor);
   if (opts.mode) qs.set('mode', opts.mode);   // APK mode split testing — 'admin' | 'customer'
   if (opts.admin) qs.set('Admin', opts.admin);   // sole admin-login entry point — no UI link exists anymore
-  const url = qs.toString() ? `${APP_URL}?${qs.toString()}` : APP_URL;
+  const url = qs.toString() ? `${baseUrl}?${qs.toString()}` : baseUrl;
   await page.goto(url);
   await page.waitForSelector('#bootLoader.gone', { timeout:15000 }).catch(() => {});
   return { errors, state };
@@ -713,4 +724,4 @@ async function superLogin(page, user = 'yuvraj_owner', pass = 'ChangeThisSuperPa
 }
 
 module.exports = { openApp, setTheme, goTo, adminLogin, superLogin,
-                   freshState, todayIST, APP_URL, SESSION };
+                   freshState, todayIST, APP_URL, SESSION, resolveAppUrl };
