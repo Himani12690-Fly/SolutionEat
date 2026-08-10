@@ -2986,7 +2986,8 @@
         const openA=(availAll[a]&&availAll[a].ok)?0:1, openB=(availAll[b]&&availAll[b].ok)?0:1;
         return openA-openB;
       });
-      const cards = orderedMealKeys.map(m=>{
+      const cardHtmlByKey={};
+      orderedMealKeys.forEach(m=>{
         const meta=MEAL_META[m]||{};
         const av=availAll[m];
         const name=mealTitle(m);
@@ -2997,7 +2998,7 @@
         const desc=(rich.items&&rich.items.length?rich.items:[]).slice(0,6).join(' · ');
         const ph=mealPhoto(m);
         const photo = ph
-          ? `<img class="c1-img c1-img-fade" src="${ph}" alt="">`
+          ? `<img class="c1-img c1-img-fade" src="${ph}" alt="" decoding="async">`
           : (HAS_VENDOR_PARAM && vendorHasOwnImg(m)
               ? `<div class="c1-img c1-imgskel"></div>`      // vendor ki asli image aa rahi hai → skeleton, default flash nahi
               : `<div class="c1-img c1-emoji">${meta.emoji||'🍽️'}</div>`);
@@ -3017,7 +3018,7 @@
         const custLink = (orderable && vs.length>1)
           ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>`
           : (closed ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>` : `<span></span>`);
-        return `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
+        cardHtmlByKey[m] = `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
           <div class="c1-top" ${orderable?`onclick="openMealSheet('${m}')"`:''}>
             ${photo}
             <div class="c1-info">
@@ -3031,24 +3032,65 @@
           </div>
           <div class="c1-actions" id="mca-${m}">${custLink}${btn}</div>
         </div>`;
-      }).join('');
+      });
+      const cards = orderedMealKeys.map(m=>cardHtmlByKey[m]).join('');
       const __html = cards || `<div class="menu-closed">—</div>`;
       // Load ke dauran ye function 2-3 baar call hota hai (availability → stats → images →
-      // language). Har baar innerHTML replace hone se page blink karta tha. Agar markup
-      // bilkul same hai to DOM ko chhedo hi nahi — blink khatam.
+      // language), aur Add+/date-switch bhi isi se guzarte hain. Agar poora markup
+      // bilkul same hai to DOM ko bilkul chhedo hi mat.
       if(box.__lastHtml === __html) return;
       box.__lastHtml = __html;
-      // Sirf pehle real paint par entrance-animation class — meal-tab ya date
-      // switch (ya koi bhi baad ka data update) par cards silently replace
-      // hote hain, fade/slide replay nahi hota (wahi asli "flicker" tha).
-      if(!__mpEverPainted){ __mpEverPainted=true; box.classList.add('mp-anim'); setTimeout(()=>box.classList.remove('mp-anim'),450); }
-      else box.classList.remove('mp-anim');
-      box.innerHTML = __html;
+      const firstPaint = !__mpEverPainted;
+      if(firstPaint) __mpEverPainted=true;
+      if(!cards || !box.__cardsMounted){
+        // Skeleton/error/first-load se aa rahe hain, ya koi bhi meal orderable
+        // nahi (menu-closed blob) — yahan per-card patch ka koi fayda nahi,
+        // seedha poora mount karo.
+        box.__cardHtml = {};
+        if(firstPaint){ box.classList.add('mp-anim'); setTimeout(()=>box.classList.remove('mp-anim'),450); }
+        else box.classList.remove('mp-anim');
+        box.innerHTML = __html;
+        if(cards){ box.__cardsMounted=true; orderedMealKeys.forEach(m=>{ box.__cardHtml[m]=cardHtmlByKey[m]; }); }
+        else box.__cardsMounted=false;
+        return;
+      }
+      // ⚠️ ASLI FIX: pehle yahan poora box.innerHTML replace hota tha — matlab
+      // Add+ dabane se ek meal ka button badalta, par SAARI cards (aur unki
+      // <img> tags) destroy+recreate ho jaati thi. Isse (a) fade/flicker poore
+      // panel par dikhta, (b) unrelated meals ki images bhi dubara load/decode
+      // hoti (kabhi-kabhi network se dubara bhi, agar host cache-friendly na
+      // ho) — "image load slow" wali complaint ka bhi yahi asli sabab tha. Ab
+      // sirf wahi card DOM node replace hota hai jiska HTML actually badla ho;
+      // baaki cards (unki images samet) bilkul untouched rehte hain.
+      box.classList.remove('mp-anim');   // patch mode kabhi replay nahi karta
+      const __tmp=document.createElement('div');
+      orderedMealKeys.forEach(m=>{
+        const html=cardHtmlByKey[m];
+        if(box.__cardHtml[m]===html) return;   // ye card nahi badla — bilkul mat chhedo
+        box.__cardHtml[m]=html;
+        __tmp.innerHTML=html;
+        const newEl=__tmp.firstElementChild;
+        const oldEl=document.getElementById('mc-'+m);
+        if(oldEl) oldEl.replaceWith(newEl); else box.appendChild(newEl);
+      });
+      // Meal ab list me nahi (admin ne hata di / disable kar di) — stale node hatao.
+      Object.keys(box.__cardHtml).forEach(k=>{
+        if(orderedMealKeys.indexOf(k)<0){ delete box.__cardHtml[k]; const el=document.getElementById('mc-'+k); if(el) el.remove(); }
+      });
+      // Order sync — jab open/closed sort badalta hai (dekho orderedMealKeys upar)
+      // tabhi nodes idhar-udhar move karte hain, content ko chhue bina.
+      let ref=box.firstElementChild;
+      orderedMealKeys.forEach(m=>{
+        const el=document.getElementById('mc-'+m);
+        if(!el) return;
+        if(el!==ref) box.insertBefore(el, ref);   // wahi se hata ke yahan reinsert — DOM move, recreate nahi
+        ref=el.nextElementSibling;
+      });
     }catch(err){
       try{ console.error('renderMealPanelNow failed', err); }catch(e){}
       try{ dbgLog({ev:'meal_panel_render_error', err:String(err).slice(0,200)}); }catch(e){}
       const errHtml='<div class="c1card c1-closed" style="opacity:.85;justify-content:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;width:100%;"><span style="font-size:28px;">⚠️</span><span class="c1-name">'+t('menuLoadFailed')+'</span><button class="c1-add" onclick="box.__lastHtml=null;renderMealPanel();" style="max-width:160px;">'+t('retryBtn')+'</button></div></div>';
-      box.__lastHtml=null; box.innerHTML=errHtml;
+      box.__lastHtml=null; box.__cardsMounted=false; box.innerHTML=errHtml;
     }
   }
 
