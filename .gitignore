@@ -10,6 +10,9 @@ apps-script*.js
 apps-script*.txt
 *.gs
 
+# Claude Code agent worktrees
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
