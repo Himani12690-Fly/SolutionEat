@@ -26,7 +26,9 @@ function freshState() {
     // hai (Super Admin doosre vendor ki config/users chhoo raha hai, apni nahi).
     vendorConfigs: {}, // targetVendorId -> config object
     vendorUsers: {},   // targetVendorId -> users array
-    notifications: []  // { time, audience:'vendor'|phone, title, body, type, relatedRow } — bell feed
+    notifications: [], // { time, audience:'vendor'|phone, title, body, type, relatedRow } — bell feed
+    otps: {},          // phone -> { code, attempts } — mirrors apps-script-v6.txt's CacheService OTP store
+    otpVerified: {}     // phone -> true, short-lived marker between verifyOtp (new user) and completeOtpSignup
   };
 }
 
@@ -233,6 +235,44 @@ function handlePost(state, body) {
     if (!p.credential) return { status:'error', message:'Missing credential' };
     if (!p.phone) return { status:'need_phone' };
     return { status:'success', token: SESSION.token, name: p.name || SESSION.name, phone: p.phone };
+  }
+
+  // ── Mobile OTP login (mirrors sendOtp/verifyOtp/completeOtpSignup in
+  // apps-script-v6.txt) — fixed '123456' test code instead of real fast2sms,
+  // same expiry-less-but-attempt-limited/send-limited shape as the real
+  // CacheService store, just kept in state.otps/state.otpVerified instead. ──
+  if (action === 'sendotp') {
+    const phone = String(p.phone || '');
+    if (!/^[6-9]\d{9}$/.test(phone)) return { status:'error', code:'bad_phone', message:'Please enter a valid 10-digit mobile number.' };
+    state.otpSendCounts = state.otpSendCounts || {};
+    const sendCount = state.otpSendCounts[phone] || 0;
+    if (sendCount >= 4) return { status:'error', code:'otp_too_many_sends', message:'Too many OTP requests. Please try again after some time.' };
+    state.otpSendCounts[phone] = sendCount + 1;
+    state.otps[phone] = { code: '123456', attempts: 0 };
+    return { status:'success' };
+  }
+  if (action === 'verifyotp') {
+    const phone = String(p.phone || '');
+    const entered = String(p.code || '');
+    const rec = state.otps[phone];
+    if (!rec) return { status:'error', code:'otp_expired', message:'OTP expired or not requested. Please request a new one.' };
+    if (rec.attempts >= 5) { delete state.otps[phone]; return { status:'error', code:'otp_too_many_attempts', message:'Too many wrong attempts. Please request a new OTP.' }; }
+    if (entered !== rec.code) { rec.attempts++; return { status:'error', code:'otp_wrong', message:'Incorrect OTP. Please try again.' }; }
+    delete state.otps[phone];
+    if (state.otpSendCounts) delete state.otpSendCounts[phone];
+    const u = state.users.find(x => x.phone === phone);
+    if (!u) { state.otpVerified[phone] = true; return { status:'need_name', code:'need_name', message:'Please tell us your name to finish signing in.' }; }
+    if (u.status === 'Blocked') return { status:'error', code:'blocked', message:'Your account is blocked. Support: 70434 91481' };
+    return { status:'success', token: SESSION.token, name: u.name, phone };
+  }
+  if (action === 'completeotpsignup') {
+    const phone = String(p.phone || '');
+    const name = String(p.name || '').trim();
+    if (name.length < 2) return { status:'error', code:'bad_name', message:'Please enter your name.' };
+    if (!state.otpVerified[phone]) return { status:'error', code:'otp_expired', message:'Your verification expired. Please request a new OTP.' };
+    delete state.otpVerified[phone];
+    state.users.push({ phone, name, email:'', created:'01 Jan 25', lastLogin:'01 Jan 25', status:'Active', orders:0 });
+    return { status:'success', token: SESSION.token, name, phone };
   }
 
   // ── Wrapped-APK Google sign-in bounce-back (mirrors completePendingGoogleAuth/
