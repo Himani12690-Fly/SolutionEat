@@ -43,7 +43,10 @@ test.describe('Meal sheet stepper', () => {
 test.describe('Home card stepper', () => {
   test('the "+" respects the configured max, and "−" decrements instead of removing the whole item', async ({ page }) => {
     const state = stateWithLunchMax(2);
-    await openAppRaw(page, { vendor: 'nestandnosh', state });
+    // Fixed time before lunch's 09:00 cutoff — the Home card only shows the
+    // stepper (vs. a disabled "Closed" button) while the meal is orderable,
+    // so this test must not depend on whatever the real wall-clock time is.
+    await openAppRaw(page, { vendor: 'nestandnosh', state, istOverride: '2026-08-04T08:00:00' });
     await page.evaluate(() => window.quickAdd('lunch'));
     await expect(page.locator('#mc-lunch .c1-st-n')).toHaveText('1');
     await page.click('#mc-lunch .c1-st-btn[aria-label="Add more"]');
