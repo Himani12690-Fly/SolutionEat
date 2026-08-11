@@ -8,5 +8,15 @@
         "2A:D2:7F:B2:91:9E:4F:23:C0:1A:14:C4:4A:A3:4F:8A:0A:A6:F8:1F:5B:8B:25:57:DF:1E:4D:03:60:0B:5B:CD"
       ]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "cloud.mytiffin.twa",
+      "sha256_cert_fingerprints": [
+        "34:2A:62:9F:39:C8:B4:82:DB:D7:80:C3:C3:7E:70:08:D1:A3:5E:42:83:C5:69:CD:F8:98:46:45:F7:4C:82:D3"
+      ]
+    }
   }
 ]
