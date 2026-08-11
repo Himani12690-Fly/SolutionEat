@@ -708,7 +708,47 @@
     </div>
   </div>
 
-
+  <!-- ══════ BULK / PARTY ORDER — dedicated page (not a drawer/sheet anymore).
+       Order form up top, "Recent Bulk Orders" table below so a customer can
+       place a request and immediately see it (and their last few requests'
+       status) without hopping over to Profile. Lives INSIDE .container (like
+       every other view) — it was accidentally placed after .container's own
+       closing tag, alongside the position:fixed modal/sheet overlays, which
+       made it inherit zero layout height from its real siblings: whenever
+       Bulk was the active view, the now-empty (all children display:none)
+       .container still reserved its full min-height above it, pushing the
+       actual Bulk form ~800px down the page — looked completely blank until
+       you scrolled past that reserved space. ══════ -->
+  <div id="bulkView" class="hidden">
+    <div class="hero sub-hero">
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <h1 style="font-size:20px;" data-i="bulkTitle">🎉 Bulk / Party Order</h1>
+      <p class="tagline" style="margin:0;" data-i="bulkSub">Ordering for a group or event? Tell us the details — the kitchen will confirm availability &amp; price.</p>
+    </div>
+    <div class="section">
+      <label class="sh-lbl" data-i="bulkMealLbl">Meal</label>
+      <select class="sh-select" id="bulkMeal"></select>
+      <label class="sh-lbl" data-i="bulkQtyLbl">Quantity (min 5)</label>
+      <input class="sh-select" type="number" id="bulkQty" min="5" value="10">
+      <label class="sh-lbl" data-i="bulkDateLbl">Delivery date</label>
+      <input class="sh-select" type="date" id="bulkDate">
+      <label class="sh-lbl" data-i="bulkAddrLbl">Delivery address</label>
+      <input class="sh-select" id="bulkAddr" data-ph="bulkAddrPh" placeholder="Office / event address">
+      <label class="sh-lbl" data-i="bulkNotesLbl">Notes (optional)</label>
+      <input class="sh-select" id="bulkNotes" data-ph="bulkNotesPh" placeholder="Veg only, no onion, etc.">
+      <button class="add-cart-btn" id="bulkSubmitBtn" style="margin-top:16px;" onclick="submitBulkOrderFE()" data-i="bulkSubmit">Submit Bulk Request</button>
+      <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeBulkOrderSheet()" data-i="ratingNotNow">Abhi nahi</button>
+    </div>
+    <div class="section">
+      <div class="section-title" data-i="bulkRecentTitle">Recent Bulk Orders</div>
+      <div style="overflow-x:auto;">
+        <table class="bulk-hist-table">
+          <thead><tr><th data-i="bulkColItem">Item</th><th data-i="bulkColDate">Date</th><th data-i="bulkColStatus">Status</th></tr></thead>
+          <tbody id="bulkHistoryTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
 </div>
   <!-- ══════ DELIVERY MODE CHOOSER (order se pehle) ══════ -->
@@ -822,40 +862,6 @@
         <div style="font-size:11.5px;color:var(--muted);margin-top:4px;" id="exitConfirmSubText" data-i="exitConfirmSub">You'll be logged out.</div>
         <button class="add-cart-btn" style="margin-top:16px;background:var(--danger);" onclick="confirmExitApp()" data-i="exitConfirmBtn">Exit</button>
         <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeExitConfirmSheet()" data-i="ratingNotNow">Abhi nahi</button>
-      </div>
-    </div>
-  </div>
-  <!-- ══════ BULK / PARTY ORDER — dedicated page (not a drawer/sheet anymore).
-       Order form up top, "Recent Bulk Orders" table below so a customer can
-       place a request and immediately see it (and their last few requests'
-       status) without hopping over to Profile. ══════ -->
-  <div id="bulkView" class="hidden">
-    <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
-      <h1 style="font-size:20px;" data-i="bulkTitle">🎉 Bulk / Party Order</h1>
-      <p class="tagline" style="margin:0;" data-i="bulkSub">Ordering for a group or event? Tell us the details — the kitchen will confirm availability &amp; price.</p>
-    </div>
-    <div class="section">
-      <label class="sh-lbl" data-i="bulkMealLbl">Meal</label>
-      <select class="sh-select" id="bulkMeal"></select>
-      <label class="sh-lbl" data-i="bulkQtyLbl">Quantity (min 5)</label>
-      <input class="sh-select" type="number" id="bulkQty" min="5" value="10">
-      <label class="sh-lbl" data-i="bulkDateLbl">Delivery date</label>
-      <input class="sh-select" type="date" id="bulkDate">
-      <label class="sh-lbl" data-i="bulkAddrLbl">Delivery address</label>
-      <input class="sh-select" id="bulkAddr" data-ph="bulkAddrPh" placeholder="Office / event address">
-      <label class="sh-lbl" data-i="bulkNotesLbl">Notes (optional)</label>
-      <input class="sh-select" id="bulkNotes" data-ph="bulkNotesPh" placeholder="Veg only, no onion, etc.">
-      <button class="add-cart-btn" id="bulkSubmitBtn" style="margin-top:16px;" onclick="submitBulkOrderFE()" data-i="bulkSubmit">Submit Bulk Request</button>
-      <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeBulkOrderSheet()" data-i="ratingNotNow">Abhi nahi</button>
-    </div>
-    <div class="section">
-      <div class="section-title" data-i="bulkRecentTitle">Recent Bulk Orders</div>
-      <div style="overflow-x:auto;">
-        <table class="bulk-hist-table">
-          <thead><tr><th data-i="bulkColItem">Item</th><th data-i="bulkColDate">Date</th><th data-i="bulkColStatus">Status</th></tr></thead>
-          <tbody id="bulkHistoryTbody"></tbody>
-        </table>
       </div>
     </div>
   </div>

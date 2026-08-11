@@ -591,7 +591,19 @@
     // ke liye khatam ho jaata hai.
     if(id==='profileView'||id==='adminPanel'){ try{ setLang(LANG); }catch(e){} }
     lastGoodView = id;
-    window.scrollTo(0,0); updateBottomNav(id); }
+    // ⚠️ Ek synchronous window.scrollTo(0,0) yahin turant call karna kaafi
+    // nahi tha — lambi page (jaise Home, bahut scroll ho chuki) se ek CHOTI
+    // page (jaise bulkView) pe switch karte waqt, real mobile Chrome/WebView
+    // apna "scroll anchoring" try karta hai aur reset ko fight kar deta hai:
+    // naya view render hota hai, par viewport wahi purani scroll position pe
+    // atka reh jaata hai jo nayi (chhoti) page ke actual content se aage
+    // nikal chuki hoti hai — result: sirf khaali overscroll area dikhta hai,
+    // page bilkul blank lagta hai (bottom-nav ke alawa), jab tak user khud
+    // upar scroll na kare. Do bar requestAnimationFrame se agle paint ke
+    // BAAD scroll karte hain — tab tak naya (chhota) layout settle ho chuka
+    // hota hai, isliye reset asal me tikta hai.
+    requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ window.scrollTo(0,0); }); });
+    updateBottomNav(id); }
 
   // ═══════ BLANK-SCREEN GUARD ═══════
   // App background se wapas aaye aur (kisi bhi wajah se) koi view visible na ho,
