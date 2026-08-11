@@ -2570,6 +2570,21 @@
         // list turant refresh karo taaki badge bina agle poll ka wait kiye update ho.
         const ptype=(payload.data&&payload.data.type)||'';
         if(['order_status','bulk_request'].indexOf(ptype)>=0) loadNotifications();
+        // Order-status push arrive hoti thi (toast dikhta tha) par My Orders
+        // page ka status chip purana hi rehta tha jab tak user manually
+        // Refresh na dabaaye — upcomingOrders cache turant ravaana nahi hota
+        // tha. Ab cache turant refresh karo, aur agar Orders page abhi khula
+        // hai to use bhi turant re-render karo (jaisa cancelMyOrder karta hai).
+        if(ptype==='order_status'){
+          refreshOrderedMap().then(function(){
+            const ov=document.getElementById('ordersView');
+            if(ov && !ov.classList.contains('hidden')){
+              const hd=document.getElementById('histDate');
+              loadMyOrders(hd&&hd.value?hd.value:fmtYMD(dateWithOffset(0)));
+            }
+            renderMealPanel();
+          });
+        }
         // Vendor-content-change pushes (menu/prices/timings/kitchen open-close) —
         // sirf toast se kaam nahi chalta, warna app khula rehte hue customer purani
         // (stale) menu/price/timing dekhta rehta jab tak agla 90s poll na chale.
@@ -4862,14 +4877,36 @@
   // City/Gota me ho) fake-precision hai. Bahut kharab accuracy pe label ko chhedo
   // hi mat — default text hi behtar hai ek galat-specific naam se.
   const AREA_LABEL_MAX_ACCURACY_M = 1000;
+  const AREA_LABEL_MAX_SNAP_KM = 1.2;
   let dscAreaLabelCache = null;
+  function osmSnapDistanceKm(lat1,lon1,lat2,lon2){
+    const R=6371, toRad=d=>d*Math.PI/180;
+    const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+    const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+    return R*2*Math.asin(Math.sqrt(a));
+  }
   function resolveDscAreaLabel(lat,lng,accuracy){
     if(accuracy!=null && accuracy>AREA_LABEL_MAX_ACCURACY_M) return;
     const key = lat.toFixed(3)+','+lng.toFixed(3);
     if(dscAreaLabelCache && dscAreaLabelCache.key===key){ setDscCityLabel(dscAreaLabelCache.label); return; }
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`)
+    // zoom=14 (suburb/admin-node level) ka OSM India ke kai areas me sparse
+    // data hai — jab wahan koi qareeb ka indexed suburb node nahi hota,
+    // Nominatim apne paas jo sabse nazdeek node hai wahi thama deta hai, chahe
+    // wo 1-2km door kyun na ho (verified: Makarba pe query karne se Vejalpur
+    // ka ek POI ~1.8km door se aaya, galat label). zoom=16 (road/street level)
+    // OSM ka kahin zyada dense-mapped data hai — nearest actual road milta
+    // hai, aur uske address hierarchy se suburb nikalna reliably sahi aata hai.
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`)
       .then(r=>r.json())
       .then(j=>{
+        // Belt-and-suspenders: Nominatim apna resolved point (j.lat/j.lon)
+        // bhi deta hai — agar wo humare asli query point se bahut door hai,
+        // iska matlab yahan bhi OSM ke paas sahi-nazdeek data nahi mila.
+        // Aisi halat me chup rehna behtar hai (jaisa accuracy-gate upar).
+        if(j && j.lat!=null && j.lon!=null){
+          const snapKm = osmSnapDistanceKm(lat, lng, parseFloat(j.lat), parseFloat(j.lon));
+          if(snapKm > AREA_LABEL_MAX_SNAP_KM) return;
+        }
         const a=(j&&j.address)||{};
         const label = a.suburb||a.neighbourhood||a.quarter||a.city_district||a.town||a.village||a.city||a.county;
         if(label){ dscAreaLabelCache={key,label}; setDscCityLabel(label); }
