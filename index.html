@@ -5931,6 +5931,7 @@
       step('adminStepsInit', adminStepsInit);
       step('fillStats', () => fillStats(j));
       step('initOrderAlerts', initOrderAlerts);
+      step('maybeAskAdminPush', maybeAskAdminPush);
       step('bulkBadge', refreshBulkBadge);
       step('loadVendorNotifications', loadVendorNotifications);
       adminStep('stats','Stats','ok');
@@ -5976,6 +5977,7 @@
       stepR('initConfigEditor', initConfigEditor);
       stepR('adminOpenLastTab', adminOpenLastTab);
       stepR('initOrderAlerts', initOrderAlerts);
+      stepR('maybeAskAdminPush', maybeAskAdminPush);
       stepR('bulkBadge', refreshBulkBadge);
       stepR('loadVendorNotifications', loadVendorNotifications);
       adminStep('stats','Stats','ok');
@@ -6303,6 +6305,37 @@
     const sign=bn?(' — '+bn):'', withBn=bn?(' with '+bn):'';   // naam khaali ho to dangling '— '/'with' na dikhe
     const msgs={Pending:'Your order for '+dt+' has been received.'+sign,Preparing:'Your order for '+dt+' is being prepared and will be delivered in your selected time slot.'+sign,Delivered:'Your order for '+dt+' has been delivered. Thank you for ordering'+withBn+'!'};
     openWhatsApp(normalizeWa(o.phone), (msgs[o.status]||msgs.Pending));
+  }
+
+  // ═══════ ADMIN PUSH NOTIFICATIONS (Firebase Cloud Messaging) — the
+  // real-time counterpart to the poll-based alerts below (reaches the vendor
+  // even with the admin panel closed/backgrounded). Reuses the exact same
+  // FIREBASE_CONFIG/__fbApp/__fbMessaging the customer-side push already
+  // set up above — one Firebase project, one app instance, either role. ═══════
+  // No toggle here either (same reasoning as order alerts) — tries once per
+  // login/restore, silently no-ops on anything unsupported/blocked so it
+  // never gets in the vendor's way. Mirrors customer-side maybeAskPush(),
+  // adapted for admin auth (checkAuth via adminCreds) instead of a customer
+  // SESSION token.
+  async function maybeAskAdminPush(){
+    try{
+      if(isWrappedApp()) return;   // Web Push doesn't work in an embedded WebView
+      if(!pushConfigured()) return;
+      if(!adminCreds) return;
+      if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      if(Notification.permission === 'denied') return;   // blocked — asking again is pointless
+      const reg = await navigator.serviceWorker.ready;
+      if(!__fbApp){ __fbApp=firebase.initializeApp(FIREBASE_CONFIG); __fbMessaging=firebase.messaging(); }
+      if(Notification.permission !== 'granted'){
+        if(storeGet('fbt_admin_notif_asked')) return;   // ask once per device, same as customer side
+        storeSet('fbt_admin_notif_asked', 1);
+        const perm = await Notification.requestPermission();
+        if(perm !== 'granted') return;
+      }
+      const fcmToken = await __fbMessaging.getToken({ vapidKey: FIREBASE_VAPID_KEY, serviceWorkerRegistration: reg });
+      if(!fcmToken) return;
+      await apiPost({ action:'saveadminpushtoken', user:adminCreds.user, pass:adminCreds.pass, fcmToken:fcmToken });
+    }catch(e){ /* push is a bonus on top of the always-on poll — never let it block login */ }
   }
 
   // ═══════ ADMIN ORDER ALERTS (poll + ringtone + notification) — always on,
