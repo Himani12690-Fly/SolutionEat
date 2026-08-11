@@ -957,7 +957,6 @@
         <span class="atb-sect" id="adminSectionTitle">🧾 Orders</span>
       </div>
       <span class="admin-bell" id="adminBell" onclick="openVendorNotifSheet()">🔔<span class="admin-bell-badge hidden" id="adminBellBadge">0</span></span>
-      <span class="alert-toggle" id="alertToggle" onclick="toggleAlerts()">🔕 OFF</span>
     </div>
     <div class="section" style="padding-bottom:110px;">
 
@@ -5931,7 +5930,7 @@
       step('showAdminLoader', () => showAdminLoader('Setting up your dashboard…'));
       step('adminStepsInit', adminStepsInit);
       step('fillStats', () => fillStats(j));
-      step('alertToggleUI', updateAlertToggleUI);
+      step('initOrderAlerts', initOrderAlerts);
       step('bulkBadge', refreshBulkBadge);
       step('loadVendorNotifications', loadVendorNotifications);
       adminStep('stats','Stats','ok');
@@ -5976,7 +5975,7 @@
       stepR('initMenuEditor', initMenuEditor);
       stepR('initConfigEditor', initConfigEditor);
       stepR('adminOpenLastTab', adminOpenLastTab);
-      stepR('alertToggleUI', updateAlertToggleUI);
+      stepR('initOrderAlerts', initOrderAlerts);
       stepR('bulkBadge', refreshBulkBadge);
       stepR('loadVendorNotifications', loadVendorNotifications);
       adminStep('stats','Stats','ok');
@@ -6306,23 +6305,25 @@
     openWhatsApp(normalizeWa(o.phone), (msgs[o.status]||msgs.Pending));
   }
 
-  // ═══════ ADMIN ORDER ALERTS (poll + ringtone + notification) ═══════
+  // ═══════ ADMIN ORDER ALERTS (poll + ringtone + notification) — always on,
+  // no vendor-facing toggle. A vendor forgetting to flip a switch shouldn't
+  // be the reason a new order goes unheard. ═══════
   let alertTimer=null, ringCtx=null, ringTimer=null;
-  function alertsOn(){ return !!storeGet('fbt_alerts_on'); }
-  function updateAlertToggleUI(){ const b=document.getElementById('alertToggle'); if(!b)return; b.textContent=alertsOn()?'🔔 Alerts: ON':'🔕 Alerts: OFF'; b.classList.toggle('on',alertsOn()); }
-  // ═══════ Vendor's notification bell (topbar) — ALAG cheez hai alertToggle se
-  // (jo sirf "panel khula rahe to sound bajao" hai). Ye ek mandatory in-app list
-  // hai — customer ki taraf se koi bhi order-activity (naya order, edit, cancel,
-  // bulk request) yahan record hoti hai, koi ON/OFF nahi. ═══════
+  // ═══════ Vendor's notification bell (topbar) — separate from the ringtone
+  // alert poll above (that's just "panel open rahe to sound bajao"). This is
+  // a mandatory in-app list — any customer order-activity (new order, edit,
+  // cancel, bulk request) records here, no ON/OFF for either anymore. ═══════
   let vendorNotifCache=[], vendorNotifTimer=null;
   function loadVendorNotifications(){
     if(!adminCreds) return;
     apiPost({action:'vendornotifications', user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
       if(j.status==='success'){ vendorNotifCache=j.notifications||[]; renderVendorNotifBadge(); }
     }).catch(()=>{});
-    // Mandatory/always-on hai — alertsOn() (sound toggle) se ALAG, uske OFF hone
-    // par bhi bell chalta rahe. Interval ek hi baar banta hai (login/restore
-    // dono isi function ko call karte hain, guard se dobara nahi banega).
+    // In-app bell list — separate concern from the ringtone/badge alert poll
+    // (initOrderAlerts()/checkNewOrders(), 40s interval), this one runs its
+    // own 60s interval. Both are always-on now, no vendor toggle for either.
+    // Interval banta ek hi baar hai (login/restore dono isi function ko call
+    // karte hain, guard se dobara nahi banega).
     if(!vendorNotifTimer) vendorNotifTimer=setInterval(()=>{ if(adminCreds) loadVendorNotifications(); }, 60000);
   }
   function vendorNotifSeenKey(){ return 'fbt_admin_notif_seen'; }
@@ -6360,21 +6361,27 @@
     }catch(e){}
   }
   function stopRing(){ if(ringTimer){ clearInterval(ringTimer); ringTimer=null; } }
-  function toggleAlerts(){
-    if(alertsOn()){ storeDel('fbt_alerts_on'); stopRing(); stopAlertPolling(); updateAlertToggleUI(); showToast('🔕 Order alerts OFF',''); return; }
+  // Runs automatically on every successful login/session-restore (see
+  // adminLogin()/restoreAdmin()) — no vendor action needed. Notification
+  // permission + AudioContext creation both need a user gesture per browser
+  // autoplay policy; adminLogin() runs from the Login button's click handler
+  // so that's covered there, but restoreAdmin() (silent reload) has no fresh
+  // gesture — the ringtone may stay silently blocked until the vendor taps
+  // anything on the page, though polling/badge/notification-list still work
+  // regardless. This is an inherent browser limitation, not fixable from JS.
+  function initOrderAlerts(){
     try{ if(window.Notification&&Notification.permission!=='granted') Notification.requestPermission(); }catch(e){}
     try{ ringCtx = ringCtx || new (window.AudioContext||window.webkitAudioContext)(); if(ringCtx.resume) ringCtx.resume(); }catch(e){}
-    storeSet('fbt_alerts_on',1); updateAlertToggleUI();
     if(!adminCreds){ return; }
     apiPost({action:'lastorder', user:adminCreds.user, pass:adminCreds.pass})
       .then(j=>{ if(j.status==='success') storeSet('fbt_lastrow', j.lastRow||0); })
       .catch(()=>{})
-      .finally(()=>{ startAlertPolling(); showToast('🔔 Order alerts ON — keep this panel open','success'); });
+      .finally(()=>{ startAlertPolling(); });
   }
-  function startAlertPolling(){ stopAlertPolling(); if(!alertsOn()||!adminCreds)return; alertTimer=setInterval(checkNewOrders,40000); }
+  function startAlertPolling(){ stopAlertPolling(); if(!adminCreds)return; alertTimer=setInterval(checkNewOrders,40000); }
   function stopAlertPolling(){ if(alertTimer){ clearInterval(alertTimer); alertTimer=null; } }
   function checkNewOrders(){
-    if(!adminCreds||!alertsOn())return;
+    if(!adminCreds)return;
     apiPost({action:'lastorder', user:adminCreds.user, pass:adminCreds.pass})
       .then(j=>{
         if(j.status!=='success')return;

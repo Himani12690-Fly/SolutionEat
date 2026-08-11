@@ -99,3 +99,25 @@ test.describe('Admin login via ?Admin=<vendorSlug> (sole entry point, no UI link
     await expect(page.locator('#adminLogin')).not.toHaveClass(/hidden/);
   });
 });
+
+test.describe('admin.html / superadmin.html with NO query params at all', () => {
+  // Regression: a bare admin.html (stray bookmark, typo'd URL, or a
+  // misconfigured APK start URL missing ?Admin=) used to fall through
+  // finishInit() doing nothing, then recoverIfBlank()'s generic "no vendor
+  // param -> Discovery" fallback (shared.js, written for index.html/
+  // customer.html) kicked in and showed the customer marketplace INSIDE
+  // the admin-only file — exactly the cross-tenant leak this whole file
+  // split was meant to prevent. Fixed via an explicit APP_ROLE marker each
+  // split file declares, checked early in recoverIfBlank().
+  test('admin.html always resolves to admin login, never Discovery', async ({ page }) => {
+    await openApp(page, { file: 'admin.html', loggedIn: false });
+    await expect(page.locator('#adminLogin')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#dscView')).toHaveClass(/hidden/);
+  });
+
+  test('superadmin.html always resolves to super-admin login, never Discovery', async ({ page }) => {
+    await openApp(page, { file: 'superadmin.html', loggedIn: false });
+    await expect(page.locator('#superLogin')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#dscView')).toHaveClass(/hidden/);
+  });
+});

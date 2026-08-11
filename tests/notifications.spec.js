@@ -223,21 +223,21 @@ test.describe('Vendor bell — admin topbar', () => {
     await expect(page.locator('#adminBellBadge')).toHaveClass(/hidden/);
   });
 
-  test('bell keeps working when the (separate) sound alert toggle is OFF', async ({ page }) => {
+  test('order-alert ringtone/banner starts automatically on login — no toggle exists anymore', async ({ page }) => {
     const { state } = await openApp(page);
-    await page.evaluate(() => window.menuChangeDate(1));
-    await page.evaluate(() => window.quickAdd('lunch'));
-    await page.evaluate(() => window.goToCheckout());
-    await page.fill('#customerName', 'Test User');
-    await page.click('#placeBtn');
-    await page.waitForTimeout(500);
-
     await adminLogin(page);
     await page.waitForTimeout(500);
-    const alertsOn = await page.evaluate(() => window.alertsOn && window.alertsOn());
-    if (alertsOn) await page.click('#alertToggle');
-    await page.evaluate(() => window.loadVendorNotifications());
+    // No toggle to find or click — initOrderAlerts() ran as part of login and
+    // already seeded fbt_lastrow from the mock backend's current lastRow.
+    await expect(page.locator('#alertToggle')).toHaveCount(0);
+    await expect(page.locator('#newOrderBanner')).toHaveClass(/hidden/);
+
+    // Simulate a new order landing on the backend (bump nextRow directly on
+    // the Node-side mock state — faster than driving the full customer
+    // checkout flow) and let the already-running poll notice it.
+    state.nextRow++;
+    await page.evaluate(() => window.checkNewOrders());
     await page.waitForTimeout(300);
-    await expect(page.locator('#adminBellBadge')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#newOrderBanner')).not.toHaveClass(/hidden/);
   });
 });

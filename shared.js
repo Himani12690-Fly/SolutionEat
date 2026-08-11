@@ -658,6 +658,16 @@
     // param kabhi honor nahi hota — RESTORABLE filter se upar hi handle ho chuka).
     let isSuper=false; try{ isSuper = new URLSearchParams(location.search).get('superadmin')==='1'; }catch(e){}
     if(isSuper && APK_MODE!=='customer'){ showView(superCredsValidated ? 'superPanel' : 'superLogin'); return; }
+    // admin.html/superadmin.html (phase 3 split files) declare their own
+    // APP_ROLE — neither has a legitimate customer/Discovery destination,
+    // ever, so resolve straight to that role's login/panel instead of
+    // falling into the generic "no vendor param -> dscView" default below,
+    // which was written for index.html/customer.html and would otherwise
+    // wrongly show the marketplace inside what must be an admin-only file.
+    if(typeof APP_ROLE!=='undefined'){
+      if(APP_ROLE==='admin'){ showView(adminCredsValidated ? 'adminPanel' : 'adminLogin'); return; }
+      if(APP_ROLE==='superadmin'){ showView(superCredsValidated ? 'superPanel' : 'superLogin'); return; }
+    }
     if(!target || ALL_VIEWS.indexOf(target)<0){
       if(isLoggedIn()) target = 'homeView';
       // Vendor page (?v=slug) pe logged-out user ko discovery/browse-kitchens pe mat
