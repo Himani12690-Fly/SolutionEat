@@ -41,12 +41,17 @@ test.describe('Admin auth', () => {
     await expect(page.locator('#toast')).toContainText('username and password');
   });
 
-  test('logout se panel band', async ({ page }) => {
+  // ⚠️ Pehle logout ke baad hideAdmin() customer-side showLanding()/showPublic()
+  // route karta tha — admin.html Phase 3 split ke baad ek dedicated admin-only
+  // file hai (koi customer fallback nahi), isliye wo galat/dead route tha
+  // (customer login/discovery jaisa "galat page" dikhta). Ab seedha adminLogin.
+  test('logout se panel band aur admin login page par wapas aata hai', async ({ page }) => {
     await openApp(page);
     await adminLogin(page);
     await page.evaluate(() => window.adminLogout());
     await page.waitForTimeout(300);
     await expect(page.locator('#adminPanel')).toHaveClass(/hidden/);
+    await expect(page.locator('#adminLogin')).not.toHaveClass(/hidden/);
   });
 });
 

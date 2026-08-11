@@ -600,6 +600,13 @@
     .date-tabs .dt-btn.active { border-color:var(--accent); background:var(--accent); color:#fff; }
     .oc { cursor:pointer; }
     .oc-tap-hint { font-size:10px; color:var(--accent-dark); font-weight:700; margin-top:6px; text-align:right; }
+    /* Unread notification — chhota accent left-border, tap se read ho ke gayab ho jaata hai */
+    .notif-row.unread { border-left:3px solid var(--accent); }
+    /* Bulk order page — "Recent Bulk Orders" table */
+    .bulk-hist-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+    .bulk-hist-table th { text-align:left; color:var(--muted); font-size:11px; font-weight:800; padding:6px 8px; border-bottom:1.5px solid var(--line); white-space:nowrap; }
+    .bulk-hist-table td { padding:9px 8px; border-bottom:1px solid var(--line); font-weight:700; color:var(--ink); white-space:nowrap; }
+    .bulk-hist-table tr:last-child td { border-bottom:none; }
     .om-meal { background:var(--card); border:1.5px solid var(--line); border-radius:13px; padding:13px; margin-top:12px; }
     .om-meal .omm-head { display:flex; align-items:center; justify-content:space-between; font-size:14.5px; font-weight:900; color:var(--ink); margin-bottom:8px; }
     .om-meal .omm-badge { background:var(--accent-soft); color:var(--accent-dark); font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px; }
