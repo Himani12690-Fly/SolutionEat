@@ -5060,9 +5060,27 @@
   }
   // ═══════ KITCHEN ID GATE (multi-tenant Admin app — see #adminKitchenGate
   // markup for the full rationale) ═══════
+  // ⚠️ storeSet/storeGet/storeDel apne aap VENDOR_ID se key prefix karte hain
+  // (nsKey()) — is cache ke liye BILKUL galat hai, kyunki ye khud VENDOR_ID
+  // decide karta hai. goToKitchenSlug() bare load (VENDOR_ID abhi default hai)
+  // se save karta hai, isliye unprefixed key pe likhta; switchKitchen() us
+  // waqt chalta hai jab VENDOR_ID pehle se real vendor (jaise 'annapurna') ban
+  // chuka hota hai — storeDel() us waqt EK ALAG (annapurna-prefixed) key clear
+  // karta, asli cache chhua tak nahi jaata, aur "Switch kitchen" wahi vendor pe
+  // wapas laa deta (bug tha, isi wajah se). Raw localStorage, hamesha same
+  // fixed key naam, VENDOR_ID se poori tarah independent — is fix karta hai.
   function adminKitchenSlugKey(){ return 'fbt_admin_kitchen_slug'; }
+  function getCachedKitchenSlug(){
+    try{ const v=localStorage.getItem(adminKitchenSlugKey()); return v?JSON.parse(v):null; }catch(e){ return null; }
+  }
+  function setCachedKitchenSlug(slug){
+    try{ localStorage.setItem(adminKitchenSlugKey(), JSON.stringify(slug)); }catch(e){}
+  }
+  function clearCachedKitchenSlug(){
+    try{ localStorage.removeItem(adminKitchenSlugKey()); }catch(e){}
+  }
   function goToKitchenSlug(slug){
-    storeSet(adminKitchenSlugKey(), slug);
+    setCachedKitchenSlug(slug);
     location.href = location.pathname + '?Admin=' + encodeURIComponent(slug);
   }
   function submitKitchenSlug(){
@@ -5080,7 +5098,7 @@
   // Login screen ka "Switch kitchen" link — galat/purana slug cache se hata
   // ke gate pe wapas le jaata hai, dobara type karne ke liye.
   function switchKitchen(){
-    storeDel(adminKitchenSlugKey());
+    clearCachedKitchenSlug();
     location.href = location.pathname;
   }
   function adminLogin() {
@@ -6852,7 +6870,7 @@
         // straight into their ?Admin=<slug> and skip the gate. No cache yet
         // (true first launch, or a stray bookmark/typo'd URL with a browser
         // that also has no cache) → ask which kitchen this is.
-        const cachedKitchenSlug = storeGet(adminKitchenSlugKey());
+        const cachedKitchenSlug = getCachedKitchenSlug();
         if (cachedKitchenSlug) { location.replace(location.pathname + '?Admin=' + encodeURIComponent(cachedKitchenSlug)); return; }
         showView('adminKitchenGate');
     } // end finishInit

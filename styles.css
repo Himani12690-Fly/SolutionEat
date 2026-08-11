@@ -935,6 +935,20 @@
     .dsc-loader .dl-s { font-size:12px; color:var(--muted); font-weight:600; margin-top:-8px; }
     @keyframes dlspin { to { transform:rotate(360deg); } }
     @keyframes dlpulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.18); } }
+    /* Platform brand strip — Discovery is myTiffin's own page (not any single
+       vendor's), so it should say so, unlike the sticky location bar below it
+       which is functional/compact by design and shouldn't get crowded. */
+    .zo-brand-strip { display:flex; align-items:center; gap:8px; padding:14px 15px 0;
+      animation:zoBrandIn .5s cubic-bezier(.34,1.56,.64,1) both; }
+    .zo-brand-logo { width:28px; height:28px; border-radius:8px; object-fit:cover;
+      animation:zoBrandLogoPop .6s cubic-bezier(.34,1.56,.64,1) both; }
+    .zo-brand-name { font-size:15.5px; font-weight:900; letter-spacing:-0.2px; color:var(--ink); }
+    @keyframes zoBrandIn { from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+    @keyframes zoBrandLogoPop { 0%{ opacity:0; transform:scale(.5) rotate(-8deg); }
+      70%{ transform:scale(1.08) rotate(2deg); } 100%{ opacity:1; transform:scale(1) rotate(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .zo-brand-strip, .zo-brand-logo { animation:none; }
+    }
     /* Sticky location header */
     .zo-head { position:sticky; top:0; z-index:40; background:var(--bg); padding:14px 15px 12px;
       display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line); }
