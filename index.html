@@ -4846,7 +4846,12 @@
       if(watchId!=null) navigator.geolocation.clearWatch(watchId);
       fallbackToBrowse();
     }, { enableHighAccuracy:true, timeout:10000 });
-    setTimeout(useBest, 3000);
+    // 3s → 6s: weak-signal/indoor GPS often hasn't converged to a tight fix
+    // yet at 3s (still settles for whatever coarse WiFi/cell-tower sample it
+    // has) — the extra time gives it a real chance to lock something better
+    // before we give up and use "best so far", same trade-off real map apps
+    // make by showing "locating…" a bit longer.
+    setTimeout(useBest, 6000);
   }
   // Top header ka "Ahmedabad" — customer ke apne area/locality naam se badalne ke
   // liye. Free reverse-geocoding (OpenStreetMap Nominatim, no API key/billing) —
