@@ -10,11 +10,15 @@ const { test, expect } = require('@playwright/test');
 const { openApp: openAppRaw, adminLogin } = require('./helpers');
 const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
 
-test.describe('Customer — Bulk Order sheet', () => {
-  test('bottom nav has a Bulk Order tab that opens the sheet', async ({ page }) => {
+test.describe('Customer — Bulk Order page', () => {
+  // ⚠️ Pehle ye ek bottom sheet/drawer thi (overlay, poore page ke upar) —
+  // ab #bulkView ek proper dedicated page hai (bottom-nav "Bulk" tab), form
+  // upar aur khud ki "Recent Bulk Orders" table neeche.
+  test('bottom nav has a Bulk Order tab that opens the dedicated page', async ({ page }) => {
     await openApp(page);
     await page.click('#bn-bulk');
-    await expect(page.locator('#bulkOrderSheet')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#bulkView')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#bn-bulk')).toHaveClass(/active/);
   });
 
   test('meal dropdown is populated from the vendor\'s enabled meals', async ({ page }) => {
@@ -31,10 +35,10 @@ test.describe('Customer — Bulk Order sheet', () => {
     await page.fill('#bulkQty', '3');
     await page.fill('#bulkDate', await page.locator('#bulkDate').getAttribute('min'));
     await page.click('#bulkSubmitBtn');
-    await expect(page.locator('#bulkOrderSheet')).not.toHaveClass(/hidden/); // sheet stays open, request rejected client-side
+    await expect(page.locator('#bulkView')).not.toHaveClass(/hidden/); // page stays put, request rejected client-side
   });
 
-  test('submitting a valid request closes the sheet and shows it in My Bulk Requests', async ({ page }) => {
+  test('submitting a valid request refreshes this page\'s own history table and Profile\'s My Bulk Requests', async ({ page }) => {
     await openApp(page);
     await page.evaluate(() => window.openBulkOrderSheet());
     await page.selectOption('#bulkMeal', 'lunch');
@@ -42,19 +46,28 @@ test.describe('Customer — Bulk Order sheet', () => {
     await page.fill('#bulkDate', await page.locator('#bulkDate').getAttribute('min'));
     await page.fill('#bulkAddr', 'Office, 12th floor');
     await page.click('#bulkSubmitBtn');
-    await expect(page.locator('#bulkOrderSheet')).toHaveClass(/hidden/);
+    // Stays on the bulk page — the request shows up right there, no need to hop to Profile.
+    await expect(page.locator('#bulkView')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#bulkHistoryTbody')).toContainText('25');
+    await expect(page.locator('#bulkHistoryTbody')).toContainText('Pending');
     await page.evaluate(() => window.showProfilePage());
     await expect(page.locator('#pfBulkRequestsWrap')).not.toHaveClass(/hidden/);
     await expect(page.locator('#pfBulkRequestsList')).toContainText('25');
     await expect(page.locator('#pfBulkRequestsList')).toContainText('Pending');
   });
 
-  test('the 1-tiffin-limit popup offers a Bulk Order CTA', async ({ page }) => {
+  test('the 1-tiffin-limit popup CTA opens the dedicated Bulk Order page', async ({ page }) => {
     await openApp(page);
     await page.evaluate(() => window.showLimitPopup());
     await page.click('text=Place a Bulk Order');
     await expect(page.locator('#limitModal')).toHaveClass(/hidden/);
-    await expect(page.locator('#bulkOrderSheet')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#bulkView')).not.toHaveClass(/hidden/);
+  });
+
+  test('"Quantity" label is used instead of "How many tiffins?"', async ({ page }) => {
+    await openApp(page);
+    await page.evaluate(() => window.openBulkOrderSheet());
+    await expect(page.locator('label[data-i="bulkQtyLbl"]')).toContainText('Quantity');
   });
 });
 
@@ -65,7 +78,7 @@ test.describe('Admin — Bulk Requests tab', () => {
     await page.fill('#bulkQty', '30');
     await page.fill('#bulkDate', await page.locator('#bulkDate').getAttribute('min'));
     await page.click('#bulkSubmitBtn');
-    await expect(page.locator('#bulkOrderSheet')).toHaveClass(/hidden/);
+    await expect(page.locator('#bulkHistoryTbody')).toContainText('30');
   }
 
   test('a submitted request appears in the admin Bulk Requests tab with a pending badge', async ({ page }) => {

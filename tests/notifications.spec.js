@@ -90,7 +90,11 @@ test.describe('Customer bell — top of Home page', () => {
     await expect(page.locator('#notifList')).toContainText('Delivered');
   });
 
-  test('opening the bell sheet marks notifications as seen (badge clears)', async ({ page }) => {
+  // ⚠️ Pehle sirf sheet KHOLNE se hi sab "seen" maan liya jaata tha (ek global
+  // last-seen timestamp) — koi explicit control nahi tha. Ab read state
+  // per-notification hai: sirf sheet kholna kuch mark nahi karta, ya to us
+  // ek row ko tap karo ya "Mark all read" dabao.
+  test('just opening the bell sheet does NOT clear the badge on its own', async ({ page }) => {
     const state = freshState();
     const row = seedOrder(state);
     await openApp(page, { state });
@@ -102,7 +106,39 @@ test.describe('Customer bell — top of Home page', () => {
     await page.evaluate(() => window.closeNotifSheet());
     await page.evaluate(() => window.loadNotifications());
     await page.waitForTimeout(300);
+    await expect(page.locator('#h1BellBadge')).not.toHaveClass(/hidden/);
+  });
+
+  test('"Mark all read" clears the badge, and stays cleared after a re-fetch', async ({ page }) => {
+    const state = freshState();
+    const row = seedOrder(state);
+    await openApp(page, { state });
+    await adminActOn(page, state, ap => ap.evaluate(r => window.setMealSt(r, 'lunch', 'Preparing'), row));
+    await page.evaluate(() => window.loadNotifications());
+    await page.waitForTimeout(300);
+    await expect(page.locator('#h1BellBadge')).not.toHaveClass(/hidden/);
+    await page.evaluate(() => window.openNotifSheet());
+    await expect(page.locator('#notifMarkAllBtn')).not.toHaveClass(/hidden/);
+    await page.click('#notifMarkAllBtn');
     await expect(page.locator('#h1BellBadge')).toHaveClass(/hidden/);
+    // Re-fetch (mirrors the 60s poll) shouldn't resurrect an already-read notification.
+    await page.evaluate(() => window.loadNotifications());
+    await page.waitForTimeout(300);
+    await expect(page.locator('#h1BellBadge')).toHaveClass(/hidden/);
+  });
+
+  test('tapping a single notification row marks only that one as read', async ({ page }) => {
+    const state = freshState();
+    const row = seedOrder(state);
+    await openApp(page, { state });
+    await adminActOn(page, state, ap => ap.evaluate(r => window.setMealSt(r, 'lunch', 'Preparing'), row));
+    await page.evaluate(() => window.loadNotifications());
+    await page.waitForTimeout(300);
+    await page.evaluate(() => window.openNotifSheet());
+    await expect(page.locator('#h1BellBadge')).toHaveText('1');
+    await page.click('#notifList .notif-row');
+    await expect(page.locator('#h1BellBadge')).toHaveClass(/hidden/);
+    await expect(page.locator('#notifList .notif-row')).not.toHaveClass(/unread/);
   });
 });
 

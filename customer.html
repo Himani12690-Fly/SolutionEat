@@ -558,7 +558,7 @@
   <div class="bottom-nav hidden" id="bottomNav">
     <button class="bn-item" id="bn-land" onclick="navTo('land')"><svg class="ic bn-ic"><use href="#ic-home"/></svg><span class="bn-lbl" data-i="navHomeShort"></span></button>
     <button class="bn-item" id="bn-orders" onclick="navTo('orders')"><svg class="ic bn-ic"><use href="#ic-orders"/></svg><span class="bn-lbl" data-i="navOrdersShort"></span></button>
-    <button class="bn-item" id="bn-bulk" onclick="openBulkOrderSheet()"><svg class="ic bn-ic"><use href="#ic-gift"/></svg><span class="bn-lbl" data-i="navBulkShort"></span></button>
+    <button class="bn-item" id="bn-bulk" onclick="navTo('bulk')"><svg class="ic bn-ic"><use href="#ic-gift"/></svg><span class="bn-lbl" data-i="navBulkShort"></span></button>
     <button class="bn-item" id="bn-sub" onclick="showSubPage()"><svg class="ic bn-ic"><use href="#ic-repeat"/></svg><span class="bn-lbl" data-i="navSubShort"></span></button>
     <button class="bn-item" id="bn-profile" onclick="navTo('profile')"><span class="bn-av" id="bnAvatar">?</span><span class="bn-lbl" data-i="navProfileShort"></span></button>
   </div>
@@ -777,7 +777,10 @@
   <div class="sheet-overlay hidden" id="notifSheet" onclick="if(event.target===this)closeNotifSheet()">
     <div class="sheet" style="max-width:420px;">
       <div style="padding:20px 18px;">
-        <div style="font-size:15px;font-weight:900;text-align:center;margin-bottom:14px;">🔔 Notifications</div>
+        <div style="display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:900;">🔔 Notifications</div>
+          <span id="notifMarkAllBtn" class="hidden" onclick="markAllNotifsRead()" style="position:absolute;right:0;font-size:11.5px;font-weight:800;color:var(--accent-dark);cursor:pointer;">✓ Mark all read</span>
+        </div>
         <div id="notifList"></div>
       </div>
     </div>
@@ -822,26 +825,37 @@
       </div>
     </div>
   </div>
-  <div class="sheet-overlay hidden" id="bulkOrderSheet" onclick="if(event.target===this)closeBulkOrderSheet()">
-    <div class="sheet" style="max-width:420px;">
-      <div style="padding:22px 20px 20px;">
-        <div style="text-align:center;">
-          <div style="font-size:34px;">🎉</div>
-          <div style="font-size:15px;font-weight:900;margin-top:4px;" data-i="bulkTitle">Bulk / Party Order</div>
-          <div style="font-size:11.5px;color:var(--muted);margin-top:3px;" data-i="bulkSub">Ordering for a group or event? Tell us the details — the kitchen will confirm availability &amp; price.</div>
-        </div>
-        <label class="sh-lbl" data-i="bulkMealLbl">Meal</label>
-        <select class="sh-select" id="bulkMeal"></select>
-        <label class="sh-lbl" data-i="bulkQtyLbl">How many tiffins? (min 5)</label>
-        <input class="sh-select" type="number" id="bulkQty" min="5" value="10">
-        <label class="sh-lbl" data-i="bulkDateLbl">Delivery date</label>
-        <input class="sh-select" type="date" id="bulkDate">
-        <label class="sh-lbl" data-i="bulkAddrLbl">Delivery address</label>
-        <input class="sh-select" id="bulkAddr" data-ph="bulkAddrPh" placeholder="Office / event address">
-        <label class="sh-lbl" data-i="bulkNotesLbl">Notes (optional)</label>
-        <input class="sh-select" id="bulkNotes" data-ph="bulkNotesPh" placeholder="Veg only, no onion, etc.">
-        <button class="add-cart-btn" id="bulkSubmitBtn" style="margin-top:16px;" onclick="submitBulkOrderFE()" data-i="bulkSubmit">Submit Bulk Request</button>
-        <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeBulkOrderSheet()" data-i="ratingNotNow">Abhi nahi</button>
+  <!-- ══════ BULK / PARTY ORDER — dedicated page (not a drawer/sheet anymore).
+       Order form up top, "Recent Bulk Orders" table below so a customer can
+       place a request and immediately see it (and their last few requests'
+       status) without hopping over to Profile. ══════ -->
+  <div id="bulkView" class="hidden">
+    <div class="hero sub-hero">
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <h1 style="font-size:20px;" data-i="bulkTitle">🎉 Bulk / Party Order</h1>
+      <p class="tagline" style="margin:0;" data-i="bulkSub">Ordering for a group or event? Tell us the details — the kitchen will confirm availability &amp; price.</p>
+    </div>
+    <div class="section">
+      <label class="sh-lbl" data-i="bulkMealLbl">Meal</label>
+      <select class="sh-select" id="bulkMeal"></select>
+      <label class="sh-lbl" data-i="bulkQtyLbl">Quantity (min 5)</label>
+      <input class="sh-select" type="number" id="bulkQty" min="5" value="10">
+      <label class="sh-lbl" data-i="bulkDateLbl">Delivery date</label>
+      <input class="sh-select" type="date" id="bulkDate">
+      <label class="sh-lbl" data-i="bulkAddrLbl">Delivery address</label>
+      <input class="sh-select" id="bulkAddr" data-ph="bulkAddrPh" placeholder="Office / event address">
+      <label class="sh-lbl" data-i="bulkNotesLbl">Notes (optional)</label>
+      <input class="sh-select" id="bulkNotes" data-ph="bulkNotesPh" placeholder="Veg only, no onion, etc.">
+      <button class="add-cart-btn" id="bulkSubmitBtn" style="margin-top:16px;" onclick="submitBulkOrderFE()" data-i="bulkSubmit">Submit Bulk Request</button>
+      <button class="add-cart-btn" style="margin-top:8px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeBulkOrderSheet()" data-i="ratingNotNow">Abhi nahi</button>
+    </div>
+    <div class="section">
+      <div class="section-title" data-i="bulkRecentTitle">Recent Bulk Orders</div>
+      <div style="overflow-x:auto;">
+        <table class="bulk-hist-table">
+          <thead><tr><th data-i="bulkColItem">Item</th><th data-i="bulkColDate">Date</th><th data-i="bulkColStatus">Status</th></tr></thead>
+          <tbody id="bulkHistoryTbody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -1564,7 +1578,7 @@
   // koi item highlight nahi hoga, lekin navigation hamesha available rahegi.
   // Nav me sirf Home / Cart / Profile hai. Orders, Subscribe aur Ask AI Profile ke
   // Quick Links se khulte hai — un pages pe Profile hi highlighted rahega.
-  const BN_SCREENS={ homeView:'land', page1:'land', cartView:'profile', ordersView:'orders', profileView:'profile', subView:'sub', aboutView:'profile', qaView:'profile' };
+  const BN_SCREENS={ homeView:'land', page1:'land', cartView:'profile', ordersView:'orders', bulkView:'bulk', profileView:'profile', subView:'sub', aboutView:'profile', qaView:'profile' };
   function updateBottomNav(viewId){
     const bn=document.getElementById('bottomNav'); if(!bn)return;
     const show=Object.keys(BN_SCREENS).indexOf(viewId)>=0 && isLoggedIn();
@@ -1575,7 +1589,7 @@
       // to Schedule tab highlight hoga, Home nahi — customer ko clearly pata
       // rahe ki wo abhi future-date order mode me hai, aaj wale mode me nahi.
       const active = (viewId==='homeView' && dateOffset!==0) ? 'schedule' : BN_SCREENS[viewId];
-      ['land','orders','schedule','sub','profile'].forEach(k=>{ const el=document.getElementById('bn-'+k); if(el) el.classList.toggle('active', k===active); });
+      ['land','orders','schedule','bulk','sub','profile'].forEach(k=>{ const el=document.getElementById('bn-'+k); if(el) el.classList.toggle('active', k===active); });
     }
   }
   function navTo(where){
@@ -1585,6 +1599,7 @@
     else if(where==='sub') showSubPage();
     else if(where==='cart') showCartPage();
     else if(where==='orders') showOrdersPage();
+    else if(where==='bulk') openBulkOrderSheet();
     else if(where==='profile') showProfilePage();
   }
   // Home tab hamesha AAJ ka matlab hai — "Schedule Your Meal" se future date
@@ -1661,14 +1676,33 @@
   // ═══════ Notification bell (Home page) — in-app list, mandatory (no OS
   // permission needed, unlike push above). Har order-related activity jo
   // VENDOR karta hai (status change, bulk approve/decline) yahan aati hai.
-  // Unread state client-side hai (last-seen timestamp) — backend kisi row ko
-  // "read" mark karne ke liye alag se likhta nahi, sirf history deta hai.
+  // ⚠️ Pehle sirf ek "last seen" timestamp hota tha (sheet khulte hi turant
+  // sab "read" maan liya jaata) — do dikkatein: (1) backend agar kabhi wahi
+  // history entry dobara bhej de (naye poll me same event phir mil jaaye),
+  // wo naye time ke saath phir "unread" dikhne lagta — "same notification
+  // baar baar aa rahi hai" wali complaint yahi thi. (2) koi explicit "read"
+  // control nahi tha. Ab: (a) backend se aayi list ko title+body+time se
+  // dedupe karte hain, (b) sirf pichhle 24 ghante ki entries rakhte/dikhate
+  // hain, (c) read state per-notification hai (client-side key list), (d)
+  // "Mark all read" se bulk clear ho sakta hai.
   let notifCache=[], notifTimer=null;
+  // Stable client-side key — backend response me koi unique id nahi aata,
+  // sirf title/body/time; ye teeno milke ek asli event ko uniquely identify
+  // karte hain (aur backend ke dobara-bhejne ko dedupe/reconcile karte hain).
+  function notifKey(n){ return (n.title||'')+'|'+(n.body||'')+'|'+(n.time||''); }
   function loadNotifications(){
     if(!isLoggedIn()) return;
     const url=GOOGLE_SCRIPT_URL+'?action=mynotifications&token='+encodeURIComponent(SESSION.token)+'&vendorId='+VENDOR_ID+'&authVendorId='+((SESSION&&SESSION.vid)||VENDOR_ID);
     fetch(url).then(r=>r.json()).then(j=>{
-      if(j.status==='success'){ notifCache=j.notifications||[]; renderNotifBadge(); }
+      if(j.status==='success'){
+        const seen=new Set(), uniq=[];
+        (j.notifications||[]).forEach(n=>{ const k=notifKey(n); if(seen.has(k))return; seen.add(k); uniq.push(n); });
+        notifCache=uniq;
+        pruneReadKeys();
+        renderNotifBadge();
+        const sheet=document.getElementById('notifSheet');
+        if(sheet && !sheet.classList.contains('hidden')) renderNotifList();
+      }
     }).catch(()=>{});
     // Boot-time fetch + push-triggered refresh ke bharose mat raho — FCM
     // foreground push reliably fire nahi karta (permission denied/background
@@ -1676,11 +1710,44 @@
     // Vendor bell jaisa hi 60s poll (mirrors loadVendorNotifications()).
     if(!notifTimer) notifTimer=setInterval(()=>{ if(isLoggedIn()) loadNotifications(); }, 60000);
   }
-  function notifSeenKey(){ return 'fbt_notif_seen'; }
+  // Sirf pichhle 24 ghante ki entries — purani history list ko lamba/bekaar
+  // nahi karti, badge count bhi isi window se nikalta hai.
+  function recentNotifs(){
+    const cutoff=Date.now()-24*60*60*1000;
+    return notifCache.filter(n=>new Date(n.time).getTime()>=cutoff);
+  }
+  function notifReadKey(){ return 'fbt_notif_read'; }
+  function loadReadKeys(){ return storeGet(notifReadKey())||[]; }
+  function saveReadKeys(arr){ storeSet(notifReadKey(), arr); }
+  // 24h window se bahar nikal chuki keys hata do, warna ye list hamesha
+  // ke liye badhti rahegi.
+  function pruneReadKeys(){
+    const valid=new Set(recentNotifs().map(notifKey));
+    saveReadKeys(loadReadKeys().filter(k=>valid.has(k)));
+  }
+  function markNotifRead(n){
+    const keys=loadReadKeys(), k=notifKey(n);
+    if(keys.indexOf(k)<0){ keys.push(k); saveReadKeys(keys); }
+  }
+  function markAllNotifsRead(){
+    saveReadKeys(recentNotifs().map(notifKey));
+    renderNotifBadge();
+    renderNotifList();
+  }
+  // Sheet me tap karne par (data-i index se) sirf wahi ek notification read
+  // mark hoti hai — poori list ko "read" maan lena (jaisa pehle openNotifSheet
+  // karta tha) is-se hata diya, ab user ka explicit control hai.
+  function markNotifReadByIndex(i){
+    const box=document.getElementById('notifList'); if(!box||!box.__list) return;
+    const n=box.__list[i]; if(!n) return;
+    markNotifRead(n);
+    renderNotifBadge();
+    renderNotifList();
+  }
   function renderNotifBadge(){
     const badge=document.getElementById('h1BellBadge'); if(!badge) return;
-    const lastSeen=Number(storeGet(notifSeenKey())||0);
-    const unread=notifCache.filter(n=>new Date(n.time).getTime()>lastSeen).length;
+    const readSet=new Set(loadReadKeys());
+    const unread=recentNotifs().filter(n=>!readSet.has(notifKey(n))).length;
     badge.textContent=unread>9?'9+':String(unread);
     badge.classList.toggle('hidden', unread===0);
   }
@@ -1695,19 +1762,30 @@
   }
   function renderNotifList(){
     const box=document.getElementById('notifList'); if(!box) return;
-    if(!notifCache.length){ box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — you\'ll see order updates here.</p>'; return; }
-    box.innerHTML=notifCache.map(n=>`<div class="oc" style="margin-bottom:8px;">
+    const list=recentNotifs();
+    box.__list=list;
+    const markAllBtn=document.getElementById('notifMarkAllBtn');
+    if(!list.length){
+      box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — you\'ll see order updates here.</p>';
+      if(markAllBtn) markAllBtn.classList.add('hidden');
+      return;
+    }
+    const readSet=new Set(loadReadKeys());
+    const unreadCount=list.filter(n=>!readSet.has(notifKey(n))).length;
+    if(markAllBtn) markAllBtn.classList.toggle('hidden', unreadCount===0);
+    box.innerHTML=list.map((n,i)=>{
+      const read=readSet.has(notifKey(n));
+      return `<div class="oc notif-row${read?'':' unread'}" data-idx="${i}" onclick="markNotifReadByIndex(${i})">
       <div style="font-weight:800;font-size:13px;">${esc(n.title)}</div>
       ${n.body?`<div style="font-size:12px;color:var(--muted);margin-top:3px;">${esc(n.body)}</div>`:''}
       <div style="font-size:10.5px;color:var(--muted);margin-top:5px;">${relTime(n.time)}</div>
-    </div>`).join('');
+    </div>`;
+    }).join('');
   }
   function openNotifSheet(){
     if(!isLoggedIn()){ showAuth(); return; }
     renderNotifList();
     document.getElementById('notifSheet').classList.remove('hidden');
-    storeSet(notifSeenKey(), Date.now());
-    renderNotifBadge();
   }
   function closeNotifSheet(){ document.getElementById('notifSheet').classList.add('hidden'); }
   async function togglePushNotifications(){
@@ -3211,17 +3289,25 @@
   // tab me jaati hai. Vendor approve (qty/price adjust karke) ya decline karta
   // hai, customer ko push notification + Profile ki "My Bulk Requests" list
   // dono se pata chal jaata hai.
+  // ⚠️ Pehle ye ek bottom sheet/drawer thi (poore page ke upar overlay). Ab
+  // proper dedicated page hai (#bulkView, bottom-nav "Bulk" tab se), jisme
+  // upar form aur neeche khud apni "Recent Bulk Orders" table hai — customer
+  // ko status dekhne ke liye alag se Profile jaane ki zaroorat nahi. Function
+  // naam wahi purane rakhe hain (openBulkOrderSheet/closeBulkOrderSheet) taaki
+  // baaki app (limit-popup CTA, tests) bina badle chalte rahein — bas ab ye
+  // sheet ki jagah view navigate karte hain.
   function openBulkOrderSheet(){
     if(!isLoggedIn()){ showAuth(); return; }
+    showView('bulkView');
     const sel=document.getElementById('bulkMeal');
     if(sel) sel.innerHTML = enabledMeals().map(m=>{ const mt=mealType(m); return mt ? `<option value="${m}">${mt.emoji||'🍽️'} ${mt.title||m}</option>` : ''; }).join('');
     const dt=document.getElementById('bulkDate');
     if(dt){ const min=dateWithOffsetStr(1); dt.min=min; if(!dt.value || dt.value<min) dt.value=min; }
     const addr=document.getElementById('bulkAddr');
     if(addr && !addr.value){ const saved=storeGet('fbt_addr')||{}; if(saved.society && saved.flatNo) addr.value=saved.flatNo+', '+saved.society; }
-    document.getElementById('bulkOrderSheet').classList.remove('hidden');
+    renderBulkHistoryTable();
   }
-  function closeBulkOrderSheet(){ document.getElementById('bulkOrderSheet').classList.add('hidden'); }
+  function closeBulkOrderSheet(){ navTo('land'); }
   function submitBulkOrderFE(){
     const meal=document.getElementById('bulkMeal').value;
     const qty=parseInt(document.getElementById('bulkQty').value,10);
@@ -3234,13 +3320,31 @@
       .then(j=>{
         btn.disabled=false; btn.textContent=t('bulkSubmit')||'Submit Bulk Request';
         if(j.status==='success'){
-          closeBulkOrderSheet();
+          // Sheet band karke Profile bhejne ki zaroorat nahi ab — isi page ki
+          // table turant refresh ho jaati hai, customer request yahin dekh leta hai.
           document.getElementById('bulkNotes').value='';
           showToast('✅ '+(t('bulkSubmitted')||'Request sent — the kitchen will confirm shortly.'),'success');
           loadMyBulkRequests();
+          renderBulkHistoryTable();
         } else showToast('❌ '+(j.message||'Failed'),'error');
       })
       .catch(()=>{ btn.disabled=false; btn.textContent=t('bulkSubmit')||'Submit Bulk Request'; showToast(t('errNetwork'),'error'); });
+  }
+  // Bulk page ki apni "Recent Bulk Orders" table — sirf pichhle 5, taaki page
+  // lamba na ho. (Profile ki "My Bulk Requests" list poori history dikhati hai,
+  // alag hi rehti hai — dono independent renders hain, same backend data se.)
+  function renderBulkHistoryTable(){
+    if(!isLoggedIn()) return;
+    const tbody=document.getElementById('bulkHistoryTbody'); if(!tbody) return;
+    apiPost({ action:'mybulkrequests', token:SESSION.token }).then(j=>{
+      const reqs=(j.status==='success') ? (j.requests||[]).slice(0,5) : [];
+      if(!reqs.length){ tbody.innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:16px 8px;">${t('bulkNoHistory')||'No bulk orders yet.'}</td></tr>`; return; }
+      tbody.innerHTML=reqs.map(r=>{
+        const mt=mealType(r.meal);
+        const qtyLine=(r.status==='Approved' && r.approvedQty) ? `${r.approvedQty} × ${(mt&&mt.title)||r.meal}` : `${r.qty} × ${(mt&&mt.title)||r.meal}`;
+        return `<tr><td>${esc(qtyLine)}</td><td>${esc(r.date)}</td><td>${bulkStatusChip(r.status)}</td></tr>`;
+      }).join('');
+    }).catch(()=>{ tbody.innerHTML=`<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:16px 8px;">${t('errNetwork')}</td></tr>`; });
   }
   function bulkStatusChip(status){
     const s=String(status||'Pending');

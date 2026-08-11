@@ -4845,7 +4845,15 @@
   // clicks intercept kar leta tha, login hi impossible ho jaata. Admin route
   // pe jaate hi gate hata do.
   function showAdminLogin(){ showView('adminLogin'); }
-  function hideAdmin(){ exitAdminTheme(); if(storeGet('fbt_lang')) setLang(storeGet('fbt_lang')); isLoggedIn()?showLanding():showPublic(); }
+  // ⚠️ Pehle yahan isLoggedIn()?showLanding():showPublic() tha — customer-side
+  // routing, jo Phase 3 split se PEHLE ke combined file me sahi tha (tab
+  // admin.html hi customer discovery/home bhi serve karta tha). Ab admin.html
+  // ek DEDICATED admin-only file hai (dekho finishInit() — sirf restoreAdmin()
+  // ya adminLogin, koi customer fallback nahi), isliye showLanding()/
+  // showPublic() dead/wrong route the — logout ke baad customer login/discovery
+  // jaisa "galat page" dikhta tha. Ab seedha adminLogin, jaisa finishInit() ka
+  // apna fallback bhi hai.
+  function hideAdmin(){ exitAdminTheme(); if(storeGet('fbt_lang')) setLang(storeGet('fbt_lang')); showView('adminLogin'); }
   function adminLogout(){ adminCreds=null; adminCredsValidated=false; storeDel('fbt_admin'); stopAlertPolling(); stopRing(); if(vendorNotifTimer){ clearInterval(vendorNotifTimer); vendorNotifTimer=null; } hideAdmin(); }
   function adminTab(tb){ ['orders','users','menu','config','stats','variants','promos','billing','bulk'].forEach(x=>{ const v=document.getElementById('aview-'+x); const b=document.getElementById('atab-'+x); if(v)v.classList.toggle('hidden',x!==tb); if(b)b.classList.toggle('active',x===tb); }); if(tb==='variants') openVariantsEditor(); if(tb==='promos') loadPromos(); if(tb==='billing') renderVendorBilling(); if(tb==='bulk') loadBulkRequests(); }
 
