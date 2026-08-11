@@ -15,7 +15,8 @@
       "namespace": "android_app",
       "package_name": "cloud.mytiffin.twa",
       "sha256_cert_fingerprints": [
-        "34:2A:62:9F:39:C8:B4:82:DB:D7:80:C3:C3:7E:70:08:D1:A3:5E:42:83:C5:69:CD:F8:98:46:45:F7:4C:82:D3"
+        "34:2A:62:9F:39:C8:B4:82:DB:D7:80:C3:C3:7E:70:08:D1:A3:5E:42:83:C5:69:CD:F8:98:46:45:F7:4C:82:D3",
+        "30:C0:32:99:A4:3B:DC:4F:7A:0F:62:05:B9:72:9F:53:A7:1C:10:18:7D:93:EB:AF:2B:B3:45:35:D1:CB:69:C6"
       ]
     }
   }
