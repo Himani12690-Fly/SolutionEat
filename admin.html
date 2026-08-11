@@ -701,6 +701,27 @@
   </div>
 
 
+  <!-- ══════ ADMIN — KITCHEN ID GATE ══════
+       This is one Play Store app shared by every vendor — there's no vendor
+       slug in the install URL like the ?Admin=<slug> web link has. First
+       launch on a device asks which kitchen it belongs to, saves it locally
+       (device-level, not vendor-scoped — see adminKitchenSlugKey()), and
+       every launch after that skips straight to that vendor's login. No
+       backend validation here on purpose (would need a new endpoint) — a
+       wrong slug just lands on a login screen with the wrong/default
+       branding, which is a clear enough signal to hit "Switch kitchen". -->
+  <div id="adminKitchenGate" class="hidden">
+    <div class="hero" style="padding:20px;">
+      <h1 style="font-size:20px;">🏠 Which kitchen is this?</h1>
+      <p class="tagline" style="margin:0;">Enter your Kitchen ID — you'll only need to do this once on this device.</p>
+    </div>
+    <div class="section">
+      <div class="form-group"><label>Kitchen ID</label><input type="text" id="adminKitchenSlug" placeholder="e.g. annapurna" autocapitalize="none" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')submitKitchenSlug()"></div>
+      <div class="field-error" id="err-adminKitchenSlug">Please enter your Kitchen ID.</div>
+      <button class="admin-btn" onclick="submitKitchenSlug()">Continue</button>
+      <p style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:10px;">Not sure? Ask whoever set up your kitchen on this platform for your exact Kitchen ID.</p>
+    </div>
+  </div>
   <div id="adminLogin" class="hidden">
     <div class="hero" style="padding:20px;position:relative;">
       <!-- ⚠️ Pehle yahan sirf generic "Admin Login" tha — kis vendor/kitchen ke liye
@@ -720,6 +741,7 @@
       <div class="form-group"><label>Username</label><input type="text" id="adminUser"></div>
       <div class="form-group"><label>Password</label><input type="password" id="adminPass"></div>
       <button class="admin-btn" id="loginBtn" onclick="adminLogin()">🔓 Login</button>
+      <p style="font-size:11.5px;text-align:center;margin-top:12px;"><span onclick="switchKitchen()" style="color:var(--accent-dark);font-weight:800;cursor:pointer;">🔄 Not your kitchen? Switch</span></p>
     </div>
   </div>
   <!-- ══════ ADMIN PANEL ══════ -->
@@ -1044,10 +1066,14 @@
          activity (naya order, edit, cancel, bulk request). Mandatory/always-on,
          koi ON/OFF nahi — sirf ek list jo hamesha available hai. -->
     <div class="sheet-overlay hidden" id="vendorNotifSheet" onclick="if(event.target===this)closeVendorNotifSheet()">
-      <div class="sheet" style="max-width:420px;">
+      <div class="sheet" style="max-width:420px;position:relative;">
+        <div class="sheet-close" onclick="closeVendorNotifSheet()">✕</div>
         <div style="padding:20px 18px;">
           <div style="font-size:15px;font-weight:900;text-align:center;margin-bottom:14px;">🔔 Notifications</div>
           <div id="vendorNotifList"></div>
+          <div id="vendorNotifClearWrap" class="hidden" style="text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
+            <span onclick="clearAllVendorNotifs()" style="font-size:11.5px;font-weight:800;color:var(--danger);cursor:pointer;">🗑 Clear all</span>
+          </div>
         </div>
       </div>
     </div>
@@ -5031,6 +5057,31 @@
       });
     }, 800);
   }
+  // ═══════ KITCHEN ID GATE (multi-tenant Admin app — see #adminKitchenGate
+  // markup for the full rationale) ═══════
+  function adminKitchenSlugKey(){ return 'fbt_admin_kitchen_slug'; }
+  function goToKitchenSlug(slug){
+    storeSet(adminKitchenSlugKey(), slug);
+    location.href = location.pathname + '?Admin=' + encodeURIComponent(slug);
+  }
+  function submitKitchenSlug(){
+    const el = document.getElementById('adminKitchenSlug');
+    const raw = (el && el.value || '').trim().toLowerCase();
+    const errEl = document.getElementById('err-adminKitchenSlug');
+    if (!raw || !/^[a-z0-9-]+$/.test(raw)) {
+      if (errEl) errEl.classList.add('show');
+      if (el) el.focus();
+      return;
+    }
+    if (errEl) errEl.classList.remove('show');
+    goToKitchenSlug(raw);
+  }
+  // Login screen ka "Switch kitchen" link — galat/purana slug cache se hata
+  // ke gate pe wapas le jaata hai, dobara type karne ke liye.
+  function switchKitchen(){
+    storeDel(adminKitchenSlugKey());
+    location.href = location.pathname;
+  }
   function adminLogin() {
   const u = document.getElementById('adminUser').value.trim();
   const p = document.getElementById('adminPass').value;
@@ -5537,17 +5588,38 @@
     if(!vendorNotifTimer) vendorNotifTimer=setInterval(()=>{ if(adminCreds) loadVendorNotifications(); }, 60000);
   }
   function vendorNotifSeenKey(){ return 'fbt_admin_notif_seen'; }
+  // "Clear all" backend se delete nahi karta (shared vendor log — kisi doosre
+  // admin device/session ko bhi affect karega) — bas is device pe ek "yahan
+  // tak clear kiya" timestamp save karte hain. Naya notification (clear ke
+  // BAAD ka time) phir bhi turant dikhega.
+  function vendorNotifClearedKey(){ return 'fbt_admin_notif_cleared_before'; }
+  function visibleVendorNotifs(){
+    const clearedBefore=Number(storeGet(vendorNotifClearedKey())||0);
+    return vendorNotifCache.filter(n=>new Date(n.time).getTime()>clearedBefore);
+  }
+  function clearAllVendorNotifs(){
+    storeSet(vendorNotifClearedKey(), Date.now());
+    renderVendorNotifBadge();
+    renderVendorNotifList();
+  }
   function renderVendorNotifBadge(){
     const badge=document.getElementById('adminBellBadge'); if(!badge) return;
     const lastSeen=Number(storeGet(vendorNotifSeenKey())||0);
-    const unread=vendorNotifCache.filter(n=>new Date(n.time).getTime()>lastSeen).length;
+    const unread=visibleVendorNotifs().filter(n=>new Date(n.time).getTime()>lastSeen).length;
     badge.textContent=unread>9?'9+':String(unread);
     badge.classList.toggle('hidden', unread===0);
   }
   function renderVendorNotifList(){
     const box=document.getElementById('vendorNotifList'); if(!box) return;
-    if(!vendorNotifCache.length){ box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — customer order activity will show up here.</p>'; return; }
-    box.innerHTML=vendorNotifCache.map(n=>`<div class="oc" style="margin-bottom:8px;">
+    const list=visibleVendorNotifs();
+    const clearWrap=document.getElementById('vendorNotifClearWrap');
+    if(!list.length){
+      box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — customer order activity will show up here.</p>';
+      if(clearWrap) clearWrap.classList.add('hidden');
+      return;
+    }
+    if(clearWrap) clearWrap.classList.remove('hidden');
+    box.innerHTML=list.map(n=>`<div class="oc" style="margin-bottom:8px;">
       <div style="font-weight:800;font-size:13px;">${esc(n.title)}</div>
       ${n.body?`<div style="font-size:12px;color:var(--muted);margin-top:3px;">${esc(n.body)}</div>`:''}
       <div style="font-size:10.5px;color:var(--muted);margin-top:5px;">${relTime(n.time)}</div>
@@ -6772,12 +6844,16 @@
             if (!restoreAdmin()) showView('adminLogin');
             return;
         }
-        // No mode/vendor param at all (bare admin.html — a stray bookmark,
-        // typo'd URL, or misconfigured APK start URL missing ?Admin=) — this
-        // file has no other legitimate destination, so still resolve to
-        // admin login/panel rather than doing nothing and leaving recovery
-        // to recoverIfBlank()'s separate pageshow-triggered pass.
-        if (!restoreAdmin()) showView('adminLogin');
+        // No mode/vendor param at all — this is the real-world shape of the
+        // Play Store Admin app's launch (one shared install, no per-vendor
+        // URL to bake in). A cached Kitchen ID from a previous submitKitchenSlug()
+        // means we already know which vendor this device belongs to — redirect
+        // straight into their ?Admin=<slug> and skip the gate. No cache yet
+        // (true first launch, or a stray bookmark/typo'd URL with a browser
+        // that also has no cache) → ask which kitchen this is.
+        const cachedKitchenSlug = storeGet(adminKitchenSlugKey());
+        if (cachedKitchenSlug) { location.replace(location.pathname + '?Admin=' + encodeURIComponent(cachedKitchenSlug)); return; }
+        showView('adminKitchenGate');
     } // end finishInit
 
 })(); // end init

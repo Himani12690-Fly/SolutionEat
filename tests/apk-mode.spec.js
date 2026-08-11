@@ -109,10 +109,23 @@ test.describe('admin.html / superadmin.html with NO query params at all', () => 
   // the admin-only file — exactly the cross-tenant leak this whole file
   // split was meant to prevent. Fixed via an explicit APP_ROLE marker each
   // split file declares, checked early in recoverIfBlank().
-  test('admin.html always resolves to admin login, never Discovery', async ({ page }) => {
+  test('admin.html with no cached kitchen resolves to the Kitchen ID gate, never Discovery', async ({ page }) => {
+    // Bare admin.html is the Play Store Admin app's real start URL (one shared
+    // install for every vendor, no ?Admin=<slug> baked in) — first launch with
+    // no cached kitchen asks which one this device belongs to, instead of
+    // going straight to a (necessarily vendor-less) admin login.
     await openApp(page, { file: 'admin.html', loggedIn: false });
-    await expect(page.locator('#adminLogin')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#adminKitchenGate')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#adminLogin')).toHaveClass(/hidden/);
     await expect(page.locator('#dscView')).toHaveClass(/hidden/);
+  });
+  test('admin.html with a cached kitchen slug redirects straight to that vendor\'s admin login', async ({ page }) => {
+    await openApp(page, { file: 'admin.html', loggedIn: false });
+    await page.evaluate(() => localStorage.setItem('fbt_admin_kitchen_slug', JSON.stringify('demo')));
+    await page.reload();
+    await page.waitForURL(/[?&]Admin=demo/);
+    await expect(page.locator('#adminKitchenGate')).toHaveClass(/hidden/);
+    await expect(page.locator('#adminLogin')).not.toHaveClass(/hidden/);
   });
 
   test('superadmin.html always resolves to super-admin login, never Discovery', async ({ page }) => {

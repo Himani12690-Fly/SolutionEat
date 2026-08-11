@@ -1269,10 +1269,14 @@
          activity (naya order, edit, cancel, bulk request). Mandatory/always-on,
          koi ON/OFF nahi — sirf ek list jo hamesha available hai. -->
     <div class="sheet-overlay hidden" id="vendorNotifSheet" onclick="if(event.target===this)closeVendorNotifSheet()">
-      <div class="sheet" style="max-width:420px;">
+      <div class="sheet" style="max-width:420px;position:relative;">
+        <div class="sheet-close" onclick="closeVendorNotifSheet()">✕</div>
         <div style="padding:20px 18px;">
           <div style="font-size:15px;font-weight:900;text-align:center;margin-bottom:14px;">🔔 Notifications</div>
           <div id="vendorNotifList"></div>
+          <div id="vendorNotifClearWrap" class="hidden" style="text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
+            <span onclick="clearAllVendorNotifs()" style="font-size:11.5px;font-weight:800;color:var(--danger);cursor:pointer;">🗑 Clear all</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1402,13 +1406,17 @@
        by the VENDOR on their orders (status change, bulk approve/decline). In-app
        list, no OS permission needed, so it's always available (unlike push). -->
   <div class="sheet-overlay hidden" id="notifSheet" onclick="if(event.target===this)closeNotifSheet()">
-    <div class="sheet" style="max-width:420px;">
+    <div class="sheet" style="max-width:420px;position:relative;">
+      <div class="sheet-close" onclick="closeNotifSheet()">✕</div>
       <div style="padding:20px 18px;">
         <div style="display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:14px;">
           <div style="font-size:15px;font-weight:900;">🔔 Notifications</div>
           <span id="notifMarkAllBtn" class="hidden" onclick="markAllNotifsRead()" style="position:absolute;right:0;font-size:11.5px;font-weight:800;color:var(--accent-dark);cursor:pointer;">✓ Mark all read</span>
         </div>
         <div id="notifList"></div>
+        <div id="notifClearWrap" class="hidden" style="text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);">
+          <span onclick="clearAllNotifs()" style="font-size:11.5px;font-weight:800;color:var(--danger);cursor:pointer;">🗑 Clear all</span>
+        </div>
       </div>
     </div>
   </div>
@@ -2405,9 +2413,20 @@
   // nahi karti, badge count bhi isi window se nikalta hai.
   function recentNotifs(){
     const cutoff=Date.now()-24*60*60*1000;
-    return notifCache.filter(n=>new Date(n.time).getTime()>=cutoff);
+    const clearedBefore=Number(storeGet(notifClearedKey())||0);
+    return notifCache.filter(n=>{ const t=new Date(n.time).getTime(); return t>=cutoff && t>clearedBefore; });
   }
   function notifReadKey(){ return 'fbt_notif_read'; }
+  // "Clear all" backend se delete nahi karta (shared log — dusre device/
+  // session ko bhi affect karega) — bas is device pe ek "yahan tak clear
+  // kiya" timestamp save karte hain, "mark all read" jaisa hi local pattern.
+  // Naya notification (clear ke BAAD ka time) phir bhi turant dikhega.
+  function notifClearedKey(){ return 'fbt_notif_cleared_before'; }
+  function clearAllNotifs(){
+    storeSet(notifClearedKey(), Date.now());
+    renderNotifBadge();
+    renderNotifList();
+  }
   function loadReadKeys(){ return storeGet(notifReadKey())||[]; }
   function saveReadKeys(arr){ storeSet(notifReadKey(), arr); }
   // 24h window se bahar nikal chuki keys hata do, warna ye list hamesha
@@ -2456,11 +2475,14 @@
     const list=recentNotifs();
     box.__list=list;
     const markAllBtn=document.getElementById('notifMarkAllBtn');
+    const clearWrap=document.getElementById('notifClearWrap');
     if(!list.length){
       box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — you\'ll see order updates here.</p>';
       if(markAllBtn) markAllBtn.classList.add('hidden');
+      if(clearWrap) clearWrap.classList.add('hidden');
       return;
     }
+    if(clearWrap) clearWrap.classList.remove('hidden');
     const readSet=new Set(loadReadKeys());
     const unreadCount=list.filter(n=>!readSet.has(notifKey(n))).length;
     if(markAllBtn) markAllBtn.classList.toggle('hidden', unreadCount===0);
@@ -6405,17 +6427,38 @@
     if(!vendorNotifTimer) vendorNotifTimer=setInterval(()=>{ if(adminCreds) loadVendorNotifications(); }, 60000);
   }
   function vendorNotifSeenKey(){ return 'fbt_admin_notif_seen'; }
+  // "Clear all" backend se delete nahi karta (shared vendor log — kisi doosre
+  // admin device/session ko bhi affect karega) — bas is device pe ek "yahan
+  // tak clear kiya" timestamp save karte hain. Naya notification (clear ke
+  // BAAD ka time) phir bhi turant dikhega.
+  function vendorNotifClearedKey(){ return 'fbt_admin_notif_cleared_before'; }
+  function visibleVendorNotifs(){
+    const clearedBefore=Number(storeGet(vendorNotifClearedKey())||0);
+    return vendorNotifCache.filter(n=>new Date(n.time).getTime()>clearedBefore);
+  }
+  function clearAllVendorNotifs(){
+    storeSet(vendorNotifClearedKey(), Date.now());
+    renderVendorNotifBadge();
+    renderVendorNotifList();
+  }
   function renderVendorNotifBadge(){
     const badge=document.getElementById('adminBellBadge'); if(!badge) return;
     const lastSeen=Number(storeGet(vendorNotifSeenKey())||0);
-    const unread=vendorNotifCache.filter(n=>new Date(n.time).getTime()>lastSeen).length;
+    const unread=visibleVendorNotifs().filter(n=>new Date(n.time).getTime()>lastSeen).length;
     badge.textContent=unread>9?'9+':String(unread);
     badge.classList.toggle('hidden', unread===0);
   }
   function renderVendorNotifList(){
     const box=document.getElementById('vendorNotifList'); if(!box) return;
-    if(!vendorNotifCache.length){ box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — customer order activity will show up here.</p>'; return; }
-    box.innerHTML=vendorNotifCache.map(n=>`<div class="oc" style="margin-bottom:8px;">
+    const list=visibleVendorNotifs();
+    const clearWrap=document.getElementById('vendorNotifClearWrap');
+    if(!list.length){
+      box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — customer order activity will show up here.</p>';
+      if(clearWrap) clearWrap.classList.add('hidden');
+      return;
+    }
+    if(clearWrap) clearWrap.classList.remove('hidden');
+    box.innerHTML=list.map(n=>`<div class="oc" style="margin-bottom:8px;">
       <div style="font-weight:800;font-size:13px;">${esc(n.title)}</div>
       ${n.body?`<div style="font-size:12px;color:var(--muted);margin-top:3px;">${esc(n.body)}</div>`:''}
       <div style="font-size:10.5px;color:var(--muted);margin-top:5px;">${relTime(n.time)}</div>
