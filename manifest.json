@@ -1,6 +1,6 @@
 {
-    "name": "Nest & Nosh",
-    "short_name": "Nest & Nosh",
+    "name": "myTiffin",
+    "short_name": "myTiffin",
     "description": "Fresh, home-style tiffin meals delivered daily – home and office.",
     "start_url": "/",
     "scope": "/",
@@ -26,13 +26,13 @@
             "purpose": "any"
         },
         {
-            "src": "icon-192.png",
+            "src": "icon-192-maskable.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "icon-512.png",
+            "src": "icon-512-maskable.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"

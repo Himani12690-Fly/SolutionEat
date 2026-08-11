@@ -3,7 +3,7 @@
 // so its top-level const/let/function declarations are visible as globals to that script.
 // Do not add type="module" or defer/async to its <script> tag -- execution order matters.
 
-    const ALL_VIEWS = ['authPage','homeView','page1','page2','cartView','ordersView','subView','aboutView','profileView','bulkView','c','adminLogin','adminPanel','superLogin','superPanel','qaView','dscView','kitchenClosedView'];
+    const ALL_VIEWS = ['authPage','homeView','page1','page2','cartView','ordersView','subView','aboutView','profileView','bulkView','c','adminKitchenGate','adminLogin','adminPanel','superLogin','superPanel','qaView','dscView','kitchenClosedView'];
   // ═══════ PER-VENDOR BACKEND ROUTING ═══════
   // ⚠️ Scale ka asli fix: har vendor ka APNA Apps Script deployment.
   // Apps Script ki quota (runtime, simultaneous executions) poore SCRIPT PROJECT ki
