@@ -1,0 +1,42 @@
+{
+    "name": "myTiffin Admin",
+    "short_name": "myTiffin Admin",
+    "description": "Vendor dashboard for myTiffin — manage orders, menu, and your kitchen.",
+    "start_url": "/admin.html",
+    "scope": "/",
+    "id": "/admin.html",
+    "display": "standalone",
+    "display_override": ["standalone"],
+    "orientation": "portrait",
+    "background_color": "#f5eee0",
+    "theme_color": "#6366f1",
+    "lang": "en",
+    "dir": "ltr",
+    "categories": ["business", "food", "productivity"],
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "icon-192-maskable.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icon-512-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
