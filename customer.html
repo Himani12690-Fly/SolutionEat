@@ -351,6 +351,15 @@
   <!-- ══════ SUBSCRIPTION VIEW ══════ -->
   <!-- ══════ DISCOVERY — apne area ki kitchens ══════ -->
   <div id="dscView" class="hidden">
+    <!-- Discovery ye platform ka apna (koi ek vendor ka nahi) page hai — har
+         vendor ki apni branding uske link (?v=) se hi aati hai, is page ka
+         asli "malik" myTiffin khud hai. Pehle yahan kahin bhi platform naam/
+         logo nahi tha (sirf 📍 area + generic 🍱 emoji), naya user seedha
+         vendor cards pe pahunch jaata tha bina pata chale ye kaunsa app hai. -->
+    <div class="zo-brand-strip">
+      <img class="zo-brand-logo" src="icon-192.png" alt="myTiffin">
+      <span class="zo-brand-name">myTiffin</span>
+    </div>
     <!-- Zomato-style sticky location header -->
     <div class="zo-head">
       <div class="zo-loc">
@@ -362,7 +371,7 @@
       </div>
       <div class="zo-head-actions">
         <select id="langSelDsc" class="js-lang zo-lang" onchange="setLang(this.value)"></select>
-        <span class="zo-avatar" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--card);border:1.5px solid var(--line);border-radius:50%;">🍱</span>
+        <img class="zo-avatar" src="icon-192.png" alt="myTiffin">
       </div>
     </div>
 
