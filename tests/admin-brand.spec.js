@@ -99,12 +99,16 @@ test('6. brand load nahi hua → dot chhupa, sirf section title', async ({ page 
   await expect(page.locator('#adminSectionTitle')).toBeVisible();
 });
 
-test('7. alert toggle brand ke saath bhi visible aur clickable hai', async ({ page }) => {
+test('7. notification bell brand ke saath bhi visible aur clickable hai', async ({ page }) => {
+  // Alert toggle hata diya gaya (order alerts ab always-on hain, koi vendor
+  // toggle nahi) — is test ka asli concern (lambe brand name se topbar ka
+  // control squeeze na ho) ab bache hue control, notification bell, par
+  // check hota hai.
   await openAdmin(page, 'Maa Annapurna Tiffin & Catering Service Ahmedabad');
-  const at = page.locator('.atb-branded .alert-toggle');
-  await expect(at).toBeVisible();
-  const box = await at.boundingBox();
-  expect(box.width).toBeGreaterThan(40);   // squeeze nahi hua
+  const bell = page.locator('#adminBell');
+  await expect(bell).toBeVisible();
+  const box = await bell.boundingBox();
+  expect(box.width).toBeGreaterThan(20);   // squeeze nahi hua
 });
 
 test('8. customer header ka brand nahi toota', async ({ page }) => {

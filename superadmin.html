@@ -1067,6 +1067,11 @@
 
   <script src="shared.js"></script>
 <script>
+  // This file has no legitimate customer/Discovery destination — ever.
+  // recoverIfBlank() (shared.js) checks this to short-circuit straight to
+  // super-admin login/panel instead of its generic no-vendor-param →
+  // Discovery fallback, which would otherwise wrongly apply here too.
+  const APP_ROLE = 'superadmin';
   // ⚠️ BRAND FLASH FIX — vendor pages pe refresh karne par (ya bfcache restore pe)
   // sabhi .vbrand-logo/.vbrand-name elements ek pal ke liye HARDCODED "Nest & Nosh"
   // dikhate the (unki HTML me hi baked-in default tha), asli vendor ka naam/logo
