@@ -66,6 +66,11 @@
        theme text color use ho (dark mode me black-on-black jaisa bug rokta hai) */
     input, select, textarea, button { color:var(--ink); font-family:inherit; }
     html { overflow-x:hidden; }
+    /* SPA views showView() se hidden/unhidden hote hain (poora page navigate
+       nahi hota) — is wajah se browser ka "scroll anchoring" heuristic kabhi
+       kabhi showView() ke apne scrollTo(0,0) reset ko fight kar deta hai
+       (bade page se chhote page pe switch karte waqt). Anchoring off. */
+    html, body { overflow-anchor:none; }
     body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:var(--body-bg); min-height:100dvh; color:var(--ink); transition:background .2s; overflow-x:hidden; max-width:100%; }
     /* Phone pe container (--bg) aur body (--body-bg) ke beech ka white seam hata do.
        Desktop pe side-gutter effect waise hi rehta hai. */
