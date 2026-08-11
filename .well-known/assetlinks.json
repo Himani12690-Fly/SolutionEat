@@ -19,5 +19,15 @@
         "30:C0:32:99:A4:3B:DC:4F:7A:0F:62:05:B9:72:9F:53:A7:1C:10:18:7D:93:EB:AF:2B:B3:45:35:D1:CB:69:C6"
       ]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "cloud.mytiffin.admin.twa",
+      "sha256_cert_fingerprints": [
+        "E9:1B:3B:38:D6:CD:28:AC:4A:4B:2F:8D:E0:F6:EE:53:A2:EF:1E:23:E9:8A:F0:7A:F5:C8:73:B5:30:28:32:9E"
+      ]
+    }
   }
 ]
