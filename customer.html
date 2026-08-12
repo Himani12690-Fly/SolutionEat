@@ -259,6 +259,11 @@
     <!-- Compact header: logo + name + location + cart -->
     <div class="h1-top h1-centered">
       <div class="h1-bell" id="h1Bell" onclick="openNotifSheet()"><span>🔔</span><span class="h1-bell-badge hidden" id="h1BellBadge">0</span></div>
+      <!-- Vendor ka apna logo/naam yahan hamesha dominant hai (jaisa hona chahiye —
+           customer isi kitchen se order kar raha hai), par is se pehle iska koi
+           ishaara nahi tha ki ye myTiffin platform pe chal raha hai — poora app
+           "sirf [Vendor]" jaisa lagta tha. Chhota, subtle attribution tag. -->
+      <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
       <span class="h1-logo-wrap"><img class="h1-logo vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""></span>
       <div class="h1-rate hidden" id="h1Rate"></div>
       <div class="h1-tt">
@@ -1021,11 +1026,6 @@
 
   // ── Location auto-detect (optional) ──
   // Home page par "📍 Ahmedabad" ki jagah user ke aas-paas ka naam dikhata hai.
-  // Location auto-detect (optional). Key khaali chhodoge to detection band —
-  // header me static "Ahmedabad" dikhega, kuch nahi tootega.
-  // Free alternatives (BigDataCloud etc.) India me neighbourhood-level galat dete hain,
-  // isliye sirf Google Geocoding — ya phir kuch nahi.
-  const MAPS_API_KEY = '';
 
   // ⚠️ Push notifications setup — firebase-messaging-sw.js me bhi EXACT SAME
   // FIREBASE_CONFIG paste karo (dono jagah match hona chahiye). VAPID key sirf
@@ -1635,32 +1635,6 @@
     __dscIsTop = true; openDiscovery();
   }
   function showProfilePage(){ showView('profileView'); renderProfile(); }
-  // ═══════ LOCATION AUTO-DETECT (optional, non-blocking) ═══════
-  // Home page ki "📍 Ahmedabad" line ko user ke aas-paas ke naam se replace karta hai.
-  // Har cheez optional hai — permission deny, API key na ho, ya network fail ho jaye
-  // to line waisi hi rehti hai. Order flow par ISKA KOI ASAR NAHI.
-  const LOC_CACHE_KEY = 'fbt_locname';
-  const LOC_TTL_MS = 24 * 60 * 60 * 1000;  // 24 ghante — har user ka din me ~1 hi API call
-
-  function setLocLine(txt){
-    document.querySelectorAll('.loc-place').forEach(el => { el.textContent = txt; });
-  }
-
-  // Google ke result me se sabse kaam ka naam chuno:
-  // pehle building/society (premise), phir mohalla (neighborhood/sublocality)
-  function pickPlaceName(results){
-    if(!results || !results.length) return '';
-    const wanted = ['neighborhood','sublocality_level_1','sublocality','locality'];
-    for(const type of wanted){
-      const hit = results.find(r => (r.types||[]).indexOf(type) >= 0);
-      if(hit){
-        const comp = (hit.address_components||[]).find(x => (x.types||[]).indexOf(type) >= 0);
-        if(comp && comp.long_name) return comp.long_name;
-      }
-    }
-    const parts = String(results[0].formatted_address||'').split(',');
-    return parts[0] ? parts[0].trim() : '';
-  }
   // ═══════ PUSH NOTIFICATIONS (kitchen closed / menu updated alerts) ═══════
   // Poori tarah optional, non-blocking — koi bhi step fail ho (browser support
   // nahi, permission deny, FIREBASE_CONFIG abhi paste nahi hui) to sirf silently
@@ -1946,33 +1920,6 @@
     }catch(e){}
   }
 
-  function detectLocation(force, done){
-    if(!MAPS_API_KEY){ if(done) done(); return; }     // key nahi → detection off
-    if(!navigator.geolocation){ if(done) done(); return; }
-
-    if(!force){
-      const cached = storeGet(LOC_CACHE_KEY);
-      if(cached && cached.name && (Date.now() - (cached.at||0) < LOC_TTL_MS)){
-        setLocLine(cached.name); if(done) done(); return;   // 24 ghante purana result
-      }
-    }
-
-    navigator.geolocation.getCurrentPosition(pos => {
-      const { latitude:lat, longitude:lng } = pos.coords;
-      fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&result_type=neighborhood|sublocality|locality&key=${MAPS_API_KEY}`)
-        .then(r => r.json())
-        .then(j => {
-          if(j.status !== 'OK') return;
-          const name = pickPlaceName(j.results);
-          if(!name) return;
-          setLocLine(name);
-          storeSet(LOC_CACHE_KEY, { name: name, at: Date.now() });
-        })
-        .catch(()=>{})
-        .finally(()=>{ if(done) done(); });
-    }, ()=>{ if(done) done(); },
-       { enableHighAccuracy:true, timeout:8000, maximumAge: force?0:300000 });
-  }
 
   function renderHome(){
     const hv=document.getElementById('homeView'); if(!hv)return;
@@ -4192,7 +4139,7 @@
       if(watchId!=null) navigator.geolocation.clearWatch(watchId);
       if(!best){ fallbackToBrowse(); return; }
       const lat=best.coords.latitude, lng=best.coords.longitude;
-      resolveDscAreaLabel(lat,lng,best.coords.accuracy);
+      resolveAreaLabel(lat,lng,best.coords.accuracy,setDscCityLabel);
       fetch(GOOGLE_SCRIPT_URL+'?action=nearbyvendors&lat='+lat+'&lng='+lng).then(r=>r.json()).then(j=>{
         const vendors=(j&&j.vendors)||[];
         if(vendors.length) renderDscNearby(vendors);
@@ -4214,28 +4161,36 @@
     // make by showing "locating…" a bit longer.
     setTimeout(useBest, 6000);
   }
-  // Top header ka "Ahmedabad" — customer ke apne area/locality naam se badalne ke
-  // liye. Free reverse-geocoding (OpenStreetMap Nominatim, no API key/billing) —
-  // sirf ek baar per location fetch hoti hai (cache), aur fail ho to chup-chaap
-  // default text hi rehta hai (koi error UI nahi, kyunki yeh sirf cosmetic hai).
+  // Top header ka "Ahmedabad" — customer/kitchen ke apne area/locality naam se
+  // badalne ke liye. DO free (no API key/billing) sources cross-check karte
+  // hain — akela OpenStreetMap Nominatim kaafi nahi tha: wo QUERY POINT ke
+  // sabse NAZDEEK indexed node/POI thama deta hai, aur jin areas (jaise Godrej
+  // Garden City/Gota) me OSM ka apna data sparse hai, "nazdeek" node kabhi
+  // 1-2+ km door kisi padosi area (jaise Adalaj/Chandlodiya) ka nikal aata hai
+  // — snap-distance guard (neeche) aisi galat-confident cases ko silently
+  // reject kar deta hai, par tab koi label hi nahi milta. BigDataCloud
+  // (bhi free/no-key, admin-boundary-polygon data use karta hai — "nazdeek
+  // node" wali dikkat nahi hoti) ko isi liye fallback ki tarah try karte hain.
   // accuracy (meters, browser deta hai) — indoors/weak-signal me GPS/WiFi
   // location kai km tak off ho sakta hai; aisi halat me ek CONFIDENT par GALAT
-  // door ka area naam dikhana (jaise "Adalaj" jab customer asal me Godrej Garden
-  // City/Gota me ho) fake-precision hai. Bahut kharab accuracy pe label ko chhedo
-  // hi mat — default text hi behtar hai ek galat-specific naam se.
+  // door ka area naam dikhana fake-precision hai. Bahut kharab accuracy pe
+  // label ko chhedo hi mat — default text hi behtar hai ek galat-specific
+  // naam se. (accuracy=null pass karo jab coordinate GPS-live nahi, balki
+  // kisi stored/fixed point — jaise ek vendor ki apni Kitchen Location — ka
+  // ho; wahan browser accuracy ka koi matlab nahi.)
   const AREA_LABEL_MAX_ACCURACY_M = 1000;
   const AREA_LABEL_MAX_SNAP_KM = 1.2;
-  let dscAreaLabelCache = null;
+  let areaLabelCache = null;
   function osmSnapDistanceKm(lat1,lon1,lat2,lon2){
     const R=6371, toRad=d=>d*Math.PI/180;
     const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
     const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
     return R*2*Math.asin(Math.sqrt(a));
   }
-  function resolveDscAreaLabel(lat,lng,accuracy){
+  function resolveAreaLabel(lat,lng,accuracy,onLabel){
     if(accuracy!=null && accuracy>AREA_LABEL_MAX_ACCURACY_M) return;
     const key = lat.toFixed(3)+','+lng.toFixed(3);
-    if(dscAreaLabelCache && dscAreaLabelCache.key===key){ setDscCityLabel(dscAreaLabelCache.label); return; }
+    if(areaLabelCache && areaLabelCache.key===key){ onLabel(areaLabelCache.label); return; }
     // zoom=14 (suburb/admin-node level) ka OSM India ke kai areas me sparse
     // data hai — jab wahan koi qareeb ka indexed suburb node nahi hota,
     // Nominatim apne paas jo sabse nazdeek node hai wahi thama deta hai, chahe
@@ -4243,25 +4198,40 @@
     // ka ek POI ~1.8km door se aaya, galat label). zoom=16 (road/street level)
     // OSM ka kahin zyada dense-mapped data hai — nearest actual road milta
     // hai, aur uske address hierarchy se suburb nikalna reliably sahi aata hai.
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`)
-      .then(r=>r.json())
-      .then(j=>{
-        // Belt-and-suspenders: Nominatim apna resolved point (j.lat/j.lon)
-        // bhi deta hai — agar wo humare asli query point se bahut door hai,
-        // iska matlab yahan bhi OSM ke paas sahi-nazdeek data nahi mila.
-        // Aisi halat me chup rehna behtar hai (jaisa accuracy-gate upar).
-        if(j && j.lat!=null && j.lon!=null){
-          const snapKm = osmSnapDistanceKm(lat, lng, parseFloat(j.lat), parseFloat(j.lon));
-          if(snapKm > AREA_LABEL_MAX_SNAP_KM) return;
+    const osm = fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`)
+      .then(r=>r.json()).catch(()=>null);
+    const bdc = fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`)
+      .then(r=>r.json()).catch(()=>null);
+    Promise.all([osm, bdc]).then(([j,b])=>{
+      let label = null;
+      // Belt-and-suspenders: Nominatim apna resolved point (j.lat/j.lon)
+      // bhi deta hai — agar wo humare asli query point se bahut door hai,
+      // iska matlab yahan bhi OSM ke paas sahi-nazdeek data nahi mila.
+      // Aisi halat me chup rehna behtar hai (jaisa accuracy-gate upar).
+      if(j && j.lat!=null && j.lon!=null){
+        const snapKm = osmSnapDistanceKm(lat, lng, parseFloat(j.lat), parseFloat(j.lon));
+        if(snapKm <= AREA_LABEL_MAX_SNAP_KM){
+          const a=j.address||{};
+          label = a.suburb||a.neighbourhood||a.quarter||a.city_district||a.town||a.village||a.city||a.county;
         }
-        const a=(j&&j.address)||{};
-        const label = a.suburb||a.neighbourhood||a.quarter||a.city_district||a.town||a.village||a.city||a.county;
-        if(label){ dscAreaLabelCache={key,label}; setDscCityLabel(label); }
-      })
-      .catch(()=>{});
+      }
+      if(!label && b && (b.locality||b.city)) label = b.locality||b.city;
+      if(label){ areaLabelCache={key,label}; onLabel(label); }
+    });
   }
   function setDscCityLabel(text){
     const el=document.getElementById('dscCity'); if(el && text) el.textContent = text;
+  }
+  // Home page (.loc-place, ek specific vendor ke page pe) ke liye — CFG.kitchenLat/
+  // Lng (Setup me ab mandatory) ko reverse-geocode karke asli kitchen-area naam
+  // dikhata hai (jaise "Godrej Garden City"), applyVendorBrand()'s turant
+  // VENDOR_BRAND.areas[0]-wale sync guess ko upgrade karte hue jab resolve ho
+  // jaaye. accuracy=null — ye ek fixed/stored coordinate hai, GPS reading nahi.
+  function refreshKitchenAreaLabel(){
+    if(typeof CFG!=='object' || CFG.kitchenLat==null || CFG.kitchenLng==null) return;
+    resolveAreaLabel(CFG.kitchenLat, CFG.kitchenLng, null, label=>{
+      document.querySelectorAll('.loc-place').forEach(el=>{ el.textContent = label; });
+    });
   }
   // Location denied/unavailable/failed — sirf yahi ab purani "browse everything"
   // list dikhata hai. dscAreas cache hone par dobara fetch nahi (showView() ke
@@ -4696,7 +4666,11 @@
     // Array.isArray() check — pehle sirf .split() maan ke chalte the, isliye
     // discovery se aaya cached array pe ".split is not a function" crash hota
     // tha (init() ke bilkul shuru me, uncaught — poora boot wahin ruk jaata).
-    if(!MAPS_API_KEY){
+    // Ye sirf INSTANT best-guess hai (vendor ka apna configured areas list,
+    // sync, kabhi bhi galat/stale ho sakta hai) — refreshKitchenAreaLabel()
+    // (tryBootstrap me, CFG.kitchenLat/Lng fresh hone ke baad) isko precise
+    // reverse-geocoded naam se upgrade kar deta hai jab wo resolve ho jaaye.
+    {
       const areasRaw = VENDOR_BRAND.areas;
       const areasStr = Array.isArray(areasRaw) ? areasRaw.join(',') : (areasRaw||'');
       const area = areasStr.split(',')[0].trim() || 'Ahmedabad';
@@ -4827,10 +4801,6 @@
     initTheme();
     initDemo();   // ⚠️ pehle kabhi call hi nahi hota tha — demoBar/demoCustHint/demoAdminHint
                   // hamesha hidden reh jaate the, ?v=demo par bhi. Dead-code sweep me pakda gaya.
-    if(MAPS_API_KEY){
-        document.querySelectorAll('.loc-refresh').forEach(b=>b.classList.remove('hidden'));
-        detectLocation();
-    }
     const cl=storeGet('fbt_lang'); if(cl&&T[cl])LANG=cl;
     const savedAddr=storeGet('fbt_addr'); if(savedAddr&&(savedAddr.deliveryType==='home'||savedAddr.deliveryType==='office')) deliveryType=savedAddr.deliveryType;
 
@@ -4950,6 +4920,7 @@
                             storeSet('fbt_cfg', CFG);
                         }
                         applyConfigToUI();
+                        refreshKitchenAreaLabel();
                         pickDefaultDate(); pickActiveMeal();
                         preloadImgs();          // naye vendor ki images turant background me download → skeleton jaldi asli photo banega
                       }catch(err){
@@ -5182,6 +5153,7 @@
                         storeSet('fbt_cfg', CFG);
                         if (old !== nw) changed = true;
                         applyConfigToUI();
+                        refreshKitchenAreaLabel();
                     }
                     if (j.vendor && j.vendor.name && JSON.stringify(j.vendor) !== JSON.stringify(VENDOR_BRAND)) {
                         VENDOR_BRAND = j.vendor;
