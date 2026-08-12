@@ -153,7 +153,31 @@
          hamesha tap-able hai, hamesha discovery pe hi jaata hai. -->
     <div id="authBackKitchens" class="hidden" style="padding:14px 16px 0;font-size:13.5px;font-weight:800;color:var(--accent-dark,#6366f1);cursor:pointer;" onclick="__dscIsTop=true;openDiscovery();" data-i="allKitchensBack">‹ All Kitchens</div>
     <div class="hero">
-      <div class="lang-switch"><select id="langSelAuth" class="js-lang" onchange="setLang(this.value)"></select></div>
+      <div class="hero-illus" aria-hidden="true">
+        <svg viewBox="0 0 240 150" xmlns="http://www.w3.org/2000/svg">
+          <ellipse class="hi-shadow" cx="120" cy="128" rx="52" ry="9"></ellipse>
+          <g class="hi-steam">
+            <path class="s1" d="M98 46c-7-7 5-15-1-24"></path>
+            <path class="s2" d="M120 40c-7-7 5-17-1-26"></path>
+            <path class="s3" d="M142 46c-7-7 5-15-1-24"></path>
+          </g>
+          <g class="hi-tiffin">
+            <path d="M104 30c0-15 32-15 32 0" fill="none" stroke="#fbbf24" stroke-width="5" stroke-linecap="round"></path>
+            <circle cx="120" cy="14" r="5" fill="#fbbf24"></circle>
+            <rect x="94" y="28" width="52" height="24" rx="11" fill="#fff7ed"></rect>
+            <rect x="94" y="28" width="52" height="24" rx="11" fill="none" stroke="#fdba74" stroke-width="2.5"></rect>
+            <rect x="91" y="50" width="58" height="27" rx="12" fill="#fef3e2"></rect>
+            <rect x="91" y="50" width="58" height="27" rx="12" fill="none" stroke="#fdba74" stroke-width="2.5"></rect>
+            <rect x="88" y="75" width="64" height="28" rx="13" fill="#fff7ed"></rect>
+            <rect x="88" y="75" width="64" height="28" rx="13" fill="none" stroke="#fdba74" stroke-width="2.5"></rect>
+            <rect x="86" y="101" width="68" height="7" rx="3.5" fill="#fdba74"></rect>
+          </g>
+          <g class="hi-sparkle">
+            <path class="star" d="M190 38l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#fff"></path>
+            <circle class="dot" cx="58" cy="64" r="4" fill="#fff"></circle>
+          </g>
+        </svg>
+      </div>
       <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"><div class="logo-spin" id="authLogoSpin"></div></div>
       <p class="tagline" data-i="tagline"></p>
       <span class="hero-badge" data-i="secureLogin"></span>
@@ -356,21 +380,19 @@
          asli "malik" myTiffin khud hai. Pehle yahan kahin bhi platform naam/
          logo nahi tha (sirf 📍 area + generic 🍱 emoji), naya user seedha
          vendor cards pe pahunch jaata tha bina pata chale ye kaunsa app hai. -->
-    <div class="zo-brand-strip">
-      <img class="zo-brand-logo" src="icon-192.png" alt="myTiffin">
-      <span class="zo-brand-name">myTiffin</span>
-    </div>
-    <!-- Zomato-style sticky location header -->
+    <!-- Zomato-style sticky location header — single row: brand (left),
+         location (middle), avatar (right), per reference layout. -->
     <div class="zo-head">
+      <div class="zo-head-brand">
+        <span class="zo-brand-name">myTiffin</span>
+      </div>
       <div class="zo-loc">
-        <span class="zo-pin">📍</span>
         <div class="zo-loc-txt">
           <div class="zo-loc-label" id="dscCity" data-i="dscYourArea">Your Area</div>
           <div class="zo-loc-sub" data-i="dscTagline">Fresh home-style meals near you</div>
         </div>
       </div>
       <div class="zo-head-actions">
-        <select id="langSelDsc" class="js-lang zo-lang" onchange="setLang(this.value)"></select>
         <img class="zo-avatar" src="icon-192.png" alt="myTiffin">
       </div>
     </div>
