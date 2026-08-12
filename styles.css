@@ -127,6 +127,43 @@
     .lang-switch select { background:var(--bg); border:1.5px solid var(--line); color:var(--ink); font-size:12px; font-weight:700; padding:6px 10px; border-radius:10px; outline:none; }
     .lang-switch select option { color:#333; }
 
+    /* AUTH HERO — gradient banner + animated tiffin illustration. Deliberately
+       NOT theme-driven (no var(--accent) swap): like a brand banner, it stays
+       the same vivid indigo in light and dark mode, matching how the reference
+       login screens this was modeled on keep one fixed hero color regardless
+       of app theme. Shared across customer login (#authPage) and vendor login
+       (#adminKitchenGate/#adminLogin, in admin.html) so both apps' entry
+       screens read as one common design. */
+    #authPage .hero, #adminKitchenGate .hero, #adminLogin .hero {
+      background:linear-gradient(160deg,#6366f1 0%,#5457e8 48%,#4338ca 100%);
+      border-radius:0 0 32px 32px; border-bottom:none; padding:16px 20px 30px;
+      box-shadow:0 14px 30px -12px rgba(67,56,202,.5); overflow:hidden; }
+    #authPage .hero .tagline, #adminKitchenGate .hero .tagline { color:rgba(255,255,255,.88); }
+    #authPage .hero-badge { background:rgba(255,255,255,.16); color:#fff; backdrop-filter:blur(3px); }
+    #authPage .logo-spin, #adminKitchenGate .logo-spin, #adminLogin .logo-spin { border-color:rgba(255,255,255,.3); border-top-color:#fff; }
+    #adminKitchenGate .hero h1, #adminLogin .hero h1 { color:#fff; }
+
+    .hero-illus { display:flex; justify-content:center; margin:4px 0 8px;
+      animation:heroIllusIn .6s cubic-bezier(.34,1.56,.64,1) both; }
+    .hero-illus svg { width:180px; max-width:72%; height:auto; overflow:visible; display:block; }
+    @keyframes heroIllusIn { from{ opacity:0; transform:translateY(10px) scale(.92); } to{ opacity:1; transform:none; } }
+    .hi-tiffin { transform-box:fill-box; transform-origin:center; animation:hiFloat 3.2s ease-in-out infinite; }
+    @keyframes hiFloat { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+    .hi-shadow { fill:rgba(0,0,0,.24); transform-box:fill-box; transform-origin:center; animation:hiShadow 3.2s ease-in-out infinite; }
+    @keyframes hiShadow { 0%,100%{ transform:scale(1); opacity:.55; } 50%{ transform:scale(.8); opacity:.3; } }
+    .hi-steam path { fill:none; stroke:rgba(255,255,255,.85); stroke-width:4; stroke-linecap:round;
+      opacity:0; transform-box:fill-box; transform-origin:center; }
+    .hi-steam .s1 { animation:hiSteam 2.6s ease-in-out infinite; }
+    .hi-steam .s2 { animation:hiSteam 2.6s ease-in-out infinite .5s; }
+    .hi-steam .s3 { animation:hiSteam 2.6s ease-in-out infinite 1s; }
+    @keyframes hiSteam { 0%{ opacity:0; transform:translateY(6px) scaleY(.6); } 35%{ opacity:.9; } 100%{ opacity:0; transform:translateY(-16px) scaleY(1); } }
+    .hi-sparkle .star, .hi-sparkle .dot { transform-box:fill-box; transform-origin:center; animation:hiTwinkle 1.9s ease-in-out infinite; }
+    .hi-sparkle .dot { animation-delay:.5s; }
+    @keyframes hiTwinkle { 0%,100%{ opacity:.3; transform:scale(.75); } 50%{ opacity:1; transform:scale(1.15); } }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-illus, .hi-tiffin, .hi-shadow, .hi-steam path, .hi-sparkle .star, .hi-sparkle .dot { animation:none !important; }
+    }
+
     .fresh-strip { background:var(--warnbg); border-bottom:1px solid #f0d9a8; padding:10px 16px; font-size:12.5px; font-weight:600; color:#7a5b00; text-align:center; line-height:1.45; }
     .profile-strip { background:var(--accent-soft); border-bottom:1px solid #e0e4ff; padding:10px 16px; font-size:13px; font-weight:700; color:var(--ink); display:flex; justify-content:space-between; align-items:center; }
     .logout-link { color:var(--danger); font-weight:800; font-size:12.5px; cursor:pointer; }
@@ -935,34 +972,29 @@
     .dsc-loader .dl-s { font-size:12px; color:var(--muted); font-weight:600; margin-top:-8px; }
     @keyframes dlspin { to { transform:rotate(360deg); } }
     @keyframes dlpulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.18); } }
-    /* Platform brand strip — Discovery is myTiffin's own page (not any single
-       vendor's), so it should say so, unlike the sticky location bar below it
-       which is functional/compact by design and shouldn't get crowded. */
-    .zo-brand-strip { display:flex; align-items:center; gap:8px; padding:14px 15px 0;
+    /* Sticky location header — one single row: brand (left), location (middle),
+       avatar (right), like the reference header this was modeled on. Fixed
+       indigo gradient (not theme-driven — same reasoning as #authPage .hero). */
+    .zo-head { position:sticky; top:0; z-index:40; padding:14px 15px;
+      background:linear-gradient(160deg,#6366f1 0%,#5457e8 55%,#4338ca 100%); border-radius:0 0 24px 24px;
+      box-shadow:0 10px 24px -10px rgba(67,56,202,.45); border-bottom:none;
+      display:flex; align-items:center; gap:10px;
       animation:zoBrandIn .5s cubic-bezier(.34,1.56,.64,1) both; }
-    .zo-brand-logo { width:28px; height:28px; border-radius:8px; object-fit:cover;
-      animation:zoBrandLogoPop .6s cubic-bezier(.34,1.56,.64,1) both; }
-    .zo-brand-name { font-size:15.5px; font-weight:900; letter-spacing:-0.2px; color:var(--ink); }
+    .zo-head-brand { display:flex; align-items:center; flex-shrink:0; }
+    .zo-brand-name { font-size:16px; font-weight:900; letter-spacing:-0.2px; color:#fff; white-space:nowrap; }
     @keyframes zoBrandIn { from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
-    @keyframes zoBrandLogoPop { 0%{ opacity:0; transform:scale(.5) rotate(-8deg); }
-      70%{ transform:scale(1.08) rotate(2deg); } 100%{ opacity:1; transform:scale(1) rotate(0); } }
     @media (prefers-reduced-motion: reduce) {
-      .zo-brand-strip, .zo-brand-logo { animation:none; }
+      .zo-head { animation:none; }
     }
-    /* Sticky location header */
-    .zo-head { position:sticky; top:0; z-index:40; background:var(--bg); padding:14px 15px 12px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--line); }
-    .zo-loc { display:flex; align-items:flex-start; gap:8px; min-width:0; }
-    .zo-pin { font-size:20px; line-height:1.1; color:var(--danger); }
+    .zo-loc { display:flex; align-items:center; min-width:0; flex:1;
+      justify-content:center; text-align:center; }
     .zo-loc-txt { min-width:0; }
-    .zo-loc-label { font-size:16px; font-weight:900; color:var(--ink); line-height:1.15;
-      display:flex; align-items:center; gap:5px; }
-    .zo-loc-sub { font-size:11px; color:var(--muted); font-weight:600; margin-top:2px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px; }
+    .zo-loc-label { font-size:14.5px; font-weight:900; color:#fff; line-height:1.15;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .zo-loc-sub { font-size:10px; color:rgba(255,255,255,.8); font-weight:600; margin-top:1px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .zo-head-actions { display:flex; align-items:center; gap:9px; flex-shrink:0; }
-    .zo-lang { border:1.5px solid var(--line); border-radius:9px; padding:6px 7px; font-size:11px;
-      font-weight:800; background:var(--bg); color:var(--ink); }
-    .zo-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line); }
+    .zo-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid rgba(255,255,255,.5); }
     /* Non-blocking "try location again" — fallback-browse state only */
     .zo-loc-retry { margin:10px 15px 0; display:flex; align-items:center; gap:8px; background:var(--accent-soft);
       border:1.5px dashed var(--accent); border-radius:12px; padding:10px 13px; font-size:12px; font-weight:800;
@@ -1060,8 +1092,14 @@
     .tabs { display:flex; gap:5px; margin:12px 0 16px; background:var(--line); padding:5px; border-radius:14px; }
     .tab-btn { flex:1; padding:9px 2px; border:none; border-radius:10px; font-size:11px; font-weight:800; cursor:pointer; background:transparent; color:var(--muted); }
     .tab-btn.active { background:var(--accent); color:#fff; }
-    /* Admin top bar — hamburger + section title (tabs ki jagah left drawer) */
-    .admin-topbar { position:sticky; top:0; z-index:30; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); color:#fff; padding:13px 15px; display:flex; align-items:center; gap:13px; }
+    /* Admin top bar — hamburger + section title (tabs ki jagah left drawer).
+       Same fixed indigo gradient + rounded-bottom as the customer Discovery
+       header (.zo-head) and login heroes, so vendor and customer chrome
+       reads as one common design instead of two different styles. */
+    .admin-topbar { position:sticky; top:0; z-index:30;
+      background:linear-gradient(160deg,#6366f1 0%,#5457e8 55%,#4338ca 100%);
+      border-radius:0 0 22px 22px; box-shadow:0 10px 22px -12px rgba(67,56,202,.45);
+      color:#fff; padding:13px 15px 16px; display:flex; align-items:center; gap:13px; }
     .admin-topbar .atb-title { flex:1; font-size:16px; font-weight:900; }
     /* ══ Admin topbar me vendor brand (logo + naam, ek hi line) ══
        Vendor jo admin me login kare use apni kitchen ka naam/logo dikhe — pehle
