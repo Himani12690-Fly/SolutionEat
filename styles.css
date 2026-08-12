@@ -142,6 +142,14 @@
     #authPage .hero-badge { background:rgba(255,255,255,.16); color:#fff; backdrop-filter:blur(3px); }
     #authPage .logo-spin, #adminKitchenGate .logo-spin, #adminLogin .logo-spin { border-color:rgba(255,255,255,.3); border-top-color:#fff; }
     #adminKitchenGate .hero h1, #adminLogin .hero h1 { color:#fff; }
+    /* Simple round back button, overlaid on the gradient hero — matches the
+       reference login screen's corner back-arrow instead of a plain text link
+       floating above the banner. */
+    .auth-back-btn { position:absolute; top:14px; left:14px; z-index:5;
+      width:34px; height:34px; border-radius:50%; background:#fff;
+      box-shadow:0 4px 10px rgba(0,0,0,.2); display:flex; align-items:center;
+      justify-content:center; font-size:19px; font-weight:900; line-height:1;
+      color:#4338ca; cursor:pointer; }
 
     .hero-illus { display:flex; justify-content:center; margin:4px 0 8px;
       animation:heroIllusIn .6s cubic-bezier(.34,1.56,.64,1) both; }
@@ -315,6 +323,12 @@
       .h1-top.h1-centered .h1-logo-wrap::before { animation:none; opacity:0.28; }
     }
     .h1-top.h1-centered .h1-tt { flex:none; width:100%; }
+    /* Platform attribution — small, muted, sits above the vendor's own (dominant)
+       logo/name. Not meant to compete with vendor branding, just a quiet "this
+       runs on myTiffin" signal so the app doesn't read as the vendor's own app. */
+    .h1-platform { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:800;
+      color:var(--muted); letter-spacing:0.2px; }
+    .h1-platform-ic { width:16px; height:16px; border-radius:5px; object-fit:cover; }
     /* Kitchen ka aggregate rating — hero ke top-left corner me (bell top-right leta hai) */
     .h1-rate { position:absolute; top:16px; left:16px; display:flex; flex-direction:column;
       align-items:center; gap:3px; z-index:2; }
@@ -471,8 +485,6 @@
     .fld-hint { font-size:10.5px; color:var(--muted); margin-top:5px; line-height:1.45; }
     .cfg-chk { display:flex; align-items:center; gap:9px; background:var(--card); border:1.5px solid var(--line); border-radius:11px; padding:11px 13px; font-size:12.5px; font-weight:700; color:var(--ink); margin-bottom:8px; cursor:pointer; }
     .cfg-chk input { width:17px; height:17px; accent-color:var(--accent); }
-    .loc-refresh { background:none; border:none; font-family:inherit; color:var(--accent-dark);
-                   font-size:13px; font-weight:900; cursor:pointer; padding:2px 5px; line-height:1; }
     /* Profile */
     /* Profile header — plain background (Telegram jaisa), koi colored card nahi */
     .pf-card { background:transparent; border-radius:0; padding:10px 18px 22px; text-align:center; color:var(--ink); }
