@@ -59,4 +59,63 @@ test.describe('Google Sign-In redirect flow — first-time login (need_phone)', 
     ]);
     expect(page.url()).toContain('v=otherkitchen');
   });
+
+  // Regression for a real reported bug: right after this exact redirect+restore
+  // (base URL -> googleLogin succeeds -> ?v=otherkitchen restored via
+  // location.replace), the customer was bounced straight back to the login
+  // page. Root cause: storeSet('fbt_session', SESSION) ran while VENDOR_ID was
+  // still resolving to the DEFAULT vendor (Google's redirect_uri can't carry
+  // ?v=), so the session was persisted under the DEFAULT-vendor localStorage
+  // key; the very next boot — now correctly on ?v=otherkitchen — reads the
+  // vendor-namespaced key instead, finds nothing, and shows the login page.
+  // Fixed by also stashing SESSION in a one-shot sessionStorage slot (g_sess)
+  // right before the redirect, picked up by shared.js's boot code once
+  // VENDOR_ID is correct. This test proves the fix by reloading — a real app
+  // reopen — after landing on the restored URL and confirming login holds.
+  test('session survives the ?v= restore — reopening the app after redirect login does NOT bounce back to login', async ({ page }) => {
+    await openAppRaw(page, { loggedIn: false });
+    await page.evaluate(() => { sessionStorage.setItem('g_ret', '?v=otherkitchen'); });
+    await page.evaluate(() => window.showAuth());
+    await page.evaluate(() => window.onGoogleCredential({ credential: 'fake.jwt.token' }));
+    await expect(page.locator('#googlePhoneBox')).not.toHaveClass(/hidden/);
+    await page.fill('#authName', 'Test Customer');
+    await page.fill('#authPhone', '9876543210');
+    await Promise.all([
+      page.waitForURL(/[?&]v=otherkitchen/),
+      page.click('#finishLoginBtn'),
+    ]);
+    await page.waitForLoadState('domcontentloaded');
+    expect(await page.evaluate(() => window.isLoggedIn())).toBe(true);
+    // A real app reopen: fresh navigation to the exact same (now vendor-correct) URL.
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForFunction(() => typeof window.isLoggedIn === 'function');
+    expect(await page.evaluate(() => window.isLoggedIn())).toBe(true);
+    await expect(page.locator('#authPage')).toHaveClass(/hidden/);
+  });
+
+  // Same fix, other call site: onGoogleCredential()'s own direct-success path
+  // (phone already on file, so googleLogin succeeds without the phone step).
+  test('session survives the ?v= restore on the direct (no phone-step) login path too', async ({ page }) => {
+    await openAppRaw(page, { loggedIn: false });
+    await page.evaluate(() => { sessionStorage.setItem('g_ret', '?v=otherkitchen'); });
+    await page.evaluate(() => window.showAuth());
+    // #authPhone is normally hidden until a credential arrives (need_phone
+    // branch unhides it) — set the value directly, readAuthPhone() only cares
+    // about .value, not visibility. This simulates a returning customer whose
+    // phone is already on file, so googleLogin succeeds without the phone step.
+    await page.evaluate(() => { document.getElementById('authPhone').value = '9876543210'; });
+    await Promise.all([
+      page.waitForURL(/[?&]v=otherkitchen/),
+      page.evaluate(() => window.onGoogleCredential({ credential: 'fake.jwt.token' })),
+    ]);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForFunction(() => typeof window.isLoggedIn === 'function');
+    expect(await page.evaluate(() => window.isLoggedIn())).toBe(true);
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForFunction(() => typeof window.isLoggedIn === 'function');
+    expect(await page.evaluate(() => window.isLoggedIn())).toBe(true);
+    await expect(page.locator('#authPage')).toHaveClass(/hidden/);
+  });
 });
