@@ -10,6 +10,15 @@ const { test, expect } = require('@playwright/test');
 const { openApp: openAppRaw, freshState } = require('./helpers');
 const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
 
+// ⚠️ TEMPORARY: OTP login abhi band hai (shared.js ka OTP_LOGIN_ENABLED=false) —
+// login page pe uska entry point chhupa hua hai, isliye ye tests UI tak pahunch
+// hi nahi paate. Flow ka code (UI, JS, i18n, backend actions) delete NAHI kiya
+// gaya, sirf hide kiya hai — isliye tests bhi delete nahi kar rahe, skip kar
+// rahe hain. Feature wapas ON karte hi ye beforeEach hata dena.
+test.beforeEach(async ({}, testInfo) => {
+  testInfo.skip(true, 'OTP login temporarily disabled — see OTP_LOGIN_ENABLED in shared.js');
+});
+
 test.describe('Mobile OTP login — UI', () => {
   test('toggle button reveals the OTP box and hides itself', async ({ page }) => {
     await openApp(page, { loggedIn: false });

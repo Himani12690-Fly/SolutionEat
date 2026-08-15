@@ -190,8 +190,8 @@
         <!-- Mobile OTP — Google ka doosra option. Apna alag block hai (googlePhoneBox
              se), kyunki wo Google-verify ke baad ke sirf naam+phone collect karta
              hai; OTP ka poora phone-verify-naam flow independent hai. -->
-        <div class="auth-or-sep"><span data-i="orDivider">or</span></div>
-        <button type="button" class="g-btn" id="otpToggleBtn" onclick="showOtpLogin()" style="background:var(--card);color:var(--ink);border:1.5px solid var(--line);">
+        <div class="auth-or-sep hidden" id="authOrSep"><span data-i="orDivider">or</span></div>
+        <button type="button" class="g-btn hidden" id="otpToggleBtn" onclick="showOtpLogin()" style="background:var(--card);color:var(--ink);border:1.5px solid var(--line);">
           <span style="font-size:20px;">📱</span>
           <span data-i="loginWithOtp"></span>
         </button>
@@ -714,10 +714,6 @@
         <button class="add-cart-btn" style="margin-top:12px;" onclick="savePfAddr()" data-i="pfSave"></button>
       </div>
       <div class="lp-sec-t" data-i="pfQuick"></div>
-      <div id="pfBulkRequestsWrap" class="hidden">
-        <div class="lp-sec-t" data-i="bulkMyRequests">My Bulk Requests</div>
-        <div id="pfBulkRequestsList"></div>
-      </div>
       <div class="pf-row" onclick="openShareKitchenSheet()"><span class="ic-tile tile-blue em">📤</span><span data-i="shareKitchen">Share this Kitchen</span><i>›</i></div>
       <div class="pf-row hidden" id="pfInstallApp" onclick="openInstallAppSheet()"><span class="ic-tile tile-purple em">📲</span><span data-i="installAppRow">Install App</span><i>›</i></div>
       <div class="pf-row" onclick="openRateSheet()"><span class="ic-tile tile-orange em">⭐</span><span data-i="rateKitchen"></span><i>›</i></div>
@@ -1991,7 +1987,6 @@
     }
     const ts=document.getElementById('themeSelProfile'); if(ts) ts.value = readTheme();
     const ia=document.getElementById('pfInstallApp'); if(ia) ia.classList.toggle('hidden', !canShowInstallRow());
-    loadMyBulkRequests();
   }
   function savePfAddr(){
     const s=document.getElementById('pfSociety').value, f=document.getElementById('pfFlat').value.trim();
@@ -2284,7 +2279,13 @@
     // fields) — warna pichhli baar ka "verify code" screen atka reh jaata.
     if(otpResendTimer){ clearInterval(otpResendTimer); otpResendTimer=null; }
     const otpBox=document.getElementById('otpLoginBox'); if(otpBox) otpBox.classList.add('hidden');
-    const otpToggle=document.getElementById('otpToggleBtn'); if(otpToggle) otpToggle.classList.remove('hidden');
+    // OTP entry point sirf tab dikhao jab feature ON ho (shared.js ka
+    // OTP_LOGIN_ENABLED). OFF hone par divider bhi chhupa rehta hai, warna
+    // "Sign in with Google" ke neeche ek akela "or" latka reh jaata.
+    const otpToggle=document.getElementById('otpToggleBtn');
+    const otpSep=document.getElementById('authOrSep');
+    if(otpToggle) otpToggle.classList.toggle('hidden', !OTP_LOGIN_ENABLED);
+    if(otpSep) otpSep.classList.toggle('hidden', !OTP_LOGIN_ENABLED);
     const otpCS=document.getElementById('otpCodeStep'); if(otpCS) otpCS.classList.add('hidden');
     const otpNS=document.getElementById('otpNameStep'); if(otpNS) otpNS.classList.add('hidden');
     const otpPS=document.getElementById('otpPhoneStep'); if(otpPS) otpPS.classList.remove('hidden');
@@ -3418,7 +3419,6 @@
           // table turant refresh ho jaati hai, customer request yahin dekh leta hai.
           document.getElementById('bulkNotes').value='';
           showToast('✅ '+(t('bulkSubmitted')||'Request sent — the kitchen will confirm shortly.'),'success');
-          loadMyBulkRequests();
           renderBulkHistoryTable();
         } else showToast('❌ '+(j.message||'Failed'),'error');
       })
@@ -3445,28 +3445,6 @@
     if(s==='Approved') return `<span style="background:var(--okbg);color:var(--ok);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">✓ ${t('bulkApproved')||'Approved'}</span>`;
     if(s==='Declined') return `<span style="background:var(--dangerbg);color:var(--danger);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">✕ ${t('bulkDeclined')||'Declined'}</span>`;
     return `<span style="background:var(--accent-soft);color:var(--accent-dark);font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;">⏳ ${t('bulkPending')||'Pending'}</span>`;
-  }
-  function loadMyBulkRequests(){
-    if(!isLoggedIn()) return;
-    apiPost({ action:'mybulkrequests', token:SESSION.token }).then(j=>{
-      const wrap=document.getElementById('pfBulkRequestsWrap'), list=document.getElementById('pfBulkRequestsList');
-      if(!wrap || !list) return;
-      const reqs=(j.status==='success') ? (j.requests||[]) : [];
-      wrap.classList.toggle('hidden', reqs.length===0);
-      if(!reqs.length) return;
-      list.innerHTML = reqs.map(r=>{
-        const mt=mealType(r.meal);
-        const qtyLine = (r.status==='Approved' && r.approvedQty) ? `${r.approvedQty} × ${(mt&&mt.title)||r.meal}` : `${r.qty} × ${(mt&&mt.title)||r.meal}`;
-        return `<div class="pf-box" style="margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13.5px;font-weight:800;">${qtyLine}</span>
-            ${bulkStatusChip(r.status)}
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">${r.date}${r.status==='Approved' && r.approvedPrice ? ' · ₹'+r.approvedPrice : ''}</div>
-          ${r.adminNote ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">💬 ${r.adminNote}</div>` : ''}
-        </div>`;
-      }).join('');
-    }).catch(()=>{});
   }
 
   function contactKitchen(){

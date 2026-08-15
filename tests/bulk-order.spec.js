@@ -38,7 +38,7 @@ test.describe('Customer — Bulk Order page', () => {
     await expect(page.locator('#bulkView')).not.toHaveClass(/hidden/); // page stays put, request rejected client-side
   });
 
-  test('submitting a valid request refreshes this page\'s own history table and Profile\'s My Bulk Requests', async ({ page }) => {
+  test('submitting a valid request refreshes this page\'s own history table', async ({ page }) => {
     await openApp(page);
     await page.evaluate(() => window.openBulkOrderSheet());
     await page.selectOption('#bulkMeal', 'lunch');
@@ -50,10 +50,11 @@ test.describe('Customer — Bulk Order page', () => {
     await expect(page.locator('#bulkView')).not.toHaveClass(/hidden/);
     await expect(page.locator('#bulkHistoryTbody')).toContainText('25');
     await expect(page.locator('#bulkHistoryTbody')).toContainText('Pending');
+    // Profile ka duplicate "My Bulk Requests" block hata diya gaya hai — Bulk ka
+    // apna page hai aur history wahin dikhti hai. Ye assert isliye ki wo section
+    // galti se dobara na aa jaye.
     await page.evaluate(() => window.showProfilePage());
-    await expect(page.locator('#pfBulkRequestsWrap')).not.toHaveClass(/hidden/);
-    await expect(page.locator('#pfBulkRequestsList')).toContainText('25');
-    await expect(page.locator('#pfBulkRequestsList')).toContainText('Pending');
+    await expect(page.locator('#pfBulkRequestsWrap')).toHaveCount(0);
   });
 
   test('the 1-tiffin-limit popup CTA opens the dedicated Bulk Order page', async ({ page }) => {
