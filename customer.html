@@ -1700,6 +1700,10 @@
   // karte hi ise yahan point kar deta hai — isse push handler (jo bahar, top-level
   // scope me hai) us closure ko chhoo sakta hai bina poora refresh logic dobara likhe.
   let __forceConfigRefresh = null;
+  // tryBootstrap() (init() IIFE ke andar, vendor menu/config load karta hai) —
+  // ise yahan point kar dete hain taaki menu-load-failed retry button (inline
+  // onclick, global scope me chalta hai) is closure ko call kar sake.
+  let __retryBootstrap = null;
   function pushSubscribed(){ return !!storeGet('fbt_push_token'); }
   // ⚠️ localStorage me token hone ka matlab ye NAHI ki push subscription abhi bhi
   // zinda hai. SW replace/unregister hone pe subscription mar jaati thi par token
@@ -3131,6 +3135,11 @@
   // MENU ka "Roti(5)·Daal·Chawal ₹80" flash aata tha. Bina ?v= (default/discovery) pe
   // ye hamesha true — wahan koi vendor gating nahi.
   let __vendorReady = !HAS_VENDOR_PARAM;
+  // Sirf tab true hota hai jab tryBootstrap() dono attempts ke baad bhi (network
+  // error ya non-success status) haar maan leta hai — first-time visitor (jiska
+  // koi cached MENU nahi) is state me #mealPanel me plain "—" ki jagah ek clear
+  // "Couldn't load menu — Retry" card dekhega (neeche renderMealPanelNow()).
+  let __bootstrapFailed = false;
   // Pehli baar #mealPanel me asli cards paint hote hi true ho jaata hai — CSS
   // entrance animation (.mp-anim) sirf usi ek paint ke liye lagti hai, baad ke
   // sabhi re-renders (meal-tab/date switch, stats/image update) bina replay
@@ -3159,6 +3168,22 @@
       else if(bn) logoHtml='<div style="width:48px;height:48px;border-radius:50%;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:21px;">'+esc(bn.trim().charAt(0).toUpperCase())+'</div>';
       const skel='<div class="c1card c1-closed" style="opacity:.75;justify-content:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 0;width:100%;">'+logoHtml+'<div class="al-spin"></div><span class="c1-name">'+t('pleaseWait')+'</span></div></div>';
       if(box.__lastHtml!==skel){ box.__lastHtml=skel; box.innerHTML=skel; }
+      return;
+    }
+    // ⚠️ ASLI FIX (critical delay bug, part 2): CFG hamesha ek hardcoded default
+    // (breakfast/lunch/dinner, defaultVariantsFE() ki placeholder pricing/items)
+    // se shuru hota hai — bootstrap genuinely fail ho jaaye (cold/dead backend,
+    // dono attempts) tab bhi enabledMeals() khaali NAHI hota, isliye neeche ka
+    // "cards" build kabhi bhi truly empty nahi hota — customer ko chup-chaap
+    // WRONG/placeholder menu dikh jaata (asli kitchen ka nahi), bilkul "kitchen
+    // ka home page hai par asli menu nahi" wali report jaisa. Ye check us
+    // placeholder-menu ko explicitly rokta hai jab hume PAKKA pata hai ki
+    // bootstrap fail hua aur koi real cached menu bhi nahi hai — clear retry
+    // card dikhata hai, chup-chaap galat menu nahi.
+    if(__bootstrapFailed && (!MENU || !MENU.monday)){
+      const bn2=(VENDOR_BRAND&&VENDOR_BRAND.name)||'';
+      const failHtml='<div class="c1card c1-closed" style="opacity:.85;justify-content:center;"><div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0;width:100%;"><span style="font-size:28px;">⚠️</span><span class="c1-name">'+t('menuLoadFailed')+(bn2?(' — '+esc(bn2)):'')+'</span><button class="c1-add" onclick="if(__retryBootstrap)__retryBootstrap();" style="max-width:160px;">'+t('retryBtn')+'</button></div></div>';
+      if(box.__lastHtml!==failHtml){ box.__lastHtml=failHtml; box.innerHTML=failHtml; }
       return;
     }
     // ⚠️ Ye pura block (asli cards banana) try/catch me le liya. Wajah: agar kisi
@@ -5122,9 +5147,22 @@
             const cv = document.getElementById('cartView');
             if (cv && !cv.classList.contains('hidden')) renderCart();
         }
+        // Retry tap karte hi turant "please wait" skeleton wapas dikhao (poora
+        // network round-trip khatam hone ka wait kiye bina) — chupchap stale
+        // "Couldn't load" card pe atka nahi rehna.
+        __retryBootstrap = function(){ __bootstrapFailed=false; __vendorReady=false; try{ renderMealPanel(); }catch(e){} tryBootstrap(0); };
         function tryBootstrap(attempt) {
-            fetch(GOOGLE_SCRIPT_URL + '?action=bootstrap&vendorId=' + VENDOR_ID)
-                .then(r => r.json())
+            // ⚠️ Ye fetch pehle bina kisi timeout ke thi — agar Apps Script cold
+            // start hoke bhi kabhi respond na kare (hang, na error na success), ye
+            // hamesha ke liye pending reh jaata, aur neeche __vendorReady kabhi true
+            // na hota. 25s ek generous bound hai (apiPost() ke 20s precedent se
+            // thoda zyada, kyunki cold GAS + bootstrap ka JSON dono milke apiPost
+            // ke simple POST se thoda slow ho sakte hain) — isse pehla attempt
+            // genuinely hang nahi ho sakta, retry turant chalega.
+            const __bsCtrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+            const __bsTimer = setTimeout(() => { try { __bsCtrl && __bsCtrl.abort(); } catch (e) {} }, 25000);
+            fetch(GOOGLE_SCRIPT_URL + '?action=bootstrap&vendorId=' + VENDOR_ID, __bsCtrl ? { signal: __bsCtrl.signal } : {})
+                .then(r => { clearTimeout(__bsTimer); return r.json(); })
                 .then(j => {
                     if (j.status === 'success') {
                       try{
@@ -5169,13 +5207,16 @@
                     if (attempt < 1) { setTimeout(() => tryBootstrap(attempt + 1), 1200); return; }
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                     __vendorReady = true;   // dono attempt fail — jo cache mila wahi dikha do (skeleton me mat atko)
+                    __bootstrapFailed = true;
                     finishInit();
                     refreshLiveViews();
                 })
                 .catch(() => {
+                    clearTimeout(__bsTimer);
                     if (attempt < 1) { setTimeout(() => tryBootstrap(attempt + 1), 1200); return; }
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                     __vendorReady = true;
+                    __bootstrapFailed = true;
                     finishInit();
                     refreshLiveViews();
                 });
@@ -5199,9 +5240,16 @@
     // pe fasa reh jaata tha, chahe tab visible/focused hi rahe (visibilitychange/
     // pageshow/focus wale recoverIfBlank() tabhi chalte hain jab tab switch ho).
     // finishInitOnce() guard se double-run nahi hoga chahe baad me real data aa jaye.
+    // ⚠️ ASLI FIX (critical delay bug): ye 8s failsafe pehle __vendorReady=true bhi
+    // set kar deta tha — cold GAS pe 20-50s bilkul normal hai, isliye customer ko
+    // "kitchen ka home page hai, par asli menu nahi" wala broken-empty/placeholder
+    // state dikhta, jo bootstrap resolve hone par achanak sahi ho jaata. Fix: sirf
+    // boot LOADER 8s pe hide hota hai; __vendorReady sirf tryBootstrap() ki apni
+    // success/exhausted-retry path se true hota hai. Beech ke gap me #mealPanel
+    // apna khud ka "please wait" skeleton dikhata rehta hai — honest loading
+    // state, broken-empty nahi.
     setTimeout(function(){
         if (__bl && !__bl.classList.contains('gone')) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
-        __vendorReady = true;
         finishInit();
     }, 8000);
 
