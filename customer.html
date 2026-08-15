@@ -630,7 +630,12 @@
       </div>
       <div class="form-group">
         <label><span data-i="society"></span> <span style="color:var(--danger)">*</span></label>
-        <select id="society" onchange="validateSociety(); if(!document.getElementById('page2').classList.contains('hidden')){renderSummary(); document.getElementById('barTotal2').textContent='₹'+cartTotalDisplay();}"></select>
+        <select id="society" onchange="onSocietyChange()"></select>
+        <!-- Building list se bahar wale customers ke liye. Vendor 5km radius set
+             kar sakta hai par utni saari buildings naam se list nahi kar sakta —
+             "Other" chunte hi ye field khul jaati hai aur customer apna address
+             khud likh deta hai. -->
+        <input type="text" id="societyOther" class="hidden" maxlength="60" data-ph="societyOtherPh" oninput="clearErr('societyOther','err-society')">
         <div class="field-error" id="err-society" data-i="errSociety"></div>
       </div>
       <div class="form-group">
@@ -1552,7 +1557,9 @@
       const co=companyByName(domVal || savedAddr.company || '');
       return co ? (co.fee||CFG.deliveryNear||10) : (CFG.deliveryNear||10);
     }
-    const domSoc = document.getElementById('society') ? document.getElementById('society').value : '';
+    // ⚠️ .value seedha padhna galat hai — "Other" pe wo '__other__' hota hai,
+    // asli naam free-text field me. societyValue() dono cases sambhalta hai.
+    const domSoc = (typeof societyValue==='function') ? societyValue() : '';
     const soc = domSoc || savedAddr.society || '';
     const far=(CFG.farSocieties||[]).map(s=>String(s).toLowerCase().trim());
     return far.indexOf(String(soc).toLowerCase().trim())>=0 ? (CFG.deliveryFar||20) : (CFG.deliveryNear||10);
@@ -1966,7 +1973,18 @@
     updateNavAvatar();
     const ph=document.getElementById('pfPhone'); if(ph)ph.textContent=(SESSION&&SESSION.phone)?('📞 +91 '+SESSION.phone):'';
     const sel=document.getElementById('pfSociety');
-    if(sel){ const saved=storeGet('fbt_addr')||{}; sel.innerHTML=(CFG.societies||[]).map(s=>`<option value="${s}" ${saved.society===s?'selected':''}>${s}</option>`).join(''); const fl=document.getElementById('pfFlat'); if(fl)fl.value=saved.flatNo||''; }
+    if(sel){
+      const saved=storeGet('fbt_addr')||{};
+      // ⚠️ Checkout ka "Other" address vendor ki societies list me nahi hota. Sirf
+      // list render karte to Profile me wo address dropdown me milta hi nahi —
+      // browser pehla option select kar leta aur "Save Address" dabate hi customer
+      // ka apna address chup-chaap kisi aur society se replace ho jaata. Isliye
+      // saved value list me na ho to use bhi ek option ke roop me jod dete hain.
+      const list=(CFG.societies||[]).slice();
+      if(saved.society && !list.includes(saved.society)) list.push(saved.society);
+      sel.innerHTML=list.map(s=>`<option value="${s}" ${saved.society===s?'selected':''}>${s}</option>`).join('');
+      const fl=document.getElementById('pfFlat'); if(fl)fl.value=saved.flatNo||'';
+    }
     const ts=document.getElementById('themeSelProfile'); if(ts) ts.value = readTheme();
     const ia=document.getElementById('pfInstallApp'); if(ia) ia.classList.toggle('hidden', !canShowInstallRow());
     loadMyBulkRequests();
@@ -3552,7 +3570,20 @@
     const lbl=document.getElementById('phoneNoLbl'); if(lbl) lbl.innerHTML=t('verifiedMobile');
     if(!document.getElementById('customerName').value) document.getElementById('customerName').value=SESSION.name||'';
     const c=storeGet('fbt_addr'); let filled=false;
-    if(c){ if(c.society){ document.getElementById('society').value=c.society; filled=true; } if(c.flatNo){ document.getElementById('flatNo').value=c.flatNo; filled=true; } }
+    if(c){
+      if(c.society){
+        const sel=document.getElementById('society'), oth=document.getElementById('societyOther');
+        // Saved address vendor ki list me ho to seedha select; na ho (customer ne
+        // "Other" se apna likha tha, ya vendor ne baad me list se hata diya) to
+        // "Other" pe daal ke wahi text wapas dikhao — warna dropdown khaali
+        // dikhta aur customer ka address chup-chaap gayab lagta.
+        const inList=Array.from(sel.options).some(o=>o.value===c.society);
+        if(inList){ sel.value=c.society; if(oth){ oth.value=''; oth.classList.add('hidden'); } }
+        else { sel.value='__other__'; if(oth){ oth.value=c.society; oth.classList.remove('hidden'); } }
+        filled=true;
+      }
+      if(c.flatNo){ document.getElementById('flatNo').value=c.flatNo; filled=true; }
+    }
     document.getElementById('savedNote').classList.toggle('show',filled);
     renderSavedAddr();
   }
@@ -3617,7 +3648,29 @@
   function setValid(id,e){ const el=document.getElementById(id); el.classList.remove('error'); el.classList.add('valid'); document.getElementById(e).classList.remove('show'); }
   function setError(id,e){ const el=document.getElementById(id); el.classList.add('error'); el.classList.remove('valid'); document.getElementById(e).classList.add('show'); }
   function clearErr(id,e){ document.getElementById(id).classList.remove('error'); document.getElementById(e).classList.remove('show'); }
-  function validateSociety(){ const v=document.getElementById('society').value; v?setValid('society','err-society'):setError('society','err-society'); return !!v; }
+  // "Other" chuna ho to asli value free-text field me hoti hai — wahi backend ko
+  // jaati hai (society ka naam), taaki vendor ko padhne layak address mile.
+  function societyValue(){
+    const sel=document.getElementById('society'); if(!sel) return '';
+    if(sel.value!=='__other__') return sel.value;
+    const o=document.getElementById('societyOther');
+    return o ? o.value.trim() : '';
+  }
+  function onSocietyChange(){
+    const sel=document.getElementById('society'), o=document.getElementById('societyOther');
+    if(o) o.classList.toggle('hidden', sel.value!=='__other__');
+    validateSociety();
+    if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); document.getElementById('barTotal2').textContent='₹'+cartTotalDisplay(); }
+  }
+  function validateSociety(){
+    const sel=document.getElementById('society');
+    const other=(sel && sel.value==='__other__');
+    const v=societyValue();
+    // Error hamesha society field pe hi dikhao (dono cases me wahi ek error line hai).
+    if(v){ setValid(other?'societyOther':'society','err-society'); if(other) setValid('society','err-society'); }
+    else { setError(other?'societyOther':'society','err-society'); }
+    return !!v;
+  }
   function validateFlat(){ const el=document.getElementById('flatNo'); let v=el.value.trim().toUpperCase().replace(/\s+/g,''); const m=v.match(/^([A-Z]{1,3})[-\/]?(\d{1,4})$/); if(m){ el.value=m[1]+'-'+m[2]; setValid('flatNo','err-flatNo'); return true; } setError('flatNo','err-flatNo'); return false; }
   function validateCompany(){ const v=document.getElementById('company').value; v?setValid('company','err-company'):setError('company','err-company'); return !!v; }
   // Employee ID abhi optional hai — sirf mobile number mandatory
@@ -3665,7 +3718,7 @@
     if(!okLoc||!okN){ showToast(t('completeFields'),'warning'); return; }
     const orderPhone = SESSION.phone;
     const isOff=(deliveryType==='office');
-    const addr={ deliveryType:deliveryType, society: isOff?document.getElementById('company').value:document.getElementById('society').value,
+    const addr={ deliveryType:deliveryType, society: isOff?document.getElementById('company').value:societyValue(),
                  flatNo: isOff?document.getElementById('empId').value.trim():document.getElementById('flatNo').value.trim(),
                  name:document.getElementById('customerName').value.trim(), phone:orderPhone,
                  note:document.getElementById('orderNote')?document.getElementById('orderNote').value.trim():'', payment:payment };
@@ -4717,8 +4770,9 @@
     const sel=document.getElementById('society'); const cur=sel?sel.value:'';
     const socList=CFG.societies||[];
     if(sel){
-      sel.innerHTML='<option value="">— '+t('society')+' —</option>'+socList.map(s=>`<option value="${s}">${s}</option>`).join('');
-      if(cur && socList.includes(cur)) sel.value=cur;
+      sel.innerHTML='<option value="">— '+t('society')+' —</option>'+socList.map(s=>`<option value="${s}">${s}</option>`).join('')
+                   +'<option value="__other__">'+t('societyOther')+'</option>';
+      if(cur && (socList.includes(cur) || cur==='__other__')) sel.value=cur;
     }
     const cs=document.getElementById('company');
     if(cs){ const cc=cs.value;
