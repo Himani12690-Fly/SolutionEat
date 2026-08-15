@@ -68,6 +68,11 @@
     }catch(e){ return DEFAULT_VENDOR_ID; }
   })();
   const IS_DEFAULT_VENDOR = (VENDOR_ID === DEFAULT_VENDOR_ID);
+  // ⚠️ TEMPORARY: Mobile-OTP login band hai (fast2sms/delivery verify hone tak).
+  // Poora flow — UI, JS, i18n, backend actions — jaisa tha waisa hi hai; sirf
+  // login page pe uska entry point chhupa hai. Wapas chaalu karna ho to bas
+  // isko true kar dena, aur tests/otp-login.spec.js ka skip hata dena.
+  const OTP_LOGIN_ENABLED = false;
   const IS_DEMO = (VENDOR_ID === 'demo');   // ?v=demo → try-before-buy mode
   // Platform ka main link (bina ?v= ya ?Admin=) → pehle discovery. Vendor ke
   // apne link se aane wale customer ko seedha uski app milegi.
