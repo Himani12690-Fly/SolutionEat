@@ -1,56 +1,56 @@
-// shared.js -- extracted from index.html (Phase 1: shared/common code, zero behavior change).
-// Loaded as a plain classic script immediately before the main inline <script> in index.html,
-// so its top-level const/let/function declarations are visible as globals to that script.
-// Do not add type="module" or defer/async to its <script> tag -- execution order matters.
+
+
+
+
 
     const ALL_VIEWS = ['authPage','homeView','page1','page2','cartView','ordersView','subView','aboutView','profileView','bulkView','c','adminKitchenGate','adminLogin','adminPanel','superLogin','superPanel','qaView','dscView','kitchenClosedView'];
-  // ═══════ PER-VENDOR BACKEND ROUTING ═══════
-  // ⚠️ Scale ka asli fix: har vendor ka APNA Apps Script deployment.
-  // Apps Script ki quota (runtime, simultaneous executions) poore SCRIPT PROJECT ki
-  // hoti hai — sirf sheet alag karne se kuch nahi badalta. Alag deployment matlab
-  // alag quota bucket → ek vendor ka rush baaki vendors ko slow nahi karega.
-  //
-  // Routing ek static file se aati hai (vendors.json, index.html ke saath hi host karo):
-  //   { "nestandnosh": { "url": "https://script.google.com/.../exec" },
-  //     "maakaswaad":  { "url": "https://script.google.com/.../exec" } }
-  // Ye file GitHub Pages/Netlify se serve hoti hai — koi Apps Script call nahi lagti,
-  // isliye routing khud kabhi bottleneck nahi banegi.
+
+
+
+
+
+
+
+
+
+
+
   const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdMXlSwNdqO84OspsUe2jAEeDL-hbwjwLcKL-fo6YObB6Se-dvTxX2iS5BMz2t8bV6/exec';
-  let GOOGLE_SCRIPT_URL = DEFAULT_SCRIPT_URL;   // boot pe vendor ke hisaab se set hota hai
-  // 25+ vendors ke baad shared deployment ka LockService.getScriptLock() SAARE
-  // vendors ke order-placement ko globally serialize karne lagta hai (chahe wo
-  // alag-alag Sheets me likh rahe hon) — real bottleneck load-testing me pakda
-  // gaya. Vendor apna alag Apps Script deployment bana ke Super Admin me
-  // scriptUrl set kar sakta hai; ye us record ko bootstrap response (j.vendor.
-  // scriptUrl) se validate karke GOOGLE_SCRIPT_URL switch kar deta hai, taaki
-  // uske baad ke saare calls (order/menu/admin) us alag deployment pe jaayein,
-  // apne lock ke saath, doosre vendors se independent.
-  // ⚠️ Pehle yahan alag se 'vendors.json' fetch karte the isi lookup ke liye —
-  // wo file repo me kabhi bani hi nahi (guaranteed 404, silent no-op fallback).
-  // Ab lookup alag request ki jagah usi bootstrap response ke andar aata hai.
+  let GOOGLE_SCRIPT_URL = DEFAULT_SCRIPT_URL;
+
+
+
+
+
+
+
+
+
+
+
   function applyVendorScriptUrl(vendor){
     const u = vendor && vendor.scriptUrl;
     if(!u) return;
-    // Sirf asli script.google.com URL accept karo — GOOGLE_SCRIPT_URL har call
-    // me session token bhejta hai, isliye kisi bhi arbitrary URL pe switch hona
-    // (galat data-entry ya compromised Super Admin account se) token leak kar
-    // sakta hai. Format galat ho to chup-chaap shared URL pe hi rehte hain.
+
+
+
+
     if(!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u)) return;
     GOOGLE_SCRIPT_URL = u;
   }
   function loadVendorEndpoint(){
     return Promise.resolve();
   }
-  // ═══════ MULTI-TENANT: VENDOR ID ═══════
-  // Har vendor ka apna link: yourapp.com/?v=vendorSlug — link na ho to DEFAULT_VENDOR chalta hai
-  // (isliye maujooda users/links bilkul bhi nahi tootenge). Phase 2 mein backend isi vendorId se
-  // Sheets (Orders/Menu/Config) filter karega.
+
+
+
+
   const DEFAULT_VENDOR_ID = 'nestandnosh';
-  // ?Admin=<vendorSlug> (or ?admin=) — the ONLY way to reach admin login now;
-  // there is no in-UI link (see authPage footer). Doubles as the vendor-slug
-  // source for admin URLs, same as ?v= does for customer links — a vendor's
-  // admin URL is just /?Admin=<theirSlug>, meant to be the Admin WebView APK's
-  // start URL / a private bookmark, never surfaced to customers.
+
+
+
+
+
   const ADMIN_PARAM = (function(){
     try{
       const q = new URLSearchParams(location.search);
@@ -68,14 +68,10 @@
     }catch(e){ return DEFAULT_VENDOR_ID; }
   })();
   const IS_DEFAULT_VENDOR = (VENDOR_ID === DEFAULT_VENDOR_ID);
-  // ⚠️ TEMPORARY: Mobile-OTP login band hai (fast2sms/delivery verify hone tak).
-  // Poora flow — UI, JS, i18n, backend actions — jaisa tha waisa hi hai; sirf
-  // login page pe uska entry point chhupa hai. Wapas chaalu karna ho to bas
-  // isko true kar dena, aur tests/otp-login.spec.js ka skip hata dena.
   const OTP_LOGIN_ENABLED = false;
-  const IS_DEMO = (VENDOR_ID === 'demo');   // ?v=demo → try-before-buy mode
-  // Platform ka main link (bina ?v= ya ?Admin=) → pehle discovery. Vendor ke
-  // apne link se aane wale customer ko seedha uski app milegi.
+  const IS_DEMO = (VENDOR_ID === 'demo');
+
+
   const HAS_VENDOR_PARAM = (function(){
     try {
       const q = new URLSearchParams(location.search);
@@ -83,12 +79,12 @@
     }
     catch(e){ return false; }
   })();
-  // ═══════ ANDROID APK (WebView wrapper) ═══════
-  // isWrappedApp(): Android WebViews append "; wv)" to their User-Agent — a
-  // tool-agnostic signal that works regardless of which no-code WebView-to-APK
-  // service wraps this app. Once a specific tool is picked, check its docs for
-  // a more reliable injected flag (most provide one, e.g. window.isNativeApp)
-  // and OR it in here.
+
+
+
+
+
+
   function isWrappedApp(){
     try{
       if(/;\s*wv\)/i.test(navigator.userAgent)) return true;
@@ -96,26 +92,26 @@
     }catch(e){}
     return false;
   }
-  // APK_MODE: each APK build's "start URL" (set in the wrapper tool's dashboard,
-  // not in code) points at ?mode=admin or ?mode=customer — plain web/PWA use
-  // never sets this and behaves exactly as before.
+
+
+
   const APK_MODE = (function(){
     try{
       const m = (new URLSearchParams(location.search).get('mode') || '').trim().toLowerCase();
       return (m === 'admin' || m === 'customer') ? m : '';
     }catch(e){ return ''; }
   })();
-  // Dynamic config (admin editable, synced from backend)
-  // ═══════ MEAL TYPES — dynamic, admin-configurable list (replaces the old fixed
-  // breakfast/lunch/dinner/meal4 model) ═══════
-  // Each entry: { key, title, emoji, price, capacity, windowStart, windowEnd (the
-  // meal's serving/delivery window — also used to auto-generate time-slot options),
-  // cutoff (order deadline, "HH:MM"), cutoffAheadDay (true = cutoff is the PREVIOUS
-  // day, breakfast-style; false = same day as delivery), enabled, core (true for the
-  // 3 built-in meals — can be disabled but never removed), hasVariants (false only
-  // for breakfast — no sabzi/roti/addons, matches the pre-existing business rule).
-  // "Add Meal" in Setup just pushes a new entry with a generated key (meal_<ts>) and
-  // the same shape — no code change needed for a 4th/5th/Nth meal.
+
+
+
+
+
+
+
+
+
+
+
   function defaultMealTypes(){
     return [
       { key:'breakfast', title:'Breakfast', emoji:'🌅', price:80, capacity:0, windowStart:'07:00', windowEnd:'09:00', cutoff:'22:00', cutoffAheadDay:true,  enabled:true, core:true, hasVariants:false, maxQtyPerOrder:1 },
@@ -126,17 +122,17 @@
   let CFG = {
     prices: { tiffinMini:60, extraRotiPlain:10, extraRotiButter:15, dahi:15, extraSabzi:20 },
     mealTypes: defaultMealTypes(),
-    township: '',    // ⚠️ real config load hone tak sirf khaali — kabhi bhi Raj ka apna township nahi
-    societies: [],   // ⚠️ same wajah
+    township: '',
+    societies: [],
     companies: [],
     homeEnabled: true,
     officeEnabled: false,
     whatsappAuto: true,
     closedDates: [],
-    // Ye placeholder CFG hai — asli data aane tak sirf yehi dikhta hai. Pehle isme
-    // tempClosed jaise fields MISSING the (backend ka defaultConfig() se match nahi
-    // karta tha) — defensive fallbacks crash se bachate hain, par field yahan bhi
-    // rakhna zyada sahi/consistent hai.
+
+
+
+
     tempClosed: false, tempClosedMsg: '',
     deliveryEnabled: true,
     deliveryNear: 10,
@@ -151,17 +147,17 @@
   };
   function variantsFor(m){ return (CFG.variants&&CFG.variants[m]&&CFG.variants[m].length)?CFG.variants[m]:defaultVariantsFE()[m]; }
   function findVariant(m,id){ const vs=variantsFor(m); return vs.find(v=>v.id===id)||vs[0]; }
-  // "Select sabzi" sirf un meals ke liye jinme sabzi hoti hi hai — Lunch aur Dinner.
-  // ⚠️ Pehle check ULTA tha: `m!=='breakfast'`, yani sirf breakfast chhod ke HAR meal
-  // me sabzi dropdown dikhta tha AUR required bhi tha. Vendor ka koi bhi naya meal
-  // (Setup → Add Meal se bana meal_<ts>) apne saath sabziOptions nahi laata, isliye
-  // uska dropdown khaali rehta tha — aur required hone ki wajah se customer us meal
-  // ko cart me daal hi nahi paata tha (hamesha "Select sabzi" warning). Ab meal ke
-  // apne sabziOptions ko bhi maante hain, taaki vendor jis meal ke liye sabzi list
-  // deta hai wahan dropdown aa jaye, aur jahan nahi deta wahan na aaye.
-  // `day` = us din ka MENU object (caller ke paas pehle se hota hai) — yahan se
-  // reach karke nikalne ki koshish nahi karte, kyunki din chunne wale helpers
-  // (selDayKey waghera) har page file ke apne script me hain, shared.js me nahi.
+
+
+
+
+
+
+
+
+
+
+
   function mealUsesSabzi(m, day){
     if(m==='lunch' || m==='dinner') return true;
     if(m==='breakfast') return false;
@@ -176,7 +172,7 @@
     saturday:  { breakfast:['🥣 Dosa','🥣 Sambar','🌶️ Chutney','🍵 Chai'], lunch:{sabziOptions:['Chole','Paneer Butter Masala','Dal Tadka'],fixedItems:['🍚 Rice','🫓 Roti (2)','🥗 Salad','🥒 Raita']}, dinner:{sabziOptions:['Paneer Butter Masala','Rajma Masala','Mix Veg'],fixedItems:['🍚 Veg Biryani','🫓 Roti (2)','🥒 Raita','🥗 Salad']} },
     sunday:    { breakfast:['🫓 Paneer Paratha','🥣 Curd','🍯 Pickle','🍵 Chai'], lunch:{sabziOptions:['Dal Makhani','Shahi Paneer','Chole'],fixedItems:['🍚 Veg Pulao','🫓 Naan (2)','🥗 Salad','🍮 Gulab Jamun (1)']}, dinner:{sabziOptions:['Rajma Masala','Paneer Tikka Masala','Aloo Gobi'],fixedItems:['🍚 Steam Rice','🫓 Roti (4)','🥗 Onion Salad','🥒 Raita']} }
   };
-  // ═══════ i18n ═══════
+
   const LANGS = { en:'English', hinglish:'Hinglish', hi:'हिन्दी', gu:'ગુજરાતી' };
   const T = {
     en: {
@@ -226,7 +222,7 @@
     hinglish: {
       loadingEllipsis:'Loading…', signingIn:'Sign in ho raha hai…', waitingInBrowser:'Aapke browser me sign-in ka wait ho raha hai…', shareKitchen:'Share this Kitchen', shareKitchenTitle:'Share this Kitchen', shareKitchenSub:'Dosto ko ye link bhejo ya QR scan karwao', shareKitchenBtn:'📤 Share Karo', installAppRow:'App Install Karo', installAppTitle:'App Install Karo', installAppSub:'Home screen par add karo — ek tap me order karo, browser ki zaroorat nahi.', installAppIosTitle:'iPhone/iPad par Install karein', installAppIosSteps:'Neeche Share icon par tap karo, phir "Add to Home Screen" chuno.', installAppBtn:'📲 Install Karo', installAppInstalled:'✅ App install ho gayi!', allKitchensBack:'‹ All Kitchens', demoModeTitle:'🎬 Demo Mode', demoModeDesc:'Signup ki zaroorat nahi — ek tap me andar aa jaao aur poora customer experience dekho.', demoLoginBtn2:'🚀 Demo Customer se Login', demoLoggingIn:'⏳ Andar le ja rahe hain…', dscTagline:'Fresh home-style meals near you', dscYourArea:'Your Area', dscTryLocation:'Location dobara try karo — apne paas ki kitchens dekho', dscLocBlockedToast:'Is site ke liye location block hai. Address bar ke paas 🔒/ⓘ icon pe tap karo → Permissions → Location → Allow, phir dobara try karo.', orDivider:'ya', loginWithOtp:'Mobile OTP se Login Karein', sendOtpBtn:'OTP Bhejein', sendingOtp:'Bhej rahe hain…', otpSentTo:'OTP {phone} par bhej diya gaya hai', verifying:'Verify ho raha hai…', resendOtp:'OTP Dobara Bhejein', resendOtpIn:'{s}s me dobara bhejein', changeNumber:'Number badlein', otpInvalid:'6-digit OTP daalein', srv_bad_phone:'Sahi 10-digit mobile number daalein.', srv_otp_too_many_sends:'Bahut zyada OTP requests. Thodi der baad try karein.', srv_otp_expired:'OTP expire ho gaya ya maanga hi nahi gaya. Naya OTP mangwao.', srv_otp_too_many_attempts:'Bahut zyada galat try. Naya OTP mangwao.', srv_otp_wrong:'Galat OTP. Dobara try karein.', srv_busy:'Server abhi busy hai — thodi der baad try karein.', srv_bad_name:'Apna naam daalein.', dscAvailableKitchens:'Available kitchens', dscSearchingNear:'Aapke paas kitchens dhoondi ja rahi hain…', dscNoNearby:'Aapke delivery radius me abhi koi kitchen nahi mili', browseKitchens:'Browse Kitchens', themeLabel:'🎨 Theme', themeSystem:'📱 System Default', themeLight:'☀️ Light', themeDark:'🌙 Dark', ratingTapStars:'Tap karke stars chuniye', ratingCommentPh:'Kuch likhna chahein? (optional)', ratingSubmitBtn:'Rating bhejein', ratingNotNow:'Abhi nahi', demoGlobalBanner:'🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai', dscLoaderTitle:'Finding kitchens near you…', dscLoaderSub:'Fresh home-style meals, loading up', couldNotLoadOrders:'Orders load nahi ho paaye.', networkErrorShort:'Network error.', retryBtn:'🔄 Retry', lblVariant:'Variant', lblSabzi:'Sabzi', lblRoti:'Roti', topRatedBadge:'★ TOP RATED', newBadge:'🆕 NEW', newTag:'New', noReviewsYet:'Abhi koi review nahi', couponNotApplied:'Coupon apply nahi hua', amountChargedLbl:'Amount charged:', legalNameLbl:'Legal Name', gstNumberLbl:'GST Number', fssaiLbl:'FSSAI Lic No', menuLoadFailed:'Menu load nahi ho paaya', totalLbl:'Total', ordersPlacedOne:'Aapka order successfully place ho gaya hai.', ordersPlacedMany:'Aapke {n} order successfully place ho gaye hain.', ordersDupSuffix:' {n} date par pehle se order maujood tha.',
       errNetwork:'❌ Network error. Connection check karke dobara try karein.', sessionExpired:'⚠️ Session expire ho gaya — kripya dobara sign in karein.', completeFields:'⚠️ Kripya saari zaroori details bharein.', orderFailed:'❌ Order place nahi ho paya. Kripya dobara try karein.', selectDate:'⚠️ Pehle ek date chunein.', orderCancelled:'✅ Aapka order cancel ho gaya.', resetLinkBad:'❌ Ye reset link invalid ya expire ho chuka hai.', confirmCancel:'Ye order cancel karein?', welcomeUser:'🎉 Swagat hai,', errLogin:'Aage badhne ke liye sign in karein.',
-      // ── Auth (sign in / sign up / password reset) ──
+
       signInTitle:'Wapas Aapka Swagat Hai', signInBtn:'Sign In', signUpTitle:'Naya Account Banayein', signUpSub:'Roz ka tiffin order karne ke liye sign up karein.',
       createAccountBtn:'Account Banayein', emailLabel:'Email', passwordLabel:'Password', passwordPh:'Apna password daalein', passwordPh6:'Kam se kam 6 characters',
       confirmPwLabel:'Password Confirm Karein', confirmPwPh:'Password dobara daalein', newPasswordLabel:'Naya Password',
@@ -236,7 +232,7 @@
       resetTitle:'Naya Password Set Karein', resetSub:'Apne account ke liye naya password chunein.', resetBtn:'Password Reset Karein', passwordResetDone:'Password update ho gaya — ab sign in kar sakte hain.',
       backToSignIn:'← Sign In par wapas', switchToSignIn:'Pehle se account hai? <b onclick="showAuthMode(\'signin\')">Sign In</b>', switchToSignUp:'Account nahi hai? <b onclick="showAuthMode(\'signup\')">Sign Up</b>',
       phoneDeliveryHint:'Delivery ke liye isi number par sampark karenge.',
-      // ── Bottom nav ──
+
       navHomeShort:'Home', navCartShort:'Cart', navOrdersShort:'Orders', navSub:'Subscription', navSubShort:'Subscribe', navBulkShort:'Bulk', schedTitle:'📅 Meal Schedule Karo', schedSub:'Kis din ke liye order karna hai?', schedOrderingFor:'Order ho raha hai', schedBackToday:'Aaj pe wapas', schedDayLbl:'Din', schedMealLbl:'Meal', schedContinue:'Menu Par Jaayein', exitConfirmTitle:'App Band Karein?', exitConfirmSub:'Aap logout ho jayenge.', exitConfirmBtn:'Exit Karein', exitConfirmSubGuest:'Kya aap sach me exit karna chahte hain?',
       bulkOrderRow:'Bulk / Party Order', bulkMyRequests:'Mere Bulk Requests', bulkTitle:'🎉 Bulk / Party Order',
       bulkSub:'Group ya event ke liye order kar rahe ho? Details batao — kitchen availability aur price confirm karega.',
@@ -244,14 +240,14 @@
       bulkAddrPh:'Office / event ka address', bulkNotesLbl:'Notes (optional)', bulkNotesPh:'Jaise, sirf veg, bina pyaz...',
       bulkSubmit:'Bulk Request Bhejein', limitBulkCta:'🎉 Bulk Order Karein',
       bulkErrQty:'Kam se kam 5 tiffin daaliye.', bulkErrDate:'Delivery date chuniye.',
-      bulkSubmitted:'Request bhej di gayi — kitchen jald confirm karega.', bulkApproved:'Approved', bulkDeclined:'Declined', bulkPending:'Pending', scheduleBtn:'Schedule', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Roz', onb1Body:'Order karne ke baad hi banta hai — na frozen, na baasi.', onb2Title:'Home aur Office Delivery', onb2Body:'Jahan bhi ho — ghar ya office, order karo.', onb3Title:'Aaj Order Karo ya Schedule Karo', onb3Body:'Kal ka tiffin plan karna hai? Neeche "Schedule Your Meal" use karo.', onb4Title:'Aasan Payment', onb4Body:'UPI se pay karo ya seedha Cash on Delivery — jo pasand ho.', onbGetStarted:'Shuru Karein', navAiShort:'AI Help',       // ── Subscription ──
+      bulkSubmitted:'Request bhej di gayi — kitchen jald confirm karega.', bulkApproved:'Approved', bulkDeclined:'Declined', bulkPending:'Pending', scheduleBtn:'Schedule', onbSkip:'Skip', onb1Title:'Fresh Tiffin, Roz', onb1Body:'Order karne ke baad hi banta hai — na frozen, na baasi.', onb2Title:'Home aur Office Delivery', onb2Body:'Jahan bhi ho — ghar ya office, order karo.', onb3Title:'Aaj Order Karo ya Schedule Karo', onb3Body:'Kal ka tiffin plan karna hai? Neeche "Schedule Your Meal" use karo.', onb4Title:'Aasan Payment', onb4Body:'UPI se pay karo ya seedha Cash on Delivery — jo pasand ho.', onbGetStarted:'Shuru Karein', navAiShort:'AI Help',
       subTitle:'🔁 Subscription', subActive:'Active Plan', subPickMeals:'Meals chunein', subPickDays:'Din chunein',
       subWeekdays:'Som–Shukra', subAllDays:'Saaton din', subClear:'Clear', subWeekdaysSub:'Som-Shukra, saare meals', subAllDaysSub:'Har din, saare meals', subClearSub:'Nayi shuruaat', subMealsPerWeek:'meals/hafta schedule hue', subAnySabzi:'Chef ki pasand',
       subStart:'Shuru', subEnd:'Khatam', subStart2:'Subscription Shuru Karein', subUpdate:'Plan Update Karein', subCancelBtn:'Plan Cancel Karein',
       subCancelConfirm:'Subscription cancel karein?', subCancelled:'Subscription cancel ho gaya', subSaved:'Subscription save ho gaya.',
       subSkipBtn:'Ek din skip karein', subPickSkipDate:'Skip karne ke liye date chunein', subSkipDone:'Din skip ho gaya', subUnskipDone:'Skip hata diya', subSkipped:'Skipped',
       subDateRange:'Date range', subDaysWeek:'din/hafta', subDelivery:'Delivery', subEditNote:'Neeche edit karke Update dabayein — plan badal jayega', subEndAfter:'End date, start ke baad honi chahiye', subStartInfo:'Kal se shuru',
-      // ── Contact ──
+
       navContact:'Contact Karein', contactTitle:'📞 Contact Karein', contactSub:'Aapki baat sunna hamesha achha lagta hai',
       contactInfoTitle:'ℹ️ Jaankari', contactAddrLbl:'Location', contactAreaLbl:'Delivery Area', contactHoursLbl:'Delivery Time',
       tagline:'Fresh • Homemade • Doorstep Delivery', secureLogin:'🔐 Secure Login',
@@ -382,7 +378,7 @@
     const tc=document.querySelector('meta[name="theme-color"]');
     if (tc) tc.setAttribute('content', effective === 'dark' ? '#14151f' : '#6366f1');
   }
-  // Theme read helper — vendor key, phir shared user-level key, phir default
+
   function readTheme(){
     let m = storeGet('fbt_theme');
     if(!m){ try{ const s=localStorage.getItem('nn_theme_shared'); m = s?JSON.parse(s):null; }catch(e){} }
@@ -391,7 +387,7 @@
   function initTheme(){
     const saved = readTheme();
     applyTheme(saved);
-    // System badle to (agar 'system' chuna hai) live update ho
+
     try {
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
         if (readTheme() === 'system') applyTheme('system');
@@ -403,14 +399,14 @@
     LANG = l;
     try { localStorage.setItem('fbt_lang', l); } catch(e){}
     document.documentElement.lang = (l === 'hinglish' ? 'en' : l);
-    // ⚠️ Pehle sirf init() ke waqt EK BAAR initLangSelectors() chalta tha. Agar
-    // koi bhi select.js-lang element us EXACT waqt options se khaali reh gaya
-    // (Profile/Admin panel jaise sections), to yahan neeche `.value=l` set karne
-    // se kuch nahi hota — browser silently ignore karta hai agar koi matching
-    // <option> na ho, aur dropdown HAMESHA ke liye blank dikhta reh jaata (login/
-    // discovery ke selects theek dikhte kyunki unke options waqt pe ban gaye the).
-    // Ab har setLang() call pe options FIR SE guaranteed bante hain — value set
-    // karne se pehle — isliye ye khaali-dropdown bug kabhi wapas nahi aa sakta.
+
+
+
+
+
+
+
+
     initLangSelectors();
     document.querySelectorAll('select.js-lang').forEach(s => { s.value = l; });
     applyLang();
@@ -427,14 +423,14 @@
     const opts = Object.keys(LANGS).map(k => `<option value="${k}">${LANGS[k]}</option>`).join('');
     document.querySelectorAll('select.js-lang').forEach(s => { s.innerHTML = opts; s.value = LANG; });
   }
-  // ═══════ IST TIME ═══════
-  // Playwright tests seed window.__TEST_IST_OVERRIDE (a fixed early-morning ISO
-  // string, via addInitScript — see tests/helpers.js) BEFORE this script runs, so
-  // every test gets a deterministic "current time," never flaky depending on
-  // when in the day the suite happens to execute (cutoff logic below is real
-  // wall-clock-sensitive: lunch/dinner/etc. legitimately close after their
-  // configured cutoff, which used to make "Today" tests fail only in the
-  // afternoon/evening).
+
+
+
+
+
+
+
+
   let __istOverride = (typeof window !== 'undefined' && window.__TEST_IST_OVERRIDE) || null;
   function getISTNow() {
     if (__istOverride) return new Date(__istOverride);
@@ -445,13 +441,13 @@
   const WEEKDAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   function weekdayKey(d){ return WEEKDAYS[d.getDay()]; }
   function fmtLabel(d){ const dd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return dd[d.getDay()]+', '+String(d.getDate()).padStart(2,'0')+' '+mo[d.getMonth()]; }
-  // meal type lookup + cutoff — "cutoff" is stored as "HH:MM" on the meal-type
-  // record now (admin-editable per meal, see CFG.mealTypes / defaultMealTypes()).
+
+
   function mealType(meal){ return (CFG.mealTypes||[]).find(mt=>mt.key===meal); }
   function hhmmToMins(hhmm){ const p=String(hhmm||'').split(':'); const h=parseInt(p[0],10), m=parseInt(p[1],10); return (isFinite(h)&&isFinite(m))?(h*60+m):null; }
   function cutoffMins(meal){
     const mt=mealType(meal); const v=mt&&hhmmToMins(mt.cutoff);
-    return (typeof v==='number'&&v>=0&&v<1440)?v:570;   // 9:30 AM generic fallback if meal/cutoff missing
+    return (typeof v==='number'&&v>=0&&v<1440)?v:570;
   }
   function formatMinutesAsClock(mins){
     mins=((mins%1440)+1440)%1440;
@@ -464,11 +460,11 @@
     const A=(ok,why)=>({ok:ok,why:why||''});
     const dstr=fmtYMD(dateWithOffset(off));
     const out={};
-    // ⚠️ Emergency close — planned closedDates se PEHLE aur SABHI din (aaj + future)
-    // ke liye check karo. closedDates ek SPECIFIC calendar date block karta hai
-    // (pre-planned); tempClosed admin ka turant "sab kuch abhi pause karo" switch
-    // hai (jaise gas leak, staff na hona) — quick-close se duration di gayi ho to
-    // us time ke baad apne aap khul jaata hai, warna jab tak khud OFF na kare.
+
+
+
+
+
     if(isKitchenEmergencyClosed()){
       const msg=CFG.tempClosedMsg||t('kitchenClosedMsg');
       MEALS.forEach(m=>out[m]=A(false,msg)); return out;
@@ -477,10 +473,10 @@
       const closedMsg=t('kitchenClosedMsg');
       MEALS.forEach(m=>out[m]=A(false,closedMsg)); return out;
     }
-    // Per-meal cutoff (admin Setup se configurable — mt.cutoff/.cutoffAheadDay),
-    // delivery din pe apply hota hai:
-    //  cutoffAheadDay:true (breakfast-style)  → raat pehle configured time tak, kabhi same-day nahi
-    //  cutoffAheadDay:false (lunch/dinner/etc) → usi din configured time tak
+
+
+
+
     (CFG.mealTypes||[]).forEach(mt=>{
       const cm=cutoffMins(mt.key);
       if(mt.cutoffAheadDay){
@@ -494,100 +490,100 @@
     });
     return out;
   }
-  // Admin Setup se jo meals ON hain sirf wahi customer ko dikhte hain. Sab meals ab
-  // uniform hain (har ek ka apna .enabled hai) — purana meal4-only opt-in special
-  // case hata diya, sab meals same tarah opt-out (enabled defaults true) hai.
+
+
+
   function enabledMeals(){
     const list=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false).map(mt=>mt.key);
-    return list.length?list:MEALS;   // sab OFF ho jaye to app khali na dikhe
+    return list.length?list:MEALS;
   }
-  // ═══════ STORAGE + SESSION ═══════
-  // Multi-tenant: non-default vendor ki keys namespace ho jaati hain (vendorId_key) —
-  // taaki 2 vendors ka data same device pe mix na ho. Default vendor (abhi ke live users)
-  // bilkul same purani keys use karta rehta hai, koi migration/breakage nahi.
+
+
+
+
   function nsKey(k){ return IS_DEFAULT_VENDOR ? k : (VENDOR_ID+'_'+k); }
   function storeSet(k,v){ try{ if(k==='fbt_session'&&v&&typeof v==='object'){ if(!v.vid) v.vid=VENDOR_ID; if(!v.ts) v.ts=Date.now(); } localStorage.setItem(nsKey(k),JSON.stringify(v)); }catch(e){} }
   function storeGet(k){ try{ const v=localStorage.getItem(nsKey(k)); return v?JSON.parse(v):null; }catch(e){ return null; } }
   function storeDel(k){ try{ localStorage.removeItem(nsKey(k)); }catch(e){} }
-  // ⚠️ Cross-vendor shared session hata diya gaya — ek global (bina-namespace)
-  // key me har login save hota tha, aur agar is vendor ka apna session na mile
-  // to WAHI shared token silently utha ke "logged in" maan liya jaata tha, bina
-  // ye check kiye ki wo asal me abhi wale customer ka hi hai ya kisi purane/
-  // doosre account ka (jaise shared/test device pe). Isi se "kabhi-kabhi default
-  // User 3 se login ho jaata hai" wali bug aati thi — koi bhi naya vendor visit,
-  // agar device pe koi purana cached session pada ho, use silently apna lega
-  // bina customer ne "Sign in with Google" tak dabaya ho. SHARED_SESSION_KEY
-  // sirf legacy cleanup ke liye (neeche logout()) rakha gaya hai.
+
+
+
+
+
+
+
+
+
   const SHARED_SESSION_KEY = 'nn_session_shared';
   let SESSION = storeGet('fbt_session');
-  // Google's OAuth redirect flow (googleRedirectLogin) bounces the browser away
-  // and back on the SAME page — Google's redirect_uri can't carry ?v=<vendor>,
-  // so the moment the login response arrives (URL still vendor-less) VENDOR_ID
-  // resolves to DEFAULT and storeSet('fbt_session',...) persists under the
-  // DEFAULT-vendor key, right before ?v= gets restored via location.replace().
-  // The next boot (now correctly on ?v=<vendor>) reads the VENDOR-namespaced
-  // key, finds nothing, and bounces back to login — this is the "sign in works
-  // but immediately kicks back to login page" bug. Fix: the login code also
-  // stashes the fresh SESSION in a one-shot sessionStorage slot right before
-  // that redirect; pick it up here (now that VENDOR_ID is correct), persist it
-  // under the right key, and clear the slot immediately so it's never reused.
+
+
+
+
+
+
+
+
+
+
+
   if(!SESSION){
     try{
       const gs = sessionStorage.getItem('g_sess');
       if(gs){
         sessionStorage.removeItem('g_sess');
         SESSION = JSON.parse(gs);
-        // ⚠️ SESSION.vid ko YAHAN OVERWRITE MAT KARO. vid ka matlab hai "ye token
-        // KIS vendor ne banaya tha" — current page ka vendor nahi (meCall()/apiPost()
-        // isi se authVendorId bhejte hain, aur backend USI vendor ki Sessions sheet
-        // me token dhoondta hai). Redirect flow me googleLogin hamesha vendor-less
-        // URL pe chalta hai, yani token DEFAULT vendor ke naam se banta hai; usko
-        // yahan 'hungrybirds' (ya jo bhi ?v= ho) likh dena matlab backend galat
-        // sheet me dhoondega aur HAMESHA invalid_session dega — login ke turant
-        // baad wapas login page. Original vid waisa hi rehne do; vendor ke apne
-        // sheet me asli entry completeCrossVendorLogin() banata hai.
+
+
+
+
+
+
+
+
+
         if(SESSION && typeof SESSION === 'object'){ if(!SESSION.vid) SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); }
       }
     }catch(e){}
   }
   function isLoggedIn(){ return !!(SESSION && SESSION.token); }
   let __toastT=null;
-  // XSS guard — user ka koi bhi text innerHTML me jaane se pehle escape
+
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function showToast(msg,type=''){
     const el=document.getElementById('toast');
     el.textContent=msg; el.className='toast '+type; el.classList.add('show');
-    if(__toastT) clearTimeout(__toastT);                    // purana timer cancel (warna naya toast jaldi gayab hota tha)
+    if(__toastT) clearTimeout(__toastT);
     __toastT=setTimeout(()=>{ el.classList.remove('show'); __toastT=null; },3800);
   }
-  // Server error → user ki chuni hui language me (code-based translation)
+
   function srvMsg(j){
     if(j && j.code){ const k='srv_'+j.code; const s=t(k); if(s && s!==k) return s; }
     return (j && j.message) || t('errNetwork');
   }
   function apiPost(p, _tries){
-    _tries = (_tries==null) ? 2 : _tries;   // total 2 koshish (cold GAS ke liye)
+    _tries = (_tries==null) ? 2 : _tries;
     const body=Object.assign({},p,{vendorId:VENDOR_ID, authVendorId:(SESSION&&SESSION.vid)||VENDOR_ID});
     const ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
-    // 45s tha — measured cold-start ~5s hi lagta hai, isliye 45s×2 tries=90s worst-case
-    // ek call ke liye bahut zyada tha (login me 3-4 sequential calls milke minutes
-    // khinch jaate the). 20s abhi bhi generous margin hai, par fail jaldi dikhega.
+
+
+
     const timer = setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 20000);
     const opts = { method:'POST', body:JSON.stringify(body) };
     if(ctrl) opts.signal = ctrl.signal;
-    // ⚠️ bad-JSON wala retry .then() ke andar hota hai. Wo retry jab khud fail hota
-    // hai to uska rejection niche wale .catch() me aata hai — jahan _tries abhi bhi
-    // 2 hai — to wo DOBARA retry kar deta tha (total 3 round-trip, cold GAS pe
-    // ~60s tak user login screen pe atka rehta). Ye flag dono ko ek hi baar rakhta hai.
+
+
+
+
     let __retried = false;
     return fetch(GOOGLE_SCRIPT_URL, opts)
-      .then(r=> r.text())                    // pehle text lo — cold GAS redirect kabhi HTML/empty deta hai
+      .then(r=> r.text())
       .then(txt=>{
         clearTimeout(timer);
         let j=null;
         try{ j = JSON.parse(txt); }
         catch(e){
-          // JSON nahi mila (HTML/khaali/redirect-page). Ek baar chup-chaap retry.
+
           if(_tries>1){ __retried = true; return new Promise(res=>setTimeout(res,1200)).then(()=>apiPost(p,_tries-1)); }
           dbgLog({ev:'POST_badjson', act:p&&p.action, body:String(txt).slice(0,80)});
           throw new Error('bad_json');
@@ -597,70 +593,70 @@
       })
       .catch(err=>{
         clearTimeout(timer);
-        // abort/network fail — ek baar retry, warna throw karo (upar ka .catch toast dega)
+
         if(_tries>1 && !__retried){ return new Promise(res=>setTimeout(res,1200)).then(()=>apiPost(p,_tries-1)); }
         throw err;
       });
   }
-  // ═══════ VIEW NAV ═══════
+
   function closeAllPopups(){
     ['mealSheet','orderModal','limitModal','modeModal'].forEach(x=>{ const e=document.getElementById(x); if(e) e.classList.add('hidden'); });
   }
   
   let lastGoodView = null;
   function showView(id){
-    // Agar koi galat/unknown id aa jaye to SAB views hide ho jaate the → blank white page.
-    // Ab aisi id ko chup-chaap safe view pe redirect kar dete hain.
+
+
     if(ALL_VIEWS.indexOf(id) < 0) id = isLoggedIn() ? 'homeView' : 'dscView';
-    // Logged-in user ko login page kabhi mat dikhao. Rapid back/forward pe
-    // recoverIfBlank/stale state isi wajah se login flash karta tha.
+
+
     if(id==='authPage' && isLoggedIn()) id='homeView';
-    // ⚠️ Kitchen temporarily closed (emergency close) → customer ki koi bhi
-    // navigation (kahin se bhi — bottom nav, back button, deep link, restore)
-    // isi ek gate screen pe le jaani chahiye. Ye SINGLE enforcement point hai
-    // (showView()) isliye alag-alag jagah check duplicate nahi karna padta — jo
-    // bhi view khulwane ki koshish kare, tempClosed hone par yahi jeetega.
-    // Admin/superadmin apna alag login hai — customer ke tempClosed se unka
-    // koi lena dena nahi.
+
+
+
+
+
+
+
     if(isKitchenEmergencyClosed() && isLoggedIn() && id!=='kitchenClosedView' && ['adminPanel','adminLogin','superPanel','superLogin'].indexOf(id)<0){
       id='kitchenClosedView';
     }
     if(id==='kitchenClosedView') renderKitchenClosedGate();
-    closeAllPopups();                                       // page badle to koi popup upar chipka na rahe
-    // authPage/pubView transient screens hai — inko fbt_view me SAVE nahi karna.
-    // Warna recoverIfBlank() baad me inhe "last good view" samajh ke restore kar deta
-    // hai, aur logged-in user ko random login page dikh jaata hai.
-    // profileView bhi nahi — wo sirf bottom-nav ke Profile button se khulna chahiye.
+    closeAllPopups();
+
+
+
+
     try{ if(['homeView','page1','cartView','ordersView','subView','aboutView','adminPanel'].indexOf(id)>=0) storeSet('fbt_view',id); }catch(e){}
     ALL_VIEWS.forEach(v=>{ const el=document.getElementById(v); if(el) el.classList.toggle('hidden', v!==id); });
-    // dscView kisi bhi raste se khule (fallback/recover se bhi), uska data load hona
-    // chahiye. Pehle sirf openDiscovery() load karta tha, isliye fallback se aane par
-    // "Available kitchens" ke neeche khaali page dikhta tha.
+
+
+
     if(id==='dscView'){ startDiscoveryFlow(); }
-    // ⚠️ Profile aur Admin panel me kabhi-kabhi language dropdown + kuch labels
-    // blank dikhte the (boot ke waqt kisi wajah se translation apply hone se
-    // reh gaya ho). Ye do views jab bhi khulte hain, translations ek baar zaroor
-    // fresh laga do — bilkul safe hai (idempotent), aur ye class of bug hamesha
-    // ke liye khatam ho jaata hai.
+
+
+
+
+
     if(id==='profileView'||id==='adminPanel'){ try{ setLang(LANG); }catch(e){} }
     lastGoodView = id;
-    // ⚠️ Ek synchronous window.scrollTo(0,0) yahin turant call karna kaafi
-    // nahi tha — lambi page (jaise Home, bahut scroll ho chuki) se ek CHOTI
-    // page (jaise bulkView) pe switch karte waqt, real mobile Chrome/WebView
-    // apna "scroll anchoring" try karta hai aur reset ko fight kar deta hai:
-    // naya view render hota hai, par viewport wahi purani scroll position pe
-    // atka reh jaata hai jo nayi (chhoti) page ke actual content se aage
-    // nikal chuki hoti hai — result: sirf khaali overscroll area dikhta hai,
-    // page bilkul blank lagta hai (bottom-nav ke alawa), jab tak user khud
-    // upar scroll na kare. Do bar requestAnimationFrame se agle paint ke
-    // BAAD scroll karte hain — tab tak naya (chhota) layout settle ho chuka
-    // hota hai, isliye reset asal me tikta hai.
+
+
+
+
+
+
+
+
+
+
+
     requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ window.scrollTo(0,0); }); });
     updateBottomNav(id); }
 
-  // ═══════ BLANK-SCREEN GUARD ═══════
-  // App background se wapas aaye aur (kisi bhi wajah se) koi view visible na ho,
-  // to khaali safed page dikhta tha. Ye har baar check karke wapas la deta hai.
+
+
+
   function noViewVisible(){
     return !ALL_VIEWS.some(v=>{ const el=document.getElementById(v); return el && !el.classList.contains('hidden'); });
   }
@@ -669,41 +665,41 @@
     let target = lastGoodView;
     if(!target){
       try{ target = storeGet('fbt_view'); }catch(e){}
-      // Reload ke baad sirf inhi views ko restore karna hai. profileView / authPage /
-      // pubView purane localStorage me pade ho sakte hai — unhe ignore karo, warna
-      // profile apne aap khul jaata hai. (lastGoodView pe ye filter NAHI lagta —
-      // agar user abhi profile pe hi hai to app wapas aane par profile hi chahiye.)
+
+
+
+
       let RESTORABLE = ['homeView','page1','cartView','ordersView','subView','aboutView','adminPanel','adminLogin','dscView','superPanel','superLogin'];
-      // Customer APK build — vendor/admin views ko kabhi restore mat karo, chahe
-      // fbt_view me pade ho (purani plain-web session ka leftover ho sakta hai).
+
+
       if(APK_MODE==='customer') RESTORABLE = RESTORABLE.filter(v=>['adminPanel','adminLogin','superPanel','superLogin'].indexOf(v)<0);
       if(target && RESTORABLE.indexOf(target)<0) target = null;
     }
-    // ⚠️ CRITICAL: showView() seedha yahan se lagta hai, bina kisi backend
-    // credential-check ke — showOrdersPage()/adminLogin() jaise wrapper functions
-    // ke apne guard yahan BYPASS ho jaate hain. Matlab session expire/logout ke
-    // baad, ya kisi bhi vendor-switch/refresh/back-button pe, agar fbt_view me
-    // stale customer/admin/super view pada tha (purani session se), seedha khul
-    // jaata tha — bina ye check kiye ki abhi genuinely logged-in/validated hai ya
-    // nahi. Isi se ek real bug mila: customer ne kisi vendor card pe click kiya,
-    // aur us vendor ke liye stale (galat/purana) cached admin credentials hone ki
-    // wajah se, use Admin Orders panel dikh gaya — pehle hi login/validate hue
-    // bina. Fix: sirf-cached (adminCreds/superCreds set hai) kaafi nahi — ACTUAL
-    // backend-confirmed flag (adminCredsValidated/superCredsValidated) chahiye.
+
+
+
+
+
+
+
+
+
+
+
     const CUSTOMER_ONLY = ['homeView','page1','cartView','ordersView','subView'];
     if(target && CUSTOMER_ONLY.indexOf(target)>=0 && !isLoggedIn()) target = null;
-    // ⚠️ adminCredsValidated===false ka matlab HAMESHA "invalid/stale creds" nahi
-    // hota — jab tak restoreAdmin() (finishInit() ke andar, jo khud vendor-bootstrap
-    // fetch resolve hone ke BAAD chalta hai) apna backend round-trip complete na
-    // kare, ye flag false hi rahega, chahe creds bilkul valid hi hon. Ye function
-    // (recoverIfBlank) page load ke ~80ms baad hi 'pageshow' se chal jaata hai —
-    // restoreAdmin() ko apna network call karne ka mauka milne se BHI PEHLE. Pehle
-    // yahan seedha customer login (authPage) dikha diya jaata tha, aur restoreAdmin()
-    // ka asli result baad me aata — matlab HAR admin refresh pe 1-2 second ke liye
-    // login page flash hota tha, ek baar nahi. Fix: agar raw cached creds maujood
-    // hain (matlab restoreAdmin() abhi chalega ya chal raha hai), kuch mat badlo —
-    // jo bhi loader dikh raha hai usse dikhne do, normal boot flow apna kaam poora
-    // karega. Sirf creds bilkul cached na hone par hi customer fallback pe jao.
+
+
+
+
+
+
+
+
+
+
+
+
     if(target==='adminPanel' && !adminCredsValidated){
       if(storeGet('fbt_admin')) return;
       target = null;
@@ -712,32 +708,32 @@
       if(storeGet('fbt_super')) return;
       target = null;
     }
-    // Admin APK build — recovery hamesha admin par hi resolve ho, kabhi customer
-    // home/discovery pe nahi.
+
+
     if(APK_MODE==='admin'){ showView(adminCredsValidated ? 'adminPanel' : 'adminLogin'); return; }
-    // ?Admin=<vendorSlug> — same treatment as Admin APK: recovery always
-    // resolves to admin, never customer landing (mirrors finishInit()'s
-    // HAS_ADMIN_PARAM branch above).
+
+
+
     if(HAS_ADMIN_PARAM){ showView(adminCredsValidated ? 'adminPanel' : 'adminLogin'); return; }
-    // Super Admin mode me customer landing pe mat phenko (Customer APK me ye
-    // param kabhi honor nahi hota — RESTORABLE filter se upar hi handle ho chuka).
+
+
     let isSuper=false; try{ isSuper = new URLSearchParams(location.search).get('superadmin')==='1'; }catch(e){}
     if(isSuper && APK_MODE!=='customer'){ showView(superCredsValidated ? 'superPanel' : 'superLogin'); return; }
-    // admin.html/superadmin.html (phase 3 split files) declare their own
-    // APP_ROLE — neither has a legitimate customer/Discovery destination,
-    // ever, so resolve straight to that role's login/panel instead of
-    // falling into the generic "no vendor param -> dscView" default below,
-    // which was written for index.html/customer.html and would otherwise
-    // wrongly show the marketplace inside what must be an admin-only file.
+
+
+
+
+
+
     if(typeof APP_ROLE!=='undefined'){
       if(APP_ROLE==='admin'){ showView(adminCredsValidated ? 'adminPanel' : 'adminLogin'); return; }
       if(APP_ROLE==='superadmin'){ showView(superCredsValidated ? 'superPanel' : 'superLogin'); return; }
     }
     if(!target || ALL_VIEWS.indexOf(target)<0){
       if(isLoggedIn()) target = 'homeView';
-      // Vendor page (?v=slug) pe logged-out user ko discovery/browse-kitchens pe mat
-      // phenko — wahaan login dikhna chahiye. Pehle yahi "browse kitchens" flash aata tha
-      // jab login page refresh hota tha (pageshow/focus pe recover trigger hota hai).
+
+
+
       else if(HAS_VENDOR_PARAM){
         const bl0=document.getElementById('bootLoader'); if(bl0){ bl0.classList.add('gone'); setTimeout(()=>bl0.remove(),300); }
         if(typeof showAuth==='function'){ showAuth(); return; }
@@ -746,21 +742,21 @@
       else target = 'dscView';
     }
     showView(target);
-    // Boot loader agar atka reh gaya ho to usko bhi hatao
+
     const bl=document.getElementById('bootLoader'); if(bl){ bl.classList.add('gone'); setTimeout(()=>bl.remove(),300); }
-    // ⚠️ SELF-HEAL: Home dikh rahi hai par meal panel khaali hai (koi bhi wajah se —
-    // stale dateOffset, ek round-trip ke baad refresh chook gaya, jo bhi) — turant
-    // dobara bhar do. Ye check yahan (pageshow/focus/visibilitychange se) hamesha
-    // chalta hai, isliye trigger jo bhi ho, khaali screen zyada der nahi rukti.
+
+
+
+
     if(target==='homeView'){
       const mp=document.getElementById('mealPanel');
       if(mp && !mp.children.length && isLoggedIn()){ refreshAvailability(); renderHome(); }
     }
   }
-  // ═══════ CUSTOM CONFIRM (native confirm() ki jagah — app jaisa dikhta hai) ═══════
+
   let __confirmResolve = null;
-  // Simple ek-button popup (sirf "Okay"). confirmModal ko reuse karta hai aur
-  // 'No' button chhupa deta hai — naya markup banane ki zarurat nahi.
+
+
   function showAlert(opts){
     const o = opts || {};
     document.getElementById('cfIcon').textContent = o.icon || 'ℹ️';
@@ -782,12 +778,12 @@
     document.getElementById('cfNo').textContent = o.no || 'Cancel';
     const yes = document.getElementById('cfYes');
     yes.style.background = o.danger ? 'var(--danger)' : 'var(--accent)';
-    const no = document.getElementById('cfNo'); if(no) no.style.display = '';   // showAlert ne chhupaya ho to wapas
+    const no = document.getElementById('cfNo'); if(no) no.style.display = '';
     document.getElementById('confirmModal').classList.remove('hidden');
     return new Promise(res => { __confirmResolve = res; });
   }
   function closeConfirm(val){
     document.getElementById('confirmModal').classList.add('hidden');
-    const no = document.getElementById('cfNo'); if(no) no.style.display = '';   // alert ke baad restore
+    const no = document.getElementById('cfNo'); if(no) no.style.display = '';
     if(__confirmResolve){ const r = __confirmResolve; __confirmResolve = null; r(!!val); }
   }
