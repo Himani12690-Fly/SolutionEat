@@ -118,25 +118,23 @@
     var hasV = !!( (new URLSearchParams(location.search).get('v')||'').trim() );
     var img = document.querySelector('#bootLoader .vbrand-logo');
     if(!img) return;
-    if(!hasV){ img.src = img.getAttribute('data-default-src'); img.alt='Nest & Nosh'; return; }
+    if(!hasV){ img.src = img.getAttribute('data-default-src'); img.alt='myTiffin'; return; }
     // Vendor page: is vendor ki cached branding dhoondo (namespaced key: <slug>_fbt_brand)
     var slug = (new URLSearchParams(location.search).get('v')||'').trim().toLowerCase();
     var raw = localStorage.getItem(slug+'_fbt_brand');
     var b = raw ? JSON.parse(raw) : null;
-    if(b && (b.logo || b.name)){
-      if(b.logo){ img.src = b.logo; }
-      else {
-        var ch=(b.name||'').trim().charAt(0).toUpperCase();
-        img.src='data:image/svg+xml,'+'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%237c3aed"/><text x="50" y="50" dy=".36em" font-family="sans-serif" font-size="52" font-weight="700" fill="%23fff" text-anchor="middle">'+ch+'</text></svg>';
-      }
-      img.alt = b.name||'';
-    }
-    /* cache nahi → blank hi rehne do (default flash nahi); bootstrap asli logo bhar dega */
+    // ⚠️ Yahan pehle cached NAME se (logo na ho to) ek letter-avatar bhi bana
+    // dete the — agar cache stale/purana ho (jaise vendor rename ho chuka ho),
+    // to galat letter flash hota (jaise "Hungry Birds" ki jagah purana "N..."
+    // naam). Ab: sirf tab hi badlo jab ek asli LOGO cached ho — warna default
+    // (myTiffin) logo hi rehne do, koi galat-letter guess nahi.
+    if(b && b.logo){ img.src = b.logo; img.alt = b.name||''; }
+    /* cache nahi (ya sirf naam, logo nahi) → default logo hi rehne do; bootstrap asli logo bhar dega */
   }catch(e){}
 })();
 </script>
 <div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t" data-i="loadingEllipsis">Loading…</div></div>
-<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
+<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="myTiffin"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
 <div class="container">
 
   <!-- ══════ FIRST-RUN ONBOARDING (naye customer ke liye, sirf ek baar) ══════ -->
@@ -153,7 +151,7 @@
          hamesha tap-able hai, hamesha discovery pe hi jaata hai. -->
     <div class="hero">
       <div id="authBackKitchens" class="hidden auth-back-btn" onclick="__dscIsTop=true;openDiscovery();" aria-label="All Kitchens">‹</div>
-      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"><div class="logo-spin" id="authLogoSpin"></div></div>
+      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="myTiffin"><div class="logo-spin" id="authLogoSpin"></div></div>
       <p class="tagline" data-i="tagline"></p>
       <span class="hero-badge" data-i="secureLogin"></span>
     </div>
@@ -250,26 +248,20 @@
       <!-- Admin login has no UI entry point here by design — see ?Admin=<vendorSlug>
            handling near VENDOR_ID/finishInit() below. Complete separation: a customer
            on this page has no way to discover or reach admin login. -->
-      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> · Ahmedabad, India</div>
+      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="myTiffin"></span> · Ahmedabad, India</div>
     </div>
   </div>
 
   <!-- ══════ HOME LANDING ══════ -->
   <div id="homeView" class="hidden">
     <!-- Compact header: logo + name + location + cart -->
-    <div class="h1-top h1-centered">
-      <div class="h1-bell" id="h1Bell" onclick="openNotifSheet()"><span>🔔</span><span class="h1-bell-badge hidden" id="h1BellBadge">0</span></div>
-      <!-- Vendor ka apna logo/naam yahan hamesha dominant hai (jaisa hona chahiye —
-           customer isi kitchen se order kar raha hai), par is se pehle iska koi
-           ishaara nahi tha ki ye myTiffin platform pe chal raha hai — poora app
-           "sirf [Vendor]" jaisa lagta tha. Chhota, subtle attribution tag. -->
-      <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
+    <div class="h1-top h1-strip">
       <span class="h1-logo-wrap"><img class="h1-logo vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""></span>
-      <div class="h1-rate hidden" id="h1Rate"></div>
       <div class="h1-tt">
-        <div class="h1-name"><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div>
+        <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span><span class="h1-rate hidden" id="h1Rate"></span></div>
         <div class="h1-loc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       </div>
+      <div class="h1-bell" id="h1Bell" onclick="openNotifSheet()"><span>🔔</span><span class="h1-bell-badge hidden" id="h1BellBadge">0</span></div>
       <!-- Header ka cart icon hata diya — bottom nav me Cart tab pehle se hai (badge ke saath),
            aur neeche "N items added → Continue" bar bhi hai. Teen jagah cart zyada tha. -->
     </div>
@@ -336,7 +328,7 @@
   <!-- ══════ CART VIEW ══════ -->
   <div id="cartView" class="hidden">
     <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div>
       <h1 style="font-size:20px;" data-i="yourCart"></h1>
     </div>
     <div class="section pad-sticky">
@@ -450,20 +442,21 @@
 
   <div id="subView" class="hidden">
     <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div>
       <h1 style="font-size:20px;" data-i="subTitle"></h1>
       <p class="tagline" style="margin:0;" data-i="subSub"></p>
     </div>
-    <div class="section">
+    <div class="section pad-sticky">
       <div id="subActiveBox"></div>
       <div id="subFormBox"></div>
     </div>
+    <div class="sticky-bar hidden" id="subSaveBar"></div>
   </div>
 
   <!-- ══════ MY ORDERS VIEW ══════ -->
   <div id="ordersView" class="hidden">
     <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div>
       <h1 style="font-size:20px;" data-i="myOrders"></h1>
     </div>
     <div class="section">
@@ -674,7 +667,7 @@
   <!-- ══════ ADMIN LOGIN ══════ -->
   <!-- ══════ PROFILE ══════ -->
   <div id="profileView" class="hidden">
-    <div class="hero sub-hero no-title"><div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div></div>
+    <div class="hero sub-hero no-title"><div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div></div>
     <div class="section">
       <div class="pf-card">
         <div class="pf-avwrap disabled" id="pfAvaWrap">
@@ -715,7 +708,7 @@
       <button class="add-cart-btn" style="margin-top:20px;background:var(--dangerbg);color:var(--danger);" onclick="logout()" data-i="logout"></button>
     </div>
     <div class="footer">
-      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> · Ahmedabad, India</div>
+      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="myTiffin"></span> · Ahmedabad, India</div>
     </div>
   </div>
 
@@ -728,7 +721,7 @@
            wahi hain jo baaki poori app use karti hai — VENDOR_BRAND load hote hi
            applyVendorBrand() ye apne aap bhar deta hai. -->
       <img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="" style="width:44px;height:44px;border-radius:12px;object-fit:cover;display:block;margin:0 auto 8px;">
-      <h1 style="font-size:20px;">🔐 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> — Admin Login</h1>
+      <h1 style="font-size:20px;">🔐 <span class="vbrand-name" data-default-name="myTiffin"></span> — Admin Login</h1>
     </div>
     <div class="section">
       <div class="demo-login hidden" id="demoAdminHint">
@@ -1211,7 +1204,7 @@
       </div>
     </div>
     <div class="footer">
-      <div class="f-copy">⚙️ Admin · © 2026 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> · Ahmedabad, India</div>
+      <div class="f-copy">⚙️ Admin · © 2026 <span class="vbrand-name" data-default-name="myTiffin"></span> · Ahmedabad, India</div>
     </div>
 
     <div class="sheet-overlay hidden" id="adminMoreOverlay" onclick="if(event.target===this)closeAdminMore()">
@@ -1313,7 +1306,7 @@
        you scrolled past that reserved space. ══════ -->
   <div id="bulkView" class="hidden">
     <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div>
       <h1 style="font-size:20px;" data-i="bulkTitle">🎉 Bulk / Party Order</h1>
       <p class="tagline" style="margin:0;" data-i="bulkSub">Ordering for a group or event? Tell us the details — the kitchen will confirm availability &amp; price.</p>
     </div>
@@ -1493,22 +1486,20 @@
       var imgs = document.querySelectorAll('.vbrand-logo');
       var names = document.querySelectorAll('.vbrand-name');
       if(!hasV){
-        // Bina ?v= — platform ka apna default page, "Nest & Nosh" hi sahi hai yahan.
-        names.forEach(function(el){ el.textContent = el.getAttribute('data-default-name')||'Nest & Nosh'; });
+        // Bina ?v= — platform ka apna default page, "myTiffin" hi sahi hai yahan.
+        names.forEach(function(el){ el.textContent = el.getAttribute('data-default-name')||'myTiffin'; });
         return;
       }
       var slug = (new URLSearchParams(location.search).get('v')||'').trim().toLowerCase();
       var raw = null; try{ raw = localStorage.getItem(slug+'_fbt_brand'); }catch(e){}
       var b = raw ? JSON.parse(raw) : null;
       imgs.forEach(function(img){
+        // ⚠️ Cached NAME se (logo na ho to) letter-avatar banana yahan se hata
+        // diya — stale cache (jaise vendor rename ho chuka) galat letter flash
+        // karta tha. Sirf asli LOGO cached ho tabhi badlo.
         if(b && b.logo){ img.src=b.logo; img.alt=b.name||''; }
-        else if(b && b.name){
-          var ch=(b.name||'').trim().charAt(0).toUpperCase();
-          img.src='data:image/svg+xml,'+'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%237c3aed"/><text x="50" y="50" dy=".36em" font-family="sans-serif" font-size="52" font-weight="700" fill="%23fff" text-anchor="middle">'+ch+'</text></svg>';
-          img.alt=b.name;
-        }
-        // cache nahi mila → jo bhi transparent placeholder HTML me hai wahi rehne
-        // do (default "Nest & Nosh" flash nahi) — applyVendorBrand() jald hi bhar dega.
+        // warna jo bhi default (ab myTiffin logo) HTML me hai wahi rehne do —
+        // applyVendorBrand() jald hi asli data se bhar dega.
       });
       names.forEach(function(el){ el.textContent = (b&&b.name)?b.name:''; });
     }catch(e){}
@@ -2754,8 +2745,17 @@
     updateCartBadge();
   }
   function doQuickAdd(m){
-    const b=freshBuilder()[m];
     if(cart.find(it=>it.deliveryDate===selDateStr()&&it.meal===m)){ openMealSheet(m); return; }  // already hai → customize
+    // Ek se zyada tiffin-size/variant option ho to "ADD +" seedha default add
+    // nahi karta — customize sheet khol deta hai taaki customer khud choose
+    // kare, kisi default variant ko chup-chaap na thopa jaaye.
+    if(variantsFor(m).length>1){ openMealSheet(m); return; }
+    addMealDirect(m);
+  }
+  // Ek hi variant ho (ya koi bhi test/setup jahan customize-gate ka concern
+  // nahi) — seedha default combination ke saath cart me daal do.
+  function addMealDirect(m){
+    const b=freshBuilder()[m];
     const v=findVariant(m,b.tiffinType);
     cart.push({ id:selDateStr()+'|'+m+'|'+b.tiffinType, deliveryDate:selDateStr(), deliveryLabel:fmtLabel(selDate()), day:selDayKey().charAt(0).toUpperCase()+selDayKey().slice(1),
       meal:m, qty:1, tiffinType:b.tiffinType, variantName:v.name, sabzi:b.sabzi||'',
@@ -3549,14 +3549,14 @@
     meCall(SESSION.token).then(j=>{
       sessionCheckBusy=false;
       if(j && j.status==='invalid_session'){
-        // Doosri raay bhi invalid — shared session ka token try karo
-        const shared = readSharedSession();
-        if(shared && shared.token && shared.token!==SESSION.token){
-          return meCall(shared.token).then(j2=>{
-            if(j2 && j2.status==='invalid_session'){ forceLogout(); }
-            else { SESSION=shared; storeSet('fbt_session',SESSION); applyMeResult(j2); }
-          }).catch(()=>{});
-        }
+        // ⚠️ Pehle yahan ek "shared" (cross-vendor, bina-namespace) session ka
+        // token bhi try hota tha, aur agar wo zinda milta to CHUP-CHAAP usi ko
+        // apna liya jaata — bina verify kiye ki wo asal me isi customer ka hai
+        // ya device pe pehle se pada kisi doosre/purane account ka. Isi se
+        // "kabhi-kabhi default User 3 se login ho jaata hai" wali bug aati thi.
+        // Ab: token genuinely invalid hai to seedha logout — customer ko
+        // dobara "Sign in with Google" karna hoga, koi silent identity-switch
+        // nahi.
         forceLogout();
       } else {
         // Token actually zinda hai — us ek call ka apna issue tha. Chup-chaap andar raho,
@@ -4597,16 +4597,33 @@
         </div>`:''}
       </div>`;
     };
+    const mealsPerWeek = subState.days.length * Object.keys(subState.meals).length;
+    const quickSets=[
+      { key:'weekdays', ic:'💼', lbl:t('subWeekdays'), sub:t('subWeekdaysSub') },
+      { key:'all',      ic:'📅', lbl:t('subAllDays'),  sub:t('subAllDaysSub') },
+      { key:'clear',    ic:'🧹', lbl:t('subClear'),    sub:t('subClearSub') },
+    ];
     document.getElementById('subFormBox').innerHTML=`
       <div class="cust-label">1️⃣ ${t('subPickMeals')}</div>
       ${mealCard('breakfast')}${mealCard('lunch')}${mealCard('dinner')}
       <div class="cust-label">2️⃣ ${t('subPickDays')}</div>
-      <div class="sub-quick">
-        <button onclick="subQuickDays('weekdays')">${t('subWeekdays')}</button>
-        <button onclick="subQuickDays('all')">${t('subAllDays')}</button>
-        <button onclick="subQuickDays('clear')">${t('subClear')}</button>
-      </div>
-      <div class="sub-days">${WEEKDAYS.map(d=>`<div class="sub-day ${subState.days.indexOf(d)>=0?'on':''}" onclick="subToggleDay('${d}')">${subDayLabel(d)}</div>`).join('')}</div>
+      <div class="sub-qs-row">${quickSets.map(q=>`
+        <div class="sub-qs-card" onclick="subQuickDays('${q.key}')">
+          <div class="sub-qs-ic">${q.ic}</div>
+          <div class="sub-qs-lbl">${q.lbl}</div>
+          <div class="sub-qs-sub">${q.sub}</div>
+        </div>`).join('')}</div>
+      <div class="sub-summary-pill">📅 <b>${mealsPerWeek}</b>&nbsp;${t('subMealsPerWeek')}</div>
+      <div class="sub-daylist">${WEEKDAYS.map(d=>{
+        const on=subState.days.indexOf(d)>=0;
+        return `<div class="sub-dayrow ${on?'on':''}" onclick="subToggleDay('${d}')">
+          <div>
+            <span class="sub-dayrow-full">${subDayLabel(d)}</span>
+            <span class="sub-dayrow-short">${d.charAt(0).toUpperCase()+d.slice(1)}</span>
+          </div>
+          <div class="sub-daycheck ${on?'on':''}">${on?'✓':''}</div>
+        </div>`;
+      }).join('')}</div>
       <div class="cust-label">3️⃣ ${t('subDateRange')}</div>
       <div class="dt-row">
         <div class="dt-cell"><span class="dt-lbl">${t('subStart')}</span><input type="date" id="subStart" value="${subState.startDate}" min="${dateWithOffsetStr(1)}" onchange="subState.startDate=this.value"></div>
@@ -4614,8 +4631,13 @@
       </div>
       <div class="cust-label">4️⃣ ${t('subDelivery')}</div>
       <div class="cust-row"><span>${t('society')}</span><select onchange="subState.society=this.value">${socOpts}</select></div>
-      <div class="form-group" style="margin-top:8px;"><label>${t('flat')}</label><input type="text" id="subFlat" value="${subState.flat}" placeholder="D-706" maxlength="10" oninput="subState.flat=this.value"></div>
-      <button class="admin-btn" style="margin-top:14px;" onclick="doSaveSub()">${sub&&sub.status==='Active'?('💾 '+t('subUpdate')):('✅ '+t('subStart2'))}</button>`;
+      <div class="form-group" style="margin-top:8px;"><label>${t('flat')}</label><input type="text" id="subFlat" value="${subState.flat}" placeholder="D-706" maxlength="10" oninput="subState.flat=this.value"></div>`;
+    const bar=document.getElementById('subSaveBar');
+    if(bar){
+      bar.classList.remove('hidden');
+      bar.innerHTML=`<div class="bar-total"><div class="lbl">${mealsPerWeek} ${t('subMealsPerWeek')}</div><div class="amt">${subState.days.length} ${t('subDaysWeek')}</div></div>
+        <button class="bar-btn" onclick="doSaveSub()">${sub&&sub.status==='Active'?('💾 '+t('subUpdate')):('✅ '+t('subStart2'))}</button>`;
+    }
   }
 
   function subToggleMeal(m){ if(subState.meals[m])delete subState.meals[m]; else subState.meals[m]={tiffinType:'full',sabzi:'',qty:1}; if(!subState.time[m])subState.time[m]=TIME_SLOTS[m][0]; renderSubForm(currentSubForRerender()); }
