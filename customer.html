@@ -255,13 +255,19 @@
   <!-- ══════ HOME LANDING ══════ -->
   <div id="homeView" class="hidden">
     <!-- Compact header: logo + name + location + cart -->
-    <div class="h1-top h1-strip">
+    <div class="h1-top h1-centered">
+      <div class="h1-bell" id="h1Bell" onclick="openNotifSheet()"><span>🔔</span><span class="h1-bell-badge hidden" id="h1BellBadge">0</span></div>
+      <!-- Vendor ka apna logo/naam yahan hamesha dominant hai (jaisa hona chahiye —
+           customer isi kitchen se order kar raha hai), par is se pehle iska koi
+           ishaara nahi tha ki ye myTiffin platform pe chal raha hai — poora app
+           "sirf [Vendor]" jaisa lagta tha. Chhota, subtle attribution tag. -->
+      <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
       <span class="h1-logo-wrap"><img class="h1-logo vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""></span>
+      <div class="h1-rate hidden" id="h1Rate"></div>
       <div class="h1-tt">
-        <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span><span class="h1-rate hidden" id="h1Rate"></span></div>
+        <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
         <div class="h1-loc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       </div>
-      <div class="h1-bell" id="h1Bell" onclick="openNotifSheet()"><span>🔔</span><span class="h1-bell-badge hidden" id="h1BellBadge">0</span></div>
       <!-- Header ka cart icon hata diya — bottom nav me Cart tab pehle se hai (badge ke saath),
            aur neeche "N items added → Continue" bar bhi hai. Teen jagah cart zyada tha. -->
     </div>

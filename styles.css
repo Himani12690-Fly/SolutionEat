@@ -301,34 +301,48 @@
     .h1-loc { font-size:11.5px; color:var(--muted); font-weight:500; margin-top:2px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    /* Single-row strip header — same shape as Discovery's .zo-head: brand/logo
-       left, name+location centered in the middle, bell right, on the same
-       fixed indigo gradient + rounded-bottom family as .zo-head/#authPage
-       .hero/.admin-topbar (deliberately not theme-driven — see #authPage
-       .hero above), so this is the last of this app's headers to match. */
-    .h1-top.h1-strip { position:relative;
-      background:linear-gradient(160deg,#6366f1 0%,#5457e8 55%,#4338ca 100%);
-      border-radius:0 0 24px 24px; box-shadow:0 10px 24px -12px rgba(67,56,202,.45); }
+    /* Centered hero header (bada logo, naam+location neeche) */
+    .h1-top.h1-centered { flex-direction:column; align-items:center; text-align:center; gap:10px; padding:22px 18px 16px; position:relative; }
+    .h1-top.h1-centered .h1-logo { width:96px; height:96px; box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+    /* Logo animation — sirf `transform` animate hota hai, isliye GPU pe chalta hai aur
+       layout/paint dobara nahi hota (kam load). Do cheez: dheema float aur ek
+       slow-rotating gradient ring jo logo ke peeche se jhaankti hai. */
     .h1-logo-wrap { position:relative; display:inline-flex; flex-shrink:0; }
     .h1-logo-wrap > img { position:relative; z-index:1; }
-    .h1-top.h1-strip .h1-logo { width:40px; height:40px;
-      box-shadow:0 0 0 2px rgba(255,255,255,.4); }
-    .h1-top.h1-strip .h1-tt { text-align:center; }
-    .h1-top.h1-strip .h1-name { color:#fff; justify-content:center; display:flex;
-      align-items:center; gap:6px; }
-    .h1-top.h1-strip .h1-loc { color:rgba(255,255,255,.82); }
-    /* Kitchen ka aggregate rating — naam ke saath inline (pehle hero ke corner
-       me alag badge tha; compact strip me uske liye jagah nahi hai). */
-    .h1-rate { display:inline-flex; align-items:center; gap:4px; flex-shrink:0; }
-    .h1-rate-pill { display:inline-flex; align-items:center; gap:3px; background:#267e3e; color:#fff;
-      font-size:11.5px; font-weight:900; padding:2px 7px; border-radius:7px; line-height:1.4; }
-    .h1-rate-cnt { display:none; }   /* compact strip me sirf star-pill, "By N ratings" caption nahi */
-    /* Notification bell — strip ke right end me, normal flex item (pehle
-       hero ke corner me absolute tha, ab poori row hi compact hai). */
-    .h1-top.h1-strip .h1-bell { position:static; width:36px; height:36px;
-      border-radius:50%; background:#fff; color:#4338ca; border:none; display:flex;
-      align-items:center; justify-content:center; font-size:16px; cursor:pointer;
-      flex-shrink:0; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+    .h1-top.h1-centered .h1-logo-wrap { animation:logoFloat 5s ease-in-out infinite; will-change:transform; }
+    .h1-top.h1-centered .h1-logo-wrap::before {
+      content:''; position:absolute; inset:-5px; border-radius:50%; z-index:0;
+      background:conic-gradient(from 0deg, transparent 0deg, var(--accent) 70deg, transparent 150deg,
+                                transparent 210deg, var(--accent) 280deg, transparent 360deg);
+      opacity:0.5; animation:logoRing 7s linear infinite; will-change:transform; }
+    @keyframes logoFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+    @keyframes logoRing  { to { transform:rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce){
+      .h1-top.h1-centered .h1-logo-wrap { animation:none; }
+      .h1-top.h1-centered .h1-logo-wrap::before { animation:none; opacity:0.28; }
+    }
+    .h1-top.h1-centered .h1-tt { flex:none; width:100%; }
+    /* Platform attribution — small, muted, sits above the vendor's own (dominant)
+       logo/name. Not meant to compete with vendor branding, just a quiet "this
+       runs on myTiffin" signal so the app doesn't read as the vendor's own app. */
+    .h1-platform { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:800;
+      color:var(--muted); letter-spacing:0.2px; }
+    .h1-platform-ic { width:16px; height:16px; border-radius:5px; object-fit:cover; }
+    /* Kitchen ka aggregate rating — hero ke top-left corner me (bell top-right leta hai) */
+    .h1-rate { position:absolute; top:16px; left:16px; display:flex; flex-direction:column;
+      align-items:center; gap:3px; z-index:2; }
+    .h1-rate-pill { display:inline-flex; align-items:center; gap:4px; background:#267e3e; color:#fff;
+      font-size:15px; font-weight:900; padding:5px 11px; border-radius:9px; line-height:1;
+      box-shadow:0 2px 8px rgba(38,126,62,0.28); }
+    .h1-rate-cnt { font-size:10.5px; font-weight:800; color:var(--muted);
+      border-bottom:1.5px dotted var(--line); padding-bottom:1px; }
+    .h1-top.h1-centered .h1-name { font-size:22px; white-space:normal; }
+    .h1-top.h1-centered .h1-loc { font-size:13px; margin-top:4px; white-space:normal; }
+    /* Notification bell — hero ke top-right corner me */
+    .h1-bell { position:absolute; top:16px; right:16px; z-index:2; width:38px; height:38px;
+      border-radius:50%; background:var(--card); border:1.5px solid var(--line); display:flex;
+      align-items:center; justify-content:center; font-size:17px; cursor:pointer;
+      box-shadow:0 2px 8px rgba(0,0,0,0.08); }
     .h1-bell-badge { position:absolute; top:-4px; right:-4px; min-width:17px; height:17px; padding:0 4px;
       border-radius:9px; background:var(--danger); color:#fff; font-size:9.5px; font-weight:900;
       display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--card); }
