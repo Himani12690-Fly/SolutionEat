@@ -4009,6 +4009,32 @@
       ? [validateCompany(), validateEmpId()].every(Boolean)
       : [validateSociety(), validateFlat()].every(Boolean);
     if(!okLoc||!okN){ showToast(t('completeFields'),'warning'); return; }
+    // ⚠️ P0 tha: cutoff/capacity sirf ADD karte waqt check hoti thi, submit pe nahi.
+    // Customer 8:58 PM pe dinner add karke, browse karke, 9:03 pe pay kar deta —
+    // frontend chup-chaap bhej deta. Ab submit se theek pehle dobara check karte
+    // hain, taaki kitchen ko aisa order na jaye jo wo bana hi nahi sakti.
+    {
+      const stale=[];
+      cart.forEach(it=>{
+        let off=-1;
+        for(let o=0;o<=2;o++){ if(fmtYMD(dateWithOffset(o))===it.deliveryDate){ off=o; break; } }
+        if(off<0){ stale.push(it); return; }                       // beet chuki date
+        const av=mealsAvail(off)[it.meal];
+        if(!av||!av.ok) stale.push(it);
+        else if(capacityReached(it.meal,it.deliveryDate)) stale.push(it);
+      });
+      if(stale.length){
+        const names=[...new Set(stale.map(x=>mealTitle(x.meal)))].join(', ');
+        showToast('⚠️ '+names+' ab order nahi ho sakta (time nikal gaya ya slot full) — cart se hata diya.','warning');
+        const bad=new Set(stale.map(x=>x.id));
+        cart=cart.filter(x=>!bad.has(x.id));
+        saveCart(); updateCartBadge(); renderCart(); renderMealPanel();
+        if(!cart.length){ goToPage1(); return; }
+        renderSummary();
+        const b=document.getElementById('barTotal2'); if(b) b.textContent='₹'+cartTotalDisplay();
+        return;   // customer ko naya total dekhne do, phir wo khud confirm kare
+      }
+    }
     const orderPhone = SESSION.phone;
     const isOff=(deliveryType==='office');
     const addr={ deliveryType:deliveryType, society: isOff?document.getElementById('company').value:societyValue(),
@@ -4127,7 +4153,20 @@
         });
         // Server-returned total (authoritative) — exactly jo charge hua
         const grandTotal=serverTotal;
-        stepP('resetCart', () => { cart=[]; editingRow=null; appliedPromo=null; saveCart(); payRef=makePayRef();
+        stepP('resetCart', () => {
+          // ⚠️ P0 tha: pehle yahan seedha `cart=[]` hota tha — yani ek bhi order
+          // safal hua to POORA cart uda diya jaata tha. Ek 3-meal cart 3 alag
+          // requests me jaati hai; mobile network par pehli safal aur baaki 2 fail
+          // hona aam baat hai. Us case me customer ko success card dikhta, cart
+          // khaali ho jaata, aur wo 2 orders bina kisi nishaan ke gayab — customer
+          // 3 tiffin ka intezaar karta, kitchen ke paas sirf 1 aata. Ab sirf wahi
+          // dates hatate hain jo SERVER ne confirm ki (results me ok:true), baaki
+          // items cart me bache rehte hain taaki customer dobara try kar sake.
+          const doneDates = new Set(results.filter(r=>r.ok).map(r=>r.dstr));
+          cart = cart.filter(it => !doneDates.has(it.deliveryDate));
+          editingRow=null;
+          if(!cart.length) appliedPromo=null;   // promo tabhi hatao jab kuch bacha hi na ho
+          saveCart(); payRef=makePayRef();
           // ⚠️ Sirf `cart` khaali karna kaafi nahi tha — UI ko bataya hi nahi ja
           // raha tha ki cart badal gaya. Meal card ka stepper (− 1 +) cartQtyFor()
           // se banta hai aur badge updateCartBadge() se; order place hone ke baad
@@ -4136,6 +4175,13 @@
           // clearCart() ye refresh pehle se karta hai; success path me chhoot gaya tha.
           updateCartBadge(); renderMealTabs(); renderMealPanel(); renderCart(); });
         stepP('showSuccessCard', () => {
+          // Agar koi order fail hua hai to success card MAT dikhao — wo "sab ho
+          // gaya" ka signal deta hai. Customer checkout pe hi rahe, bache hue
+          // items ke saath, aur usse saaf bataya jaye ki kya nahi gaya.
+          if(fail>0){
+            showToast('⚠️ '+ok+' order'+(ok>1?'s':'')+' placed, '+fail+' could not go through — please try the remaining item'+(fail>1?'s':'')+' again.','warning');
+            return;
+          }
           document.getElementById('orderFormWrap').classList.add('hidden');
           document.getElementById('page2Bar').classList.add('hidden');
           document.getElementById('successCard').classList.remove('hidden');
