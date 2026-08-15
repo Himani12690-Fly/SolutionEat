@@ -526,7 +526,6 @@
   // stashes the fresh SESSION in a one-shot sessionStorage slot right before
   // that redirect; pick it up here (now that VENDOR_ID is correct), persist it
   // under the right key, and clear the slot immediately so it's never reused.
-  let __g_sess_picked_up = false;
   if(!SESSION){
     try{
       const gs = sessionStorage.getItem('g_sess');
@@ -542,22 +541,10 @@
         // sheet me dhoondega aur HAMESHA invalid_session dega — login ke turant
         // baad wapas login page. Original vid waisa hi rehne do; vendor ke apne
         // sheet me asli entry completeCrossVendorLogin() banata hai.
-        if(SESSION && typeof SESSION === 'object'){ if(!SESSION.vid) SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); __g_sess_picked_up = true; }
+        if(SESSION && typeof SESSION === 'object'){ if(!SESSION.vid) SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); }
       }
     }catch(e){}
   }
-  // ── TEMP DEBUG (session-expiry hunt round 2) — baad me hata dena ──
-  // dbgLog() khud abhi tak defined nahi hai (customer.html/index.html ka apna
-  // inline script hai, shared.js ke BAAD load hota hai) — isliye yahan seedha
-  // usi localStorage key me likhte hain, taaki dbgShow() me ek hi timeline me
-  // dikhe: har PAGE LOAD (reload/redirect samet) ka VENDOR_ID + session state.
-  try{
-    const __k='nn_debug';
-    const __a=JSON.parse(localStorage.getItem(__k)||'[]');
-    __a.push({ ev:'BOOT', vid:VENDOR_ID, hasStored:!!storeGet('fbt_session'), sessVid:(SESSION&&SESSION.vid)||'', gSessPickup:__g_sess_picked_up, url:location.href.slice(0,120), t:new Date().toTimeString().slice(0,8) });
-    while(__a.length>25) __a.shift();
-    localStorage.setItem(__k, JSON.stringify(__a));
-  }catch(e){}
   function isLoggedIn(){ return !!(SESSION && SESSION.token); }
   let __toastT=null;
   // XSS guard — user ka koi bhi text innerHTML me jaane se pehle escape
