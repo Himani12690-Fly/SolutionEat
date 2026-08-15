@@ -281,9 +281,39 @@ test.describe('Checkout & orders', () => {
     await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
+    // openApp() ek saved address wala (returning) customer seed karta hai, isliye
+    // checkout ab seedha form nahi — "Deliver to" card dikhata hai (Zomato/Swiggy
+    // pattern). Fields tak pahunchne ke liye pehle "Change", bilkul waise hi jaise
+    // asli customer karega.
+    await page.evaluate(() => window.editSavedAddr());
     await page.fill('#flatNo', 'd706');
     await page.evaluate(() => window.validateFlat());
     await expect(page.locator('#flatNo')).toHaveValue('D-706');
+  });
+
+  test('saved address wapas nahi bharwate — checkout card dikhata hai, "Change" pe hi form khulta hai', async ({ page }) => {
+    await openApp(page);   // seeded addr: Vrindavan / D-706
+    await page.evaluate(() => window.menuChangeDate(1));
+    await page.evaluate(() => window.addMealDirect('lunch'));
+    await page.evaluate(() => window.goToCheckout());
+    // Address pehle se hai → card, aur address fields chhupi hui.
+    await expect(page.locator('#savedAddrCard')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#addrFieldsWrap')).toHaveClass(/hidden/);
+    await expect(page.locator('#savedAddrS')).toContainText('D-706');
+    await expect(page.locator('#savedAddrS')).toContainText('Vrindavan');
+    // "Change" pe form khulta hai aur card hat jaata hai.
+    await page.click('#savedAddrCard .mch-c');
+    await expect(page.locator('#addrFieldsWrap')).not.toHaveClass(/hidden/);
+    await expect(page.locator('#savedAddrCard')).toHaveClass(/hidden/);
+  });
+
+  test('naya customer (koi saved address nahi) ko seedha form milta hai, card nahi', async ({ page }) => {
+    await openApp(page, { addr: { deliveryType:'home' } });   // society/flat khaali = adhoora
+    await page.evaluate(() => window.menuChangeDate(1));
+    await page.evaluate(() => window.addMealDirect('lunch'));
+    await page.evaluate(() => window.goToCheckout());
+    await expect(page.locator('#savedAddrCard')).toHaveClass(/hidden/);
+    await expect(page.locator('#addrFieldsWrap')).not.toHaveClass(/hidden/);
   });
 
   test('UPI chunne par QR box dikhta hai', async ({ page }) => {
