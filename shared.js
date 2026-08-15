@@ -146,6 +146,22 @@
   };
   function variantsFor(m){ return (CFG.variants&&CFG.variants[m]&&CFG.variants[m].length)?CFG.variants[m]:defaultVariantsFE()[m]; }
   function findVariant(m,id){ const vs=variantsFor(m); return vs.find(v=>v.id===id)||vs[0]; }
+  // "Select sabzi" sirf un meals ke liye jinme sabzi hoti hi hai — Lunch aur Dinner.
+  // ⚠️ Pehle check ULTA tha: `m!=='breakfast'`, yani sirf breakfast chhod ke HAR meal
+  // me sabzi dropdown dikhta tha AUR required bhi tha. Vendor ka koi bhi naya meal
+  // (Setup → Add Meal se bana meal_<ts>) apne saath sabziOptions nahi laata, isliye
+  // uska dropdown khaali rehta tha — aur required hone ki wajah se customer us meal
+  // ko cart me daal hi nahi paata tha (hamesha "Select sabzi" warning). Ab meal ke
+  // apne sabziOptions ko bhi maante hain, taaki vendor jis meal ke liye sabzi list
+  // deta hai wahan dropdown aa jaye, aur jahan nahi deta wahan na aaye.
+  // `day` = us din ka MENU object (caller ke paas pehle se hota hai) — yahan se
+  // reach karke nikalne ki koshish nahi karte, kyunki din chunne wale helpers
+  // (selDayKey waghera) har page file ke apne script me hain, shared.js me nahi.
+  function mealUsesSabzi(m, day){
+    if(m==='lunch' || m==='dinner') return true;
+    if(m==='breakfast') return false;
+    return !!(day && day[m] && (day[m].sabziOptions||[]).length);
+  }
   let MENU = {
     monday:    { breakfast:['🍚 Poha','🫓 Paratha (2)','🥣 Curd','🍵 Chai'], lunch:{sabziOptions:['Paneer Butter Masala','Dal Tadka','Mix Veg'],fixedItems:['🍚 Jeera Rice','🫓 Roti (4)','🥗 Salad','🥣 Dal Fry']}, dinner:{sabziOptions:['Aloo Gobi','Rajma Masala','Chole'],fixedItems:['🍚 Steam Rice','🫓 Roti (4)','🥒 Raita','🥗 Salad']} },
     tuesday:   { breakfast:['🥣 Upma','🫓 Paratha (2)','🍯 Chutney','🍵 Chai'], lunch:{sabziOptions:['Dal Makhani','Shahi Paneer','Mix Veg'],fixedItems:['🍚 Peas Pulao','🫓 Roti (4)','🥗 Salad','🧈 Papad']}, dinner:{sabziOptions:['Rajma Masala','Aloo Matar','Paneer Tikka Masala'],fixedItems:['🍚 Rice','🫓 Roti (4)','🥗 Onion Salad','🍋 Lemon']} },

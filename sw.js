@@ -15,6 +15,18 @@
 
 const CACHE = 'fbt-v40';
 const ASSETS = ['./', './index.html', './manifest.json', './logo-round.png'];
+// Vendor logos / meal photos (cross-origin, Drive-hosted) ka apna bucket — app-shell
+// cache se alag rakha hai taaki naye deploy pe shell refresh ho par images bani rahein
+// (wahi to baar-baar dobara download ho rahi thi). Bounded — neeche trimImgCache().
+const IMG_CACHE = 'fbt-img-v1';
+const IMG_CACHE_MAX = 80;
+function trimImgCache() {
+  return caches.open(IMG_CACHE).then(c => c.keys().then(keys => {
+    if (keys.length <= IMG_CACHE_MAX) return;
+    // Cache.keys() insertion order deta hai — sabse purani entries pehle hatao.
+    return Promise.all(keys.slice(0, keys.length - IMG_CACHE_MAX).map(k => c.delete(k)));
+  })).catch(() => {});
+}
 
 // ─────────────────────────── 1. CACHE (firebase se bilkul independent) ───────────────────────────
 
@@ -24,8 +36,12 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
+    // ⚠️ IMG_CACHE ko yahan se bachana ZAROORI hai. Ye filter pehle "CACHE ke alawa
+    // sab uda do" tha — naye deploy pe app-shell to sahi refresh hota, par vendor
+    // logos ka bucket bhi har baar saaf ho jaata, yani logo phir se network se.
+    // Wahi to theek kar rahe hain, isliye use explicitly chhod dete hain.
     caches.keys()
-      .then(k => Promise.all(k.filter(x => x !== CACHE).map(x => caches.delete(x))))
+      .then(k => Promise.all(k.filter(x => x !== CACHE && x !== IMG_CACHE).map(x => caches.delete(x))))
       .then(() => self.clients.claim())
   );
 });
@@ -39,10 +55,34 @@ self.addEventListener('fetch', e => {
   //    SW bilkul beech me na aaye (yehi GAS redirect ko todta tha).
   if (req.method !== 'GET') return;
 
-  // 2) Sirf apni hi origin (GitHub Pages) ki requests handle karo. Baaki sab —
-  //    script.google.com, googleusercontent.com, gstatic (firebase SDK), drive,
-  //    apis, qrserver, koi bhi third-party — SW touch hi na kare.
-  if (url.origin !== self.location.origin) return;
+  // 2a) Cross-origin IMAGES (vendor logo, meal photos — Drive/googleusercontent pe
+  //     hoti hain) → cache-first, apne alag bucket me.
+  //     ⚠️ Pehle yahan se seedha `return` tha, yani har third-party request SW ke
+  //     bahar. Iska matlab: vendor ka logo Discovery pe load hota, phir login page
+  //     pe DOBARA network se, phir login ke baad Home pe TEESRI baar, phir har
+  //     reload pe phir se — kyunki ye teenon alag page-load hain (location.replace)
+  //     aur logo kabhi kahin cache hi nahi hota tha. Brand ka naam/logo-URL to
+  //     pehle se localStorage me cache tha, par IMAGE ke bytes har baar naye sire
+  //     se aate the — isi se har page pe skeleton/flash dikhta tha.
+  //     Cross-origin image bina CORS ke "opaque" response deta hai; usse padha
+  //     nahi ja sakta par cache karke <img> me dikhaya ja sakta hai, jo yahan
+  //     kaafi hai. QR sirf isliye chhoda hai ki wo har vendor-link ke liye alag
+  //     generate hota hai aur sasta hai.
+  if (url.origin !== self.location.origin) {
+    const isImg = req.destination === 'image' || /\.(png|jpe?g|webp|gif|svg)(\?|$)/i.test(url.pathname);
+    if (isImg && url.hostname !== 'api.qrserver.com') {
+      e.respondWith(
+        caches.open(IMG_CACHE).then(c =>
+          c.match(req).then(hit => hit || fetch(req).then(r => {
+            // Opaque (status 0) bhi cache karo — cross-origin image ke liye wahi milta hai.
+            if (r && (r.ok || r.type === 'opaque')) { c.put(req, r.clone()).then(() => trimImgCache()).catch(() => {}); }
+            return r;
+          }))
+        ).catch(() => fetch(req))
+      );
+    }
+    return;   // baaki third-party (script.google.com, gstatic, apis) SW touch na kare
+  }
 
   // 3) HTML/navigation → network-first (naya deploy turant dikhe), offline pe cache.
   if (req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {

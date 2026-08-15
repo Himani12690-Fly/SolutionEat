@@ -151,8 +151,10 @@
          hamesha tap-able hai, hamesha discovery pe hi jaata hai. -->
     <div class="hero">
       <div id="authBackKitchens" class="hidden auth-back-btn" onclick="__dscIsTop=true;openDiscovery();" aria-label="All Kitchens">‹</div>
-      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="myTiffin"><div class="logo-spin" id="authLogoSpin"></div></div>
-      <p class="tagline" data-i="tagline"></p>
+      <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
+      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><div class="logo-spin" id="authLogoSpin"></div></div>
+      <div class="auth-kname"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
+      <div class="auth-kloc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       <span class="hero-badge" data-i="secureLogin"></span>
     </div>
     <div class="section">
@@ -255,13 +257,19 @@
   <!-- ══════ HOME LANDING ══════ -->
   <div id="homeView" class="hidden">
     <!-- Compact header: logo + name + location + cart -->
-    <div class="h1-top h1-strip">
+    <div class="h1-top h1-centered">
+      <div class="h1-bell" id="h1Bell" onclick="openNotifSheet()"><span>🔔</span><span class="h1-bell-badge hidden" id="h1BellBadge">0</span></div>
+      <!-- Vendor ka apna logo/naam yahan hamesha dominant hai (jaisa hona chahiye —
+           customer isi kitchen se order kar raha hai), par is se pehle iska koi
+           ishaara nahi tha ki ye myTiffin platform pe chal raha hai — poora app
+           "sirf [Vendor]" jaisa lagta tha. Chhota, subtle attribution tag. -->
+      <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
       <span class="h1-logo-wrap"><img class="h1-logo vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""></span>
+      <div class="h1-rate hidden" id="h1Rate"></div>
       <div class="h1-tt">
-        <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span><span class="h1-rate hidden" id="h1Rate"></span></div>
+        <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
         <div class="h1-loc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       </div>
-      <div class="h1-bell" id="h1Bell" onclick="openNotifSheet()"><span>🔔</span><span class="h1-bell-badge hidden" id="h1BellBadge">0</span></div>
       <!-- Header ka cart icon hata diya — bottom nav me Cart tab pehle se hai (badge ke saath),
            aur neeche "N items added → Continue" bar bhi hai. Teen jagah cart zyada tha. -->
     </div>
@@ -587,6 +595,18 @@
         </div>
       </div>
 
+      <!-- Saved address card — Zomato/Swiggy wala pattern. Address ek baar
+           set ho gaya to har order pe dobara form nahi bharwate; sirf "Deliver
+           to" summary dikhate hain aur "Change" tap karne par hi fields khulti
+           hain. Address adhoora ho (ya pehli baar ho) to card chhupa rehta hai
+           aur seedha form dikhta hai, jaisa pehle tha. -->
+      <div id="savedAddrCard" class="hidden mode-chip" style="margin-bottom:14px;">
+        <span class="mch-i" id="savedAddrIc">🏠</span>
+        <span class="mch-x"><span class="mch-t" id="savedAddrT"></span><div class="mch-s" id="savedAddrS"></div></span>
+        <span class="mch-c" onclick="editSavedAddr()" data-i="modeChange"></span>
+      </div>
+
+      <div id="addrFieldsWrap">
       <!-- OFFICE FIELDS -->
       <div id="officeFields" class="hidden">
         <div class="form-group">
@@ -619,6 +639,7 @@
         <div class="field-error" id="err-flatNo" data-i="errFlat"></div>
       </div>
       </div><!-- /homeFields -->
+      </div><!-- /addrFieldsWrap -->
       <div class="form-group">
         <label><span data-i="fullName"></span> <span style="color:var(--danger)">*</span></label>
         <input type="text" id="customerName" maxlength="40" oninput="clearErr('customerName','err-name')" onblur="validateName()" data-ph="namePh">
@@ -1061,7 +1082,6 @@
   return out;
 }
   // Variant helpers
-  function priceRange(m){ const vs=variantsFor(m); const ps=vs.map(v=>v.price); return {min:Math.min(...ps),max:Math.max(...ps)}; }
 
 
 
@@ -1518,6 +1538,9 @@
     if(cs){ cs.textContent=(deliveryType==='office')?t('dtOfficeSub'):t('dtHomeSub'); }
     document.getElementById('homeFields').classList.toggle('hidden',deliveryType==='office');
     document.getElementById('officeFields').classList.toggle('hidden',deliveryType!=='office');
+    // Mode badalne pe "address poora hai ya nahi" ka jawab badal jaata hai
+    // (home ko society+flat chahiye, office ko company) — card/form dobara tay karo.
+    if(typeof renderSavedAddr==='function') renderSavedAddr();
     if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); const b=document.getElementById('barTotal2'); if(b) b.textContent='₹'+cartTotalDisplay(); }
   }
   function deliveryFee(){
@@ -3145,8 +3168,6 @@
         const av=availAll[m];
         const name=mealTitle(m);
         const vs=variantsFor(m);
-        const pr=priceRange(m);
-        const priceLabel = (pr.min===pr.max) ? `₹${pr.min}` : `₹${pr.min}–${pr.max}`;
         const rich=vs.reduce((a,b)=>b.price>a.price?b:a,vs[0]);
         const desc=(rich.items&&rich.items.length?rich.items:[]).slice(0,6).join(' · ');
         const ph=mealPhoto(m);
@@ -3177,7 +3198,6 @@
             <div class="c1-info">
               <div class="c1-h">
                 <span class="c1-nw"><span class="c1-veg"></span><span class="c1-name">${meta.emoji||''} ${name}</span></span>
-                <span class="c1-price">${priceLabel}</span>
               </div>
               <div class="c1-desc">${desc}</div>
               ${meta.time?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
@@ -3299,8 +3319,8 @@
       if(rotiOn && !plainOn && !b.butterRoti) b.butterRoti=true;   // Plain OFF ho aur abhi Plain selected hai to Butter pe shift karo
       if(rotiOn && !butterOn && b.butterRoti) b.butterRoti=false;
       inner+=`<div class="sh-block">
-        <div class="sh-lbl">${t('selectSabzi')} <span style="color:var(--danger)">*</span></div>
-        <select class="sh-select" onchange="shSet('sabzi',this.value)"><option value="">—</option>${opts}</select>
+        ${mealUsesSabzi(m,d)?`<div class="sh-lbl">${t('selectSabzi')} <span style="color:var(--danger)">*</span></div>
+        <select class="sh-select" onchange="shSet('sabzi',this.value)"><option value="">—</option>${opts}</select>`:''}
         ${rotiOn?`<div class="sh-lbl">${t('rotiType')}</div>
         <div class="sh-chips">
           ${plainOn?`<div class="sh-chip ${!b.butterRoti?'on':''}" onclick="shSetRoti(false)">${t('plain')}</div>`:''}
@@ -3443,7 +3463,7 @@
   }
   function shAddToCart(){
     const m=sheetMeal, b=builder[m];
-    if(m!=='breakfast' && !b.sabzi){ showToast('⚠️ '+t('selectSabzi'),'warning'); return; }
+    if(mealUsesSabzi(m, MENU[selDayKey()]) && !b.sabzi){ showToast('⚠️ '+t('selectSabzi'),'warning'); return; }
     if(capacityReached(m,selDateStr())){ showToast('🔴 '+t('soldOutTitle'),'error'); closeMealSheet(); patchMealCard(m); return; }
     // Data ready hai → turant, koi spinner nahi
     if(orderedMapReady){
@@ -3565,6 +3585,39 @@
     const c=storeGet('fbt_addr'); let filled=false;
     if(c){ if(c.society){ document.getElementById('society').value=c.society; filled=true; } if(c.flatNo){ document.getElementById('flatNo').value=c.flatNo; filled=true; } }
     document.getElementById('savedNote').classList.toggle('show',filled);
+    renderSavedAddr();
+  }
+  // Address poora save ho chuka hai ya nahi. Home ke liye society+flat dono
+  // chahiye, office ke liye company (empId optional hai).
+  function savedAddrComplete(){
+    const a=storeGet('fbt_addr')||{};
+    return (deliveryType==='office') ? !!a.company : !!(a.society && a.flatNo);
+  }
+  // Address set ho to checkout pe form ki jagah ek "Deliver to" summary card —
+  // Zomato/Swiggy jaisa. Har order pe dobara wahi address bharna nahi padta;
+  // badalna ho to "Change" se form khul jaata hai.
+  function renderSavedAddr(){
+    const card=document.getElementById('savedAddrCard'), wrap=document.getElementById('addrFieldsWrap');
+    if(!card||!wrap) return;
+    const ok=savedAddrComplete();
+    card.classList.toggle('hidden',!ok);
+    wrap.classList.toggle('hidden',ok);
+    // Card dikh raha hai to "details auto-filled" note bekaar hai — card khud
+    // hi address dikha raha hai.
+    const note=document.getElementById('savedNote'); if(note && ok) note.classList.remove('show');
+    if(!ok) return;
+    const a=storeGet('fbt_addr')||{};
+    const isOff=(deliveryType==='office');
+    document.getElementById('savedAddrIc').textContent = isOff?'🏢':'🏠';
+    document.getElementById('savedAddrT').textContent  = isOff?t('dtOffice'):t('dtHome');
+    document.getElementById('savedAddrS').textContent  = isOff
+      ? ((a.company||'')+(a.empId?(' · '+a.empId):''))
+      : ((a.flatNo||'')+', '+(a.society||''));
+  }
+  function editSavedAddr(){
+    const card=document.getElementById('savedAddrCard'), wrap=document.getElementById('addrFieldsWrap');
+    if(card) card.classList.add('hidden');
+    if(wrap) wrap.classList.remove('hidden');
   }
   function saveAddr(d){
     const a=storeGet('fbt_addr')||{};
