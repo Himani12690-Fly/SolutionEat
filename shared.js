@@ -485,7 +485,7 @@
   // taaki 2 vendors ka data same device pe mix na ho. Default vendor (abhi ke live users)
   // bilkul same purani keys use karta rehta hai, koi migration/breakage nahi.
   function nsKey(k){ return IS_DEFAULT_VENDOR ? k : (VENDOR_ID+'_'+k); }
-  function storeSet(k,v){ try{ if(k==='fbt_session'&&v&&typeof v==='object'&&!v.vid) v.vid=VENDOR_ID; localStorage.setItem(nsKey(k),JSON.stringify(v)); }catch(e){} }
+  function storeSet(k,v){ try{ if(k==='fbt_session'&&v&&typeof v==='object'){ if(!v.vid) v.vid=VENDOR_ID; if(!v.ts) v.ts=Date.now(); } localStorage.setItem(nsKey(k),JSON.stringify(v)); }catch(e){} }
   function storeGet(k){ try{ const v=localStorage.getItem(nsKey(k)); return v?JSON.parse(v):null; }catch(e){ return null; } }
   function storeDel(k){ try{ localStorage.removeItem(nsKey(k)); }catch(e){} }
   // ⚠️ Cross-vendor shared session hata diya gaya — ek global (bina-namespace)

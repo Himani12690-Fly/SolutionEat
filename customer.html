@@ -2878,25 +2878,42 @@
     meCall(SESSION.token).then(j=>{
       sessionCheckBusy=false;
       if(j && j.status==='invalid_session'){
+        // Apps Script's session write (googleLogin) can lag a few seconds behind
+        // a read that follows almost immediately after — seen live: a freshly-
+        // issued token, with matching vendorId/authVendorId, still came back
+        // invalid_session ~3s after a successful login (cold-start + Sheets
+        // write propagation). A session under 20s old gets ONE retry after a
+        // short pause before we trust "invalid" enough to force a customer who
+        // JUST signed in back out. Older/genuinely-invalid sessions skip this
+        // and log out immediately, same as before — this is a grace period for
+        // freshness, not a weaker check.
+        const fresh = SESSION && SESSION.ts && (Date.now()-SESSION.ts < 20000);
+        if(fresh && sessionStrikes<1){
+          sessionStrikes++;
+          dbgLog({ev:'SESSION_RETRY', vid:VENDOR_ID});
+          setTimeout(handleInvalidSession, 4000);
+          return;
+        }
         // ⚠️ Pehle yahan ek "shared" (cross-vendor, bina-namespace) session ka
         // token bhi try hota tha, aur agar wo zinda milta to CHUP-CHAAP usi ko
         // apna liya jaata — bina verify kiye ki wo asal me isi customer ka hai
         // ya device pe pehle se pada kisi doosre/purane account ka. Isi se
         // "kabhi-kabhi default User 3 se login ho jaata hai" wali bug aati thi.
-        // Ab: token genuinely invalid hai to seedha logout — customer ko
-        // dobara "Sign in with Google" karna hoga, koi silent identity-switch
-        // nahi.
+        // Ab: token genuinely invalid hai (ya upar wala retry bhi fail hua) to
+        // seedha logout — customer ko dobara "Sign in with Google" karna hoga,
+        // koi silent identity-switch nahi.
         forceLogout();
       } else {
         // Token actually zinda hai — us ek call ka apna issue tha. Chup-chaap andar raho,
         // user ko bewajah warning se mat daro (pehle "Could not load" toast aata tha).
+        sessionStrikes=0;
         applyMeResult(j);
       }
     }).catch(()=>{ sessionCheckBusy=false; /* network — andar raho */ });
   }
   // Robust session check — ek 'me' call jo token verify karta hai. invalid_session
-  // pe turant logout nahi: pehle shared session ke token se retry, phir bhi invalid
-  // to hi logout. Network/parse error pe user ko andar hi rehne do.
+  // pe turant logout nahi: fresh session ho to ek retry (upar dekho), phir bhi
+  // invalid to hi logout. Network/parse error pe user ko andar hi rehne do.
   function meCall(token,vid){
     // Token us vendorId ke against verify karo jisne use banaya tha (SESSION.vid),
     // current page ke vendorId se nahi — warna vendor switch pe jhoota invalid_session.
