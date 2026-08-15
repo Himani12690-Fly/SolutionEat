@@ -484,8 +484,36 @@
        keys (badgeFresh/cmpU1-7 etc.) from an earlier, never-wired-up build — reused
        here as-is, no new translation strings needed. -->
   <div id="aboutView" class="hidden">
-    <div class="hero" style="padding:16px;">
-      <button class="back-btn" onclick="navTo('profile')" aria-label="Back" style="border:none;background:none;font-size:22px;font-weight:900;color:var(--ink);cursor:pointer;padding:4px 8px;margin:0;">←</button>
+    <div class="hs-head">
+      <button class="hs-back" onclick="navTo('profile')" aria-label="Back">‹</button>
+      <span class="hs-title" data-i="abHelpTitle">Help &amp; Support</span>
+    </div>
+    <!-- Sabse upar wala action: Ask AI. Reference me "Chat with us" tha; hamare
+         paas wahi cheez pehle se hai (Profile ka Ask AI), isliye naya kuch banane
+         ke bajaye usi ko yahan prominent kar diya. -->
+    <div class="hs-chat" onclick="openQA()">
+      <span class="hs-chat-ic">💬</span>
+      <span>
+        <div class="hs-chat-t" data-i="abChatT">Chat with us</div>
+        <div class="hs-chat-s" data-i="abChatS">Get instant answers to your questions</div>
+      </span>
+      <span class="hs-chat-x">›</span>
+    </div>
+    <div class="section" style="padding-bottom:0;">
+      <div class="section-title" data-i="abContactT">Contact Us</div>
+      <div class="hs-cards">
+        <a id="acCall" class="hs-card" href="tel:+917043491481">
+          <span class="hs-card-ic">📞</span>
+          <div class="hs-card-t" data-i="abCallT">Call us</div>
+          <div class="hs-card-v ac-num"></div>
+        </a>
+        <a id="acWa" class="hs-card" target="_blank" rel="noopener">
+          <span class="hs-card-ic">💬</span>
+          <div class="hs-card-t" data-i="abWaT">WhatsApp</div>
+          <div class="hs-card-v ac-num"></div>
+          <div class="hs-card-s" data-i="abWaS">Chat with the kitchen</div>
+        </a>
+      </div>
     </div>
     <div class="section" style="padding-top:0;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
@@ -525,8 +553,9 @@
 
     <div class="section">
       <div id="abAddr" class="cust-row" style="padding:8px 0;"></div>
+      <!-- Call ab upar ke Contact card me hai (duplicate id hata di); yahan sirf
+           directions bacha hai, jo address ke saath hi sabse zyada sense banata hai. -->
       <div style="display:flex;gap:10px;margin:10px 0 4px;">
-        <a id="acCall" href="tel:+917043491481" style="flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;color:inherit;background:var(--card);border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.08);">📞</a>
         <a id="abDirBtn" target="_blank" style="flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;color:inherit;background:var(--card);border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.08);">🧭</a>
       </div>
       <hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">
