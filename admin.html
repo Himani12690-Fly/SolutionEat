@@ -6374,7 +6374,13 @@
     inp.click();
   }
   // Client-side compress → JPEG ~1MB se neeche guaranteed (performance ke liye).
-  const TARGET_KB=900;   // stored image ka target: 900KB (1MB se safe neeche)
+  // ⚠️ Pehle target 900KB tha — sirf backend ki 1MB limit se bachne ke liye chuna
+  // gaya tha, is baat se nahi ki image dikhti kitni badi hai. Meal card ka
+  // thumbnail 76×76 CSS px hai (.c1-img) aur object-fit:cover se crop bhi hota
+  // hai — yani 900KB ka zyada-tar data download hoke phenk diya jaata tha, har
+  // customer ke har page load pe. 3x DPI phone ke liye 480px kaafi se zyada hai.
+  const TARGET_KB=90;    // ~10x chhota; 76px thumbnail + meal sheet dono ke liye kaafi
+  const MAX_EDGE=480;    // isse bada rakhne ka koi display fayda nahi
   function dataUrlKB(u){ return Math.round((u.length*3/4)/1024); }  // base64 → KB approx
   function compressAndUpload(file,i){
     const st=document.getElementById('varUp'+i); if(st)st.textContent='⏳ Compressing…';
@@ -6382,23 +6388,29 @@
     reader.onload=e=>{
       const img=new Image();
       img.onload=()=>{
-        let max=1000;                       // start 1000px wide
+        // Square CENTER-CROP — app har jagah square container me object-fit:cover
+        // se dikhata hai, yani browser waise bhi crop karta hai. Wahi crop yahan
+        // upload se pehle kar dete hain: vendor koi bhi shape/size ki photo daale,
+        // store hamesha ek chhoti square image hoti hai. Isse har card ka framing
+        // bhi ek jaisa dikhta hai (pehle portrait photos me plate kat jaati thi).
         function encode(mx,q){
-          let w=img.width,h=img.height;
-          if(w>h && w>mx){ h=Math.round(h*mx/w); w=mx; }
-          else if(h>mx){ w=Math.round(w*mx/h); h=mx; }
-          const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-          cv.getContext('2d').drawImage(img,0,0,w,h);
+          const side=Math.min(img.width,img.height);          // bada edge kaat do
+          const sx=Math.round((img.width-side)/2), sy=Math.round((img.height-side)/2);
+          const out=Math.min(mx,side);                        // chhoti photo ko upscale mat karo
+          const cv=document.createElement('canvas'); cv.width=out; cv.height=out;
+          const ctx=cv.getContext('2d');
+          ctx.imageSmoothingQuality='high';
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, out, out);
           return cv.toDataURL('image/jpeg',q);
         }
         // Pehle quality ghatao (0.8→0.5), phir zaroorat pade to dimension ghatao (1000→800→640)
-        const dims=[1000,800,640], qs=[0.8,0.7,0.6,0.5];
+        const dims=[MAX_EDGE,360,288], qs=[0.82,0.72,0.62,0.5];
         let dataUrl=null;
         outer:
         for(const mx of dims){ for(const q of qs){ dataUrl=encode(mx,q); if(dataUrlKB(dataUrl)<=TARGET_KB) break outer; } }
         // Loop ke saare combos try karne ke baad bhi 1000KB se upar → backend anyway reject
         // karega (1MB hard limit), isliye yahin rok do — bekaar upload attempt na ho.
-        if(dataUrlKB(dataUrl)>1000){
+        if(dataUrlKB(dataUrl)>300){
           if(st)st.textContent='❌ Image too complex to compress — try a smaller/simpler photo.';
           showToast('⚠️ Ye image compress karne ke baad bhi bahut badi hai. Kripya chhoti ya simple photo try karo.','warning');
           return;
