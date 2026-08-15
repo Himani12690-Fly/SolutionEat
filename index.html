@@ -4474,7 +4474,14 @@
         });
         // Server-returned total (authoritative) — exactly jo charge hua
         const grandTotal=serverTotal;
-        stepP('resetCart', () => { cart=[]; editingRow=null; appliedPromo=null; saveCart(); payRef=makePayRef(); });
+        stepP('resetCart', () => { cart=[]; editingRow=null; appliedPromo=null; saveCart(); payRef=makePayRef();
+          // ⚠️ Sirf `cart` khaali karna kaafi nahi tha — UI ko bataya hi nahi ja
+          // raha tha ki cart badal gaya. Meal card ka stepper (− 1 +) cartQtyFor()
+          // se banta hai aur badge updateCartBadge() se; order place hone ke baad
+          // dono purani (pre-order) state pe atke reh jaate the — customer ko Home
+          // pe wapas aane par bhi "1" dikhta rehta tha, jaise item abhi bhi cart me ho.
+          // clearCart() ye refresh pehle se karta hai; success path me chhoot gaya tha.
+          updateCartBadge(); renderMealTabs(); renderMealPanel(); renderCart(); });
         stepP('showSuccessCard', () => {
           document.getElementById('orderFormWrap').classList.add('hidden');
           document.getElementById('page2Bar').classList.add('hidden');
