@@ -595,6 +595,18 @@
         </div>
       </div>
 
+      <!-- Saved address card — Zomato/Swiggy wala pattern. Address ek baar
+           set ho gaya to har order pe dobara form nahi bharwate; sirf "Deliver
+           to" summary dikhate hain aur "Change" tap karne par hi fields khulti
+           hain. Address adhoora ho (ya pehli baar ho) to card chhupa rehta hai
+           aur seedha form dikhta hai, jaisa pehle tha. -->
+      <div id="savedAddrCard" class="hidden mode-chip" style="margin-bottom:14px;">
+        <span class="mch-i" id="savedAddrIc">🏠</span>
+        <span class="mch-x"><span class="mch-t" id="savedAddrT"></span><div class="mch-s" id="savedAddrS"></div></span>
+        <span class="mch-c" onclick="editSavedAddr()" data-i="modeChange"></span>
+      </div>
+
+      <div id="addrFieldsWrap">
       <!-- OFFICE FIELDS -->
       <div id="officeFields" class="hidden">
         <div class="form-group">
@@ -627,6 +639,7 @@
         <div class="field-error" id="err-flatNo" data-i="errFlat"></div>
       </div>
       </div><!-- /homeFields -->
+      </div><!-- /addrFieldsWrap -->
       <div class="form-group">
         <label><span data-i="fullName"></span> <span style="color:var(--danger)">*</span></label>
         <input type="text" id="customerName" maxlength="40" oninput="clearErr('customerName','err-name')" onblur="validateName()" data-ph="namePh">
@@ -2135,6 +2148,9 @@
     if(cs){ cs.textContent=(deliveryType==='office')?t('dtOfficeSub'):t('dtHomeSub'); }
     document.getElementById('homeFields').classList.toggle('hidden',deliveryType==='office');
     document.getElementById('officeFields').classList.toggle('hidden',deliveryType!=='office');
+    // Mode badalne pe "address poora hai ya nahi" ka jawab badal jaata hai
+    // (home ko society+flat chahiye, office ko company) — card/form dobara tay karo.
+    if(typeof renderSavedAddr==='function') renderSavedAddr();
     if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); const b=document.getElementById('barTotal2'); if(b) b.textContent='₹'+cartTotalDisplay(); }
   }
   function deliveryFee(){
@@ -4231,6 +4247,39 @@
     const c=storeGet('fbt_addr'); let filled=false;
     if(c){ if(c.society){ document.getElementById('society').value=c.society; filled=true; } if(c.flatNo){ document.getElementById('flatNo').value=c.flatNo; filled=true; } }
     document.getElementById('savedNote').classList.toggle('show',filled);
+    renderSavedAddr();
+  }
+  // Address poora save ho chuka hai ya nahi. Home ke liye society+flat dono
+  // chahiye, office ke liye company (empId optional hai).
+  function savedAddrComplete(){
+    const a=storeGet('fbt_addr')||{};
+    return (deliveryType==='office') ? !!a.company : !!(a.society && a.flatNo);
+  }
+  // Address set ho to checkout pe form ki jagah ek "Deliver to" summary card —
+  // Zomato/Swiggy jaisa. Har order pe dobara wahi address bharna nahi padta;
+  // badalna ho to "Change" se form khul jaata hai.
+  function renderSavedAddr(){
+    const card=document.getElementById('savedAddrCard'), wrap=document.getElementById('addrFieldsWrap');
+    if(!card||!wrap) return;
+    const ok=savedAddrComplete();
+    card.classList.toggle('hidden',!ok);
+    wrap.classList.toggle('hidden',ok);
+    // Card dikh raha hai to "details auto-filled" note bekaar hai — card khud
+    // hi address dikha raha hai.
+    const note=document.getElementById('savedNote'); if(note && ok) note.classList.remove('show');
+    if(!ok) return;
+    const a=storeGet('fbt_addr')||{};
+    const isOff=(deliveryType==='office');
+    document.getElementById('savedAddrIc').textContent = isOff?'🏢':'🏠';
+    document.getElementById('savedAddrT').textContent  = isOff?t('dtOffice'):t('dtHome');
+    document.getElementById('savedAddrS').textContent  = isOff
+      ? ((a.company||'')+(a.empId?(' · '+a.empId):''))
+      : ((a.flatNo||'')+', '+(a.society||''));
+  }
+  function editSavedAddr(){
+    const card=document.getElementById('savedAddrCard'), wrap=document.getElementById('addrFieldsWrap');
+    if(card) card.classList.add('hidden');
+    if(wrap) wrap.classList.remove('hidden');
   }
   function saveAddr(d){
     const a=storeGet('fbt_addr')||{};
