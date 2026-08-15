@@ -516,6 +516,7 @@
     </div>
     <div class="section" style="padding-top:0;">
       <div class="fresh-note" data-i="freshStrip"></div>
+      <div id="abFssai" class="cust-row hidden" style="padding:10px 0 0;"></div>
     </div>
 
     <div style="padding:16px;">
@@ -1760,6 +1761,13 @@
     box.innerHTML=html;
     box.classList.remove('hidden');
   }
+  // About page — FSSAI lic. no., sirf jab admin ne bhara ho.
+  function renderAbout(){
+    const fs=document.getElementById('abFssai');
+    if(!fs) return;
+    if(CFG.fssai){ fs.innerHTML=`<span style="color:var(--muted);font-size:12px;">${t('fssaiLbl')}</span><span style="font-weight:800;">${esc(CFG.fssai)}</span>`; fs.classList.remove('hidden'); }
+    else fs.classList.add('hidden');
+  }
   // Vendor ki apni wajah (tempClosedMsg) ho to wahi, warna generic fallback.
   // Brand naam/logo alag se karne ki zaroorat nahi — .vbrand-name/.vbrand-logo
   // classes applyVendorBrand() se already sabhi jagah (is view samet) sync rehte hain.
@@ -2881,7 +2889,7 @@
 
 
   function showSubPage(){ if(!isLoggedIn()){ showAuth(); return; } showView('subView'); loadSub(); }
-  function showAboutPage(){ showView('aboutView'); }
+  function showAboutPage(){ showView('aboutView'); renderAbout(); }
   
 
   // ═══════ AUTH (Google Sign-In — the only customer login method) ═══════
