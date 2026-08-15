@@ -5774,9 +5774,18 @@
   // tak clear kiya" timestamp save karte hain. Naya notification (clear ke
   // BAAD ka time) phir bhi turant dikhega.
   function vendorNotifClearedKey(){ return 'fbt_admin_notif_cleared_before'; }
+  // Bell ab "inbox" nahi, "naya kya hai" hai. Pehle list me clear karne tak ka
+  // POORA history bhara rehta tha — vendor ko har baar wahi purane notifications
+  // dobara scroll karne padte the aur naya order usi dher me kho jaata tha.
+  // Ab list sirf wo dikhati hai jo PICHHLI baar bell kholne ke BAAD aaye.
+  // __notifViewFrom sheet khulte waqt ka snapshot hai: sheet khuli rehne par
+  // list apne aap khaali na ho jaye (kyunki khulte hi lastSeen=now ho jaata hai).
+  let __notifViewFrom=null;
   function visibleVendorNotifs(){
     const clearedBefore=Number(storeGet(vendorNotifClearedKey())||0);
-    return vendorNotifCache.filter(n=>new Date(n.time).getTime()>clearedBefore);
+    const seenFrom=(__notifViewFrom!=null) ? __notifViewFrom : Number(storeGet(vendorNotifSeenKey())||0);
+    const from=Math.max(clearedBefore, seenFrom);
+    return vendorNotifCache.filter(n=>new Date(n.time).getTime()>from);
   }
   function clearAllVendorNotifs(){
     storeSet(vendorNotifClearedKey(), Date.now());
@@ -5795,7 +5804,7 @@
     const list=visibleVendorNotifs();
     const clearWrap=document.getElementById('vendorNotifClearWrap');
     if(!list.length){
-      box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">🔔 No notifications yet — customer order activity will show up here.</p>';
+      box.innerHTML='<p style="text-align:center;color:var(--muted);font-size:12.5px;padding:24px 10px;">✅ You are all caught up — new customer activity will show up here.</p>';
       if(clearWrap) clearWrap.classList.add('hidden');
       return;
     }
@@ -5807,12 +5816,19 @@
     </div>`).join('');
   }
   function openVendorNotifSheet(){
+    // Snapshot pehle — isi ke against list render hogi, warna neeche lastSeen=now
+    // set karte hi list turant khaali dikhne lagti.
+    __notifViewFrom=Number(storeGet(vendorNotifSeenKey())||0);
     renderVendorNotifList();
     document.getElementById('vendorNotifSheet').classList.remove('hidden');
     storeSet(vendorNotifSeenKey(), Date.now());
     renderVendorNotifBadge();
   }
-  function closeVendorNotifSheet(){ document.getElementById('vendorNotifSheet').classList.add('hidden'); }
+  function closeVendorNotifSheet(){
+    document.getElementById('vendorNotifSheet').classList.add('hidden');
+    // Snapshot chhodo — agli baar list dobara "pichhli baar ke baad ka" hi dikhegi.
+    __notifViewFrom=null;
+  }
   function startRing(){
     stopRing();
     try{
