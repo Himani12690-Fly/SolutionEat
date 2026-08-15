@@ -3524,7 +3524,14 @@
     if (typeof openDiscovery === 'function') openDiscovery();
     else if (typeof showPublic === 'function') showPublic();
   }
-  function forceLogout(){ gsiStopAutoSelect(); resetMyRating(); dbgLog({ev:'FORCE_LOGOUT', vid:VENDOR_ID}); if(notifTimer){ clearInterval(notifTimer); notifTimer=null; } SESSION=null; invalidateSubCache(); storeDel('fbt_session'); showToast(t('sessionExpired'),'warning'); showAuth(); }
+  function forceLogout(){ gsiStopAutoSelect(); resetMyRating(); dbgLog({ev:'FORCE_LOGOUT', vid:VENDOR_ID}); if(notifTimer){ clearInterval(notifTimer); notifTimer=null; } SESSION=null; invalidateSubCache(); storeDel('fbt_session'); showToast(t('sessionExpired'),'warning'); showAuth();
+    // ── TEMP DEBUG (session-expiry hunt round 2) — baad me hata dena ──
+    // forceLogout() sirf genuine invalid_session confirm hone par hi chalta
+    // hai (normal user logout() se alag function hai) — isliye yahan chalte
+    // hi debug log khud-ba-khud dikha do, taaki agli baar ye bounce ho to
+    // screenshot me hi wajah dikh jaaye, console kholne ki zaroorat na pade.
+    setTimeout(dbgShow, 1000);
+  }
   // ═══════ EXIT-CONFIRM SHEET (mobile back button, top-level) ═══════
   // Pehle "press back again to exit" (2s double-tap, toast-based) tha — na koi
   // real confirmation dikhta tha, na exit karne par logout hota tha (agli baar
