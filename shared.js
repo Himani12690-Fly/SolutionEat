@@ -510,16 +510,29 @@
   // stashes the fresh SESSION in a one-shot sessionStorage slot right before
   // that redirect; pick it up here (now that VENDOR_ID is correct), persist it
   // under the right key, and clear the slot immediately so it's never reused.
+  let __g_sess_picked_up = false;
   if(!SESSION){
     try{
       const gs = sessionStorage.getItem('g_sess');
       if(gs){
         sessionStorage.removeItem('g_sess');
         SESSION = JSON.parse(gs);
-        if(SESSION && typeof SESSION === 'object'){ SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); }
+        if(SESSION && typeof SESSION === 'object'){ SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); __g_sess_picked_up = true; }
       }
     }catch(e){}
   }
+  // ── TEMP DEBUG (session-expiry hunt round 2) — baad me hata dena ──
+  // dbgLog() khud abhi tak defined nahi hai (customer.html/index.html ka apna
+  // inline script hai, shared.js ke BAAD load hota hai) — isliye yahan seedha
+  // usi localStorage key me likhte hain, taaki dbgShow() me ek hi timeline me
+  // dikhe: har PAGE LOAD (reload/redirect samet) ka VENDOR_ID + session state.
+  try{
+    const __k='nn_debug';
+    const __a=JSON.parse(localStorage.getItem(__k)||'[]');
+    __a.push({ ev:'BOOT', vid:VENDOR_ID, hasStored:!!storeGet('fbt_session'), sessVid:(SESSION&&SESSION.vid)||'', gSessPickup:__g_sess_picked_up, url:location.href.slice(0,120), t:new Date().toTimeString().slice(0,8) });
+    while(__a.length>25) __a.shift();
+    localStorage.setItem(__k, JSON.stringify(__a));
+  }catch(e){}
   function isLoggedIn(){ return !!(SESSION && SESSION.token); }
   let __toastT=null;
   // XSS guard — user ka koi bhi text innerHTML me jaane se pehle escape
@@ -562,7 +575,7 @@
           dbgLog({ev:'POST_badjson', act:p&&p.action, body:String(txt).slice(0,80)});
           throw new Error('bad_json');
         }
-        if(j&&j.status==='invalid_session'){ dbgLog({ev:'POST_invalid', act:p&&p.action, vid:VENDOR_ID}); }
+        if(j&&j.status==='invalid_session'){ dbgLog({ev:'POST_invalid', act:p&&p.action, vid:VENDOR_ID, authVid:body.authVendorId, sessVid:(SESSION&&SESSION.vid)||'', tokTail:(p&&p.token)?String(p.token).slice(-6):''}); }
         return j;
       })
       .catch(err=>{
