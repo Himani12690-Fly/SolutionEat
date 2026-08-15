@@ -517,7 +517,16 @@
       if(gs){
         sessionStorage.removeItem('g_sess');
         SESSION = JSON.parse(gs);
-        if(SESSION && typeof SESSION === 'object'){ SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); __g_sess_picked_up = true; }
+        // ⚠️ SESSION.vid ko YAHAN OVERWRITE MAT KARO. vid ka matlab hai "ye token
+        // KIS vendor ne banaya tha" — current page ka vendor nahi (meCall()/apiPost()
+        // isi se authVendorId bhejte hain, aur backend USI vendor ki Sessions sheet
+        // me token dhoondta hai). Redirect flow me googleLogin hamesha vendor-less
+        // URL pe chalta hai, yani token DEFAULT vendor ke naam se banta hai; usko
+        // yahan 'hungrybirds' (ya jo bhi ?v= ho) likh dena matlab backend galat
+        // sheet me dhoondega aur HAMESHA invalid_session dega — login ke turant
+        // baad wapas login page. Original vid waisa hi rehne do; vendor ke apne
+        // sheet me asli entry completeCrossVendorLogin() banata hai.
+        if(SESSION && typeof SESSION === 'object'){ if(!SESSION.vid) SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); __g_sess_picked_up = true; }
       }
     }catch(e){}
   }

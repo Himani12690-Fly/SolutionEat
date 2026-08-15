@@ -1610,7 +1610,12 @@
   // Fix (neeche finishInit() me): agar ye flag true hai, ek silent crossVendorLogin
   // call se ISI vendor ki apni Sheet me asli entry bana denge, bina dobara login UI
   // dikhaye.
-  const __sessionIsForeign = !!(SESSION && SESSION.token && !storeGet('fbt_session'));
+  // "Foreign" = token kisi DOOSRE vendor ke naam se bana hai (purana shared-session
+  // case, ya Google redirect login jisme token DEFAULT vendor ke naam se banta hai
+  // kyunki redirect_uri me ?v= ja hi nahi sakta). Doosre case me shared.js ka
+  // g_sess pickup session ko is vendor ke namespace me save kar deta hai, par vid
+  // original hi rehta hai — isliye vid-mismatch se hi pata chalta hai.
+  const __sessionIsForeign = !!(SESSION && SESSION.token && (!storeGet('fbt_session') || (SESSION.vid && SESSION.vid !== VENDOR_ID)));
   // Agar shared se mila to is vendor ke namespace me bhi save kar do (agli baar direct mile)
   if(SESSION && SESSION.token && SESSION.phone && !storeGet('fbt_session')){ storeSet('fbt_session', SESSION); }
   // Foreign token ko is vendor ki apni Sheet me "asli" bana do — silent, koi UI nahi.
