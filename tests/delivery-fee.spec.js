@@ -45,7 +45,7 @@ test('order total excludes delivery fee entirely when delivery charges are OFF',
   state.config.deliveryEnabled = false;
   const { state: s } = await openApp(page, { state });
   await page.evaluate(() => window.menuChangeDate(1));
-  await page.evaluate(() => { window.quickAdd('lunch'); window.cart[0].qty = 1; });
+  await page.evaluate(() => { window.addMealDirect('lunch'); window.cart[0].qty = 1; });
   await page.evaluate(() => window.goToCheckout());
   await page.fill('#customerName', 'Test User');
   const barTotal = await page.evaluate(() => document.getElementById('barTotal2').textContent);

@@ -111,25 +111,23 @@
     var hasV = !!( (new URLSearchParams(location.search).get('v')||'').trim() );
     var img = document.querySelector('#bootLoader .vbrand-logo');
     if(!img) return;
-    if(!hasV){ img.src = img.getAttribute('data-default-src'); img.alt='Nest & Nosh'; return; }
+    if(!hasV){ img.src = img.getAttribute('data-default-src'); img.alt='myTiffin'; return; }
     // Vendor page: is vendor ki cached branding dhoondo (namespaced key: <slug>_fbt_brand)
     var slug = (new URLSearchParams(location.search).get('v')||'').trim().toLowerCase();
     var raw = localStorage.getItem(slug+'_fbt_brand');
     var b = raw ? JSON.parse(raw) : null;
-    if(b && (b.logo || b.name)){
-      if(b.logo){ img.src = b.logo; }
-      else {
-        var ch=(b.name||'').trim().charAt(0).toUpperCase();
-        img.src='data:image/svg+xml,'+'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%237c3aed"/><text x="50" y="50" dy=".36em" font-family="sans-serif" font-size="52" font-weight="700" fill="%23fff" text-anchor="middle">'+ch+'</text></svg>';
-      }
-      img.alt = b.name||'';
-    }
-    /* cache nahi → blank hi rehne do (default flash nahi); bootstrap asli logo bhar dega */
+    // ⚠️ Yahan pehle cached NAME se (logo na ho to) ek letter-avatar bhi bana
+    // dete the — agar cache stale/purana ho (jaise vendor rename ho chuka ho),
+    // to galat letter flash hota (jaise "Hungry Birds" ki jagah purana "N..."
+    // naam). Ab: sirf tab hi badlo jab ek asli LOGO cached ho — warna default
+    // (myTiffin) logo hi rehne do, koi galat-letter guess nahi.
+    if(b && b.logo){ img.src = b.logo; img.alt = b.name||''; }
+    /* cache nahi (ya sirf naam, logo nahi) → default logo hi rehne do; bootstrap asli logo bhar dega */
   }catch(e){}
 })();
 </script>
 <div id="adminLoader"><div class="al-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="loading"></div><div class="al-spin"></div><div class="al-t" data-i="loadingEllipsis">Loading…</div></div>
-<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
+<div id="authTransition" class="hidden"><div class="bl-logo"><img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="myTiffin"></div><div class="bl-t" id="authTransitionText" data-i="signingIn">Signing in…</div></div>
 <div class="container">
 
   <!-- ══════ FIRST-RUN ONBOARDING (naye customer ke liye, sirf ek baar) ══════ -->
@@ -147,7 +145,7 @@
     <div id="authBackKitchens" class="hidden" style="padding:14px 16px 0;font-size:13.5px;font-weight:800;color:var(--accent-dark,#6366f1);cursor:pointer;" onclick="__dscIsTop=true;openDiscovery();" data-i="allKitchensBack">‹ All Kitchens</div>
     <div class="hero">
       <div class="lang-switch"><select id="langSelAuth" class="js-lang" onchange="setLang(this.value)"></select></div>
-      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="Nest &amp; Nosh"><div class="logo-spin" id="authLogoSpin"></div></div>
+      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="myTiffin"><div class="logo-spin" id="authLogoSpin"></div></div>
       <p class="tagline" data-i="tagline"></p>
       <span class="hero-badge" data-i="secureLogin"></span>
     </div>
@@ -244,7 +242,7 @@
       <!-- Admin login has no UI entry point here by design — see ?Admin=<vendorSlug>
            handling near VENDOR_ID/finishInit() below. Complete separation: a customer
            on this page has no way to discover or reach admin login. -->
-      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> · Ahmedabad, India</div>
+      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="myTiffin"></span> · Ahmedabad, India</div>
     </div>
   </div>
 
@@ -256,7 +254,7 @@
       <span class="h1-logo-wrap"><img class="h1-logo vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""></span>
       <div class="h1-rate hidden" id="h1Rate"></div>
       <div class="h1-tt">
-        <div class="h1-name"><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div>
+        <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
         <div class="h1-loc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       </div>
       <!-- Header ka cart icon hata diya — bottom nav me Cart tab pehle se hai (badge ke saath),
@@ -325,7 +323,7 @@
   <!-- ══════ CART VIEW ══════ -->
   <div id="cartView" class="hidden">
     <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div>
       <h1 style="font-size:20px;" data-i="yourCart"></h1>
     </div>
     <div class="section pad-sticky">
@@ -432,7 +430,7 @@
 
   <div id="subView" class="hidden">
     <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div>
       <h1 style="font-size:20px;" data-i="subTitle"></h1>
       <p class="tagline" style="margin:0;" data-i="subSub"></p>
     </div>
@@ -445,7 +443,7 @@
   <!-- ══════ MY ORDERS VIEW ══════ -->
   <div id="ordersView" class="hidden">
     <div class="hero sub-hero">
-      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div>
+      <div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div>
       <h1 style="font-size:20px;" data-i="myOrders"></h1>
     </div>
     <div class="section">
@@ -656,7 +654,7 @@
   <!-- ══════ ADMIN LOGIN ══════ -->
   <!-- ══════ PROFILE ══════ -->
   <div id="profileView" class="hidden">
-    <div class="hero sub-hero no-title"><div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span></div></div></div>
+    <div class="hero sub-hero no-title"><div class="sub-tb"><div class="sub-brand"><img class="brand-ic vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><span class="vbrand-name" data-default-name="myTiffin"></span></div></div></div>
     <div class="section">
       <div class="pf-card">
         <div class="pf-avwrap disabled" id="pfAvaWrap">
@@ -697,7 +695,7 @@
       <button class="add-cart-btn" style="margin-top:20px;background:var(--dangerbg);color:var(--danger);" onclick="logout()" data-i="logout"></button>
     </div>
     <div class="footer">
-      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> · Ahmedabad, India</div>
+      <div class="f-copy">© 2026 <span class="vbrand-name" data-default-name="myTiffin"></span> · Ahmedabad, India</div>
     </div>
   </div>
 
@@ -756,7 +754,7 @@
            wahi hain jo baaki poori app use karti hai — VENDOR_BRAND load hote hi
            applyVendorBrand() ye apne aap bhar deta hai. -->
       <img class="vbrand-logo" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="" style="width:64px;height:64px;border-radius:14px;object-fit:cover;display:block;margin:0 auto 10px;box-shadow:0 0 0 2px rgba(255,255,255,.4);">
-      <h1 style="font-size:20px;">🔐 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> — Admin Login</h1>
+      <h1 style="font-size:20px;">🔐 <span class="vbrand-name" data-default-name="myTiffin"></span> — Admin Login</h1>
     </div>
     <div class="section">
       <div class="demo-login hidden" id="demoAdminHint">
@@ -1023,7 +1021,7 @@
       </div>
     </div>
     <div class="footer">
-      <div class="f-copy">⚙️ Admin · © 2026 <span class="vbrand-name" data-default-name="Nest &amp; Nosh"></span> · Ahmedabad, India</div>
+      <div class="f-copy">⚙️ Admin · © 2026 <span class="vbrand-name" data-default-name="myTiffin"></span> · Ahmedabad, India</div>
     </div>
 
     <div class="sheet-overlay hidden" id="adminMoreOverlay" onclick="if(event.target===this)closeAdminMore()">
@@ -1284,22 +1282,20 @@
       var imgs = document.querySelectorAll('.vbrand-logo');
       var names = document.querySelectorAll('.vbrand-name');
       if(!hasV){
-        // Bina ?v= — platform ka apna default page, "Nest & Nosh" hi sahi hai yahan.
-        names.forEach(function(el){ el.textContent = el.getAttribute('data-default-name')||'Nest & Nosh'; });
+        // Bina ?v= — platform ka apna default page, "myTiffin" hi sahi hai yahan.
+        names.forEach(function(el){ el.textContent = el.getAttribute('data-default-name')||'myTiffin'; });
         return;
       }
       var slug = (new URLSearchParams(location.search).get('v')||'').trim().toLowerCase();
       var raw = null; try{ raw = localStorage.getItem(slug+'_fbt_brand'); }catch(e){}
       var b = raw ? JSON.parse(raw) : null;
       imgs.forEach(function(img){
+        // ⚠️ Cached NAME se (logo na ho to) letter-avatar banana yahan se hata
+        // diya — stale cache (jaise vendor rename ho chuka) galat letter flash
+        // karta tha. Sirf asli LOGO cached ho tabhi badlo.
         if(b && b.logo){ img.src=b.logo; img.alt=b.name||''; }
-        else if(b && b.name){
-          var ch=(b.name||'').trim().charAt(0).toUpperCase();
-          img.src='data:image/svg+xml,'+'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="50" fill="%237c3aed"/><text x="50" y="50" dy=".36em" font-family="sans-serif" font-size="52" font-weight="700" fill="%23fff" text-anchor="middle">'+ch+'</text></svg>';
-          img.alt=b.name;
-        }
-        // cache nahi mila → jo bhi transparent placeholder HTML me hai wahi rehne
-        // do (default "Nest & Nosh" flash nahi) — applyVendorBrand() jald hi bhar dega.
+        // warna jo bhi default (ab myTiffin logo) HTML me hai wahi rehne do —
+        // applyVendorBrand() jald hi asli data se bhar dega.
       });
       names.forEach(function(el){ el.textContent = (b&&b.name)?b.name:''; });
     }catch(e){}
@@ -2514,8 +2510,17 @@
     updateCartBadge();
   }
   function doQuickAdd(m){
-    const b=freshBuilder()[m];
     if(cart.find(it=>it.deliveryDate===selDateStr()&&it.meal===m)){ openMealSheet(m); return; }  // already hai → customize
+    // Ek se zyada tiffin-size/variant option ho to "ADD +" seedha default add
+    // nahi karta — customize sheet khol deta hai taaki customer khud choose
+    // kare, kisi default variant ko chup-chaap na thopa jaaye.
+    if(variantsFor(m).length>1){ openMealSheet(m); return; }
+    addMealDirect(m);
+  }
+  // Ek hi variant ho (ya koi bhi test/setup jahan customize-gate ka concern
+  // nahi) — seedha default combination ke saath cart me daal do.
+  function addMealDirect(m){
+    const b=freshBuilder()[m];
     const v=findVariant(m,b.tiffinType);
     cart.push({ id:selDateStr()+'|'+m+'|'+b.tiffinType, deliveryDate:selDateStr(), deliveryLabel:fmtLabel(selDate()), day:selDayKey().charAt(0).toUpperCase()+selDayKey().slice(1),
       meal:m, qty:1, tiffinType:b.tiffinType, variantName:v.name, sabzi:b.sabzi||'',
@@ -3309,14 +3314,9 @@
     meCall(SESSION.token).then(j=>{
       sessionCheckBusy=false;
       if(j && j.status==='invalid_session'){
-        // Doosri raay bhi invalid — shared session ka token try karo
-        const shared = readSharedSession();
-        if(shared && shared.token && shared.token!==SESSION.token){
-          return meCall(shared.token).then(j2=>{
-            if(j2 && j2.status==='invalid_session'){ forceLogout(); }
-            else { SESSION=shared; storeSet('fbt_session',SESSION); applyMeResult(j2); }
-          }).catch(()=>{});
-        }
+        // ⚠️ Cross-vendor shared-session fallback hata diya gaya (silently kisi
+        // doosre/purane cached account ko apna leta tha — see shared.js). Token
+        // genuinely invalid hai to seedha logout.
         forceLogout();
       } else {
         // Token actually zinda hai — us ek call ka apna issue tha. Chup-chaap andar raho,

@@ -133,7 +133,7 @@ test.describe('Layout', () => {
     // container (.h1-body), aur (2) cart me ek item daal ke #miniBar ko
     // genuinely visible karte hain, taaki check kuch real check kare.
     await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.waitForTimeout(300);
     // Page scrollable hai, isliye NEECHE tak scroll karke check karo —
     // top par content bar ke peeche hona normal hai.

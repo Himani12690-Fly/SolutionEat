@@ -626,11 +626,26 @@ async function mockBackend(page, state) {
   // QR image
   await page.route('**/api.qrserver.com/**', r =>
     r.fulfill({ status:200, contentType:'image/png', body:'' }));
-  // Reverse geocoding (Discovery's top location label) — free, no API key, but
-  // network se mat lao in tests, taaki offline/deterministic rahe.
-  await page.route('**/nominatim.openstreetmap.org/**', r =>
+  // Reverse geocoding (Discovery's top location label, and vendor Home page's
+  // kitchen-area label via refreshKitchenAreaLabel()) — free, no API key, but
+  // network se mat lao in tests, taaki offline/deterministic rahe. lat/lon
+  // request se hi echo karte hain taaki resolveAreaLabel()'s snap-distance
+  // check hamesha pass ho (warna wo "no usable data" maan ke BigDataCloud
+  // fallback try karta — jo neeche bhi mocked hai, par yahan zaroorat nahi).
+  await page.route('**/nominatim.openstreetmap.org/**', r => {
+    const u = new URL(r.request().url());
+    const lat = u.searchParams.get('lat') || '23.03';
+    const lon = u.searchParams.get('lon') || '72.55';
     r.fulfill({ status:200, contentType:'application/json',
-                body: JSON.stringify({ address: { suburb: 'Bopal', city: 'Ahmedabad' } }) }));
+                body: JSON.stringify({ lat, lon, address: { suburb: 'Bopal', city: 'Ahmedabad' } }) });
+  });
+  // BigDataCloud — resolveAreaLabel()'s fallback source (fires in parallel
+  // with Nominatim above, not sequentially) — bhi mock karo taaki koi bhi
+  // real network call na jaaye, chahe Nominatim ka mock kisi wajah se
+  // reject ho jaaye.
+  await page.route('**/api.bigdatacloud.net/**', r =>
+    r.fulfill({ status:200, contentType:'application/json',
+                body: JSON.stringify({ locality: 'Bopal', city: 'Ahmedabad' }) }));
 }
 
 // ── App open karo (guest ya logged-in) ──

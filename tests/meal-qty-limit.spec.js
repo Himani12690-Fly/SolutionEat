@@ -47,7 +47,7 @@ test.describe('Home card stepper', () => {
     // stepper (vs. a disabled "Closed" button) while the meal is orderable,
     // so this test must not depend on whatever the real wall-clock time is.
     await openAppRaw(page, { vendor: 'nestandnosh', state, istOverride: '2026-08-04T08:00:00' });
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await expect(page.locator('#mc-lunch .c1-st-n')).toHaveText('1');
     await page.click('#mc-lunch .c1-st-btn[aria-label="Add more"]');
     await expect(page.locator('#mc-lunch .c1-st-n')).toHaveText('2');

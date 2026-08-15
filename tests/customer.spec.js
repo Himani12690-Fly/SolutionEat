@@ -9,7 +9,7 @@ test.describe('Cart & pricing', () => {
   test('quick add se cart badge aur total banta hai', async ({ page }) => {
     await openApp(page);
     await goTo(page, 'menu');
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.waitForTimeout(200);
     // Nav redesign: bottom nav no longer has a standalone Cart tab/badge
     // (#bnCartBadge doesn't exist anymore — see updateCartBadge() in index.html).
@@ -19,6 +19,19 @@ test.describe('Cart & pricing', () => {
     // Full tiffin ₹80 + near delivery ₹10
     const total = await page.evaluate(() => window.cartTotalDisplay());
     expect(total).toBe(90);
+  });
+
+  test('"ADD +" (quickAdd) ek se zyada variant ho to seedha add nahi karta — customize sheet kholta hai', async ({ page }) => {
+    await openApp(page);
+    await goTo(page, 'menu');
+    // lunch ke 2 variants hain (Full/Mini — dekho "mini variant" test neeche),
+    // isliye quickAdd() ab default add nahi karta, seedha customize sheet
+    // khol deta hai taaki customer khud choose kare.
+    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.waitForTimeout(200);
+    await expect(page.locator('#mealSheet')).not.toHaveClass(/hidden/);
+    const qty = await page.evaluate(() => window.cart.reduce((s, it) => s + it.qty, 0));
+    expect(qty).toBe(0);   // kuch add nahi hua — customer ka faisla abhi baaki hai
   });
 
   test('mini variant lene par unit price girta hai', async ({ page }) => {
@@ -70,7 +83,7 @@ test.describe('Cart & pricing', () => {
   test('far society par delivery ₹20 lagti hai', async ({ page }) => {
     await openApp(page, { addr:{ deliveryType:'home', society:'Eden', flatNo:'A-101' } });
     await goTo(page, 'menu');
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
     await page.evaluate(() => { document.getElementById('society').value = 'Eden'; });
     await page.evaluate(() => window.renderCart());
@@ -85,8 +98,8 @@ test.describe('Cart & pricing', () => {
       // `window` (see AGENTS.md's JS-scoping-gotcha note) — setting
       // window.dateOffset directly is a silent no-op. menuChangeDate() is the
       // real, exported way to change the selected date.
-      window.menuChangeDate(1); window.quickAdd('lunch');
-      window.menuChangeDate(2); window.quickAdd('lunch');
+      window.menuChangeDate(1); window.addMealDirect('lunch');
+      window.menuChangeDate(2); window.addMealDirect('lunch');
     });
     await page.waitForTimeout(200);
     const total = await page.evaluate(() => window.cartTotalDisplay());
@@ -96,7 +109,7 @@ test.describe('Cart & pricing', () => {
   test('remove aur clear cart', async ({ page }) => {
     await openApp(page);
     await goTo(page, 'menu');
-    await page.evaluate(() => { window.quickAdd('lunch'); window.quickAdd('dinner'); });
+    await page.evaluate(() => { window.addMealDirect('lunch'); window.addMealDirect('dinner'); });
     await page.waitForTimeout(200);
     const qty = () => page.evaluate(() => window.cart.reduce((s, it) => s + it.qty, 0));
     expect(await qty()).toBe(2);
@@ -108,7 +121,7 @@ test.describe('Cart & pricing', () => {
 
   test('cart refresh ke baad bhi bacha rehta hai', async ({ page }) => {
     const { state } = await openApp(page);
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.waitForTimeout(200);
     await openApp(page, { state });
     await page.waitForTimeout(400);
@@ -120,7 +133,7 @@ test.describe('Cart & pricing', () => {
 test.describe('Promo', () => {
   test('valid code apply hota hai aur total ghatta hai', async ({ page }) => {
     await openApp(page);
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
     await page.fill('#promoCode', 'WELCOME50');
     await page.click('#promoApplyBtn');
@@ -131,7 +144,7 @@ test.describe('Promo', () => {
 
   test('galat code reject hota hai', async ({ page }) => {
     await openApp(page);
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
     await page.fill('#promoCode', 'NOPE99');
     await page.click('#promoApplyBtn');
@@ -142,7 +155,7 @@ test.describe('Promo', () => {
 
   test('promo hatane par total wapas', async ({ page }) => {
     await openApp(page);
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
     await page.fill('#promoCode', 'WELCOME50');
     await page.click('#promoApplyBtn');
@@ -158,7 +171,7 @@ test.describe('Promo', () => {
       s.promos[0].value = 500;
       return s;
     })() });
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
     await page.fill('#promoCode', 'WELCOME50');
     await page.click('#promoApplyBtn');
@@ -177,7 +190,7 @@ test.describe('Checkout & orders', () => {
     // this test would flake depending on what time of day it runs. Tomorrow
     // (offset 1) has no same-day cutoff and is always open (see mealsAvail()).
     await page.evaluate(() => window.menuChangeDate(1));
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.waitForTimeout(200);
     await page.fill('#customerName', 'Test User');
@@ -198,7 +211,7 @@ test.describe('Checkout & orders', () => {
     // total, so server-side authority is verified by any successful order.
     await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
     await page.evaluate(() => {
-      window.quickAdd('lunch');
+      window.addMealDirect('lunch');
       window.cart[0].qty = 1;
     });
     await page.evaluate(() => window.goToCheckout());
@@ -223,7 +236,7 @@ test.describe('Checkout & orders', () => {
       // it never touches the app's own top-level `let cart` (see AGENTS.md's
       // JS-scoping-gotcha note), so the real cart was never actually cleared
       // between iterations. clearCart() is the real, exposed way to do this.
-      await page.evaluate(() => { window.clearCart(); window.quickAdd('lunch'); });
+      await page.evaluate(() => { window.clearCart(); window.addMealDirect('lunch'); });
       await page.evaluate(() => window.goToCheckout());
       // First pass: quickAdd succeeds (nothing ordered yet) and checkout opens.
       // Second pass: quickAdd's own alreadyOrdered() client-side check now
@@ -253,7 +266,7 @@ test.describe('Checkout & orders', () => {
   test('address blank ho to validation rukta hai', async ({ page }) => {
     await openApp(page, { addr:{ deliveryType:'home', society:'', flatNo:'' } });
     await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.waitForTimeout(200);
     await page.fill('#customerName', 'Test User');
@@ -266,7 +279,7 @@ test.describe('Checkout & orders', () => {
   test('flat number format normalize hota hai', async ({ page }) => {
     await openApp(page);
     await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.fill('#flatNo', 'd706');
     await page.evaluate(() => window.validateFlat());
@@ -276,7 +289,7 @@ test.describe('Checkout & orders', () => {
   test('UPI chunne par QR box dikhta hai', async ({ page }) => {
     await openApp(page);
     await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.evaluate(() => window.setPay('UPI'));
     await page.fill('#customerName', 'Test User');
@@ -289,7 +302,7 @@ test.describe('Checkout & orders', () => {
   test('COD chunne par cash note dikhta hai', async ({ page }) => {
     await openApp(page);
     await page.evaluate(() => window.menuChangeDate(1));   // lunch cutoff (09:00) — "today" ke baad closed hota hai
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.evaluate(() => window.setPay('COD'));
     await page.fill('#customerName', 'Test User');
@@ -369,7 +382,7 @@ test.describe('Session', () => {
 
   test('logout se cart bhi khaali', async ({ page }) => {
     await openApp(page);
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.logout());
     await page.waitForTimeout(400);
     const n = await page.evaluate(() => window.cart.length);

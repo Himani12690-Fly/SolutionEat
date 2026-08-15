@@ -153,7 +153,7 @@ test.describe('Vendor bell — admin topbar', () => {
   test('customer placing a new order notifies the vendor', async ({ page }) => {
     const { state } = await openApp(page);
     await page.evaluate(() => window.menuChangeDate(1));
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.fill('#customerName', 'Test User');
     await page.click('#placeBtn');
@@ -207,7 +207,7 @@ test.describe('Vendor bell — admin topbar', () => {
   test('opening the vendor bell sheet marks it as seen (badge clears)', async ({ page }) => {
     const { state } = await openApp(page);
     await page.evaluate(() => window.menuChangeDate(1));
-    await page.evaluate(() => window.quickAdd('lunch'));
+    await page.evaluate(() => window.addMealDirect('lunch'));
     await page.evaluate(() => window.goToCheckout());
     await page.fill('#customerName', 'Test User');
     await page.click('#placeBtn');
