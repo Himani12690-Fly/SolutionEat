@@ -3001,7 +3001,15 @@
         // session already save ho chuka hai, toh reload logged-in hi khulega.
         try{
           const ret=sessionStorage.getItem('g_ret'); sessionStorage.removeItem('g_ret');
-          if(ret && ret!==location.search){ location.replace(location.pathname+ret); return; }
+          if(ret && ret!==location.search){
+            // storeSet() abhi jo save hua wo DEFAULT-vendor key me gaya (VENDOR_ID
+            // is waqt tak vendor-less URL se resolve ho raha tha) — reload ke baad
+            // ?v= wapas aayega aur VENDOR_ID sahi ho jaayega, par vahan koi key
+            // nahi milegi to login page pe wapas bounce ho jaata. Isliye SESSION
+            // yahan bhi stash karo — shared.js boot pe isi se real key me utha lega.
+            try{ sessionStorage.setItem('g_sess', JSON.stringify(SESSION)); }catch(e){}
+            location.replace(location.pathname+ret); return;
+          }
         }catch(e){}
         if(at){
           atText.textContent='👋 '+t('welcomeUser')+' '+j.name+'!'; atText.classList.add('welcome');
@@ -3061,7 +3069,10 @@
       // wahan nahi. Same restore yahan bhi zaroori hai.
       try{
         const ret=sessionStorage.getItem('g_ret'); sessionStorage.removeItem('g_ret');
-        if(ret && ret!==location.search){ location.replace(location.pathname+ret); return; }
+        if(ret && ret!==location.search){
+          try{ sessionStorage.setItem('g_sess', JSON.stringify(SESSION)); }catch(e){}
+          location.replace(location.pathname+ret); return;
+        }
       }catch(e){}
       enterApp();
     }).catch(()=>{ btn.textContent=t('completeSignup'); btn.disabled=false; showToast(t('errNetwork'),'error'); });

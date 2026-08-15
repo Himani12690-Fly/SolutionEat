@@ -499,6 +499,27 @@
   // sirf legacy cleanup ke liye (neeche logout()) rakha gaya hai.
   const SHARED_SESSION_KEY = 'nn_session_shared';
   let SESSION = storeGet('fbt_session');
+  // Google's OAuth redirect flow (googleRedirectLogin) bounces the browser away
+  // and back on the SAME page — Google's redirect_uri can't carry ?v=<vendor>,
+  // so the moment the login response arrives (URL still vendor-less) VENDOR_ID
+  // resolves to DEFAULT and storeSet('fbt_session',...) persists under the
+  // DEFAULT-vendor key, right before ?v= gets restored via location.replace().
+  // The next boot (now correctly on ?v=<vendor>) reads the VENDOR-namespaced
+  // key, finds nothing, and bounces back to login — this is the "sign in works
+  // but immediately kicks back to login page" bug. Fix: the login code also
+  // stashes the fresh SESSION in a one-shot sessionStorage slot right before
+  // that redirect; pick it up here (now that VENDOR_ID is correct), persist it
+  // under the right key, and clear the slot immediately so it's never reused.
+  if(!SESSION){
+    try{
+      const gs = sessionStorage.getItem('g_sess');
+      if(gs){
+        sessionStorage.removeItem('g_sess');
+        SESSION = JSON.parse(gs);
+        if(SESSION && typeof SESSION === 'object'){ SESSION.vid = VENDOR_ID; storeSet('fbt_session', SESSION); }
+      }
+    }catch(e){}
+  }
   function isLoggedIn(){ return !!(SESSION && SESSION.token); }
   let __toastT=null;
   // XSS guard — user ka koi bhi text innerHTML me jaane se pehle escape
