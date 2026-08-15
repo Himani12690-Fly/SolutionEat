@@ -118,4 +118,45 @@ test.describe('Google Sign-In redirect flow — first-time login (need_phone)', 
     expect(await page.evaluate(() => window.isLoggedIn())).toBe(true);
     await expect(page.locator('#authPage')).toHaveClass(/hidden/);
   });
+
+  // Regression for the SECOND live bug in this same flow, which the two tests
+  // above could not catch: the session persisted fine, but every subsequent
+  // backend call was rejected with invalid_session and the customer was logged
+  // out ~4s after landing on Home.
+  //
+  // SESSION.vid means "which vendor CREATED this token" — meCall()/apiPost()
+  // send it as authVendorId, and the backend looks for the token in THAT
+  // vendor's Sessions sheet. In the redirect flow googleLogin always runs on a
+  // vendor-less URL (Google's redirect_uri can't carry ?v=), so the token is
+  // always minted under the DEFAULT vendor. The g_sess pickup was overwriting
+  // vid with the CURRENT vendor, so the backend searched the wrong kitchen's
+  // sheet and could never find the token — a guaranteed invalid_session on
+  // every single call, no matter how healthy the session actually was.
+  //
+  // The mock backend ignores authVendorId (it matches on token alone), so a
+  // liveness assertion like the ones above stays green even with vid wrong —
+  // this asserts on vid itself, which is the thing that actually broke.
+  test('the restored session keeps the vendor that MINTED the token, not the page vendor', async ({ page }) => {
+    await openAppRaw(page, { loggedIn: false });   // bare URL -> default-vendor login context
+    await page.evaluate(() => { sessionStorage.setItem('g_ret', '?v=otherkitchen'); });
+    await page.evaluate(() => window.showAuth());
+    await page.evaluate(() => { document.getElementById('authPhone').value = '9876543210'; });
+    await Promise.all([
+      page.waitForURL(/[?&]v=otherkitchen/),
+      page.evaluate(() => window.onGoogleCredential({ credential: 'fake.jwt.token' })),
+    ]);
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForFunction(() => typeof window.isLoggedIn === 'function');
+
+    // Page is now scoped to otherkitchen, but the token was minted under the
+    // default vendor — vid must still say so, or auth calls hit the wrong sheet.
+    const vid = await page.evaluate(() => eval('SESSION') && eval('SESSION').vid);
+    expect(vid).toBe('nestandnosh');
+    expect(vid).not.toBe('otherkitchen');
+
+    // ...and because vid != current vendor, the app must recognise the session as
+    // "foreign" so completeCrossVendorLogin() runs and registers this customer in
+    // otherkitchen's own sheet — otherwise they never appear in that vendor's Users.
+    expect(await page.evaluate(() => eval('__sessionIsForeign'))).toBe(true);
+  });
 });
