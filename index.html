@@ -151,8 +151,10 @@
          hamesha tap-able hai, hamesha discovery pe hi jaata hai. -->
     <div class="hero">
       <div id="authBackKitchens" class="hidden auth-back-btn" onclick="__dscIsTop=true;openDiscovery();" aria-label="All Kitchens">‹</div>
-      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="myTiffin"><div class="logo-spin" id="authLogoSpin"></div></div>
-      <p class="tagline" data-i="tagline"></p>
+      <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
+      <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><div class="logo-spin" id="authLogoSpin"></div></div>
+      <div class="auth-kname"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
+      <div class="auth-kloc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       <span class="hero-badge" data-i="secureLogin"></span>
     </div>
     <div class="section">
@@ -1653,7 +1655,6 @@
   return out;
 }
   // Variant helpers
-  function priceRange(m){ const vs=variantsFor(m); const ps=vs.map(v=>v.price); return {min:Math.min(...ps),max:Math.max(...ps)}; }
 
 
 
@@ -3813,8 +3814,6 @@
         const av=availAll[m];
         const name=mealTitle(m);
         const vs=variantsFor(m);
-        const pr=priceRange(m);
-        const priceLabel = (pr.min===pr.max) ? `₹${pr.min}` : `₹${pr.min}–${pr.max}`;
         const rich=vs.reduce((a,b)=>b.price>a.price?b:a,vs[0]);
         const desc=(rich.items&&rich.items.length?rich.items:[]).slice(0,6).join(' · ');
         const ph=mealPhoto(m);
@@ -3845,7 +3844,6 @@
             <div class="c1-info">
               <div class="c1-h">
                 <span class="c1-nw"><span class="c1-veg"></span><span class="c1-name">${meta.emoji||''} ${name}</span></span>
-                <span class="c1-price">${priceLabel}</span>
               </div>
               <div class="c1-desc">${desc}</div>
               ${meta.time?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
@@ -3967,8 +3965,8 @@
       if(rotiOn && !plainOn && !b.butterRoti) b.butterRoti=true;   // Plain OFF ho aur abhi Plain selected hai to Butter pe shift karo
       if(rotiOn && !butterOn && b.butterRoti) b.butterRoti=false;
       inner+=`<div class="sh-block">
-        <div class="sh-lbl">${t('selectSabzi')} <span style="color:var(--danger)">*</span></div>
-        <select class="sh-select" onchange="shSet('sabzi',this.value)"><option value="">—</option>${opts}</select>
+        ${mealUsesSabzi(m,d)?`<div class="sh-lbl">${t('selectSabzi')} <span style="color:var(--danger)">*</span></div>
+        <select class="sh-select" onchange="shSet('sabzi',this.value)"><option value="">—</option>${opts}</select>`:''}
         ${rotiOn?`<div class="sh-lbl">${t('rotiType')}</div>
         <div class="sh-chips">
           ${plainOn?`<div class="sh-chip ${!b.butterRoti?'on':''}" onclick="shSetRoti(false)">${t('plain')}</div>`:''}
@@ -4111,7 +4109,7 @@
   }
   function shAddToCart(){
     const m=sheetMeal, b=builder[m];
-    if(m!=='breakfast' && !b.sabzi){ showToast('⚠️ '+t('selectSabzi'),'warning'); return; }
+    if(mealUsesSabzi(m, MENU[selDayKey()]) && !b.sabzi){ showToast('⚠️ '+t('selectSabzi'),'warning'); return; }
     if(capacityReached(m,selDateStr())){ showToast('🔴 '+t('soldOutTitle'),'error'); closeMealSheet(); patchMealCard(m); return; }
     // Data ready hai → turant, koi spinner nahi
     if(orderedMapReady){

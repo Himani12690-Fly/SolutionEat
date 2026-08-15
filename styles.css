@@ -133,13 +133,34 @@
        of app theme. Shared across customer login (#authPage) and vendor login
        (#adminKitchenGate/#adminLogin, in admin.html) so both apps' entry
        screens read as one common design. */
-    #authPage .hero, #adminKitchenGate .hero, #adminLogin .hero {
+    #adminKitchenGate .hero, #adminLogin .hero {
       background:linear-gradient(160deg,#6366f1 0%,#5457e8 48%,#4338ca 100%);
       border-radius:0 0 32px 32px; border-bottom:none; padding:16px 20px 30px;
       box-shadow:0 14px 30px -12px rgba(67,56,202,.5); overflow:hidden; }
-    #authPage .hero .tagline, #adminKitchenGate .hero .tagline { color:rgba(255,255,255,.88); }
-    #authPage .hero-badge { background:rgba(255,255,255,.16); color:#fff; backdrop-filter:blur(3px); }
-    #authPage .logo-spin, #adminKitchenGate .logo-spin, #adminLogin .logo-spin { border-color:rgba(255,255,255,.3); border-top-color:#fff; }
+    #adminKitchenGate .hero .tagline { color:rgba(255,255,255,.88); }
+    #adminKitchenGate .logo-spin, #adminLogin .logo-spin { border-color:rgba(255,255,255,.3); border-top-color:#fff; }
+    /* Customer login header — Home ke centered hero jaisa: chhota myTiffin
+       platform tag, bada floating vendor logo (wahi float + ring animation),
+       neeche kitchen ka apna naam aur location. Pehle yahan indigo gradient
+       banner tha jisme kitchen ka naam dikhta hi nahi tha; ab login aur Home
+       dono ek hi shakal ke hain, aur logo hamesha us kitchen ka apna hai. */
+    #authPage .hero { border-bottom:none; padding:14px 20px 16px; }
+    #authPage .hero .logo-wrap { position:relative; display:inline-flex;
+      animation:logoFloat 5s ease-in-out infinite; will-change:transform; }
+    #authPage .hero .logo-wrap > img { position:relative; z-index:1; }
+    #authPage .hero .logo-wrap::before {
+      content:''; position:absolute; inset:-5px; border-radius:50%; z-index:0;
+      background:conic-gradient(from 0deg, transparent 0deg, var(--accent) 70deg, transparent 150deg,
+                                transparent 210deg, var(--accent) 280deg, transparent 360deg);
+      opacity:0.5; animation:logoRing 7s linear infinite; will-change:transform; }
+    @media (prefers-reduced-motion: reduce){
+      #authPage .hero .logo-wrap { animation:none; }
+      #authPage .hero .logo-wrap::before { animation:none; opacity:0.28; }
+    }
+    #authPage .h1-platform { justify-content:center; margin-bottom:8px; }
+    .auth-kname { font-size:22px; font-weight:800; color:var(--ink); line-height:1.2;
+      letter-spacing:-0.3px; margin-top:10px; }
+    .auth-kloc { font-size:13px; color:var(--muted); font-weight:500; margin:4px 0 8px; }
     #adminKitchenGate .hero h1, #adminLogin .hero h1 { color:#fff; }
     /* Simple round back button, overlaid on the gradient hero — matches the
        reference login screen's corner back-arrow instead of a plain text link
@@ -407,8 +428,6 @@
     .c1-nw { display:flex; align-items:center; gap:7px; min-width:0; }
     .c1-name { font-size:15.5px; font-weight:800; color:var(--ink); letter-spacing:-0.2px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .c1-price { font-size:14.5px; font-weight:800; color:var(--ink); white-space:nowrap;
-      font-variant-numeric:tabular-nums; }
     /* Ek hi line — sab cards ki height barabar rehti hai */
     .c1-desc { font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:5px; font-weight:400;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
