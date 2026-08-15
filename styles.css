@@ -1,13 +1,10 @@
-﻿/* Externalized CSS — full content moved verbatim from index.html's inline <style> blocks (baseline: cd0cf9b). */
+﻿
     :root{
       --accent:#6366f1; --accent-dark:#4f46e5; --accent-soft:#eef0ff; --accent-glow:rgba(99,102,241,.18);
       --ink:#1e2233; --muted:#6b7280; --line:#e7e9f0; --bg:#f7f8fc; --card:#ffffff;
       --ok:#16a34a; --okbg:#e9f9ef; --danger:#e11d48; --dangerbg:#fdecef;
       --warn:#b45309; --warnbg:#fef6e7; --radius:16px;
-      /* --body-bg jaanbujh ke --bg ke barabar hai. Pehle ye #dfe3ee tha (darker), jisse
-         page pe band ban jaate the — .h1-picker (date+time), #dscView, .dsc-foot,
-         .zo-search-wrap, .zo-chip-row sab isko use karte hai. Ab poora page ek hi
-         background pe hai, upar se neeche tak. Separation ke liye .stuck ka shadow hai. */
+
       --body-bg:#f7f8fc;
     }
     html[data-theme="dark"]{
@@ -16,8 +13,7 @@
       --ok:#4ade80; --okbg:#173021; --danger:#f87171; --dangerbg:#3a1a20;
       --warn:#fbbf24; --warnbg:#332508; --body-bg:#14151f;
     }
-    /* ══════ DARK MODE FIX — ye selectors hardcoded light colors use kar rahe the,
-       isliye dark theme me white patch dikh rahe the. ══════ */
+
     html[data-theme="dark"] .demo-login { background:#2a1f08; border-color:#a16207; }
     html[data-theme="dark"] .hm-ph,
     html[data-theme="dark"] .mc-photo,
@@ -32,16 +28,15 @@
     html[data-theme="dark"] .sb-prep:not(.act) { background:#12283d; color:#93c5fd; }
     html[data-theme="dark"] .st-Cancelled,
     html[data-theme="dark"] .st-Blocked { background:var(--dangerbg); }
-    /* ══════ ICONS — stroke-based vectors (emoji ki jagah) ══════ */
+
     .ic { width:22px; height:22px; flex-shrink:0; fill:none; stroke:currentColor;
           stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; display:block; }
-    /* Telegram-style colored tile: rounded square + white icon */
+
     .ic-tile { width:29px; height:29px; border-radius:8px; display:flex; align-items:center;
                justify-content:center; flex-shrink:0; color:#fff; }
     .ic-tile .ic { width:17px; height:17px; stroke-width:2.1; }
     .ic-tile.em { font-size:15px; line-height:1; }
-    /* Profile ke "Ask AI" row ka animated orb — nav ke .bn-orb jaise hi keyframes,
-       lekin .ic-tile ke 29px slot me fit hone ke liye size adjust kiya hai. */
+
     .pf-orb { position:relative; width:29px; height:29px; flex-shrink:0; }
     .pf-orb-core { position:absolute; inset:0; border-radius:8px;
       background:linear-gradient(135deg,#8b5cf6,#6366f1 45%,#22d3ee);
@@ -61,55 +56,40 @@
     .tile-teal   { background:#14B8A6; }
 
     * { margin:0; padding:0; box-sizing:border-box; }
-    /* Safety net — koi bhi input/select apna explicit color na de to bhi
-       theme text color use ho (dark mode me black-on-black jaisa bug rokta hai) */
+
     input, select, textarea, button { color:var(--ink); font-family:inherit; }
     html { overflow-x:hidden; }
-    /* SPA views showView() se hidden/unhidden hote hain (poora page navigate
-       nahi hota) — is wajah se browser ka "scroll anchoring" heuristic kabhi
-       kabhi showView() ke apne scrollTo(0,0) reset ko fight kar deta hai
-       (bade page se chhote page pe switch karte waqt). Anchoring off. */
+
     html, body { overflow-anchor:none; }
     body { font-family:'Segoe UI', system-ui, -apple-system, sans-serif; background:var(--body-bg); min-height:100dvh; color:var(--ink); transition:background .2s; overflow-x:hidden; max-width:100%; }
-    /* Phone pe container (--bg) aur body (--body-bg) ke beech ka white seam hata do.
-       Desktop pe side-gutter effect waise hi rehta hai. */
+
     @media (max-width:520px){ body { background:var(--bg); } }
-    /* Page kabhi horizontally scroll na ho. Andar ke carousel (jaise Today's Meals)
-       apne aap me scroll karte hain — unka overflow page tak nahi jaana chahiye. */
+
     .container { overflow-x:clip; }
     #homeMealRow { max-width:100%; scrollbar-width:none; }
     #homeMealRow::-webkit-scrollbar { display:none; }
     .container { max-width:480px; margin:0 auto; background:var(--bg); min-height:100dvh; position:relative; }
-    /* Vendor logo <img> ka default 'logo-round.png' HTML parse hote hi paint ho jaata
-       hai (JS chalne se pehle) — real vendor logo aane tak chhupa do, warna galat
-       (generic) logo ek pal ke liye dikh ke phir sahi logo se replace hota dikhta hai. */
+
     .vbrand-logo { opacity:0; transition:opacity .18s ease; }
     .vbrand-logo.vb-ready { opacity:1; }
-    /* Vendor logo ka shape har placement khud decide karta hai (neeche explicit).
-       Pehle `border-radius:50% !important` sab jagah circle force kar raha tha — usne
-       .pf-logo (10px) aur .cmp-ic (10px) ke designed radius ko bhi override kar diya tha.
-       object-fit:contain — `cover` square logo ke corners crop kar deta tha (Shyam Rasoi
-       ka "Pure Vegetarian / Affordable Home Delivery" text kat raha tha). */
+
     img.vbrand-logo { object-fit:contain; }
-    /* Circle rakhne wale placements — inme `contain` NAHI chalta: agar vendor ka logo
-       square nahi hai to wo letterbox ho jaata hai aur circle me upar-neeche khaali
-       bands dikhti hai (logo "cut" jaisa lagta hai). Circle avatar ke liye `cover`
-       sahi hai — circle poora bharta hai, bas kinare thode crop hote hai. */
+
     img.brand-ic.vbrand-logo,
     .logo img.vbrand-logo,
     .pub-logo img.vbrand-logo,
     .bl-logo img.vbrand-logo { border-radius:50%; object-fit:cover; }
     img.h1-logo.vbrand-logo,
     img.zo-avatar.vbrand-logo { object-fit:cover; }
-    /* "Our Kitchen" compare icon circle rahega (.cmp-ic.usi khud .cmp-ic se specific hai) */
+
     .cmp-ic.usi { border-radius:50%; overflow:hidden; }
     .cmp-ic.usi img { border-radius:50%; object-fit:contain; }
 
-    /* HERO — clean flat header with proper top-left back button */
+
     .hero { background:var(--bg); padding:20px 20px 18px; text-align:center; color:var(--ink); position:relative; border-bottom:1px solid var(--line); }
     .hero.sub-hero { padding-top:52px; }
-    .hero.sub-hero.no-title { padding-top:46px; padding-bottom:0; }   /* sirf top strip, title nahi */
-    /* Sub-page top strip — brand + language, taaki har page pe context rahe */
+    .hero.sub-hero.no-title { padding-top:46px; padding-bottom:0; }
+
     .sub-tb { position:absolute; top:10px; left:0; right:0; display:flex; align-items:center; gap:10px; padding:0 14px; }
     .brand-ic { width:22px; height:22px; vertical-align:-5px;
                 margin-right:7px; display:inline-block; }
@@ -126,24 +106,14 @@
     .lang-switch select { background:var(--bg); border:1.5px solid var(--line); color:var(--ink); font-size:12px; font-weight:700; padding:6px 10px; border-radius:10px; outline:none; }
     .lang-switch select option { color:#333; }
 
-    /* AUTH HERO — gradient banner + animated tiffin illustration. Deliberately
-       NOT theme-driven (no var(--accent) swap): like a brand banner, it stays
-       the same vivid indigo in light and dark mode, matching how the reference
-       login screens this was modeled on keep one fixed hero color regardless
-       of app theme. Shared across customer login (#authPage) and vendor login
-       (#adminKitchenGate/#adminLogin, in admin.html) so both apps' entry
-       screens read as one common design. */
+
     #adminKitchenGate .hero, #adminLogin .hero {
       background:linear-gradient(160deg,#6366f1 0%,#5457e8 48%,#4338ca 100%);
       border-radius:0 0 32px 32px; border-bottom:none; padding:16px 20px 30px;
       box-shadow:0 14px 30px -12px rgba(67,56,202,.5); overflow:hidden; }
     #adminKitchenGate .hero .tagline { color:rgba(255,255,255,.88); }
     #adminKitchenGate .logo-spin, #adminLogin .logo-spin { border-color:rgba(255,255,255,.3); border-top-color:#fff; }
-    /* Customer login header — Home ke centered hero jaisa: chhota myTiffin
-       platform tag, bada floating vendor logo (wahi float + ring animation),
-       neeche kitchen ka apna naam aur location. Pehle yahan indigo gradient
-       banner tha jisme kitchen ka naam dikhta hi nahi tha; ab login aur Home
-       dono ek hi shakal ke hain, aur logo hamesha us kitchen ka apna hai. */
+
     #authPage .hero { border-bottom:none; padding:14px 20px 16px; }
     #authPage .hero .logo-wrap { position:relative; display:inline-flex;
       animation:logoFloat 5s ease-in-out infinite; will-change:transform; }
@@ -162,9 +132,7 @@
       letter-spacing:-0.3px; margin-top:10px; }
     .auth-kloc { font-size:13px; color:var(--muted); font-weight:500; margin:4px 0 8px; }
     #adminKitchenGate .hero h1, #adminLogin .hero h1 { color:#fff; }
-    /* Simple round back button, overlaid on the gradient hero — matches the
-       reference login screen's corner back-arrow instead of a plain text link
-       floating above the banner. */
+
     .auth-back-btn { position:absolute; top:14px; left:14px; z-index:5;
       width:34px; height:34px; border-radius:50%; background:#fff;
       box-shadow:0 4px 10px rgba(0,0,0,.2); display:flex; align-items:center;
@@ -220,7 +188,7 @@
     .spin { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,0.45); border-top-color:#fff; border-radius:50%; animation:sp .7s linear infinite; vertical-align:-2px; }
     button.is-busy { opacity:0.75; cursor:progress; }
     button.is-busy .spin { border-color:rgba(0,0,0,0.18); border-top-color:currentColor; }
-    /* Light background wale buttons (ADD) par white spinner dikhta hi nahi */
+
     .mc-add .spin { border-color:rgba(0,0,0,0.15); border-top-color:var(--accent); }
     @keyframes sp { to{ transform:rotate(360deg); } }
     .paid-badge { background:var(--okbg); color:var(--ok); font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:9px; }
@@ -232,8 +200,8 @@
       transition:transform .15s cubic-bezier(.2,.8,.2,1); }
     .sub-push:active { transform:scale(0.985); }
 
-    /* ══════ AI HELP ASSISTANT ══════ */
-    /* Animated orb — pure CSS (koi GIF file nahi, dark mode me bhi kaam karta hai) */
+
+
     .ai-orb { position:relative; width:42px; height:42px; flex:0 0 auto; }
     .ai-orb .orb-core { position:absolute; inset:0; border-radius:50%;
       background:linear-gradient(135deg,#8b5cf6,#6366f1 45%,#22d3ee);
@@ -262,10 +230,7 @@
     .demo-login button { width:100%; background:#f59e0b; color:#fff; border:none; padding:11px; border-radius:11px; font-size:13px; font-weight:900; cursor:pointer; font-family:inherit; }
     .demo-creds { background:var(--accent-soft); border-radius:9px; padding:9px 11px; font-size:11.5px; font-weight:700; color:var(--accent-dark); margin-top:9px; line-height:1.7; }
 
-    /* Chat ko viewport pe pin kiya — pehle ye normal flow me 100dvh block tha, aur
-       input focus hone par Android page ko scroll karke .qa-top header chhupa deta tha.
-       Fixed hone se header kabhi scroll out nahi hoga. z-index bottom-nav (150) se
-       neeche rakha hai taaki nav upar dikhe aur tab switch ho sake. */
+
     #qaView { position:fixed; top:0; left:50%; transform:translateX(-50%);
               width:100%; max-width:480px; height:100dvh; z-index:100;
               display:flex; flex-direction:column; background:var(--bg); }
@@ -286,8 +251,7 @@
     .qa-sug span { font-size:11px; font-weight:700; padding:7px 12px; border-radius:15px; border:1.5px solid var(--line); background:var(--card); color:var(--accent); cursor:pointer; transition:background .15s; }
     .qa-sug span:active { background:var(--accent-soft); }
     .qa-in { background:var(--card); border-top:1px solid var(--line); padding:10px 14px calc(10px + env(safe-area-inset-bottom)); display:flex; gap:9px; align-items:center; flex:0 0 auto; }
-    /* Bottom nav (fixed, ~74px + 14px gap) chat input ke upar float karta hai —
-       utni jagah chhod do warna input nav ke peeche chhup jaata hai. */
+
     .qa-in { padding-bottom:calc(90px + env(safe-area-inset-bottom)); }
     .qa-in input { flex:1; border:1.5px solid var(--line); border-radius:20px; padding:10px 15px; font-size:12.5px; background:var(--bg); color:var(--ink); font-family:inherit; }
     .qa-in input:focus { outline:none; border-color:var(--accent); }
@@ -296,7 +260,7 @@
     .qa-typing span { display:inline-block; width:6px; height:6px; margin:0 1.5px; border-radius:50%; background:var(--muted); animation:qaDot 1.2s infinite; }
     .qa-typing span:nth-child(2){animation-delay:.2s;} .qa-typing span:nth-child(3){animation-delay:.4s;}
     @keyframes qaDot { 0%,60%,100%{opacity:.3;transform:translateY(0);} 30%{opacity:1;transform:translateY(-3px);} }
-    /* Home landing */
+
     .lp-sec-t { font-size:14px; font-weight:900; color:var(--ink); margin:18px 0 10px; }
     .hm-card { display:flex; align-items:center; gap:12px; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:9px; cursor:pointer; }
     .hm-ph { width:52px; height:52px; border-radius:12px; background:linear-gradient(135deg,#f0f2f8,#e2e6f0); display:flex; align-items:center; justify-content:center; font-size:26px; overflow:hidden; flex-shrink:0; }
@@ -307,12 +271,12 @@
     .hm-pill { font-size:9.5px; font-weight:800; padding:3px 9px; border-radius:10px; flex-shrink:0; }
     .hm-pill.open { background:var(--okbg); color:var(--ok); }
     .hm-pill.closed { background:var(--dangerbg); color:var(--danger); }
-    /* ── Full-width stacked meal cards (theme-aware) ── */
+
     .fmeal { position:relative; border-radius:20px; overflow:hidden; height:150px; margin-bottom:14px;
       box-shadow:0 5px 18px rgba(0,0,0,0.10); cursor:pointer; background:var(--card); }
     html[data-theme="dark"] .fmeal { box-shadow:0 5px 18px rgba(0,0,0,0.4); }
-    /* ══════════ COMPACT MERGED HOME — refined ══════════ */
-    /* Header */
+
+
     .h1-top { display:flex; align-items:center; gap:12px; padding:14px 18px 12px; }
     .h1-logo { width:44px; height:44px; border-radius:50%; object-fit:cover; flex-shrink:0;
       box-shadow:0 2px 8px rgba(0,0,0,0.10); }
@@ -322,12 +286,10 @@
     .h1-loc { font-size:11.5px; color:var(--muted); font-weight:500; margin-top:2px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    /* Centered hero header (bada logo, naam+location neeche) */
+
     .h1-top.h1-centered { flex-direction:column; align-items:center; text-align:center; gap:10px; padding:22px 18px 16px; position:relative; }
     .h1-top.h1-centered .h1-logo { width:96px; height:96px; box-shadow:0 4px 16px rgba(0,0,0,0.12); }
-    /* Logo animation — sirf `transform` animate hota hai, isliye GPU pe chalta hai aur
-       layout/paint dobara nahi hota (kam load). Do cheez: dheema float aur ek
-       slow-rotating gradient ring jo logo ke peeche se jhaankti hai. */
+
     .h1-logo-wrap { position:relative; display:inline-flex; flex-shrink:0; }
     .h1-logo-wrap > img { position:relative; z-index:1; }
     .h1-top.h1-centered .h1-logo-wrap { animation:logoFloat 5s ease-in-out infinite; will-change:transform; }
@@ -343,13 +305,11 @@
       .h1-top.h1-centered .h1-logo-wrap::before { animation:none; opacity:0.28; }
     }
     .h1-top.h1-centered .h1-tt { flex:none; width:100%; }
-    /* Platform attribution — small, muted, sits above the vendor's own (dominant)
-       logo/name. Not meant to compete with vendor branding, just a quiet "this
-       runs on myTiffin" signal so the app doesn't read as the vendor's own app. */
+
     .h1-platform { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:800;
       color:var(--muted); letter-spacing:0.2px; }
     .h1-platform-ic { width:16px; height:16px; border-radius:5px; object-fit:cover; }
-    /* Kitchen ka aggregate rating — hero ke top-left corner me (bell top-right leta hai) */
+
     .h1-rate { position:absolute; top:16px; left:16px; display:flex; flex-direction:column;
       align-items:center; gap:3px; z-index:2; }
     .h1-rate-pill { display:inline-flex; align-items:center; gap:4px; background:#267e3e; color:#fff;
@@ -359,7 +319,7 @@
       border-bottom:1.5px dotted var(--line); padding-bottom:1px; }
     .h1-top.h1-centered .h1-name { font-size:22px; white-space:normal; }
     .h1-top.h1-centered .h1-loc { font-size:13px; margin-top:4px; white-space:normal; }
-    /* Notification bell — hero ke top-right corner me */
+
     .h1-bell { position:absolute; top:16px; right:16px; z-index:2; width:38px; height:38px;
       border-radius:50%; background:var(--card); border:1.5px solid var(--line); display:flex;
       align-items:center; justify-content:center; font-size:17px; cursor:pointer;
@@ -368,33 +328,24 @@
       border-radius:9px; background:var(--danger); color:#fff; font-size:9.5px; font-weight:900;
       display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--card); }
 
-    /* Sticky date + time picker */
+
     .h1-picker { padding:0 18px 12px; position:sticky; top:0; z-index:6;
       background:var(--body-bg); transition:box-shadow .2s ease; }
     html[data-theme="dark"] .h1-picker { background:var(--bg); }
     .h1-picker.stuck { box-shadow:0 6px 16px -8px rgba(0,0,0,0.18); }
     html[data-theme="dark"] .h1-picker.stuck { box-shadow:0 6px 16px -8px rgba(0,0,0,0.6); }
 
-    /* Body */
+
     .h1-body { padding:2px 18px 18px; }
-    /* Cart bar fixed hai (bottom:82px, ~60px tall → viewport bottom se 142px tak).
-       Jab wo dikh raha ho to content ke neeche cartView jaisi hi jagah chhodo
-       (.section.pad-sticky = 152px), warna last meal card bar ke peeche dab jaata hai.
-       Class JS se toggle hoti hai — cart khaali ho to ye gap nahi chahiye. */
+
     .h1-body.with-bar { padding-bottom:152px; }
 
-    /* ── Meal card: photo + price + ADD, one compact unit ── */
+
     .c1card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px;
       margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04), 0 6px 16px -10px rgba(0,0,0,0.12);
       transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s ease; }
     html[data-theme="dark"] .c1card { box-shadow:0 1px 3px rgba(0,0,0,0.3), 0 6px 16px -10px rgba(0,0,0,0.5); }
-    /* ⚠️ Entrance animation sirf #mealPanel ke pehle real paint par — is class ke
-       bina .c1card animate nahi karta. Pehle animation hamesha .c1card par lagi
-       thi, isliye har re-render (meal-tab switch, date switch, live stats/image
-       load) par saare cards phir se fade+slide karte — poora panel "flicker"
-       jaisa lagta tha. Ab #mealPanel.mp-anim sirf pehli baar (skeleton se asli
-       menu tak) lagti hai, JS usse turant hata deta hai — baad ke updates
-       silently DOM replace karte hain, koi replay nahi. */
+
     #mealPanel.mp-anim .c1card { animation:c1in .32s cubic-bezier(.2,.8,.2,1) both; }
     #mealPanel.mp-anim .c1card:nth-child(2) { animation-delay:.05s; }
     #mealPanel.mp-anim .c1card:nth-child(3) { animation-delay:.1s; }
@@ -407,20 +358,12 @@
     .c1-img { width:76px; height:76px; border-radius:14px; object-fit:cover; flex-shrink:0;
       background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:32px;
       transition:transform .25s cubic-bezier(.2,.8,.2,1); }
-    /* ⚠️ Pehle .c1card.c1-open:active tha (poore card pe) — :active CSS ke
-       upward-bubble ki wajah se, neeche wale ".c1-actions" ke andar "ADD +"
-       button dabate hi bhi ye match ho jaata tha (button parent card ke
-       andar hai), isliye Add tap karne par bhi photo achanak "pop" karti
-       thi. Ab sirf .c1-top (jo actually tap-to-open area hai) active hone
-       par hi zoom ho — Add+ button alag .c1-actions row me hai, wo iske
-       andar aata hi nahi. -->
-    .c1card.c1-open .c1-top:active .c1-img { transform:scale(1.04); }
-    /* meal image load hone tak halka shimmer skeleton (default photo flash rokne ke liye) */
+
     .c1-imgskel { background:linear-gradient(100deg, var(--accent-soft) 30%, rgba(255,255,255,.55) 50%, var(--accent-soft) 70%);
       background-size:200% 100%; animation:c1shimmer 1.1s ease-in-out infinite; }
     @keyframes c1shimmer { 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
     .c1-info { flex:1; min-width:0; }
-    /* veg dot — name ke saath inline (alag line pe card lambi ho jaati thi) */
+
     .c1-veg { width:13px; height:13px; border:1.5px solid var(--ok); border-radius:3px;
       display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
     .c1-veg::after { content:''; width:5.5px; height:5.5px; background:var(--ok); border-radius:50%; }
@@ -428,7 +371,7 @@
     .c1-nw { display:flex; align-items:center; gap:7px; min-width:0; }
     .c1-name { font-size:15.5px; font-weight:800; color:var(--ink); letter-spacing:-0.2px;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    /* Ek hi line — sab cards ki height barabar rehti hai */
+
     .c1-desc { font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:5px; font-weight:400;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
@@ -445,10 +388,9 @@
     .c1-add:active { transform:translateY(1px) scale(0.97); box-shadow:none; }
     .c1-add.off { background:transparent; color:var(--muted); box-shadow:none; border:1px solid var(--line);
       font-weight:700; padding:9px 20px; cursor:default; }
-    /* Dark mode me glow aur halka — warna button bhadakta hai */
+
     html[data-theme="dark"] .c1-add { box-shadow:none; }
-    /* Cart me add ho chuka hai → ADD ki jagah stepper (Zomato/Swiggy jaisa).
-       Width ADD button ke barabar rakhi hai taaki card ka layout na hile. */
+
     .c1-step { display:inline-flex; align-items:center; justify-content:space-between;
       background:var(--accent); border-radius:12px; padding:2px; min-width:112px;
       box-shadow:0 2px 8px -3px rgba(99,102,241,0.45); animation:stepIn .18s cubic-bezier(.2,.8,.2,1); }
@@ -477,9 +419,9 @@
     .fmeal-add { background:var(--accent); color:#fff; border:none; font-family:inherit; font-weight:900;
       font-size:12.5px; padding:8px 18px; border-radius:22px; cursor:pointer; box-shadow:0 4px 12px rgba(99,102,241,0.4); }
     .fmeal-add:active { transform:scale(0.96); }
-    /* Cart me hai → green tick + count, tap karne pe menu khulta hai jaha stepper hai */
+
     .fmeal-add.in-cart { background:var(--ok); }
-    /* Public landing */
+
     .mode-cards { display:flex; gap:10px; margin-top:16px; }
     .mode-card { flex:1; border:2px solid var(--line); background:var(--card); border-radius:15px; padding:16px 8px; cursor:pointer; }
     .mode-card:active, .mode-card.on { border-color:var(--accent); background:var(--accent-soft); }
@@ -503,11 +445,10 @@
     .fld-hint { font-size:10.5px; color:var(--muted); margin-top:5px; line-height:1.45; }
     .cfg-chk { display:flex; align-items:center; gap:9px; background:var(--card); border:1.5px solid var(--line); border-radius:11px; padding:11px 13px; font-size:12.5px; font-weight:700; color:var(--ink); margin-bottom:8px; cursor:pointer; }
     .cfg-chk input { width:17px; height:17px; accent-color:var(--accent); }
-    /* Profile */
-    /* Profile header — plain background (Telegram jaisa), koi colored card nahi */
+
+
     .pf-card { background:transparent; border-radius:0; padding:10px 18px 22px; text-align:center; color:var(--ink); }
-    /* Avatar + camera badge (Telegram jaisa). Badge abhi disabled hai — photo
-       upload feature aane par .pf-avwrap se .disabled hata dena. */
+
     .pf-avwrap { position:relative; display:inline-block; }
     .pf-ava { width:92px; height:92px; border-radius:50%;
               background:linear-gradient(135deg,var(--accent),#8b93ff); color:#fff;
@@ -565,7 +506,7 @@
     .nob-info { font-size:14px; opacity:0.92; margin-top:4px; }
     .nob-total { font-size:36px; font-weight:900; margin-top:12px; }
     .nob-btn { margin-top:24px; background:var(--card); color:#e11d48; border:none; border-radius:14px; padding:16px 32px; font-size:16px; font-weight:900; cursor:pointer; }
-    /* ===== SIMPLIFIED MENU ===== */
+
     .menu-topbar { display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--card); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
     .menu-topbar .mt-title { flex:1; min-width:0; }
     .menu-topbar .mt-name { font-size:15px; font-weight:900; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -579,7 +520,7 @@
     .menu-dt select { width:100%; padding:12px 12px; border:1px solid var(--line); border-radius:13px; font-size:13.5px; font-weight:700; background:var(--card); color:var(--ink); font-family:inherit; transition:border-color .18s ease; }
     .menu-dt select:focus { outline:none; border-color:var(--accent); }
 
-    /* Menu cards (Zomato-style) */
+
     .mcard { background:var(--card); margin-bottom:12px; border-radius:16px; border:1.5px solid var(--line); padding:13px; cursor:pointer; }
     .mc-body { display:flex; gap:13px; }
     .mcard:active { box-shadow:0 4px 14px rgba(99,102,241,0.15); }
@@ -594,12 +535,12 @@
     .mc-photo { width:112px; height:104px; border-radius:14px; object-fit:cover; background:linear-gradient(135deg,#f0f2f8,#e2e6f0); display:flex; align-items:center; justify-content:center; font-size:38px; }
     .mc-actions { display:flex; align-items:center; justify-content:space-between; gap:10px;
                   margin-top:13px; padding-top:12px; border-top:1px solid var(--line); }
-    /* PRIMARY — bhara hua accent button, aankh sabse pehle yahin jati hai */
+
     .mc-add { background:var(--accent); border:none; color:#fff; font-weight:900; font-size:14px;
               font-family:inherit; padding:11px 30px; border-radius:12px; cursor:pointer;
               white-space:nowrap; box-shadow:0 4px 12px rgba(99,102,241,0.28); }
     .mc-add:active { transform:translateY(1px); }
-    /* SECONDARY — sirf text, taaki ADD se compete na kare */
+
     .mc-cust { background:none; border:none; font-family:inherit; font-size:12.5px; font-weight:800;
                color:var(--accent-dark); padding:10px 4px; cursor:pointer; white-space:nowrap; }
     .menu-closed { text-align:center; padding:40px 20px; color:var(--muted); font-size:13px; font-weight:600; background:var(--card); border-radius:14px; border:1.5px solid var(--line); }
@@ -608,7 +549,7 @@
     .already-card .ac-t { font-size:14.5px; font-weight:900; color:var(--ink); margin-top:9px; line-height:1.45; }
     .already-card .ac-s { font-size:12px; font-weight:800; color:var(--ok); margin-top:5px; }
 
-    /* Bottom sheet popup */
+
     .sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:flex-end; justify-content:center; z-index:200; }
     .sheet-overlay.hidden { display:none !important; }
     .sheet { background:var(--bg); width:100%; max-width:480px; border-radius:22px 22px 0 0; max-height:92vh; overflow-y:auto; animation:sheetUp .25s ease; }
@@ -644,13 +585,13 @@
     .sh-qty .qn { width:30px; text-align:center; font-size:15px; font-weight:800; }
     .sh-add { flex:1; background:var(--accent); color:#fff; border:none; border-radius:12px; padding:14px; font-size:15px; font-weight:900; cursor:pointer; }
 
-    /* Home date row — Today/Tomorrow/Day After chips */
+
     .dt-chips { display:flex; gap:8px; }
     .dt-chip { flex:1; text-align:center; padding:9px 0; border:1.5px solid var(--line); border-radius:12px; font-size:12.5px; font-weight:800; color:var(--ink); background:var(--card); cursor:pointer; }
     .dt-chip.sel { border-color:var(--accent); background:var(--accent-soft); color:var(--accent-dark); }
     .dt-chip.off { opacity:0.4; cursor:not-allowed; }
 
-    /* Admin variants editor */
+
     .var-meal-tabs { display:flex; gap:8px; margin-bottom:12px; }
     .var-meal-tabs button { flex:1; padding:9px 4px; border:1.5px solid var(--line); border-radius:10px; background:var(--card); font-size:12px; font-weight:800; color:var(--muted); cursor:pointer; }
     .var-meal-tabs button.on { border-color:var(--accent); background:var(--accent-soft); color:var(--accent-dark); }
@@ -666,15 +607,15 @@
     .var-row2 input { flex:1; }
     .var-del { background:none; border:none; color:var(--danger); font-size:12px; font-weight:800; cursor:pointer; padding:4px 0; }
     .var-up-status { font-size:10px; color:var(--muted); margin-top:2px; }
-    /* Admin order date tabs */
+
     .date-tabs { display:flex; gap:8px; margin:4px 0 12px; }
     .date-tabs .dt-btn { flex:1; padding:10px 4px; border:1.5px solid var(--line); border-radius:11px; background:var(--card); font-size:12.5px; font-weight:800; color:var(--muted); cursor:pointer; }
     .date-tabs .dt-btn.active { border-color:var(--accent); background:var(--accent); color:#fff; }
     .oc { cursor:pointer; }
     .oc-tap-hint { font-size:10px; color:var(--accent-dark); font-weight:700; margin-top:6px; text-align:right; }
-    /* Unread notification — chhota accent left-border, tap se read ho ke gayab ho jaata hai */
+
     .notif-row.unread { border-left:3px solid var(--accent); }
-    /* Bulk order page — "Recent Bulk Orders" table */
+
     .bulk-hist-table { width:100%; border-collapse:collapse; font-size:12.5px; }
     .bulk-hist-table th { text-align:left; color:var(--muted); font-size:11px; font-weight:800; padding:6px 8px; border-bottom:1.5px solid var(--line); white-space:nowrap; }
     .bulk-hist-table td { padding:9px 8px; border-bottom:1px solid var(--line); font-weight:700; color:var(--ink); white-space:nowrap; }
@@ -692,7 +633,7 @@
     .om-total .t-amt { font-size:20px; font-weight:900; color:var(--ok); }
     .om-status-btns { display:flex; gap:8px; margin-top:14px; }
     .om-status-btns button { flex:1; padding:12px 4px; border-radius:11px; border:1.5px solid var(--line); font-size:12px; font-weight:800; cursor:pointer; background:var(--card); }
-    /* Customer My Orders — compact tappable rows */
+
     .ord-row { display:flex; align-items:center; gap:11px; background:var(--card); border:1.5px solid var(--line); border-radius:13px; padding:12px 13px; margin-bottom:9px; cursor:pointer; }
     .ord-row:active { box-shadow:0 3px 12px rgba(99,102,241,0.14); }
     .ord-row .or-date { flex:1; min-width:0; }
@@ -702,15 +643,15 @@
     .ord-row .or-total { font-size:14px; font-weight:900; color:var(--ink); }
     .ord-row .or-chev { color:var(--muted); font-size:16px; flex-shrink:0; }
     .ord-pill { display:inline-block; font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:10px; margin-top:3px; }
-    /* Bottom navigation bar */
-    /* Floating pill nav (Telegram jaisa) — screen ke bottom se uthaya hua */
+
+
     .bottom-nav { position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
                   width:calc(100% - 26px); max-width:430px; background:var(--card);
                   border:1px solid var(--line); border-radius:26px; display:flex;
                   padding:6px 5px; z-index:150; box-shadow:0 8px 26px rgba(0,0,0,0.16); }
     .bn-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 3px 6px; cursor:pointer; position:relative; border:none; background:none; border-radius:20px; transition:background .18s; }
     .bn-item.active { background:var(--accent-soft); }
-    /* Profile nav = user ka initial avatar (Telegram jaisa), plain icon nahi */
+
     .bn-av { width:23px; height:23px; border-radius:50%; display:flex; align-items:center;
              justify-content:center; font-size:11px; font-weight:900; color:#fff;
              background:linear-gradient(135deg,var(--accent),#8b93ff); flex-shrink:0; }
@@ -720,8 +661,8 @@
     .bn-item.active .bn-lbl { color:var(--accent-dark); }
     .bn-item .bn-badge { position:absolute; top:3px; right:calc(50% - 17px); background:var(--danger); color:#fff; font-size:9px; font-weight:800; min-width:15px; height:15px; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 3px; }
     .bn-badge.zero { display:none; }
-    .sticky-bar.no-nav { bottom:14px; }   /* jin pages pe bottom-nav nahi hai (checkout) */
-    /* ── Admin bottom nav (left drawer ki jagah — customer app jaisa hi feel) ── */
+    .sticky-bar.no-nav { bottom:14px; }
+
     .admin-bottom-nav { position:fixed; bottom:14px; left:50%; transform:translateX(-50%);
                   width:calc(100% - 26px); max-width:430px; background:var(--card);
                   border:1px solid var(--line); border-radius:26px; display:flex;
@@ -744,11 +685,10 @@
     .ps-right { display:flex; align-items:center; gap:14px; }
     .drawer { position:fixed; top:0; left:0; bottom:0; width:270px; max-width:80%; background:var(--card); z-index:201; transform:translateX(-100%); transition:transform .3s ease; box-shadow:4px 0 24px rgba(0,0,0,0.2); display:flex; flex-direction:column; }
     .drawer.open { transform:translateX(0); }
-    /* Sirf ADMIN drawer bacha hai — customer side par bottom nav hi sab kuch hai */
+
 
     .section { padding:20px 16px; }
-    /* Jab floating nav (bottom 14 + ~52h) aur sticky bar (bottom 82 + ~55h)
-       dono ho, content ko itni jagah chahiye warna neeche ka hissa chhup jata hai */
+
     .section.pad-sticky { padding-bottom:152px; }
     .section-title { font-size:17px; font-weight:800; color:var(--ink); margin-bottom:12px; }
 
@@ -767,7 +707,7 @@
     .sold-out-box .so-title { font-size:15px; font-weight:900; color:var(--danger); margin-bottom:4px; }
     .sold-out-box .so-sub { font-size:12.5px; color:var(--muted); }
 
-    /* Horizontal meal tabs */
+
     .meal-tabs { display:flex; gap:6px; margin:6px 0 12px; }
     .meal-tab { flex:1; padding:6px 4px; border:1.5px solid var(--line); border-radius:10px; background:var(--card); font-size:11.5px; font-weight:800; color:var(--muted); cursor:pointer; text-align:center; position:relative; }
     .meal-tab.active { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
@@ -789,8 +729,7 @@
     .dt-cell select, .dt-cell input[type=date] { width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:12px; font-size:13.5px; font-weight:700; background:var(--card); color:var(--ink); font-family:inherit; -webkit-appearance:none; appearance:none; }
     .dt-cell input[type=date]:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
     .dt-cell input[type=date]::-webkit-calendar-picker-indicator { filter:invert(0.45) sepia(1) saturate(4) hue-rotate(220deg); cursor:pointer; }
-    /* Quick Set — one-tap day presets as icon cards (was 3 plain text buttons).
-       Horizontally scrollable so it never wraps awkwardly on narrow phones. */
+
     .sub-qs-row { display:flex; gap:9px; overflow-x:auto; padding:2px 2px 8px; margin-bottom:2px;
       scrollbar-width:none; -ms-overflow-style:none; }
     .sub-qs-row::-webkit-scrollbar { display:none; }
@@ -801,12 +740,11 @@
       display:flex; align-items:center; justify-content:center; font-size:18px; }
     .sub-qs-lbl { font-size:12.5px; font-weight:800; color:var(--ink); line-height:1.25; }
     .sub-qs-sub { font-size:10px; font-weight:600; color:var(--muted); margin-top:2px; line-height:1.3; }
-    /* Live "N meals scheduled per week" summary, above the day list */
+
     .sub-summary-pill { display:flex; align-items:center; gap:7px; background:var(--accent-soft);
       border-radius:11px; padding:10px 13px; font-size:13px; font-weight:800; color:var(--accent-dark);
       margin-bottom:10px; }
-    /* Day list — one clear row per day with a checkbox-style toggle on the
-       right (was a cramped 7-pill strip that didn't read as a weekly list). */
+
     .sub-daylist { border:1.5px solid var(--line); border-radius:14px; overflow:hidden; margin-bottom:4px; }
     .sub-dayrow { display:flex; align-items:center; justify-content:space-between; padding:12px 14px;
       border-bottom:1px solid var(--line); cursor:pointer; }
@@ -842,7 +780,7 @@
     .cust-row .sub { display:block; font-size:11px; color:var(--muted); font-weight:600; }
     .cust-row select { padding:9px 12px; border:1.5px solid var(--line); border-radius:10px; font-size:14px; font-weight:600; background:var(--card); outline:none; max-width:55%; }
 
-    /* About Us — "Us vs Delivery Apps" comparison table */
+
     .cmp-table { border:1.5px solid var(--line); border-radius:14px; overflow:hidden; }
     .cmp-row { display:grid; grid-template-columns:1fr 1fr; }
     .cmp-row:not(:last-child) { border-bottom:1px solid var(--line); }
@@ -870,7 +808,7 @@
     textarea { width:100%; padding:12px 14px; border:2px solid var(--line); border-radius:12px; font-size:14px; font-family:inherit; resize:none; outline:none; background:var(--card); color:var(--ink); }
     textarea:focus { border-color:var(--accent); }
 
-    /* Cart */
+
     .cart-item { background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:11px 13px; margin-bottom:10px; }
     .ci-top { display:flex; justify-content:space-between; font-weight:800; font-size:14px; color:var(--ink); }
     .ci-price { color:var(--ok); }
@@ -879,7 +817,7 @@
     .cart-empty { color:var(--muted); font-size:13px; text-align:center; padding:16px; }
 
     .sticky-bar { position:fixed; bottom:82px; left:50%; transform:translateX(-50%); width:calc(100% - 26px); max-width:430px; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:11px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 8px 24px rgba(0,0,0,0.14); z-index:140; }
-    /* sticky-bar fixed hone se content ke neeche jagah */
+
     #page1, #cartView { padding-bottom:130px; }
     .bar-total { flex:1; }
     .bar-total .amt { font-size:20px; font-weight:800; color:var(--ink); }
@@ -887,8 +825,7 @@
     .bar-btn { padding:14px 22px; background:var(--accent); color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:800; cursor:pointer; }
     .bar-btn:disabled { opacity:0.45; }
     .bar-btn.green { background:linear-gradient(135deg,#25d366,#128c7e); }
-    /* Home ka cart bar — total ki jagah sirf "N items added" + Continue.
-       Poora bar clickable hai, isliye andar koi alag button nahi. */
+
     .sticky-bar.mini-added { gap:12px; align-items:center; cursor:pointer; padding:10px 14px; }
     .sticky-bar.mini-added:active { transform:translateX(-50%) scale(0.99); }
     .mb-thumb { width:38px; height:38px; border-radius:10px; object-fit:cover; flex-shrink:0; background:var(--line); }
@@ -896,9 +833,7 @@
     .mb-go { display:flex; align-items:center; gap:3px; color:var(--accent-dark);
       font-size:14.5px; font-weight:900; white-space:nowrap; }
 
-    /* Checkout total bar — full-width flush-to-edge instead of the floating
-       rounded pill every other .sticky-bar uses, so the total/Place Order stays
-       pinned exactly like the rest of the screen, not "floating" above content. */
+
     #page2Bar { left:0; right:0; bottom:0; width:100%; max-width:480px; margin:0 auto;
       transform:none; border-radius:0; border:none; border-top:1.5px solid var(--line);
       box-shadow:0 -6px 18px rgba(0,0,0,0.08);
@@ -935,27 +870,21 @@
     .wa-fallback.wa-btn { text-decoration:none; background:#25d366; color:#fff; padding:13px 24px; border-radius:12px; margin-top:12px; box-shadow:0 4px 12px rgba(37,211,102,.3); }
     .new-order { margin-top:22px; padding:13px 26px; background:var(--accent); color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:800; cursor:pointer; }
 
-    /* Footer discovery page (.dsc-foot) jaisa — light, muted, koi dark band nahi. */
+
     .footer { text-align:center; font-size:10.5px; color:var(--muted); font-weight:600;
       line-height:1.6; padding:16px 16px calc(16px + env(safe-area-inset-bottom));
       background:transparent; }
-    /* Footer page ke bottom pe chipke. Pehle ye short content ke turant baad aa jaata
-       tha, aur uske neeche khaali light gap dikhta tha (dark band beech me latka hua). */
-    /* Footer bottom pe chipke — sirf profileView pe, jahan content lamba hai.
-       authPage pe min-height:100dvh JAANBUJH KE nahi: uska content viewport se chhota
-       hai, aur forced 100dvh + margin-top:auto ki wajah se content aur footer ke beech
-       bada khali gap ban jaata tha aur page scroll hone lagta tha. Ab footer content ke
-       turant baad aata hai; neeche ki jagah .container (100dvh) bhar deta hai. */
+
+
     #authPage { display:flex; flex-direction:column; }
     #profileView { display:flex; flex-direction:column; min-height:100dvh; }
     #profileView .footer { margin-top:auto; }
-    /* Login page ka spacing thoda kasa — taaki poora content ek screen me aa jaye
-       aur scroll na aaye. Sirf #authPage pe scoped hai, baaki pages waise hi. */
+
     #authPage .hero { padding:14px 20px 12px; }
     #authPage .section { padding:14px 16px; }
     #authPage .center-hint { margin-top:6px; }
     #authPage .footer { padding-top:10px; }
-    /* Bottom nav wale pages pe uski jagah ghata do warna 88px ka extra scroll banta hai */
+
     .has-bottom-nav #profileView { min-height:calc(100dvh - 88px); }
     .footer .f-brand { font-size:13px; font-weight:900; color:var(--ink); letter-spacing:-0.2px; }
     .footer .f-tag { font-size:10.5px; color:var(--muted); font-weight:500; margin-top:4px; line-height:1.45; }
@@ -1006,11 +935,11 @@
     .oc-orders-link { color:var(--accent-dark); font-weight:800; text-decoration:underline; cursor:pointer; }
     .cust-filter-bar { display:flex; justify-content:space-between; align-items:center; background:var(--accent-soft); border:1.5px dashed var(--accent); border-radius:12px; padding:10px 14px; margin-bottom:10px; font-size:12px; font-weight:800; color:var(--accent-dark); }
     .cust-filter-bar b { cursor:pointer; }
-    /* ── Discovery ── */
-    /* ══════ ZOMATO-STYLE DISCOVERY ══════ */
+
+
     #dscView { background:var(--body-bg); }
     html[data-theme="dark"] #dscView { background:var(--bg); }
-    /* ── Big centered loader (fadu feel) ── */
+
     .dsc-loader { display:flex; flex-direction:column; align-items:center; justify-content:center;
       padding:70px 20px; text-align:center; gap:18px; min-height:300px; }
     .dsc-loader .dl-ring { width:56px; height:56px; position:relative; }
@@ -1026,9 +955,7 @@
     .dsc-loader .dl-s { font-size:12px; color:var(--muted); font-weight:600; margin-top:-8px; }
     @keyframes dlspin { to { transform:rotate(360deg); } }
     @keyframes dlpulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.18); } }
-    /* Sticky location header — one single row: brand (left), location (middle),
-       avatar (right), like the reference header this was modeled on. Fixed
-       indigo gradient (not theme-driven — same reasoning as #authPage .hero). */
+
     .zo-head { position:sticky; top:0; z-index:40; padding:14px 15px;
       background:linear-gradient(160deg,#6366f1 0%,#5457e8 55%,#4338ca 100%); border-radius:0 0 24px 24px;
       box-shadow:0 10px 24px -10px rgba(67,56,202,.45); border-bottom:none;
@@ -1049,11 +976,11 @@
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .zo-head-actions { display:flex; align-items:center; gap:9px; flex-shrink:0; }
     .zo-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; border:1.5px solid rgba(255,255,255,.5); }
-    /* Non-blocking "try location again" — fallback-browse state only */
+
     .zo-loc-retry { margin:10px 15px 0; display:flex; align-items:center; gap:8px; background:var(--accent-soft);
       border:1.5px dashed var(--accent); border-radius:12px; padding:10px 13px; font-size:12px; font-weight:800;
       color:var(--accent-dark); cursor:pointer; }
-    /* Search */
+
     .zo-search-wrap { padding:12px 15px 8px; background:var(--body-bg); }
     html[data-theme="dark"] .zo-search-wrap { background:var(--bg); }
     .zo-search { display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line);
@@ -1062,7 +989,7 @@
     .zo-search input { flex:1; border:none; outline:none; background:transparent; font-size:13.5px;
       font-weight:600; color:var(--ink); font-family:inherit; }
     .zo-search input::placeholder { color:var(--muted); font-weight:500; }
-    /* Chips */
+
     .zo-chip-row { display:flex; gap:9px; overflow-x:auto; padding:6px 15px 12px; background:var(--body-bg); }
     html[data-theme="dark"] .zo-chip-row { background:var(--bg); }
     .zo-chip-row::-webkit-scrollbar { display:none; }
@@ -1072,9 +999,9 @@
     .dsc-ac small { font-size:10.5px; color:var(--muted); font-weight:700; }
     .dsc-ac.on { background:var(--danger); color:#fff; border-color:var(--danger); }
     .dsc-ac.on small { color:rgba(255,255,255,0.85); }
-    /* Near You — GPS radius (society-list/area-chips se ALAG, dono saath chalte hain) */
+
     .zo-near-wrap { padding:6px 15px 4px; }
-    /* Auto-search state — Discovery khulte hi location maangte/fetch karte waqt dikhta hai */
+
     .zo-radar-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 24px 44px; gap:20px; }
     .zo-radar { position:relative; width:90px; height:90px; display:flex; align-items:center; justify-content:center; }
     .zo-radar-ring { position:absolute; inset:0; border-radius:50%; border:2px solid var(--accent); opacity:0; animation:zoRadarPulse 2.2s ease-out infinite; }
@@ -1084,18 +1011,16 @@
     @keyframes zoRadarPulse { 0% { transform:scale(0.55); opacity:.65; } 100% { transform:scale(2); opacity:0; } }
     @keyframes zoRadarBounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
     @media (prefers-reduced-motion:reduce) { .zo-radar-ring, .zo-radar-pin { animation:none; } }
-    /* No kitchens within radius yet */
+
     .zo-empty-near { padding:60px 26px 44px; text-align:center; }
-    /* Body */
+
     .zo-body { padding:6px 15px 60px; }
     .zo-sec-title { font-size:15px; font-weight:900; color:var(--ink); margin:6px 2px 13px; }
-    /* ── Zomato Rich card (banner image) ── */
+
     .zrc { background:var(--card); border:1px solid var(--line); border-radius:18px; overflow:hidden;
       margin-bottom:16px; box-shadow:0 4px 16px rgba(0,0,0,0.06); cursor:pointer; transition:transform .12s; }
     .zrc:active { transform:scale(0.99); }
-    /* Vendor card: pehle 150px ka full-width banner tha. Ab logo card ke ANDAR
-       circle me hai, aur naam/cuisine/meta uske right me. Badge + ETA ab absolute
-       nahi (banner hi nahi raha) — neeche inline chips ban gaye. */
+
     .zrc-head { display:flex; align-items:flex-start; gap:13px; }
     .zrc-av { flex:0 0 auto; width:62px; height:62px; border-radius:50%;
       background:var(--accent-soft); background-size:cover; background-position:center;
@@ -1117,17 +1042,17 @@
     .zrc-c { font-size:12.5px; color:var(--muted); margin-top:4px; }
     .zrc-meta { font-size:11.5px; color:var(--muted); font-weight:700; margin-top:9px;
       border-top:1px dashed var(--line); padding-top:9px; }
-    /* Why section */
+
     .zo-why { text-align:center; padding:18px 16px 6px; margin-top:6px; border-top:1px solid var(--line); }
     .zo-why-ic { font-size:30px; }
     .zo-why-t { font-size:16px; font-weight:900; color:var(--ink); margin-top:8px; }
     .zo-why-a { font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.55; }
 
-    /* ── Rating ── */
+
     .rate-nudge { background:var(--warnbg); border:1.5px dashed var(--warn); border-radius:13px; padding:12px 14px; margin-bottom:12px; cursor:pointer; }
     .rate-nudge .rn-t { font-size:13px; font-weight:900; color:var(--warn); }
     .rate-nudge .rn-s { font-size:11.5px; color:var(--muted); margin-top:2px; line-height:1.45; }
-    /* Rating de di gayi — prompt (amber) ki jagah confirm (green) look */
+
     .rate-nudge.rated { background:var(--okbg); border-style:solid; border-color:var(--ok); }
     .rate-nudge.rated .rn-t { color:var(--ok); }
     .star-row { display:flex; gap:8px; justify-content:center; margin:14px 0 4px; }
@@ -1146,49 +1071,31 @@
     .tabs { display:flex; gap:5px; margin:12px 0 16px; background:var(--line); padding:5px; border-radius:14px; }
     .tab-btn { flex:1; padding:9px 2px; border:none; border-radius:10px; font-size:11px; font-weight:800; cursor:pointer; background:transparent; color:var(--muted); }
     .tab-btn.active { background:var(--accent); color:#fff; }
-    /* Admin top bar — hamburger + section title (tabs ki jagah left drawer).
-       Same fixed indigo gradient + rounded-bottom as the customer Discovery
-       header (.zo-head) and login heroes, so vendor and customer chrome
-       reads as one common design instead of two different styles. */
+
     .admin-topbar { position:sticky; top:0; z-index:30;
       background:linear-gradient(160deg,#6366f1 0%,#5457e8 55%,#4338ca 100%);
       border-radius:0 0 22px 22px; box-shadow:0 10px 22px -12px rgba(67,56,202,.45);
       color:#fff; padding:13px 15px 16px; display:flex; align-items:center; gap:13px; }
     .admin-topbar .atb-title { flex:1; font-size:16px; font-weight:900; }
-    /* ══ Admin topbar me vendor brand (logo + naam, ek hi line) ══
-       Vendor jo admin me login kare use apni kitchen ka naam/logo dikhe — pehle
-       topbar sirf section title dikhata tha, koi brand nahi. Height nahi badli. */
+
     .atb-branded { gap:10px; }
     .admin-topbar .atb-logo { flex:none; width:30px; height:30px; border-radius:50%; object-fit:cover; }
     .atb-inline { flex:1; min-width:0; display:flex; align-items:baseline; gap:6px; }
-    /* ⚠️ Naam shrink hota hai, section title NAHI. Title hi asli navigation hai (tab ke
-       saath badalta hai) — lamba vendor naam usko kaatna nahi chahiye. Isliye naam pe
-       flex:1+min-width:0 (ellipsis) aur title pe flex:none. */
+
     .atb-inline .atb-vname { flex:1 1 auto; min-width:0; font-size:15px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .atb-inline .atb-dot { flex:none; opacity:.55; }
     .atb-inline .atb-sect { flex:none; font-size:13px; font-weight:700; opacity:.85; white-space:nowrap; }
-    /* Brand abhi load nahi hua (naam khaali) → "· Orders" ajeeb lagta. CSS se hi chhupa
-       do, koi JS nahi — us case me bilkul aaj jaisa (sirf section title) dikhega. */
+
     .atb-vname:empty { display:none; }
     .atb-vname:empty + .atb-dot { display:none; }
-    /* == Setup page accordion ==
-       Setup me 15 section ek hi scroll me the - bahut lamba ho gaya tha. Ab 5 group,
-       ek waqt pe ek khula. Sirf VISIBILITY badalti hai, DOM me sab kuch rehta hai -
-       isliye saveConfig() aur initConfigEditor() ko chhuna nahi pada (dono
-       getElementById se chalte hain, DOM order/visibility pe depend nahi karte). */
+
     .cfg-acc { border:1px solid var(--line); border-radius:13px; background:var(--card); margin-bottom:9px; overflow:hidden; }
     .cfg-acc-hd { display:flex; align-items:center; gap:11px; padding:13px; cursor:pointer; user-select:none; }
     .cfg-acc-ic { font-size:17px; flex:none; }
     .cfg-acc-tx { flex:1; min-width:0; }
     .cfg-acc-tx b { display:block; font-size:13.5px; font-weight:900; }
     .cfg-acc-tx i { display:block; font-size:11px; font-style:normal; font-weight:600; color:var(--muted); margin-top:2px; }
-    /* ══ Toggle button: plus <-> minus morph ══
-       Do bar hain (::before horizontal, ::after vertical). Band state me dono milke '+'
-       bante hain; khulne pe vertical bar 90deg ghoom ke horizontal me merge ho jaata hai
-       aur fade hota hai -> '-' bach jaata hai. Glyph markup me NAHI hai, isliye JS ka
-       koi kaam nahi -- .open class hi sab kuch karti hai.
-       Arrow (v/^) ki jagah +/- isliye ki +/- batata hai ki TAP karne pe kya HOGA;
-       arrow me hamesha confusion rehta hai ki wo current state hai ya action. */
+
     .cfg-acc-car { flex:none; position:relative; width:30px; height:30px; border-radius:10px; background:var(--bg);
       transition:background .22s ease, box-shadow .22s ease, transform .24s cubic-bezier(.34,1.56,.64,1); }
     .cfg-acc-car::before, .cfg-acc-car::after { content:''; position:absolute; top:50%; left:50%;
@@ -1199,7 +1106,7 @@
     .cfg-acc.open .cfg-acc-car { background:var(--accent); box-shadow:0 0 0 4px var(--accent-glow); transform:scale(1.06); }
     .cfg-acc.open .cfg-acc-car::before, .cfg-acc.open .cfg-acc-car::after { background:#fff; }
     .cfg-acc.open .cfg-acc-car::after { transform:translate(-50%,-50%) rotate(0deg); opacity:0; }
-    /* Press feedback -- tap sach me "daba" hua lagta hai */
+
     .cfg-acc-hd:active .cfg-acc-car { transform:scale(.9); }
     .cfg-acc.open .cfg-acc-hd:active .cfg-acc-car { transform:scale(.98); }
     @media (prefers-reduced-motion: reduce){
@@ -1211,15 +1118,14 @@
     .cfg-flash { animation:cfgFlash 1.2s ease; }
     @keyframes cfgFlash { 0%,100%{ box-shadow:none; } 30%{ box-shadow:0 0 0 3px var(--danger); } }
     .admin-topbar .alert-toggle { float:none; font-size:10.5px; font-weight:800; background:rgba(255,255,255,.18); color:#fff; border-radius:16px; padding:6px 12px; cursor:pointer; }
-    /* Vendor ka notification bell — mandatory/always-on, koi ON/OFF state nahi
-       (alert-toggle se ALAG cheez hai — wo panel-khula-rehte sound alert hai). */
+
     .admin-bell { position:relative; flex:none; width:30px; height:30px; border-radius:9px;
       background:rgba(255,255,255,.22); display:flex; align-items:center; justify-content:center;
       font-size:15px; cursor:pointer; }
     .admin-bell-badge { position:absolute; top:-4px; right:-4px; min-width:16px; height:16px; padding:0 3px;
       border-radius:8px; background:#fff; color:var(--danger); font-size:9px; font-weight:900;
       display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px var(--accent-dark); }
-    /* Admin drawer active item */
+
     #adminPanel .back-link, #adminPanel .alert-toggle { font-size:11px; }
     .chip { display:inline-block; padding:7px 12px; border-radius:20px; background:var(--line); color:var(--muted); font-size:11.5px; font-weight:800; cursor:pointer; margin:0 6px 8px 0; }
     .chip.sel { background:var(--accent); color:#fff; }
@@ -1229,10 +1135,10 @@
     #filterChips .chip[data-f="Preparing"].sel { background:#0d47a1; color:#fff; }
     #filterChips .chip[data-f="Delivered"].sel { background:var(--ok); color:#fff; }
     #filterChips .chip[data-f="Cancelled"].sel { background:var(--danger); color:#fff; }
-    /* Order card: done/cancelled orders dim ho jaate hain, active orders pe attention rahe */
+
     .oc.oc-done { opacity:0.55; }
     .oc.oc-done .oc-quick { display:none; }
-    /* One-tap status buttons — modal khole bina seedha next status */
+
     .oc-meals { margin-top:9px; }
     .ocm { display:flex; align-items:center; gap:8px; padding:7px 9px; border:1px solid var(--line); border-radius:10px; margin-bottom:6px; background:var(--card); }
     .ocm .ocm-t { flex:1; min-width:0; font-size:11.5px; font-weight:700; color:var(--ink); }
@@ -1251,14 +1157,14 @@
     .oc-quick button { flex:1; border:none; border-radius:10px; padding:9px 6px; font-size:11.5px; font-weight:800; cursor:pointer; }
     .oc-quick .qk-prep { background:#e3f2fd; color:#0d47a1; }
     .oc-quick .qk-done { background:var(--okbg); color:var(--ok); }
-    /* Phone ab tappable button jaisa dikhega, plain link nahi */
+
     .oc-call { display:inline-flex; align-items:center; gap:5px; background:var(--accent-soft); color:var(--accent-dark); font-weight:800; padding:5px 11px; border-radius:14px; text-decoration:none; font-size:12px; }
-    /* Aaj ka collection total — cash planning ke liye */
+
     .money-bar { display:flex; gap:8px; margin:4px 0 14px; }
     .money-bar .mb-cell { flex:1; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center; }
     .money-bar .mb-n { font-size:16px; font-weight:900; color:var(--ink); }
     .money-bar .mb-l { font-size:10px; font-weight:700; color:var(--muted); margin-top:1px; }
-    /* Kitchen breakdown — tap se expand, cooking ke waqt exact detail chahiye */
+
     .ks-toggle { text-align:center; font-size:11.5px; font-weight:800; color:var(--accent-dark); cursor:pointer; padding-top:2px; }
     .ks-detail { display:none; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); font-size:12px; color:var(--ink); line-height:1.7; }
     .ks-detail.show { display:block; }
@@ -1302,13 +1208,9 @@
     .center-hint { text-align:center; font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5; padding:0 10px; }
     .auth-or-sep { display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--muted); font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
     .auth-or-sep::before, .auth-or-sep::after { content:''; flex:1; height:1px; background:var(--line); }
-    /* Google button — natural, non-distorted size. Google ke cross-origin
-       iframe ko zoom/scale karna shape distort kar deta hai, isliye avoid.
-       Width force-override hata di — wahi left-shift ka reason thi. */
+
     #googleBtnBox { width:100%; display:flex; justify-content:center; align-items:center; min-height:48px; margin:6px 0; }
-    /* Google button — reference screenshot jaisa: safed, halka border, gol kinare,
-       center me G icon + text. GSI ke rendered button ki jagah custom hai taaki
-       redirect flow chal sake aur look poori tarah control me rahe. */
+
     .g-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:14px;
       background:var(--card); color:var(--ink); border:1.5px solid var(--line);
       border-radius:14px; padding:15px 18px; font-family:inherit; font-size:16px;
@@ -1352,11 +1254,7 @@
   #bootLoader .bl-logo img{width:76px;height:76px;display:block;animation:blPulse 1.6s ease-in-out infinite;}
   @keyframes blPulse{0%,100%{transform:scale(1);opacity:.92;}50%{transform:scale(1.08);opacity:1;}}
   @media (prefers-reduced-motion: reduce){#bootLoader .bl-logo img,#authTransition .bl-logo img,#bootLoader .bl-logo::after,#authTransition .bl-logo::after{animation:none;}}
-  /* ⚠️ Pehle logo ke neeche ek plain ghoomta ring (.bl-spin) tha, letter-avatar
-     (koi real logo na ho tab) ke saath mila ke static/basic dikhta tha. Ab
-     Home page ke meal-image loading jaisa hi shimmer-sweep logo ke UPAR
-     chalta hai (real photo ho ya letter-avatar, dono pe kaam karta hai) —
-     alag spinner ki zaroorat hi nahi. */
+
   #bootLoader .bl-logo,#authTransition .bl-logo{position:relative;width:76px;height:76px;border-radius:50%;overflow:hidden;}
   #bootLoader .bl-logo::after,#authTransition .bl-logo::after{content:'';position:absolute;inset:0;border-radius:50%;
     background:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.6) 50%, transparent 70%);
@@ -1377,36 +1275,23 @@
   #authTransition .bl-logo img{width:76px;height:76px;display:block;animation:blPulse 1.6s ease-in-out infinite;}
   #authTransition .bl-t{font-size:15px;font-weight:800;color:var(--ink);}
   #authTransition .bl-t.welcome{color:var(--accent);font-size:17px;}
-  /* Admin full-screen loading overlay (login ke baad / data fetch ke waqt) */
+
   #adminLoader{position:fixed;inset:0;background:var(--bg);z-index:9998;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:'Segoe UI',system-ui,sans-serif;transition:opacity .25s;}
   #adminLoader.show{display:flex;}
   #adminLoader.gone{opacity:0;pointer-events:none;}
   #adminLoader .al-logo img{width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;animation:blPulse 1.6s ease-in-out infinite;}
-  /* ⚠️ Pehle "#adminLoader .al-spin" tha — sirf #adminLoader ke andar hi style
-     lagti thi. Customer meal-panel skeleton (renderMealPanelNow(), "please
-     wait" card) isi .al-spin class ko admin loader ke BAHAR reuse karta hai
-     ("al-spin (admin loader wala) reuse kiya" — dekho comment wahan) — us
-     scoping ki wajah se wahan spinner literally invisible tha (0×0, koi
-     border/animation nahi), sirf static text dikhta tha, jo "kitchen ka home
-     page hai par kuch load ho hi nahi raha" jaisa broken lagta tha. Ab
-     unscoped, taaki dono jagah kaam kare. */
+
   .al-spin{width:34px;height:34px;border:3.5px solid #e7e9f0;border-top-color:var(--accent);border-radius:50%;animation:blsp .8s linear infinite;}
   #adminLoader .al-t{font-size:14px;font-weight:800;color:var(--ink);}
 
   html[data-theme="dark"] .al-spin,html[data-theme="dark"] .mini-spin,html[data-theme="dark"] .bl-spin{border-color:#2a2d3d;border-top-color:var(--accent);}
 
-    /* ═══ About / Help & Support page — reference screenshot wala layout:
-       round back-button + centered title, ek prominent "Chat with us" banner,
-       aur do bade Contact cards. Reference ka Search aur FAQ jaanbujh ke nahi
-       hain — hamare paas na searchable content hai na FAQ data, isliye khaali
-       shell dikhane se behtar hai na dikhana. ═══ */
     .hs-head { display:flex; align-items:center; gap:12px; padding:14px 16px 6px; }
     .hs-back { width:40px; height:40px; border-radius:50%; flex:none; display:flex;
       align-items:center; justify-content:center; font-size:20px; font-weight:900;
       background:var(--accent); color:#fff; border:none; cursor:pointer; line-height:1;
       box-shadow:0 3px 10px -2px rgba(99,102,241,.5); }
     .hs-title { font-size:21px; font-weight:900; letter-spacing:-0.3px; color:var(--ink); }
-    /* Chat banner — page ka sabse prominent action, isliye solid accent */
     .hs-chat { display:flex; align-items:center; gap:14px; margin:12px 16px 6px;
       padding:16px 18px; border-radius:18px; cursor:pointer; color:#fff;
       background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);
@@ -1417,7 +1302,6 @@
     .hs-chat-t { font-size:16px; font-weight:900; line-height:1.2; }
     .hs-chat-s { font-size:12px; opacity:.9; margin-top:2px; }
     .hs-chat-x { margin-left:auto; font-size:20px; font-weight:900; opacity:.85; }
-    /* Contact cards — do barabar cards, tap karne layak bade targets */
     .hs-cards { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:10px; }
     .hs-card { background:var(--card); border:1.5px solid var(--line); border-radius:16px;
       padding:16px 12px; text-align:center; text-decoration:none; color:inherit;
