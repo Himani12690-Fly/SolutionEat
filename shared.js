@@ -420,7 +420,7 @@
     document.querySelectorAll('[data-i-html]').forEach(el => { el.innerHTML = t(el.getAttribute('data-i-html')); });
     document.querySelectorAll('[data-ph]').forEach(el => { el.placeholder = t(el.getAttribute('data-ph')); });
     if (SESSION && SESSION.name) document.getElementById('profileName').textContent = '👤 ' + SESSION.name;
-    renderDateSelector(); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); renderCart(); renderAbout(); renderHome(); renderProfile();
+    renderDateSelector(); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); renderCart(); if (typeof renderAbout === 'function') renderAbout(); renderHome(); renderProfile();
     if (isLoggedIn()) { const hd=document.getElementById('histDate'); loadMyOrders(hd&&hd.value?hd.value:fmtYMD(dateWithOffset(0))); }
   }
   function initLangSelectors() {

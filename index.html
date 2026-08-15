@@ -478,11 +478,10 @@
   </div>
 
 
-  <!-- ══════ ABOUT (kitchen info card — Zomato-style, only real vendor data) ══════
-       Order: hero/brand → USP strip → "Us vs Delivery Apps" comparison → cancellation
-       policy → contact/legal. Comparison + USP copy already existed as unused i18n
-       keys (badgeFresh/cmpU1-7 etc.) from an earlier, never-wired-up build — reused
-       here as-is, no new translation strings needed. -->
+  <!-- ══════ ABOUT (Help & Support) ══════
+       Chat with us → Contact Us (call/WhatsApp) → "Freshly Prepared" note. Vendor
+       brand card, USP comparison table, cancellation policy and address/hours block
+       were removed on request — kitchen info duplicated what's already on Contact Us. -->
   <div id="aboutView" class="hidden">
     <div class="hs-head">
       <button class="hs-back" onclick="navTo('profile')" aria-label="Back">‹</button>
@@ -516,53 +515,7 @@
       </div>
     </div>
     <div class="section" style="padding-top:0;">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-        <img class="brand-ic vbrand-logo" style="width:52px;height:52px;border-radius:14px;flex:none;" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt="">
-        <div>
-          <div class="vbrand-name" style="font-size:21px;font-weight:900;line-height:1.15;"></div>
-          <div id="abTagline" style="font-size:12.5px;color:var(--muted);font-weight:700;margin-top:2px;"></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <span class="hero-badge" data-i="badgeFresh"></span>
-        <span class="hero-badge" data-i="badgeCustom"></span>
-        <span class="hero-badge" data-i="badgeCOD"></span>
-      </div>
-      <div class="fresh-note" style="margin-top:12px;" data-i="freshStrip"></div>
-    </div>
-
-    <div class="section">
-      <div class="section-title" data-i="cmpQualT"></div>
-      <div style="font-size:12.5px;color:var(--muted);font-weight:600;margin:-6px 0 14px;" data-i="cmpQualS"></div>
-      <div class="cmp-table">
-        <div class="cmp-row cmp-head"><span data-i="cmpUs"></span><span data-i="cmpThem"></span></div>
-        <div class="cmp-row"><span data-i="cmpU1"></span><span data-i="cmpT1"></span></div>
-        <div class="cmp-row"><span data-i="cmpU2"></span><span data-i="cmpT2"></span></div>
-        <div class="cmp-row"><span data-i="cmpU3"></span><span data-i="cmpT3"></span></div>
-        <div class="cmp-row"><span data-i="cmpU4"></span><span data-i="cmpT4"></span></div>
-        <div class="cmp-row"><span data-i="cmpU5"></span><span data-i="cmpT5"></span></div>
-        <div class="cmp-row"><span data-i="cmpU6"></span><span data-i="cmpT6"></span></div>
-        <div class="cmp-row"><span data-i="cmpU7"></span><span data-i="cmpT7"></span></div>
-      </div>
-    </div>
-
-    <div class="section" id="abPolicySection">
-      <div class="section-title" data-i="policyTitle" style="cursor:pointer;" onclick="toggleAboutPolicy()"></div>
-      <div id="abPolicyBody" class="policy-b hidden"></div>
-    </div>
-
-    <div class="section">
-      <div id="abAddr" class="cust-row" style="padding:8px 0;"></div>
-      <!-- Call ab upar ke Contact card me hai (duplicate id hata di); yahan sirf
-           directions bacha hai, jo address ke saath hi sabse zyada sense banata hai. -->
-      <div style="display:flex;gap:10px;margin:10px 0 4px;">
-        <a id="abDirBtn" target="_blank" style="flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;text-decoration:none;color:inherit;background:var(--card);border:1.5px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.08);">🧭</a>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">
-      <div id="abHours" class="cust-row" style="padding:8px 0;"></div>
-      <hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">
-      <div class="cust-row" style="padding:8px 0;"><span>🛵 <span data-i="abDeliveryOnly"></span></span></div>
-      <div id="abLegalBox"></div>
+      <div class="fresh-note" data-i="freshStrip"></div>
     </div>
 
     <div style="padding:16px;">
@@ -1781,14 +1734,6 @@
     if(h) return h+'h';
     return m+'m';
   }
-  // About page — sirf wahi info dikhate hain jo humare paas actually hai (CFG /
-  // VENDOR_BRAND se). Koi bhi field khaali ho to uska row/section hide ho jaata hai.
-  function aboutOpenStatus(){
-    const info=kitchenAvailabilityInfo();
-    if(info.state==='emergency') return `<span style="color:var(--danger);font-weight:800;">${t('abClosedNow')||'Closed now'}</span>`;
-    if(info.state==='open') return `<span style="color:var(--ok);font-weight:800;">${t('abOpenNow')||'Open now'}</span> · ${info.mt.emoji||''} ${esc(info.mt.title||'')} ${(t('abCloses')||'closes')} ${formatMinutesAsClock(cutoffMins(info.mt.key))}`;
-    return '';   // aaj kuch order-yogya nahi bacha — koi status line nahi
-  }
   // Home page ke top par persistent timer/banner — jo bhi meal ABHI order ho
   // sakta hai, uska cutoff kitni der me aa raha hai wahi dikhate hain (breakfast
   // jaisa cutoffAheadDay meal jo aaj order hi nahi ho sakta, kabhi is banner me
@@ -1815,49 +1760,6 @@
     box.innerHTML=html;
     box.classList.remove('hidden');
   }
-  function renderAbout(){
-    // Tagline — real serving windows honi zaroori, fake cuisine tags nahi.
-    const tag=document.getElementById('abTagline');
-    if(tag){
-      const all=Object.values(CFG.variants||{}).flat().map(v=>Number(v.price)).filter(n=>n>0);
-      const priceTxt = all.length ? ('₹'+Math.min(...all)+' '+((t('priceFrom')||'').replace('Meals from ₹{p}','').trim()||'onwards')) : '';
-      tag.textContent = ['🍱 Home Tiffin Service', priceTxt].filter(Boolean).join(' · ');
-    }
-    // Address — township + societies (jo bhi bhara hai), kuch na ho to poora row hide.
-    const ab=document.getElementById('abAddr');
-    if(ab){
-      const parts=[CFG.township].filter(Boolean);
-      const soc=(CFG.societies||[]).slice(0,4).join(', ');
-      if(soc) parts.push(soc+((CFG.societies||[]).length>4?' + more':''));
-      ab.innerHTML = parts.length ? ('📍 <span style="font-weight:700;">'+esc(parts.join(' · '))+'</span>') : '';
-      ab.classList.toggle('hidden', !parts.length);
-    }
-    // Directions button — koi lat/long store nahi karte, isliye township/society naam se
-    // Google Maps search kholte hain (exact pin nahi, par admin ki di hui location text se).
-    const dir=document.getElementById('abDirBtn');
-    if(dir){
-      const q=[CFG.township, (CFG.societies||[])[0]].filter(Boolean).join(' ');
-      if(q){ dir.href='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q); dir.classList.remove('hidden'); }
-      else dir.classList.add('hidden');
-    }
-    const hrs=document.getElementById('abHours');
-    if(hrs){
-      const status=aboutOpenStatus();
-      const windows=(CFG.mealTypes||[]).filter(mt=>mt.enabled!==false).map(mt=>mt.emoji+' '+mt.windowStart+'–'+mt.windowEnd).join(' · ');
-      hrs.innerHTML = status ? ('🕐 '+status+(windows?('<div style="font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:700;">'+esc(windows)+'</div>'):'')) : '';
-    }
-    // Legal info — Legal Name / GST / FSSAI, sirf jo bhara hai wahi dikhega.
-    const lb=document.getElementById('abLegalBox');
-    if(lb){
-      let rows='';
-      if(CFG.legalName) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">${t('legalNameLbl')}</span><span style="font-weight:800;text-align:right;">${esc(CFG.legalName)}</span></div>`;
-      if(CFG.gstNumber) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">${t('gstNumberLbl')}</span><span style="font-weight:800;text-align:right;">${esc(CFG.gstNumber)}</span></div>`;
-      if(CFG.fssai) rows+=`<div class="cust-row" style="padding:8px 0;"><span style="color:var(--muted);font-size:12px;">${t('fssaiLbl')}</span><span style="font-weight:800;text-align:right;">${esc(CFG.fssai)}</span></div>`;
-      lb.innerHTML = rows ? ('<hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">'+rows) : '';
-    }
-    const pb=document.getElementById('abPolicyBody'); if(pb) pb.innerHTML=t('policyBody');
-  }
-  function toggleAboutPolicy(){ const b=document.getElementById('abPolicyBody'); if(b) b.classList.toggle('hidden'); }
   // Vendor ki apni wajah (tempClosedMsg) ho to wahi, warna generic fallback.
   // Brand naam/logo alag se karne ki zaroorat nahi — .vbrand-name/.vbrand-logo
   // classes applyVendorBrand() se already sabhi jagah (is view samet) sync rehte hain.
@@ -2979,7 +2881,7 @@
 
 
   function showSubPage(){ if(!isLoggedIn()){ showAuth(); return; } showView('subView'); loadSub(); }
-  function showAboutPage(){ showView('aboutView'); renderAbout(); }
+  function showAboutPage(){ showView('aboutView'); }
   
 
   // ═══════ AUTH (Google Sign-In — the only customer login method) ═══════
