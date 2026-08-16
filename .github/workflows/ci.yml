@@ -17,11 +17,14 @@ concurrency:
 
 jobs:
   # ── Tez check: seconds me fail hota hai, poora suite chalane se pehle ──
-  # Phone se file edit karne par jo do cheezein sabse pehle tootti hain wahi
+  # Phone se file edit karne par jo cheezein sabse pehle tootti hain wahi
   # yahan pakdi jaati hain: stale build stamp aur inline <script> ka typo.
+  # Test jobs ka matrix bhi yahi banata hai (neeche outputs dekho).
   guard:
     name: Build stamp + syntax
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.groups.outputs.matrix }}
     steps:
       - uses: actions/checkout@v4
 
@@ -45,20 +48,38 @@ jobs:
       - name: JS syntax (inline <script> + shared.js)
         run: node tools/check-syntax.js
 
-  # ── Poora Playwright suite ──
-  # 209 tests hain aur config workers:1 / fullyParallel:false par set hai
-  # (jaan-boojh kar — screenshots aur console-error checks serial chahiye).
-  # Isliye ek machine par ~1.5 ghanta lagta. 6 shards me baant diya: har shard
-  # apne andar serial hi chalta hai, bas machines parallel hain.
+      # Har spec file kisi ek group me honi chahiye. Iske bina naya test file
+      # chupchaap kabhi chalta hi nahi aur CI jhoothi green dikhati rehti.
+      - name: Har test file kisi group me hai?
+        run: node tools/check-test-groups.js
+
+      - name: Test groups -> matrix
+        id: groups
+        run: |
+          echo "matrix=$(node -e "
+            const g = require('./tests/groups.json').groups;
+            process.stdout.write(JSON.stringify(g.map(x => ({
+              name: x.name, files: x.files.join(' ')
+            }))));
+          ")" >> "$GITHUB_OUTPUT"
+
+  # ── Poora Playwright suite, purpose ke hisaab se baante hue ──
+  # Pehle --shard=i/6 tha, jo files ko alphabetically kaat deta hai — "shard 4
+  # fail hua" se ye pata hi nahi chalta tha ke app ka kya toota. Ab job ka naam
+  # hi bata deta hai. Kaunsi file kis group me hai: tests/groups.json.
+  #
+  # Config jaan-boojh kar workers:1 / fullyParallel:false par hai (screenshots
+  # aur console-error checks serial chahiye), isliye groups parallel machines
+  # par chalte hain, har group apne andar serial.
   test:
-    name: Tests (shard ${{ matrix.shard }}/6)
+    name: ${{ matrix.name }}
     needs: guard
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
-      fail-fast: false # ek shard fail ho to baaki bhi poore chalne do
+      fail-fast: false # ek group fail ho to baaki bhi poore chalne do
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        include: ${{ fromJSON(needs.guard.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -73,7 +94,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run tests
-        run: npx playwright test --shard=${{ matrix.shard }}/6
+        run: npx playwright test ${{ matrix.files }}
 
       # Fail hone par screenshot + trace mil jaata hai — phone se bhi
       # download karke dekh sakte ho ke exactly kya toota.
@@ -81,7 +102,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-artifacts-shard-${{ matrix.shard }}
+          # Group naam me spaces/& hote hain, artifact name me nahi chalte
+          name: artifacts-${{ strategy.job-index }}
           path: tests/artifacts/
           retention-days: 7
           if-no-files-found: ignore

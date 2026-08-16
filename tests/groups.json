@@ -1,0 +1,81 @@
+{
+  "_comment": [
+    "CI ke test jobs ka naam aur unme kya chalta hai — ek hi jagah.",
+    "Pehle Playwright ka --shard=i/6 use hota tha. Wo files ko alphabetically",
+    "kaat deta hai, to 'shard 4 fail hua' se ye pata hi nahi chalta tha ke KYA",
+    "toota — har baar logs kholne padte the. Ab har job ka naam batata hai ke",
+    "app ka kaunsa hissa fail hua.",
+    "",
+    "Naya spec file banao to use yahan kisi group me daalna ZAROORI hai —",
+    "tools/check-test-groups.js guard job me fail kar dega. Wo jaan-boojh kar",
+    "hai: bina us check ke, group me na likhi gayi file chupchaap kabhi chalti",
+    "hi nahi, aur CI green dikhata rehta.",
+    "",
+    "Balance test-count se hai, par 'Scale & load' jaan-boojh kar alag hai:",
+    "usme test kam hain lekin wo sabse dheeme aur sabse nazuk hain."
+  ],
+  "groups": [
+    {
+      "name": "Customer ordering",
+      "files": [
+        "tests/customer.spec.js",
+        "tests/delivery-fee.spec.js",
+        "tests/meal-qty-limit.spec.js"
+      ]
+    },
+    {
+      "name": "Vendor admin",
+      "files": [
+        "tests/admin.spec.js",
+        "tests/admin-brand.spec.js",
+        "tests/vendor-billing.spec.js",
+        "tests/image-upload-organization.spec.js"
+      ]
+    },
+    {
+      "name": "Super admin & vendor config",
+      "files": [
+        "tests/superadmin.spec.js",
+        "tests/super-vendor-config.spec.js",
+        "tests/vendor-scripturl.spec.js",
+        "tests/bulk-order.spec.js"
+      ]
+    },
+    {
+      "name": "Login & sessions",
+      "files": [
+        "tests/otp-login.spec.js",
+        "tests/google-login.spec.js",
+        "tests/webview-google-auth.spec.js",
+        "tests/private-mode.spec.js",
+        "tests/boot-resilience.spec.js"
+      ]
+    },
+    {
+      "name": "Kitchen hours & alerts",
+      "files": [
+        "tests/kitchen-hours.spec.js",
+        "tests/notifications.spec.js",
+        "tests/ui.spec.js"
+      ]
+    },
+    {
+      "name": "Install, sharing & discovery",
+      "files": [
+        "tests/apk-mode.spec.js",
+        "tests/pwa-install.spec.js",
+        "tests/vendor-manifest.spec.js",
+        "tests/share-kitchen.spec.js",
+        "tests/nearby-kitchens.spec.js"
+      ]
+    },
+    {
+      "name": "Scale & load",
+      "files": [
+        "tests/multivendor-load.spec.js",
+        "tests/stability.spec.js",
+        "tests/volume.spec.js"
+      ]
+    }
+  ]
+}
