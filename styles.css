@@ -495,6 +495,13 @@
     .policy-card { background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:16px; margin:16px; }
     .policy-t { font-size:14px; font-weight:900; color:var(--ink); margin-bottom:9px; }
     .policy-b { font-size:12px; color:var(--muted); line-height:1.8; }
+    .loc-need { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      background:var(--accent-soft); border:1.5px dashed var(--accent); border-radius:11px;
+      padding:10px 12px; margin-top:10px; font-size:12px; font-weight:700; color:var(--accent-dark); }
+    .loc-need button { border:none; border-radius:9px; padding:8px 12px; background:var(--accent);
+      color:#fff; font-size:12px; font-weight:800; cursor:pointer; }
+    .loc-need.out { background:var(--dangerbg); border-color:var(--danger); color:var(--danger); }
+    .fld-hint { font-size:11px; color:var(--muted); font-weight:600; margin-top:5px; }
     .cart-deliv { display:flex; align-items:center; justify-content:space-between; gap:10px;
       background:var(--card); border:1.5px solid var(--line); border-radius:11px; padding:9px 12px; margin-top:10px; }
     .cart-deliv .cd-at { font-size:12px; font-weight:600; color:var(--muted); min-width:0; }

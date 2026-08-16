@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=7d090a4077">
+  <link rel="stylesheet" href="styles.css?v=c50dd960d0">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -743,14 +743,6 @@
           </div>
         </div>
 
-        <div class="cfg-acc hidden" id="cfgInstallApp" onclick="openInstallAppSheet()">
-          <div class="cfg-acc-hd">
-            <span class="cfg-acc-ic">📲</span>
-            <span class="cfg-acc-tx"><b data-i="installAppRow">Install App</b><i data-i="installAppSubAdmin">Kitchen panel ko home screen par add karo</i></span>
-            <span class="cfg-acc-car"></span>
-          </div>
-        </div>
-
         <div class="cfg-acc" id="cfga-kitchen">
           <div class="cfg-acc-hd" onclick="cfgToggle('kitchen')">
             <span class="cfg-acc-ic">🏪</span>
@@ -762,7 +754,8 @@
         <div id="kitchenLocStatus" style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;">📍 Abhi set nahi hai</div>
         <button type="button" class="admin-btn" id="captureLocBtn" onclick="captureKitchenLocation()">📍 Use my current location</button>
         <label class="fld" style="margin-top:14px;">Delivery Radius (km)</label>
-        <input type="number" class="search-box" id="cfg-deliveryRadiusKm" min="1" max="50" value="4">
+        <input type="number" class="search-box" id="cfg-deliveryRadiusKm" min="1" max="5" step="0.5" value="4">
+        <div class="fld-hint">Max 5 km — delivery charge isi distance par lagta hai.</div>
 
         <div class="section-title" style="margin-top:20px;">🔗 Aapki Kitchen ka QR Code</div>
         <div style="text-align:center;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:18px;">
@@ -905,6 +898,7 @@
         <div class="more-item" id="adr-variants" onclick="adminBnGo('variants')"><span class="di-icon">🍱</span><span>Variants</span></div>
         <div class="more-item" id="adr-promos" onclick="adminBnGo('promos')"><span class="di-icon">🎟️</span><span>Promos</span></div>
         <div class="more-item" id="adr-billing" onclick="adminBnGo('billing')"><span class="di-icon">💳</span><span>Subscription</span></div>
+        <div class="more-item hidden" id="adrInstallApp" onclick="closeAdminMore();openInstallAppSheet()"><span class="di-icon">📲</span><span data-i="installAppRow">Install App</span></div>
         <div style="padding:10px 14px 4px;">
           <div class="lp-sec-t">🌐 Language</div>
           <select class="sh-select js-lang" id="langSelAdmin" onchange="setLangAdmin(this.value)"></select>
@@ -1116,7 +1110,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=7d090a4077"></script>
+  <script src="shared.js?v=c50dd960d0"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -1152,7 +1146,7 @@
   }
   // Install row do jagah hai — customer ke profile me aur vendor ke Setup me.
   // Dono ek saath dikhen/chhupein, isliye ek hi jagah se toggle karte hain.
-  const INSTALL_ROW_IDS = ['pfInstallApp','cfgInstallApp'];
+  const INSTALL_ROW_IDS = ['pfInstallApp','adrInstallApp'];
   function refreshInstallRows(){
     const show = canShowInstallRow();
     INSTALL_ROW_IDS.forEach(function(id){ const el=document.getElementById(id); if(el) el.classList.toggle('hidden', !show); });
@@ -1398,7 +1392,9 @@
   let __adminThemeActive=false;
   function enterAdminTheme(){
     __adminThemeActive=true;
-    const m = storeGet('fbt_theme_admin') || 'system';
+    // Default light — pehle 'system' tha, to vendor ka phone dark mode me hone
+    // par admin panel bhi dark khulta tha. Customer side pehle se light hai.
+    const m = storeGet('fbt_theme_admin') || 'light';
     applyTheme(m);
     const sel=document.getElementById('themeSelAdmin'); if(sel) sel.value=m;
     const la = storeGet('fbt_lang_admin'); if(la){ setLang(la); }
@@ -1636,19 +1632,32 @@
     document.getElementById('officeFields').classList.toggle('hidden',deliveryType!=='office');
     if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); const b=document.getElementById('barTotal2'); if(b) b.textContent='₹'+cartTotalDisplay(); }
   }
+  // Delivery ab distance par hai. Customer ki location address ke saath hi
+  // store hoti hai (fbt_addr.lat/lng) — phone abhi kahan hai us par nahi,
+  // warna office se ghar ka order galat distance nikaalta.
+  function deliveryDistanceKm(){
+    try{
+      const a = storeGet('fbt_addr') || {};
+      if(typeof a.lat !== 'number' || typeof a.lng !== 'number') return null;
+      if(typeof CFG.kitchenLat !== 'number' || typeof CFG.kitchenLng !== 'number') return null;
+      return distanceKm(a.lat, a.lng, CFG.kitchenLat, CFG.kitchenLng);
+    }catch(e){ return null; }
+  }
+  function deliveryOutOfRange(){
+    const km = deliveryDistanceKm();
+    if(km == null) return false;
+    const max = Math.min(Number(CFG.deliveryRadiusKm) || DELIVERY_MAX_RADIUS_KM, DELIVERY_MAX_RADIUS_KM);
+    return km > max;
+  }
   function deliveryFee(){
     if(!cart.length) return 0;
     if(CFG.deliveryEnabled===false) return 0;
-    const savedAddr = storeGet('fbt_addr') || {};
-    if(deliveryType==='office'){
-      const domVal = document.getElementById('company') ? document.getElementById('company').value : '';
-      const co=companyByName(domVal || savedAddr.company || '');
-      return co ? (co.fee||CFG.deliveryNear||10) : (CFG.deliveryNear||10);
-    }
-    const domSoc = (typeof societyValue==='function') ? societyValue() : '';
-    const soc = domSoc || savedAddr.society || '';
-    const far=(CFG.farSocieties||[]).map(s=>String(s).toLowerCase().trim());
-    return far.indexOf(String(soc).toLowerCase().trim())>=0 ? (CFG.deliveryFar||20) : (CFG.deliveryNear||10);
+    const km = deliveryDistanceKm();
+    const slab = deliveryFeeForKm(km);
+    if(slab != null) return slab;
+    // Location abhi nahi mili — checkout waise bhi rukega (location zaroori
+    // hai), yahan 0 dikhana theek hai taaki galat amount na dikhe.
+    return 0;
   }
   function cartSubtotal(){ return cart.reduce((s,it)=> s + unitPrice(it)*it.qty, 0); }
   function feeDates(){ return new Set(cart.map(x=>x.deliveryDate)).size; }
@@ -2132,6 +2141,14 @@
   function showCartPage(){ showView('cartView'); renderCart(); }
   function cartCheckout(){
     if(!cart.length) return;
+    // Location ke bina delivery charge nikalta hi nahi — order aage nahi jaana
+    // chahiye. Permission mil jaaye to seedha wahin se aage badh jaate hain.
+    if(!hasDeliveryLocation()){
+      showToast('📍 '+t('locNeeded'),'warning');
+      captureDeliveryLocation(function(ok){ if(ok) cartCheckout(); });
+      return;
+    }
+    if(deliveryOutOfRange()){ showToast('🚫 '+t('outOfRange'),'error'); return; }
     const a=storeGet('fbt_addr')||{};
     const ready = deliveryType==='office' ? (a.company&&a.empId) : (a.society&&a.flatNo);
     if(ready){ goToCheckout(); setTimeout(()=>placeOrder(),60); }
@@ -3187,7 +3204,13 @@
     html+= hasPromos ? `<div class="promo-box">${appliedPromo
       ?`<div class="promo-applied"><span>🎟️ ${appliedPromo.code} <b>−₹${pd}</b>${feeDates()>1?`<small>${t('promoFirstDateNote')}</small>`:''}</span><span class="pr-x" onclick="removePromo()">✕</span></div>`
       :`<div class="promo-input"><select id="promoSelect" onchange="onPromoSelect()"><option value="">${t('promoPick')}</option>${CFG.promos.map(pp=>{const u=isPromoUsed(pp.code);return `<option value="${esc(pp.code)}"${u?' disabled':''}>${pp.code} · ${pp.label}${u?(' · '+t('promoUsedTag')):(pp.firstOnly?' · 🆕':'')}</option>`;}).join('')}<option value="__manual__">${t('promoOther')}</option></select><input id="promoCode" class="hidden" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>` : '';
-    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${feeDates()>1?(' × '+feeDates()):''}</span><span>₹${deliveryFeeTotal()}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
+    const __dkm = deliveryDistanceKm();
+    if(__dkm == null){
+      html+=`<div class="loc-need"><span>📍 ${t('locNeededCart')}</span><button id="locFixBtn" onclick="captureDeliveryLocation()">${t('locUseMine')}</button></div>`;
+    } else if(deliveryOutOfRange()){
+      html+=`<div class="loc-need out"><span>🚫 ${t('outOfRange')} (${fmtKm(__dkm)})</span></div>`;
+    }
+    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${__dkm!=null?(' · '+fmtKm(__dkm)):''}${feeDates()>1?(' × '+feeDates()):''}</span><span>${__dkm==null?'—':('₹'+deliveryFeeTotal())}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
     box.innerHTML=html;
     if(cbt) cbt.textContent='₹'+cartTotalDisplay();
     if(cbtn) cbtn.disabled=false;
@@ -3232,7 +3255,38 @@
     const out={ deliveryType:mode,
       society: isOff?(a.society||''):(d.society||''), flatNo: isOff?(a.flatNo||''):(d.flatNo||''),
       company: isOff?(d.society||d.company||''):(a.company||''), empId: isOff?(d.flatNo||d.empId||''):(a.empId||'') };
+    // Delivery charge distance par hai, isliye address ke saath uski location
+    // bhi sambhal ke rakhte hain.
+    if(typeof a.lat === 'number' && typeof a.lng === 'number'){ out.lat=a.lat; out.lng=a.lng; }
     storeSet('fbt_addr',out);
+  }
+
+  // Delivery location — ek baar lete hain aur address ke saath store karte
+  // hain. Location zaroori hai: iske bina charge nikaalna hi possible nahi.
+  let __locBusy = false;
+  function captureDeliveryLocation(onDone){
+    if(__locBusy) return;
+    if(!navigator.geolocation){ showToast('⚠️ '+t('locNeeded'),'warning'); if(onDone)onDone(false); return; }
+    __locBusy = true;
+    const btn=document.getElementById('locFixBtn');
+    const old=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='⏳ …'; }
+    navigator.geolocation.getCurrentPosition(function(pos){
+      __locBusy=false; if(btn){ btn.disabled=false; btn.textContent=old; }
+      const a=storeGet('fbt_addr')||{};
+      a.lat=pos.coords.latitude; a.lng=pos.coords.longitude;
+      storeSet('fbt_addr',a);
+      renderCart();
+      if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); document.getElementById('barTotal2').textContent='₹'+cartTotalDisplay(); }
+      if(onDone) onDone(true);
+    }, function(){
+      __locBusy=false; if(btn){ btn.disabled=false; btn.textContent=old; }
+      showToast('⚠️ '+t('locBlocked'),'warning');
+      if(onDone) onDone(false);
+    }, { enableHighAccuracy:true, timeout:12000, maximumAge:300000 });
+  }
+  function hasDeliveryLocation(){
+    const a=storeGet('fbt_addr')||{};
+    return typeof a.lat==='number' && typeof a.lng==='number';
   }
 
   function renderSummary(){
@@ -3355,10 +3409,16 @@
     });
     const firstKey = groups.length ? (groups[0].dstr+'|'+groups[0].meal) : '';
 
+    const __ordAddr = storeGet('fbt_addr') || {};
+    const __ordLat = (typeof __ordAddr.lat==='number') ? __ordAddr.lat : undefined;
+    const __ordLng = (typeof __ordAddr.lng==='number') ? __ordAddr.lng : undefined;
     const payloads=groups.map(({dstr, meal})=>{
       const lines=cart.filter(it=>it.deliveryDate===dstr && it.meal===meal);
       const p={ action:'order', token:SESSION.token, deliveryDate:dstr, deliveryLabel:lines[0].deliveryLabel, day:lines[0].day,
         society:addr.society, flatNo:addr.flatNo, deliveryType:deliveryType, name:addr.name, phone:addr.phone, note:addr.note, payment:addr.payment, scheme:CFG.township,
+        // Delivery fee server hi tay karta hai — usko distance nikaalne ke liye
+        // customer ki delivery location chahiye.
+        lat:__ordLat, lng:__ordLng,
         editRow:(editingRow && lines[0].__editRow===editingRow)?editingRow:undefined,
         items:lines.map(it=>({meal:it.meal,tiffinType:it.tiffinType||'',qty:it.qty,sabzi:it.sabzi||'',butterRoti:!!it.butterRoti,extraRoti:it.extraRoti||0,dahi:!!it.dahi,extraSabzi:!!it.extraSabzi,timeSlot:it.timeSlot||''})) };
       if(appliedPromo && (dstr+'|'+meal)===firstKey){ p.couponCode=appliedPromo.code; p.applyCoupon='1'; }
@@ -5341,6 +5401,8 @@
     const farSocieties=(document.getElementById('cfg-farSocieties')?document.getElementById('cfg-farSocieties').value:'').split('\n').map(s=>s.trim()).filter(Boolean);
     let deliveryRadiusKm=parseFloat(document.getElementById('cfg-deliveryRadiusKm')?document.getElementById('cfg-deliveryRadiusKm').value:4);
     if(isNaN(deliveryRadiusKm)||deliveryRadiusKm<=0) deliveryRadiusKm=4;
+    // 5 km upper cap — slab isi tak defined hai (backend me bhi yahi cap hai).
+    if(deliveryRadiusKm>DELIVERY_MAX_RADIUS_KM) deliveryRadiusKm=DELIVERY_MAX_RADIUS_KM;
     const cfg={ prices, addonsEnabled, mealTypes, township:CFG.township, societies:CFG.societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:CFG.closedDates, tempClosed:CFG.tempClosed, tempClosedMsg:CFG.tempClosedMsg, tempClosedUntil:CFG.tempClosedUntil, companies:CFG.companies, homeEnabled:CFG.homeEnabled, officeEnabled:CFG.officeEnabled, listInDiscovery:CFG.listInDiscovery, kitchenLat:workingKitchenLat, kitchenLng:workingKitchenLng, deliveryRadiusKm:deliveryRadiusKm, whatsappAuto:CFG.whatsappAuto,
       upiId:CFG.upiId, upiName:CFG.upiName, fssai:CFG.fssai, legalName:CFG.legalName, gstNumber:CFG.gstNumber };
     const btn=document.getElementById('saveConfigBtn'); btn.textContent='⏳ Saving...'; btn.disabled=true;
