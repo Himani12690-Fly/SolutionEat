@@ -3476,6 +3476,11 @@
   function validateSociety(){
     const sel=document.getElementById('society');
     const other=(sel && sel.value==='__other__');
+    // "Other" pe "society select karein" galat tha — wahan select ho chuka hai,
+    // sirf naam likhna baaki hai. data-i badalte hain taaki language switch pe
+    // bhi sahi message rahe.
+    const ee=document.getElementById('err-society');
+    if(ee){ const k=other?'errSocietyOther':'errSociety'; ee.setAttribute('data-i',k); ee.textContent=t(k); }
     const v=societyValue();
     if(v){ setValid(other?'societyOther':'society','err-society'); if(other) setValid('society','err-society'); }
     else { setError(other?'societyOther':'society','err-society'); }

@@ -854,6 +854,12 @@
     .form-group input.valid, .form-group select.valid { border-color:var(--ok); background:var(--okbg); color:var(--ink); }
     .form-group input.error, .form-group select.error { border-color:var(--danger); background:var(--dangerbg); color:var(--ink); }
     .form-group input[readonly] { background:var(--line); color:var(--muted); border-color:var(--line); }
+    /* "Other" waala free-text box select ke bilkul sate hue tha — dono ek hi
+       control lagte the. Gap de kar alag dikhaya. */
+    /* display:block zaroori hai — inline-block rehta to margin line-box me
+       kho jaata aur gap 0 hi dikhta. (.hidden ka display:none !important
+       isse override karta hai, to toggle waise ka waisa kaam karta hai.) */
+    #societyOther { display:block; margin-top:8px; }
     .field-error { display:none; color:var(--danger); font-size:12px; font-weight:600; margin-top:5px; }
     .field-error.show { display:block; }
     .saved-note { font-size:12px; color:#00a085; font-weight:700; background:#e8fff7; border:1px solid #b8f2e0; border-radius:8px; padding:8px 12px; margin-bottom:14px; display:none; }
@@ -878,12 +884,15 @@
       background:transparent; }
 
 
-    #authPage { display:flex; flex-direction:column; }
+    /* auto margins login block ko screen ke beech (thumb-zone) me laate hain;
+       content lamba ho to 0 ho jaate hain aur page scroll karta hai.
+       hero static isliye ki back arrow uske saath neeche na khiske. */
+    #authPage { display:flex; flex-direction:column; min-height:100dvh; position:relative; }
     #profileView { display:flex; flex-direction:column; min-height:100dvh; }
     #profileView .footer { margin-top:auto; }
 
-    #authPage .hero { padding:14px 20px 12px; }
-    #authPage .section { padding:14px 16px; }
+    #authPage .hero { padding:14px 20px 12px; margin-top:auto; position:static; }
+    #authPage .section { padding:14px 16px; margin-bottom:auto; }
     #authPage .center-hint { margin-top:6px; }
     #authPage .footer { padding-top:10px; }
 
