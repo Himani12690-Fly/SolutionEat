@@ -276,7 +276,6 @@
       <h1 style="font-size:20px;" data-i="yourCart"></h1>
     </div>
     <div class="section pad-sticky">
-      <div class="section-title" style="display:flex;justify-content:flex-end;"><span class="refresh-link" onclick="clearCart()" data-i="clearCart"></span></div>
       <div id="cartList"></div>
     </div>
     <div class="sticky-bar" id="cartBar">
@@ -1232,19 +1231,51 @@
   }
   function promoDiscountNow(){ return appliedPromo?Math.min(appliedPromo.discount,firstDateTotal()):0; }
   function cartTotalDisplay(){ return Math.max(0,cartTotal()-promoDiscountNow()); }
+  // Coupon check backend pe jaata hai (~5s). Jo code backend "already used"
+  // bata chuka hai, uske liye dobara itna wait karana bekaar hai — code yaad
+  // rakh lete hain aur turant bata dete hain. 7 din baad khud bhool jaata hai,
+  // taaki vendor coupon reset kare to customer atka na rahe.
+  const USED_PROMO_TTL = 7*24*60*60*1000;
+  function usedPromoMap(){
+    const o=storeGet('fbt_used_promos')||{}; const now=Date.now(); let changed=false;
+    Object.keys(o).forEach(k=>{ if(!o[k] || (now-o[k])>USED_PROMO_TTL){ delete o[k]; changed=true; } });
+    if(changed) storeSet('fbt_used_promos',o);
+    return o;
+  }
+  // Ek hi device pe alag-alag log login kar sakte hain, isliye key me user bhi.
+  function usedPromoKey(code){ return (((typeof SESSION!=='undefined'&&SESSION&&SESSION.phone)||'')+'|'+String(code||'').trim().toUpperCase()); }
+  function isPromoUsed(code){ return !!usedPromoMap()[usedPromoKey(code)]; }
+  function markPromoUsed(code){ const o=usedPromoMap(); o[usedPromoKey(code)]=Date.now(); storeSet('fbt_used_promos',o); }
+
   function applyPromo(){
     const inp=document.getElementById('promoCode'); const code=(inp?inp.value:'').trim();
     if(!code){ showToast('⚠️ '+t('promoHave'),'warning'); return; }
     if(!cart.length){ showToast('⚠️ '+t('cartEmpty'),'warning'); return; }
+    if(isPromoUsed(code)){ showToast('❌ '+t('promoAlreadyUsed'),'error'); return; }
     const pb=document.getElementById('promoApplyBtn'); btnBusy(pb,true);
     apiPost({action:'checkpromo',token:SESSION.token,code:code,amount:firstDateTotal()}).then(j=>{
       btnBusy(pb,false);
       if(j.status==='success'){ appliedPromo={code:j.code,discount:j.discount,label:j.label||''}; renderCart(); renderSummary&&!document.getElementById('page2').classList.contains('hidden')&&renderSummary(); showToast('🎟️ '+j.code+' '+t('promoApplied')+' — −₹'+j.discount,'success'); }
       else if(j.status==='invalid_session'){ handleInvalidSession(); }
-      else showToast('❌ '+(j.message||'Invalid coupon')+(feeDates()>1?(' '+t('promoFirstDateNote')):''),'error');
+      else {
+        if(/already used/i.test(j.message||'')){ markPromoUsed(code); renderCart(); }
+        showToast('❌ '+(j.message||'Invalid coupon')+(feeDates()>1?(' '+t('promoFirstDateNote')):''),'error');
+      }
     }).catch(()=>showToast(t('errNetwork'),'error'));
   }
   function pickPromo(code){ const i=document.getElementById('promoCode'); if(i){ i.value=code; applyPromo(); } }
+  // Dropdown se code chunne pe wahi hidden input me chala jaata hai (applyPromo
+  // wahin se padhta hai). "Dusra code" chunne pe select ki jagah input aa jaata
+  // hai — row phir bhi ek hi rehti hai.
+  function onPromoSelect(){
+    const sel=document.getElementById('promoSelect'), inp=document.getElementById('promoCode');
+    if(!sel||!inp) return;
+    if(sel.value==='__manual__'){ sel.classList.add('hidden'); inp.classList.remove('hidden'); inp.value=''; inp.focus(); }
+    else inp.value=sel.value;
+  }
+  // Cart ke address strip ka "Change" — order place NAHI karta, sirf address
+  // form kholta hai (one-tap wala button alag hai).
+  function editDeliveryAddress(){ goToCheckout(); }
   function removePromo(){ appliedPromo=null; renderCart(); if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); document.getElementById('barTotal2').textContent='₹'+cartTotalDisplay(); } }
 
   function saveCart(){ try{ storeSet('fbt_cart', cart); storeSet('fbt_promo', appliedPromo||null); }catch(e){} }
@@ -2551,14 +2582,16 @@
     if(m!=='breakfast'){
       const opts=((d[m]&&d[m].sabziOptions)||[]).map(o=>`<option value="${o}" ${b.sabzi===o?'selected':''}>${o}</option>`).join('');
       const AE=CFG.addonsEnabled||{};
+      // Non-tiffin variant (Paav Bhaji, Pulaav) me sabzi/roti kuch nahi jaata.
+      const usesSabzi=variantUsesSabzi(m,b.tiffinType);
       const plainOn=AE.extraRotiPlain!==false, butterOn=AE.extraRotiButter!==false;
-      const rotiOn=plainOn||butterOn;
+      const rotiOn=(plainOn||butterOn)&&usesSabzi;
       const extraRotiOn=rotiOn;
-      const dahiOn=AE.dahi!==false, sabziOn=AE.extraSabzi!==false;
+      const dahiOn=AE.dahi!==false, sabziOn=(AE.extraSabzi!==false)&&usesSabzi;
       if(rotiOn && !plainOn && !b.butterRoti) b.butterRoti=true;
       if(rotiOn && !butterOn && b.butterRoti) b.butterRoti=false;
       inner+=`<div class="sh-block">
-        ${mealUsesSabzi(m,d)?`<div class="sh-lbl">${t('selectSabzi')} <span style="color:var(--danger)">*</span></div>
+        ${(mealUsesSabzi(m,d)&&usesSabzi)?`<div class="sh-lbl">${t('selectSabzi')} <span style="color:var(--danger)">*</span></div>
         <select class="sh-select" onchange="shSet('sabzi',this.value)"><option value="">—</option>${opts}</select>`:''}
         ${rotiOn?`<div class="sh-lbl">${t('rotiType')}</div>
         <div class="sh-chips">
@@ -2656,7 +2689,7 @@
   }
   function shAddToCart(){
     const m=sheetMeal, b=builder[m];
-    if(mealUsesSabzi(m, MENU[selDayKey()]) && !b.sabzi){ showToast('⚠️ '+t('selectSabzi'),'warning'); return; }
+    if(mealUsesSabzi(m, MENU[selDayKey()]) && variantUsesSabzi(m,b.tiffinType) && !b.sabzi){ showToast('⚠️ '+t('selectSabzi'),'warning'); return; }
     if(capacityReached(m,selDateStr())){ showToast('🔴 '+t('soldOutTitle'),'error'); closeMealSheet(); patchMealCard(m); return; }
     if(orderedMapReady){
       const already=alreadyOrdered(selDateStr(), m);
@@ -2682,7 +2715,11 @@
     const v=findVariant(m,b.tiffinType);
     const lineId = selDateStr()+'|'+m+'|'+b.tiffinType;
     const item={ id:lineId, deliveryDate:selDateStr(), deliveryLabel:fmtLabel(selDate()), day:selDayKey().charAt(0).toUpperCase()+selDayKey().slice(1), meal:m, qty:b.qty, timeSlot:b.timeSlot, tiffinType:b.tiffinType, variantName:v.name };
-    if(m!=='breakfast'){ item.sabzi=b.sabzi; item.butterRoti=b.butterRoti; item.extraRoti=b.extraRoti; item.dahi=b.dahi; item.extraSabzi=b.extraSabzi; }
+    if(m!=='breakfast'){
+      const uS=variantUsesSabzi(m,b.tiffinType);
+      item.sabzi=uS?b.sabzi:''; item.butterRoti=uS?b.butterRoti:false; item.extraRoti=uS?b.extraRoti:0;
+      item.dahi=b.dahi; item.extraSabzi=uS?b.extraSabzi:false;
+    }
     const idx=cart.findIndex(x=>x.id===item.id);
     if(idx>=0) cart[idx]=item; else cart.push(item);
     showToast('🛒 '+mealTitle(m)+' ('+v.name+') '+t('addedToCart'),'success');
@@ -2702,7 +2739,10 @@
     if(it.meal==='breakfast') return timePart;
     const typePart='🍱 '+(it.variantName||it.tiffinType);
     const add=[]; if(it.extraRoti)add.push('+'+it.extraRoti+' '+t('extraRoti')); if(it.dahi)add.push(t('dahiShort')); if(it.extraSabzi)add.push(t('extraSabziShort'));
-    const rest=typePart+' · '+it.sabzi+' · '+(it.butterRoti?t('butter'):t('plain'))+(add.length?' · '+add.join(', '):'');
+    const parts=[typePart];
+    if(it.sabzi){ parts.push(it.sabzi); parts.push(it.butterRoti?t('butter'):t('plain')); }
+    if(add.length) parts.push(add.join(', '));
+    const rest=parts.join(' · ');
     return timePart?(timePart+' · '+rest):rest;
   }
   function cartTitleLine(it){
@@ -2725,9 +2765,19 @@
       cbtn.textContent = ready ? t('placeOrder') : t('checkout');
     }
     cart.sort(mealSort);
-    let html='', lastDate='';
+    // Address sabse upar — date header ke saath — taaki checkout se pehle hi
+    // saaf dikhe kahan jaa raha hai; "Change" seedha address form kholta hai.
+    const svA=storeGet('fbt_addr')||{};
+    const svReady = deliveryType==='office' ? (svA.company&&svA.empId) : (svA.society&&svA.flatNo);
+    const svLine = svReady ? (deliveryType==='office' ? (svA.company+(svA.empId?(' · '+svA.empId):'')) : (svA.flatNo+', '+svA.society)) : '';
+    let html='', lastDate='', stripDone=false;
     cart.forEach(it=>{
-      if(it.deliveryDate!==lastDate){ lastDate=it.deliveryDate; html+=`<div class="cust-label" style="margin-top:10px;">📅 ${it.deliveryLabel} · ${it.day}</div>`; }
+      if(it.deliveryDate!==lastDate){
+        lastDate=it.deliveryDate;
+        html+=`<div class="cust-label" style="margin-top:10px;">📅 ${it.deliveryLabel} · ${it.day}</div>`;
+        // Address pehli date ke just neeche — Clear hata diya, ab date line hi sabse upar.
+        if(!stripDone && svLine){ stripDone=true; html+=`<div class="cart-deliv"><span class="cd-at">🛵 ${t('deliveryAtLbl')} <b>${esc(svLine)}</b></span><span class="cd-edit" onclick="editDeliveryAddress()">${t('changeAddr')}</span></div>`; }
+      }
       html+=`<div class="cart-item">
       <div class="ci-top"><span>${cartTitleLine(it)}</span><span class="ci-price">₹${unitPrice(it)*it.qty}</span></div>
       <div class="ci-sub">${cartLineDesc(it)}</div>
@@ -2738,14 +2788,8 @@
     const hasPromos = CFG.promos && CFG.promos.length;
     html+= hasPromos ? `<div class="promo-box">${appliedPromo
       ?`<div class="promo-applied"><span>🎟️ ${appliedPromo.code} <b>−₹${pd}</b>${feeDates()>1?`<small>${t('promoFirstDateNote')}</small>`:''}</span><span class="pr-x" onclick="removePromo()">✕</span></div>`
-      :`<div class="promo-chips">${CFG.promos.map(pp=>`<span class="promo-chip" onclick="pickPromo('${pp.code}')">🎟️ ${pp.code} · ${pp.label}${pp.firstOnly?' · 🆕':''}</span>`).join('')}</div><div class="promo-input"><input id="promoCode" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>` : '';
-    // Saved address ho to delivery line me hi ek jagah dikha do — alag card/row
-    // nahi, checkout jaane se pehle customer ko yahin pata chal jaaye kahan
-    // jaa raha hai (one-tap order se pehle akhri visual check).
-    const svA=storeGet('fbt_addr')||{};
-    const svReady = deliveryType==='office' ? (svA.company&&svA.empId) : (svA.society&&svA.flatNo);
-    const svLine = svReady ? (deliveryType==='office' ? (svA.company+(svA.empId?(' · '+svA.empId):'')) : (svA.flatNo+', '+svA.society)) : '';
-    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${svLine?(' · '+esc(svLine)):''}${feeDates()>1?(' × '+feeDates()):''}</span><span>₹${deliveryFeeTotal()}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
+      :`<div class="promo-input"><select id="promoSelect" onchange="onPromoSelect()"><option value="">${t('promoPick')}</option>${CFG.promos.map(pp=>{const u=isPromoUsed(pp.code);return `<option value="${esc(pp.code)}"${u?' disabled':''}>${pp.code} · ${pp.label}${u?(' · '+t('promoUsedTag')):(pp.firstOnly?' · 🆕':'')}</option>`;}).join('')}<option value="__manual__">${t('promoOther')}</option></select><input id="promoCode" class="hidden" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>` : '';
+    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${feeDates()>1?(' × '+feeDates()):''}</span><span>₹${deliveryFeeTotal()}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
     box.innerHTML=html;
     if(cbt) cbt.textContent='₹'+cartTotalDisplay();
     if(cbtn) cbtn.disabled=false;
@@ -2876,7 +2920,8 @@
       let line=`${mealTitle(it.meal)} \u00d7 ${it.qty}`;
       if(it.meal!=='breakfast'){
         const add=[]; if(it.extraRoti)add.push('+'+it.extraRoti+' '+t('extraRoti')); if(it.dahi)add.push(t('dahiShort')); if(it.extraSabzi)add.push(t('extraSabziShort'));
-        line+=` (${it.variantName||it.tiffinType})- ${it.sabzi}, ${it.butterRoti?t('butter'):t('plain')}${add.length?(', '+add.join(', ')):''}`;
+        const sr=it.sabzi?(` ${it.sabzi}, ${it.butterRoti?t('butter'):t('plain')}`):'';
+        line+=` (${it.variantName||it.tiffinType})-${sr}${add.length?((sr?', ':' ')+add.join(', ')):''}`;
       }
       msg+=`${emoji} ${line} \u00b7 ₹${lt}\n`;
     });
