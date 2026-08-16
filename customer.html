@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=f014900151">
+  <link rel="stylesheet" href="styles.css?v=92be16d9a7">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -751,7 +751,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=f014900151"></script>
+  <script src="shared.js?v=92be16d9a7"></script>
 <script>
   (function(){
     try{
@@ -1609,9 +1609,12 @@
     addChecking=true;
     refreshOrderedMap().then(()=>{
       addChecking=false;
+      // Button pehle chhodo, phir message. Pehle "already ordered" waale raaste
+      // me ye restore hota hi nahi tha, to spinner hamesha ke liye ghoomta reh
+      // jaata tha (dialog band karne ke baad bhi).
+      if(btn){ btn.innerHTML=oldTxt; btn.style.pointerEvents=''; }
       const already = alreadyOrdered(selDateStr(), m);
       if(already){ showAlreadyOrderedCard(m, already); return; }
-      if(btn){ btn.innerHTML=oldTxt; btn.style.pointerEvents=''; }
       doQuickAdd(m);
     }).catch(()=>{
       addChecking=false;
@@ -3551,8 +3554,19 @@
     if(Number(o.meal4Qty)>0)     return 'meal4';
     return '';
   }
+  // Server jawab dene tak purana (cached) jawab hi kaafi hai — duplicate to
+  // server khud rok deta hai, isliye optimistic hona safe hai. Isse "already
+  // ordered" turant dikhta hai, 4 second ke spinner ke baad nahi.
+  function loadCachedOrderedMap(){
+    try{
+      const c=storeGet('fbt_ordmap');
+      if(!c || !c.map || !c.ts) return;
+      if(Date.now()-c.ts > 12*60*60*1000) return;   // 12 ghante se purana chhod do
+      orderedMap=c.map; orderedMapReady=true;
+    }catch(e){}
+  }
   function refreshOrderedMap(){
-    if(!isLoggedIn()){ orderedMap={}; orderedMapReady=false; upcomingOrders=null; return Promise.resolve(); }
+    if(!isLoggedIn()){ orderedMap={}; orderedMapReady=false; upcomingOrders=null; try{ storeDel('fbt_ordmap'); }catch(e){} return Promise.resolve(); }
     return fetch(GOOGLE_SCRIPT_URL+'?action=myOrders&token='+encodeURIComponent(SESSION.token)+'&vendorId='+VENDOR_ID+'&authVendorId='+((SESSION&&SESSION.vid)||VENDOR_ID))
       .then(r=>r.json()).then(j=>{
         const map={};
@@ -3566,6 +3580,7 @@
         }
         orderedMap=map;
         orderedMapReady=true;
+        try{ storeSet('fbt_ordmap', { map:map, ts:Date.now() }); }catch(e){}
       }).catch(()=>{});
   }
   function alreadyOrdered(dateStr, meal){ return orderedMap[dateStr+'|'+meal]||null; }
@@ -4160,6 +4175,7 @@
     initDemo();
     const cl=storeGet('fbt_lang'); if(cl&&T[cl])LANG=cl;
     const savedAddr=storeGet('fbt_addr'); if(savedAddr&&(savedAddr.deliveryType==='home'||savedAddr.deliveryType==='office')) deliveryType=savedAddr.deliveryType;
+    loadCachedOrderedMap();   // pehla tap turant jawab de, network ka wait na kare
 
     const cm=storeGet('fbt_menu');  const cc=storeGet('fbt_cfg');  const cb=storeGet('fbt_brand');
     if(cm&&cm.monday){ MENU=cm; if(HAS_VENDOR_PARAM) __vendorReady=true; }
