@@ -492,6 +492,18 @@
     if (__istOverride) return new Date(__istOverride);
     try { return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kolkata' })); } catch(e){ return new Date(); }
   }
+  // Kisi bhi timestamp ka IST clock (minutes-since-midnight) — device ka
+  // timezone chahe kuch bhi ho. Pehle seedha d.getHours() use hota tha, jo
+  // device local time deta hai: UTC (ya kisi aur zone) wale phone par
+  // "reopens at" jaisa time galat dikhta tha.
+  function istMinutesOf(ts){
+    try{
+      const s = new Date(ts).toLocaleString('en-US', { timeZone:'Asia/Kolkata', hour12:false, hour:'2-digit', minute:'2-digit' });
+      const m = s.match(/(\d{1,2}):(\d{2})/);
+      if(!m) return null;
+      return (Number(m[1])%24)*60 + Number(m[2]);
+    }catch(e){ return null; }
+  }
   function dateWithOffset(off){ const n=getISTNow(); return new Date(n.getFullYear(),n.getMonth(),n.getDate()+off); }
   function fmtYMD(d){ const p=x=>String(x).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
   const WEEKDAYS=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];

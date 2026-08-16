@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=f7e6654f10">
+  <link rel="stylesheet" href="styles.css?v=32fa835a20">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1137,7 +1137,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=f7e6654f10"></script>
+  <script src="shared.js?v=32fa835a20"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -1310,7 +1310,10 @@
   function emergencyCloseState(){
     if(!CFG.tempClosed) return null;
     const untilMs = CFG.tempClosedUntil ? Date.parse(CFG.tempClosedUntil) : NaN;
-    const nowMs = getISTNow().getTime();
+    // Epoch compare: yahan real timestamp chahiye, IST wall-clock nahi.
+    // getISTNow().getTime() non-IST device par shifted epoch deta hai, jisse
+    // UTC phone par "reopens" banner hi gayab ho jata tha.
+    const nowMs = Date.now();
     if(!isFinite(untilMs) || untilMs > nowMs) return { untilMs: isFinite(untilMs)?untilMs:null };
     return null;
   }
@@ -1350,8 +1353,7 @@
     if(info.state==='emergency'){
       cls='kab-closed';
       if(info.untilMs){
-        const d=new Date(info.untilMs);
-        html='😴 <b>'+esc(t('kitchenTempClosedTitle')||'Kitchen Closed')+'</b> — reopens '+formatMinutesAsClock(d.getHours()*60+d.getMinutes())+' <span class="kab-sub">(in '+fmtDuration((info.untilMs-getISTNow().getTime())/60000)+')</span>';
+        html='😴 <b>'+esc(t('kitchenTempClosedTitle')||'Kitchen Closed')+'</b> — reopens '+formatMinutesAsClock(istMinutesOf(info.untilMs))+' <span class="kab-sub">(in '+fmtDuration((info.untilMs-Date.now())/60000)+')</span>';
       } else {
         html='😴 <b>'+esc(t('kitchenTempClosedTitle')||'Kitchen Closed')+'</b>';
       }
@@ -1684,6 +1686,15 @@
     const max = Math.min(Number(CFG.deliveryRadiusKm) || DELIVERY_MAX_RADIUS_KM, DELIVERY_MAX_RADIUS_KM);
     return km > max;
   }
+  // Distance sirf tab maayne rakhti hai jab uska charge banta ho.
+  // Takeaway (customer khud aa raha) aur "free delivery for everyone"
+  // (deliveryEnabled=false) — dono me location maangna bekaar tha aur
+  // order hi block kar deta tha.
+  function deliveryNeedsLocation(){
+    if(isTakeaway()) return false;
+    if(CFG.deliveryEnabled===false) return false;
+    return true;
+  }
   function deliveryFee(){
     if(!cart.length) return 0;
     if(isTakeaway()) return 0;          // customer khud lene aa raha hai
@@ -1767,8 +1778,8 @@
       const detail=document.getElementById('emgClosedDetail');
       let txt=CFG.tempClosedMsg||'';
       if(CFG.tempClosedUntil){
-        const d=new Date(CFG.tempClosedUntil);
-        txt=(txt?txt+' · ':'')+'Reopens around '+formatMinutesAsClock(d.getHours()*60+d.getMinutes());
+        const rm=istMinutesOf(CFG.tempClosedUntil);
+        if(rm!=null) txt=(txt?txt+' · ':'')+'Reopens around '+formatMinutesAsClock(rm);
       }
       detail.textContent = txt || 'Closed until you reopen it manually.';
     } else {
@@ -2182,14 +2193,14 @@
     if(!cart.length) return;
     // Location ke bina delivery charge nikalta hi nahi — order aage nahi jaana
     // chahiye. Permission mil jaaye to seedha wahin se aage badh jaate hain.
-    if(!isTakeaway()){
-      if(!hasDeliveryLocation()){
-        showToast('📍 '+t('locNeeded'),'warning');
-        captureDeliveryLocation(function(ok){ if(ok) cartCheckout(); });
-        return;
-      }
-      if(deliveryOutOfRange()){ showToast('🚫 '+t('outOfRange'),'error'); return; }
+    if(deliveryNeedsLocation() && !hasDeliveryLocation()){
+      showToast('📍 '+t('locNeeded'),'warning');
+      captureDeliveryLocation(function(ok){ if(ok) cartCheckout(); });
+      return;
     }
+    // Charge band ho tab bhi: agar location pata hai to radius ke bahar
+    // order lena galat hai — maangte nahi, par pata ho to rok dete hain.
+    if(!isTakeaway() && hasDeliveryLocation() && deliveryOutOfRange()){ showToast('🚫 '+t('outOfRange'),'error'); return; }
     const a=storeGet('fbt_addr')||{};
     const ready = isTakeaway() ? true
                 : (deliveryType==='office' ? (a.company&&a.empId) : (a.society&&a.flatNo));
@@ -3256,7 +3267,7 @@
       ?`<div class="promo-applied"><span>🎟️ ${appliedPromo.code} <b>−₹${pd}</b>${feeDates()>1?`<small>${t('promoFirstDateNote')}</small>`:''}</span><span class="pr-x" onclick="removePromo()">✕</span></div>`
       :`<div class="promo-input"><select id="promoSelect" onchange="onPromoSelect()"><option value="">${t('promoPick')}</option>${CFG.promos.map(pp=>{const u=isPromoUsed(pp.code);return `<option value="${esc(pp.code)}"${u?' disabled':''}>${pp.code} · ${pp.label}${u?(' · '+t('promoUsedTag')):(pp.firstOnly?' · 🆕':'')}</option>`;}).join('')}<option value="__manual__">${t('promoOther')}</option></select><input id="promoCode" class="hidden" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>` : '';
     const __dkm = deliveryDistanceKm();
-    if(isTakeaway()){ /* pickup — na location chahiye, na charge */ }
+    if(!deliveryNeedsLocation()){ /* pickup ya free delivery — na location chahiye, na charge */ }
     else if(__dkm == null){
       html+=`<div class="loc-need"><span>📍 ${t('locNeededCart')}</span><button id="locFixBtn" onclick="captureDeliveryLocation()">${t('locUseMine')}</button></div>`;
     } else if(deliveryOutOfRange()){
@@ -3668,7 +3679,7 @@
 
   let payRef='';
   function makePayRef(){
-    const d=new Date(), p=(SESSION&&SESSION.phone)?String(SESSION.phone).slice(-4):'0000';
+    const d=getISTNow(), p=(SESSION&&SESSION.phone)?String(SESSION.phone).slice(-4):'0000';
     return 'FBT'+String(d.getDate()).padStart(2,'0')+String(d.getMonth()+1).padStart(2,'0')+p+String(Math.floor(Math.random()*90)+10);
   }
   function upiDeepLink(amount, scheme){
