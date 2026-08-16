@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=77d142f56e">
+  <link rel="stylesheet" href="styles.css?v=1a5f471cbb">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1137,7 +1137,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=77d142f56e"></script>
+  <script src="shared.js?v=1a5f471cbb"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -4960,13 +4960,45 @@
 
   let alertTimer=null, ringCtx=null, ringTimer=null;
   let vendorNotifCache=[], vendorNotifTimer=null;
+  // Customer side jaisa hi: server ko last-seen timestamp bhejo, sirf naya wapas
+  // aayega. Isse 60s -> 15s karna sasta pad gaya.
+  let vendorNotifSince=0;
   function loadVendorNotifications(){
     if(!adminCreds) return;
-    apiPost({action:'vendornotifications', user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
-      if(j.status==='success'){ vendorNotifCache=j.notifications||[]; renderVendorNotifBadge(); }
+    apiPost({action:'vendornotifications', since:vendorNotifSince, user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
+      if(j.status==='success'){
+        const fresh=j.notifications||[];
+        if(fresh.length || !vendorNotifCache.length){
+          const seen=new Set(), out=[];
+          [...fresh, ...vendorNotifCache].forEach(n=>{
+            const k=(n.title||'')+'|'+(n.body||'')+'|'+(n.time||'');
+            if(seen.has(k))return; seen.add(k); out.push(n);
+          });
+          vendorNotifCache=out.slice(0,200);
+          fresh.forEach(n=>{ const t=new Date(n.time).getTime(); if(isFinite(t)&&t>vendorNotifSince) vendorNotifSince=t; });
+        }
+        renderVendorNotifBadge();
+      }
     }).catch(()=>{});
-    if(!vendorNotifTimer) vendorNotifTimer=setInterval(()=>{ if(adminCreds) loadVendorNotifications(); }, 60000);
+    // Tab chhupa ho to poll band — vendor ka panel aksar background me khula
+    // rehta hai, wahan har 15s request bhejne ka koi faayda nahi. Wapas dikhte
+    // hi turant refresh hota hai (neeche visibilitychange).
+    if(!vendorNotifTimer) vendorNotifTimer=setInterval(()=>{
+      if(adminCreds && document.visibilityState==='visible') loadVendorNotifications();
+    }, 15000);
   }
+  // ── Tab wapas foreground me aate hi turant refresh ────────────────────────
+  // Ye "kabhi miss na ho" wala asli hissa hai. Phone jeb me tha, tab chhupa tha,
+  // poll ruka hua tha — user app kholta hai aur use 15s tak purana state dikhta
+  // rahe, ye sabse bura lagta hai. Ab visible hote hi ek poll turant chalta hai,
+  // to app kholte hi latest dikhta hai.
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState!=='visible') return;
+    try{ if(typeof isLoggedIn==='function' && isLoggedIn()) loadNotifications(); }catch(e){}
+    try{ if(typeof adminCreds!=='undefined' && adminCreds) loadVendorNotifications(); }catch(e){}
+    try{ if(typeof adminCreds!=='undefined' && adminCreds && typeof checkNewOrders==='function') checkNewOrders(); }catch(e){}
+  });
+
   function vendorNotifSeenKey(){ return 'fbt_admin_notif_seen'; }
   function vendorNotifClearedKey(){ return 'fbt_admin_notif_cleared_before'; }
   let __notifViewFrom=null;
