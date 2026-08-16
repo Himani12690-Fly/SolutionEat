@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=37df7fd6af">
+  <link rel="stylesheet" href="styles.css?v=f014900151">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -777,6 +777,7 @@
             <label class="cfg-chk"><input type="checkbox" id="svcOfficeEnabled"> 🏢 Office delivery (Company / Employee ID)</label>
             <div class="form-group"><label>Companies <span style="font-size:11px;color:var(--muted);font-weight:600;">(Name | Building | Fee ₹, one per line)</span></label><textarea id="svcCompanies" rows="4" placeholder="MoneyPlant Fintech | Tower B | 20"></textarea></div>
             <label class="cfg-chk"><input type="checkbox" id="svcListInDiscovery"> 🔍 Discovery me dikhna hai</label>
+            <label class="cfg-chk"><input type="checkbox" id="svcOnlinePay"> 💳 Online payment (Razorpay) chalu karein</label>
             <button class="admin-btn" onclick="svSaveConfigGroup('delivery')">💾 Save Delivery Setup</button>
           </div>
         </div>
@@ -1290,7 +1291,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=37df7fd6af"></script>
+  <script src="shared.js?v=f014900151"></script>
 <script>
   (function(){
     try{
@@ -4956,6 +4957,8 @@
       document.getElementById('svcOfficeEnabled').checked=(svCurConfig.officeEnabled===true);
       document.getElementById('svcCompanies').value=(svCurConfig.companies||[]).map(c=>[c.name,c.building||'',c.fee].join(' | ')).join('\n');
       document.getElementById('svcListInDiscovery').checked=(svCurConfig.listInDiscovery!==false);
+      // Default OFF — isliye ===true. Vendor khud chalu nahi kar sakta, sirf superadmin.
+      document.getElementById('svcOnlinePay').checked=(svCurConfig.onlinePayEnabled===true);
       document.getElementById('svcWhatsappAuto').checked=(svCurConfig.whatsappAuto!==false);
       const mtBox=document.getElementById('svCurrentMealTypes');
       if(mtBox) mtBox.textContent='Abhi ke meals: '+(svCurConfig.mealTypes||[]).map(m=>m.title).join(', ');
@@ -4983,7 +4986,8 @@
       if(officeEnabled&&!companies.length){ showToast('⚠️ Office delivery ke liye kam se kam ek company add karo.','warning'); return; }
       patch={ township:document.getElementById('svcTownship').value.trim(), societies:societies,
               homeEnabled:homeEnabled, officeEnabled:officeEnabled, companies:companies,
-              listInDiscovery:document.getElementById('svcListInDiscovery').checked };
+              listInDiscovery:document.getElementById('svcListInDiscovery').checked,
+              onlinePayEnabled:document.getElementById('svcOnlinePay').checked };
     } else if(group==='alerts'){
       patch={ whatsappAuto:document.getElementById('svcWhatsappAuto').checked };
     }
