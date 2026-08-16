@@ -4050,7 +4050,11 @@
     if(__dscIsTop){
       try{
         const u=new URL(location.href);
-        if(u.searchParams.has('v')){ u.searchParams.delete('v'); history.replaceState(null,'',u.pathname+(u.search||'')+u.hash); }
+        // Vendor ab path me hota hai (/kumkumkitchen), ?v= me nahi — sirf param
+        // hataane se logout ke baad bhi URL kitchen ka hi dikhta rehta tha.
+        // Kitchen list par hain to address bar bhi root dikhaye.
+        u.searchParams.delete('v');
+        history.replaceState(null,'','/'+(u.search||'')+u.hash);
       }catch(e){}
     }
     showView('dscView');
