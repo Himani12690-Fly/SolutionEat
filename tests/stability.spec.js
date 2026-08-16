@@ -110,10 +110,18 @@ test('C: Admin panel renders orders from all 50 clients', async ({ page }) => {
   expect(count).toBe(N_CLIENTS);
 });
 
+// 50 browser contexts EK SAATH kholna GitHub ke 2-core runner ko thrash kar
+// deta tha aur test 60s ki default limit cross kar jaata tha (locally 8-core
+// par pass hota tha — classic "mere machine par to chalta hai"). Test ka
+// maqsad concurrency nahi, session isolation hai: 50 alag sessions apas me
+// leak na karein. Isliye ab batches me chalate hain — utne hi 50 sessions,
+// bas runner ko ek saath 50 Chromium na uthane padein.
+const SESSION_BATCH = 8;
 test('D: 50 separate client sessions — login, order, refresh, verify state holds', async ({ browser }) => {
+  test.setTimeout(180_000);
   const sharedState = freshState();
   const t0 = Date.now();
-  const perClient = await Promise.all(Array.from({ length: N_CLIENTS }, async (_, i) => {
+  const runClient = async (i) => {
     const ctx = await browser.newContext();
     try {
       const page = await ctx.newPage();
@@ -124,8 +132,20 @@ test('D: 50 separate client sessions — login, order, refresh, verify state hol
       }, SESSION);
       await page.goto('http://localhost:8080/index.html?v=demo', { waitUntil: 'load' });
       const loggedIn = await page.evaluate(() => window.isLoggedIn && window.isLoggedIn());
-      // simulate refresh — the exact trigger from the real bug report
-      await page.reload({ waitUntil: 'load' });
+      // Simulate refresh — the exact trigger from the real bug report.
+      // Address bar ab masked clean path (/demo) dikhata hai, to refresh asli
+      // Pages chain se guzarta hai: /demo -> 404.html -> location.replace
+      // ('/?v=demo') -> app boot -> wapas /demo mask. Us beech me 404.html ki
+      // redirect pehli navigation ko supersede kar deti hai, isliye
+      // waitUntil:'load' apna load event kabhi dekh hi nahi paata aur hang ho
+      // jaata hai. 'commit' par chhod kar app ke ready hone ka wait karo —
+      // asli condition wahi hai, aur ye poori chain ko bhi cover karta hai.
+      await page.reload({ waitUntil: 'commit' }).catch(() => {});
+      await page.waitForFunction(
+        () => typeof window.isLoggedIn === 'function',
+        null,
+        { timeout: 30000 }
+      );
       const stillLoggedIn = await page.evaluate(() => window.isLoggedIn && window.isLoggedIn());
       const leakedOrdersView = await page.evaluate(() => {
         const el = document.getElementById('ordersView');
@@ -135,7 +155,15 @@ test('D: 50 separate client sessions — login, order, refresh, verify state hol
     } finally {
       await ctx.close();
     }
-  }));
+  };
+  const perClient = [];
+  for (let start = 0; start < N_CLIENTS; start += SESSION_BATCH) {
+    const batch = Array.from(
+      { length: Math.min(SESSION_BATCH, N_CLIENTS - start) },
+      (_, k) => runClient(start + k)
+    );
+    perClient.push(...await Promise.all(batch));
+  }
   const elapsed = Date.now() - t0;
   const okCount = perClient.filter((c) => c.ok).length;
   const avgMs = Math.round(perClient.reduce((s, c) => s + c.ms, 0) / perClient.length);
