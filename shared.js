@@ -645,9 +645,11 @@
           const el=document.getElementById('toast');
           if(el){
             el.textContent='🔄 '+t('updateReady');
-            el.className='toast'; el.classList.add('show');
+            // .tappable zaroori hai — base .toast pe pointer-events:none hai,
+            // iske bina ye dikhta to hai par tap kabhi register hi nahi hota.
+            el.className='toast tappable'; el.classList.add('show');
             el.onclick=__applyUpdate;
-            setTimeout(()=>{ el.classList.remove('show'); el.onclick=null; }, 8000);
+            setTimeout(()=>{ el.classList.remove('show'); el.classList.remove('tappable'); el.onclick=null; }, 12000);
           }
         }catch(e){}
       })
