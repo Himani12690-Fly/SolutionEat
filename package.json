@@ -2,14 +2,16 @@
   "name": "nest-and-nosh",
   "private": true,
   "version": "1.0.0",
-  "description": "Nest & Nosh – tiffin ordering app (scripts):",
+  "description": "Nest & Nosh \u2013 tiffin ordering app (scripts):",
   "scripts": {
-    "test": "playwright test",
+    "test": "node tools/stamp-version.js --check && playwright test",
     "test:ui": "playwright test --ui",
     "test:volume": "playwright test tests/volume.spec.js",
     "test:report": "playwright show-report tests/reports",
     "setup": "npm install && npx playwright install chromium",
-    "serve": "http-server -p 8080"
+    "serve": "http-server -p 8080",
+    "stamp": "node tools/stamp-version.js",
+    "verify:stamp": "node tools/stamp-version.js --check"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
