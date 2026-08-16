@@ -54,10 +54,10 @@ test.describe('Google Sign-In redirect flow — first-time login (need_phone)', 
     await page.fill('#authName', 'Test Customer');
     await page.fill('#authPhone', '9876543210');
     await Promise.all([
-      page.waitForURL(/[?&]v=otherkitchen/),
+      page.waitForURL(/(?:[?&]v=otherkitchen|\/otherkitchen(?:[/?#]|$))/),
       page.click('#finishLoginBtn'),
     ]);
-    expect(page.url()).toContain('v=otherkitchen');
+    expect(page.url()).toMatch(/(?:v=otherkitchen|\/otherkitchen(?:[/?#]|$))/);
   });
 
   // Regression for a real reported bug: right after this exact redirect+restore
@@ -81,7 +81,7 @@ test.describe('Google Sign-In redirect flow — first-time login (need_phone)', 
     await page.fill('#authName', 'Test Customer');
     await page.fill('#authPhone', '9876543210');
     await Promise.all([
-      page.waitForURL(/[?&]v=otherkitchen/),
+      page.waitForURL(/(?:[?&]v=otherkitchen|\/otherkitchen(?:[/?#]|$))/),
       page.click('#finishLoginBtn'),
     ]);
     await page.waitForLoadState('domcontentloaded');
@@ -106,7 +106,7 @@ test.describe('Google Sign-In redirect flow — first-time login (need_phone)', 
     // phone is already on file, so googleLogin succeeds without the phone step.
     await page.evaluate(() => { document.getElementById('authPhone').value = '9876543210'; });
     await Promise.all([
-      page.waitForURL(/[?&]v=otherkitchen/),
+      page.waitForURL(/(?:[?&]v=otherkitchen|\/otherkitchen(?:[/?#]|$))/),
       page.evaluate(() => window.onGoogleCredential({ credential: 'fake.jwt.token' })),
     ]);
     await page.waitForLoadState('domcontentloaded');
@@ -142,7 +142,7 @@ test.describe('Google Sign-In redirect flow — first-time login (need_phone)', 
     await page.evaluate(() => window.showAuth());
     await page.evaluate(() => { document.getElementById('authPhone').value = '9876543210'; });
     await Promise.all([
-      page.waitForURL(/[?&]v=otherkitchen/),
+      page.waitForURL(/(?:[?&]v=otherkitchen|\/otherkitchen(?:[/?#]|$))/),
       page.evaluate(() => window.onGoogleCredential({ credential: 'fake.jwt.token' })),
     ]);
     await page.waitForLoadState('domcontentloaded');

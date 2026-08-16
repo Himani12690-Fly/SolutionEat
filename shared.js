@@ -80,21 +80,20 @@
     catch(e){ return false; }
   })();
 
-  // Path-style link (mytiffin.cloud/hungryb, or mytiffin.cloud/admin/hungryb)
-  // has no server to rewrite it — GitHub Pages serves 404.html for that
-  // path, which redirects here as ?v=hungryb&__pathmode=1 (or
-  // ?admin=hungryb&__pathmode=1, see 404.html) so VENDOR_ID/ADMIN_PARAM
-  // above resolve exactly like any other ?v=/?admin= link. Only now, once
-  // resolved, swap the address bar back to the clean path via history (no
-  // reload, no extra request) so the ?v=/?admin= form is never what the
-  // user sees. Plain ?v=hungryb / ?admin=hungryb links (existing
-  // bookmarks/shares) are untouched — this only fires for the
-  // __pathmode-tagged redirect.
-  (function normalizePathModeUrl(){
+  // Any ?v=/?admin= link at the root — a path-style link redirected here by
+  // 404.html, an existing bookmark/QR code, or the app's own in-page
+  // navigation (goToVendor() etc. reconstructs "?v=" and reloads) — gets
+  // its address bar swapped to the clean /<slug> or /admin/<slug> form via
+  // history (no reload, no extra request), once VENDOR_ID/ADMIN_PARAM
+  // above have resolved it. The ?v=/?admin= form is never what the user
+  // ends up seeing, from any entry point. Only fires at "/" or
+  // "/index.html" — never touches a page already on a real path.
+  (function normalizeVendorPathUrl(){
     try{
+      if (location.pathname !== '/' && location.pathname !== '/index.html') return;
       const q = new URLSearchParams(location.search);
-      if (q.get('__pathmode') !== '1') return;
-      const isAdmin = q.has('admin');
+      if (!q.has('v') && !q.has('admin')) return;
+      const isAdmin = HAS_ADMIN_PARAM;
       q.delete('v'); q.delete('admin'); q.delete('__pathmode');
       const rest = q.toString();
       const slug = isAdmin ? ADMIN_PARAM : VENDOR_ID;

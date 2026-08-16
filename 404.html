@@ -20,16 +20,17 @@
   // (mytiffin.cloud/admin/hungryb). There's no server here to rewrite
   // either into the query params the app already resolves (?v=/?admin=),
   // so we do it client-side: redirect to index.html carrying the slug as
-  // that param, tagged __pathmode so shared.js's normalizePathModeUrl()
-  // can swap the address bar back to this same clean path once it's
-  // resolved (see shared.js).
+  // that param. shared.js's normalizeVendorPathUrl() swaps the address bar
+  // back to this same clean path once it's resolved (see shared.js) —
+  // that happens for any ?v=/?admin= link at the root, not just this one,
+  // so no special tagging is needed here.
   var parts = location.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
   var rest = location.search ? location.search.slice(1) : '';
   var qs = null;
   if (parts[0] === 'admin' && parts[1]) {
-    qs = 'admin=' + encodeURIComponent(parts[1]) + (rest ? '&' + rest : '') + '&__pathmode=1';
+    qs = 'admin=' + encodeURIComponent(parts[1]) + (rest ? '&' + rest : '');
   } else if (parts[0]) {
-    qs = 'v=' + encodeURIComponent(parts[0]) + (rest ? '&' + rest : '') + '&__pathmode=1';
+    qs = 'v=' + encodeURIComponent(parts[0]) + (rest ? '&' + rest : '');
   }
   if (qs) location.replace('/?' + qs + location.hash);
   else location.replace('/');

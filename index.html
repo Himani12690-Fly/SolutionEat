@@ -2446,7 +2446,14 @@
   }
 
   let __gsiInit=false;
-  const GOOGLE_REDIRECT_URI = location.origin + location.pathname;
+  // ⚠️ Hardcoded to root, NOT location.pathname — Google OAuth requires an
+  // exact match against the redirect URI registered in Google Cloud
+  // Console, which is the root ("/"), not any per-vendor clean path
+  // (/hungryb) the address bar might currently be showing (see
+  // shared.js's normalizeVendorPathUrl()). Every vendor shares this same
+  // one registered URI; the vendor itself travels in the ?v= param this
+  // builds into the request, same as before path-style URLs existed.
+  const GOOGLE_REDIRECT_URI = location.origin + '/';
 
   function googleRedirectLogin(){
     const btn=document.getElementById('gBtn');
@@ -2458,7 +2465,15 @@
     }catch(e){ nonce=String(Date.now())+Math.random().toString(16).slice(2); }
     try{
       sessionStorage.setItem('g_nonce', nonce);
-      sessionStorage.setItem('g_ret', location.search || '');
+      // location.search alone isn't enough any more — normalizeVendorPathUrl()
+      // (shared.js) may have already swapped the address bar to the clean
+      // /<vendor> path, leaving location.search empty even though a vendor
+      // WAS resolved for this page. Fall back to reconstructing it from
+      // VENDOR_ID so the post-OAuth redirect (google_ret handling below)
+      // still lands back on the right vendor, not the default one.
+      let gRet = location.search || '';
+      if(!gRet && HAS_VENDOR_PARAM) gRet = '?v='+encodeURIComponent(VENDOR_ID);
+      sessionStorage.setItem('g_ret', gRet);
       if(VENDOR_BRAND && VENDOR_BRAND.name) sessionStorage.setItem('g_brand', JSON.stringify(VENDOR_BRAND));
     }catch(e){}
     const p=new URLSearchParams({
@@ -3730,7 +3745,7 @@
   }
 
   function vendorOwnLink(){
-    return location.origin + location.pathname + '?v=' + encodeURIComponent(VENDOR_ID);
+    return location.origin + '/' + encodeURIComponent(VENDOR_ID);
   }
   function renderVendorQr(){
     const img=document.getElementById('vendorQrImg'); if(!img) return;
@@ -6088,12 +6103,18 @@
 
   function applyVendorManifest(name, iconSrc, hasRealLogo){
     try{
-      const startUrl = location.pathname + '?v=' + encodeURIComponent(VENDOR_ID);
+      // Root-relative, not location.pathname — the address bar may already
+      // be showing the clean /<vendor> path by the time this runs (see
+      // shared.js's normalizeVendorPathUrl()), but the manifest needs a
+      // stable value independent of that: start_url is the clean path
+      // itself (a real, working URL now), scope stays the whole origin so
+      // installed-app navigation is never restricted to one vendor's path.
+      const startUrl = '/' + encodeURIComponent(VENDOR_ID);
       const iconType = hasRealLogo ? 'image/png' : (iconSrc.indexOf('image/svg+xml')>=0 ? 'image/svg+xml' : 'image/png');
       const man = {
         name: name + ' — Tiffin Ordering', short_name: name,
         description: 'Order tiffin online from ' + name,
-        start_url: startUrl, scope: location.pathname,
+        start_url: startUrl, scope: '/',
         display: 'standalone', orientation: 'portrait',
         background_color: '#f5eee0', theme_color: '#6366f1',
         lang: 'en', dir: 'ltr', id: startUrl,
