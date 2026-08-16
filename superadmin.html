@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=92be16d9a7">
+  <link rel="stylesheet" href="styles.css?v=234be9d5be">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -847,6 +847,11 @@
             <div class="mc-t" data-i="dtOffice"></div>
             <div class="mc-s" data-i="dtOfficeSub"></div>
           </div>
+          <div class="mode-card" id="mc-takeaway" onclick="chooseMode('takeaway')">
+            <div class="mc-i">🥡</div>
+            <div class="mc-t" data-i="dtTakeaway"></div>
+            <div class="mc-s" data-i="dtTakeawaySub"></div>
+          </div>
         </div>
         <div id="modeClose" class="hidden" style="margin-top:12px;"><button class="add-cart-btn" style="background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="closeModeModal()" data-i="limitClose"></button></div>
       </div>
@@ -962,7 +967,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=92be16d9a7"></script>
+  <script src="shared.js?v=234be9d5be"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
@@ -1408,11 +1413,14 @@
   }
   function builderUnitPrice(m) { return unitPrice({ meal:m, ...builder[m] }); }
   let deliveryType='home';
-  function modesAvailable(){ return { home:(CFG.homeEnabled!==false), office:(CFG.officeEnabled===true)&&((CFG.companies||[]).length>0) }; }
+  function modesAvailable(){ return { home:(CFG.homeEnabled!==false), office:(CFG.officeEnabled===true)&&((CFG.companies||[]).length>0), takeaway:(CFG.takeawayEnabled!==false) }; }
+  function isTakeaway(){ return deliveryType==='takeaway'; }
   function openModeModal(dismissable){
     const m=modesAvailable();
     document.getElementById('mc-home').style.display=m.home?'block':'none';
     document.getElementById('mc-office').style.display=m.office?'block':'none';
+    const mcT=document.getElementById('mc-takeaway');
+    if(mcT){ mcT.style.display=m.takeaway?'block':'none'; mcT.classList.toggle('on',deliveryType==='takeaway'); }
     document.getElementById('mc-home').classList.toggle('on',deliveryType==='home');
     document.getElementById('mc-office').classList.toggle('on',deliveryType==='office');
     document.getElementById('modeClose').classList.toggle('hidden', !dismissable);
@@ -1430,31 +1438,34 @@
     if(!m.office) return true;
     if(!m.home) { setDeliveryType('office'); return true; }
     const a=storeGet('fbt_addr')||{};
-    if(a.deliveryType==='home'||a.deliveryType==='office'){ setDeliveryType(a.deliveryType); return true; }
+    if(a.deliveryType==='home'||a.deliveryType==='office'||a.deliveryType==='takeaway'){ setDeliveryType(a.deliveryType); return true; }
     return false;
   }
   function ensureMode(){ if(!modeReady()) openModeModal(false); }
   function renderModeChip(){
     const box=document.getElementById('modeChip'); if(!box)return;
     const m=modesAvailable();
-    if(!(m.home&&m.office)){ box.innerHTML=''; return; }
+    const modeCount=(m.home?1:0)+(m.office?1:0)+(m.takeaway?1:0);
+    if(modeCount<2){ box.innerHTML=''; return; }
     const a=storeGet('fbt_addr')||{};
-    const isOff=(deliveryType==='office');
-    const line=isOff ? ((a.company||'')+(a.empId?(' · '+a.empId):'')) : ((a.society||'')+(a.flatNo?(' · '+a.flatNo):''));
+    const isOff=(deliveryType==='office'), isTa=isTakeaway();
+    const line=isTa ? '' : (isOff ? ((a.company||'')+(a.empId?(' · '+a.empId):'')) : ((a.society||'')+(a.flatNo?(' · '+a.flatNo):'')));
     box.innerHTML=`<div class="mode-chip">
-      <span class="mch-i">${isOff?'🏢':'🏠'}</span>
-      <span class="mch-x"><span class="mch-t">${isOff?t('dtOffice'):t('dtHome')}</span><div class="mch-s">${line||t(isOff?'dtOfficeSub':'dtHomeSub')}</div></span>
+      <span class="mch-i">${isTa?'🥡':(isOff?'🏢':'🏠')}</span>
+      <span class="mch-x"><span class="mch-t">${isTa?t('dtTakeaway'):(isOff?t('dtOffice'):t('dtHome'))}</span><div class="mch-s">${line||t(isTa?'dtTakeawaySub':(isOff?'dtOfficeSub':'dtHomeSub'))}</div></span>
       <span class="mch-c" onclick="openModeModal(true)">${t('modeChange')}</span>
     </div>`;
   }
   function companyByName(n){ return (CFG.companies||[]).find(c=>String(c.name).toLowerCase().trim()===String(n||'').toLowerCase().trim())||null; }
   function setDeliveryType(mode){
-    deliveryType=(mode==='office')?'office':'home';
+    deliveryType=(mode==='office')?'office':((mode==='takeaway')?'takeaway':'home');
     const ic=document.getElementById('ckModeIc'), ct=document.getElementById('ckModeT'), cs=document.getElementById('ckModeS');
-    if(ic){ ic.textContent=(deliveryType==='office')?'🏢':'🏠'; }
-    if(ct){ ct.textContent=(deliveryType==='office')?t('dtOffice'):t('dtHome'); }
-    if(cs){ cs.textContent=(deliveryType==='office')?t('dtOfficeSub'):t('dtHomeSub'); }
-    document.getElementById('homeFields').classList.toggle('hidden',deliveryType==='office');
+    const ico=isTakeaway()?'🥡':((deliveryType==='office')?'🏢':'🏠');
+    const ttl=isTakeaway()?t('dtTakeaway'):((deliveryType==='office')?t('dtOffice'):t('dtHome'));
+    const sub=isTakeaway()?t('dtTakeawaySub'):((deliveryType==='office')?t('dtOfficeSub'):t('dtHomeSub'));
+    if(ic){ ic.textContent=ico; } if(ct){ ct.textContent=ttl; } if(cs){ cs.textContent=sub; }
+    // Takeaway me koi address nahi chahiye — customer khud lene aa raha hai.
+    document.getElementById('homeFields').classList.toggle('hidden',deliveryType!=='home');
     document.getElementById('officeFields').classList.toggle('hidden',deliveryType!=='office');
     if(!document.getElementById('page2').classList.contains('hidden')){ renderSummary(); const b=document.getElementById('barTotal2'); if(b) b.textContent='₹'+cartTotalDisplay(); }
   }
@@ -1462,6 +1473,7 @@
   // store hoti hai (fbt_addr.lat/lng) — phone abhi kahan hai us par nahi,
   // warna office se ghar ka order galat distance nikaalta.
   function deliveryDistanceKm(){
+    if(isTakeaway()) return null;       // distance ka charge hi nahi lagta
     try{
       const a = storeGet('fbt_addr') || {};
       if(typeof a.lat !== 'number' || typeof a.lng !== 'number') return null;
@@ -1470,6 +1482,7 @@
     }catch(e){ return null; }
   }
   function deliveryOutOfRange(){
+    if(isTakeaway()) return false;      // pickup hai, radius se koi lena-dena nahi
     const km = deliveryDistanceKm();
     if(km == null) return false;
     const max = Math.min(Number(CFG.deliveryRadiusKm) || DELIVERY_MAX_RADIUS_KM, DELIVERY_MAX_RADIUS_KM);
@@ -1477,6 +1490,7 @@
   }
   function deliveryFee(){
     if(!cart.length) return 0;
+    if(isTakeaway()) return 0;          // customer khud lene aa raha hai
     if(CFG.deliveryEnabled===false) return 0;
     const km = deliveryDistanceKm();
     const slab = deliveryFeeForKm(km);
@@ -1903,14 +1917,17 @@
     if(!cart.length) return;
     // Location ke bina delivery charge nikalta hi nahi — order aage nahi jaana
     // chahiye. Permission mil jaaye to seedha wahin se aage badh jaate hain.
-    if(!hasDeliveryLocation()){
-      showToast('📍 '+t('locNeeded'),'warning');
-      captureDeliveryLocation(function(ok){ if(ok) cartCheckout(); });
-      return;
+    if(!isTakeaway()){
+      if(!hasDeliveryLocation()){
+        showToast('📍 '+t('locNeeded'),'warning');
+        captureDeliveryLocation(function(ok){ if(ok) cartCheckout(); });
+        return;
+      }
+      if(deliveryOutOfRange()){ showToast('🚫 '+t('outOfRange'),'error'); return; }
     }
-    if(deliveryOutOfRange()){ showToast('🚫 '+t('outOfRange'),'error'); return; }
     const a=storeGet('fbt_addr')||{};
-    const ready = deliveryType==='office' ? (a.company&&a.empId) : (a.society&&a.flatNo);
+    const ready = isTakeaway() ? true
+                : (deliveryType==='office' ? (a.company&&a.empId) : (a.society&&a.flatNo));
     if(ready){ goToCheckout(); setTimeout(()=>placeOrder(),60); }
     else goToCheckout();
   }
@@ -2955,12 +2972,13 @@
       ?`<div class="promo-applied"><span>🎟️ ${appliedPromo.code} <b>−₹${pd}</b>${feeDates()>1?`<small>${t('promoFirstDateNote')}</small>`:''}</span><span class="pr-x" onclick="removePromo()">✕</span></div>`
       :`<div class="promo-input"><select id="promoSelect" onchange="onPromoSelect()"><option value="">${t('promoPick')}</option>${CFG.promos.map(pp=>{const u=isPromoUsed(pp.code);return `<option value="${esc(pp.code)}"${u?' disabled':''}>${pp.code} · ${pp.label}${u?(' · '+t('promoUsedTag')):(pp.firstOnly?' · 🆕':'')}</option>`;}).join('')}<option value="__manual__">${t('promoOther')}</option></select><input id="promoCode" class="hidden" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>` : '';
     const __dkm = deliveryDistanceKm();
-    if(__dkm == null){
+    if(isTakeaway()){ /* pickup — na location chahiye, na charge */ }
+    else if(__dkm == null){
       html+=`<div class="loc-need"><span>📍 ${t('locNeededCart')}</span><button id="locFixBtn" onclick="captureDeliveryLocation()">${t('locUseMine')}</button></div>`;
     } else if(deliveryOutOfRange()){
       html+=`<div class="loc-need out"><span>🚫 ${t('outOfRange')} (${fmtKm(__dkm)})</span></div>`;
     }
-    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${__dkm!=null?(' · '+fmtKm(__dkm)):''}${feeDates()>1?(' × '+feeDates()):''}</span><span>${__dkm==null?'—':('₹'+deliveryFeeTotal())}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
+    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>${isTakeaway()?t('dtTakeaway'):('🛵 '+t('deliveryLbl')+(__dkm!=null?(' · '+fmtKm(__dkm)):'')+(feeDates()>1?(' × '+feeDates()):''))}</span><span>${isTakeaway()?'₹0':(__dkm==null?'—':('₹'+deliveryFeeTotal()))}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
     box.innerHTML=html;
     if(cbt) cbt.textContent='₹'+cartTotalDisplay();
     if(cbtn) cbtn.disabled=false;
@@ -3121,9 +3139,10 @@
   function placeOrder(){
     if(!isLoggedIn()){ showAuth(); return; }
     const okN=validateName();
-    const okLoc=(deliveryType==='office')
-      ? [validateCompany(), validateEmpId()].every(Boolean)
-      : [validateSociety(), validateFlat()].every(Boolean);
+    const okLoc= isTakeaway() ? true
+      : ((deliveryType==='office')
+          ? [validateCompany(), validateEmpId()].every(Boolean)
+          : [validateSociety(), validateFlat()].every(Boolean));
     if(!okLoc||!okN){ showToast(t('completeFields'),'warning'); return; }
     {
       const stale=[];
