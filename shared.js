@@ -80,21 +80,26 @@
     catch(e){ return false; }
   })();
 
-  // Path-style link (mytiffin.cloud/hungryb) has no server to rewrite it —
-  // GitHub Pages serves 404.html for that path, which redirects here as
-  // ?v=hungryb&__pathmode=1 (see 404.html) so VENDOR_ID above resolves
-  // exactly like any other ?v= link. Only now, once resolved, swap the
-  // address bar back to the clean /hungryb path via history (no reload,
-  // no extra request) so the ?v= form is never what the user sees. Plain
-  // ?v=hungryb links (existing bookmarks/shares) are untouched — this only
-  // fires for the __pathmode-tagged redirect.
+  // Path-style link (mytiffin.cloud/hungryb, or mytiffin.cloud/admin/hungryb)
+  // has no server to rewrite it — GitHub Pages serves 404.html for that
+  // path, which redirects here as ?v=hungryb&__pathmode=1 (or
+  // ?admin=hungryb&__pathmode=1, see 404.html) so VENDOR_ID/ADMIN_PARAM
+  // above resolve exactly like any other ?v=/?admin= link. Only now, once
+  // resolved, swap the address bar back to the clean path via history (no
+  // reload, no extra request) so the ?v=/?admin= form is never what the
+  // user sees. Plain ?v=hungryb / ?admin=hungryb links (existing
+  // bookmarks/shares) are untouched — this only fires for the
+  // __pathmode-tagged redirect.
   (function normalizePathModeUrl(){
     try{
       const q = new URLSearchParams(location.search);
       if (q.get('__pathmode') !== '1') return;
-      q.delete('v'); q.delete('__pathmode');
+      const isAdmin = q.has('admin');
+      q.delete('v'); q.delete('admin'); q.delete('__pathmode');
       const rest = q.toString();
-      const clean = '/' + encodeURIComponent(VENDOR_ID) + (rest ? '?'+rest : '') + location.hash;
+      const slug = isAdmin ? ADMIN_PARAM : VENDOR_ID;
+      const path = (isAdmin ? '/admin/' : '/') + encodeURIComponent(slug);
+      const clean = path + (rest ? '?'+rest : '') + location.hash;
       history.replaceState(null, '', clean);
     }catch(e){}
   })();
