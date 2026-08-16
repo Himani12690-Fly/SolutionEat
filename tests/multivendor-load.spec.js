@@ -97,11 +97,25 @@ function buildOrder(vendorState, orderIdx) {
   return { payload, expectedTotal, meal, variant: variant.id, extraRoti, butterRoti, dahi, extraSabzi, deliveryType, payment, society };
 }
 
+// 50 contexts ek saath kholna CI ke 2-core runner par do tarah se toota:
+// pehle server-side (har request par gzip — dekho tools/serve.js), aur wo theek
+// karne ke baad Playwright ke apne protocol par — "Object with guid response@…
+// was not bound in the connection", jab route handlers context teardown se race
+// karte hain. Test ka maqsad simultaneous browsers nahi hai: ye 50 ALAG vendor
+// configs ka isolation aur price math check karta hai. Batches me utne hi 50
+// vendors chalte hain, bas runner par ek saath 50 Chromium nahi hote.
+// (Isi file ka Admin spot-check 8 contexts par hamesha theek raha.)
+const VENDOR_BATCH = 16;
+
 test(`Multi-vendor load: ${N_VENDORS} vendors x ${ORDERS_PER_VENDOR} varied orders each`, async ({ browser }) => {
-  test.setTimeout(Math.max(120000, N_VENDORS * 3000));
+  // Batching se wall-time badhta hai (batches ab serial hain), isliye budget bhi
+  // badhao — aur khul kar. Ye test do baar isliye toota kyunki budget tight tha,
+  // jabki pass hone par bada timeout kuch kharch nahi karta. 8-core par 124s
+  // lagta hai; CI ka 2-core runner isse kaafi dheema hai.
+  test.setTimeout(Math.max(240000, N_VENDORS * 9000));
   const t0 = Date.now();
 
-  const perVendor = await Promise.all(Array.from({ length: N_VENDORS }, async (_, i) => {
+  const runVendor = async (i) => {
     const { vendorId, state } = buildVendorState(i);
     const ctx = await browser.newContext();
     const consoleErrors = [];
@@ -150,7 +164,16 @@ test(`Multi-vendor load: ${N_VENDORS} vendors x ${ORDERS_PER_VENDOR} varied orde
     } finally {
       await ctx.close();
     }
-  }));
+  };
+
+  const perVendor = [];
+  for (let start = 0; start < N_VENDORS; start += VENDOR_BATCH) {
+    const batch = Array.from(
+      { length: Math.min(VENDOR_BATCH, N_VENDORS - start) },
+      (_, k) => runVendor(start + k)
+    );
+    perVendor.push(...await Promise.all(batch));
+  }
 
   const elapsed = Date.now() - t0;
   const vendorsOk = perVendor.filter((v) => v.ok).length;
