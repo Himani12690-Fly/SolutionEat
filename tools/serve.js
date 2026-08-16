@@ -26,6 +26,29 @@ const zlib = require('zlib');
 const ROOT = path.join(__dirname, '..');
 const PORT = Number(process.env.PORT) || 8080;
 
+// Har request par file padhna + gzipSync karna theek lagta hai jab tak load
+// test na chale. index.html 427 KB ka hai; use har hit par dobara compress
+// karna single-threaded Node ka event loop block kar deta hai, aur
+// multivendor-load (50 vendors) ke andar app ke apne fetch AbortController
+// timeout par chale jaate the. Ek baar padho, ek baar gzip karo, mtime badle
+// tabhi dobara — dev me file save karne par bhi fresh milta rahe.
+const cache = new Map();
+function load(file) {
+  let stat;
+  try { stat = fs.statSync(file); } catch (_) { return null; }
+  if (!stat.isFile()) return null;
+  const hit = cache.get(file);
+  if (hit && hit.mtime === stat.mtimeMs) return hit;
+  const raw = fs.readFileSync(file);
+  const ext = path.extname(file);
+  const entry = {
+    mtime: stat.mtimeMs, raw, ext,
+    gz: COMPRESSIBLE.has(ext) ? zlib.gzipSync(raw, { level: 6 }) : null,
+  };
+  cache.set(file, entry);
+  return entry;
+}
+
 const TYPES = {
   '.html':'text/html; charset=utf-8', '.js':'application/javascript; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.json':'application/json; charset=utf-8',
@@ -34,22 +57,21 @@ const TYPES = {
 };
 const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.json', '.svg', '.txt']);
 
-function send(res, status, body, ext, acceptEncoding) {
+function send(res, status, entry, acceptEncoding) {
   const headers = {
-    'content-type': TYPES[ext] || 'application/octet-stream',
+    'content-type': TYPES[entry.ext] || 'application/octet-stream',
     // Pages jaisa hi — isse cache-related bugs local par bhi reproduce hote hain
     'cache-control': 'max-age=600',
   };
-  if (COMPRESSIBLE.has(ext) && /gzip/.test(acceptEncoding || '')) {
-    const gz = zlib.gzipSync(body, { level: 6 });
+  if (entry.gz && /gzip/.test(acceptEncoding || '')) {
     headers['content-encoding'] = 'gzip';
-    headers['content-length'] = gz.length;
+    headers['content-length'] = entry.gz.length;
     res.writeHead(status, headers);
-    return res.end(gz);
+    return res.end(entry.gz);
   }
-  headers['content-length'] = body.length;
+  headers['content-length'] = entry.raw.length;
   res.writeHead(status, headers);
-  res.end(body);
+  res.end(entry.raw);
 }
 
 const server = http.createServer((req, res) => {
@@ -62,17 +84,14 @@ const server = http.createServer((req, res) => {
   const accept = req.headers['accept-encoding'];
 
   // Path traversal se bacho — ROOT ke bahar kuch bhi serve nahi
-  if (filePath.startsWith(ROOT) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    return send(res, 200, fs.readFileSync(filePath), path.extname(filePath), accept);
-  }
+  const hit = filePath.startsWith(ROOT) ? load(filePath) : null;
+  if (hit) return send(res, 200, hit, accept);
 
   // Yahi wo Pages wala behaviour hai: unknown path -> 404.html, 404 status ke
   // saath. App ka clean-URL routing (/<vendor>) isi se chalta hai.
-  const notFound = path.join(ROOT, '404.html');
-  if (fs.existsSync(notFound)) {
-    return send(res, 404, fs.readFileSync(notFound), '.html', accept);
-  }
-  send(res, 404, Buffer.from('Not found'), '.txt', accept);
+  const notFound = load(path.join(ROOT, '404.html'));
+  if (notFound) return send(res, 404, notFound, accept);
+  send(res, 404, { raw: Buffer.from('Not found'), ext: '.txt', gz: null }, accept);
 });
 
 server.listen(PORT, () => {
