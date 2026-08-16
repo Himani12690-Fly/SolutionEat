@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=c50dd960d0">
+  <link rel="stylesheet" href="styles.css?v=fe89e1496a">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -749,7 +749,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=c50dd960d0"></script>
+  <script src="shared.js?v=fe89e1496a"></script>
 <script>
   (function(){
     try{
@@ -1662,7 +1662,7 @@
     // duplicate karta tha, hata diya. Closed meal ke liye "📅 Schedule" link
     // alag kaam karta hai (doosri date pe jump), wo as-is hai.
     const custLink = closed
-      ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>`
+      ? scheduleLinkHtml(m)
       : `<span></span>`;
     el.innerHTML = custLink+btn;
     const card=document.getElementById('mc-'+m); if(card) card.classList.toggle('c1-open',orderable); if(card) card.classList.toggle('c1-closed',!orderable);
@@ -2444,6 +2444,15 @@
     box.innerHTML = html+'</div>';
   }
   function menuChangeDate(v){ const off=parseInt(v,10)||0; if(off!==0 && !anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
+  function scheduleTargetOff(m){
+    const a1=mealsAvail(1)[m], a2=mealsAvail(2)[m];
+    return (a1&&a1.ok) ? 1 : ((a2&&a2.ok) ? 2 : null);
+  }
+  function scheduleLinkHtml(m){
+    const off=scheduleTargetOff(m);
+    if(off==null) return `<span class="c1-cust c1-cust-off">📅 ${t('scheduleNone')}</span>`;
+    return `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${off===1?t('scheduleTomorrow'):t('scheduleDayAfter')}</span>`;
+  }
   function jumpToMealDate(m){
     if(!isLoggedIn()){ showAuth(); return; }
     const av1=mealsAvail(1)[m], av2=mealsAvail(2)[m];
@@ -2529,7 +2538,7 @@
         // duplicate karta tha, hata diya. Closed meal ke liye "📅 Schedule" link
         // alag kaam karta hai (doosri date pe jump), wo as-is hai.
         const custLink = closed
-          ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>`
+          ? scheduleLinkHtml(m)
           : `<span></span>`;
         const cutoffLine = orderable ? mealCutoffLine(m, dateOffset) : '';
         cardHtmlByKey[m] = `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
