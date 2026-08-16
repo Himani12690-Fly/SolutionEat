@@ -128,6 +128,12 @@
         <button onclick="demoLoginFE()" id="demoLoginBtn" data-i="demoLoginBtn2">🚀 Demo Customer se Login</button>
       </div>
 
+      <div id="authVendorFail" class="hidden auth-vfail">
+        <div class="avf-t">⚠️ <span data-i="kitchenLinkBad"></span></div>
+        <div class="avf-s" data-i="kitchenLinkBadSub"></div>
+        <button type="button" class="avf-btn" onclick="__dscIsTop=true;openDiscovery();" data-i="seeAllKitchens"></button>
+      </div>
+
       <div id="authSocialBlock">
         <button type="button" class="g-btn" id="gBtn" onclick="googleRedirectLogin()">
           <svg class="g-ico" viewBox="0 0 48 48" aria-hidden="true">
@@ -2843,6 +2849,18 @@
   let __mpTimer=null;
   let __vendorReady = !HAS_VENDOR_PARAM;
   let __bootstrapFailed = false;
+  // Kitchen link galat/purana ho (backend "invalid kitchen link" deta hai) ya
+  // network fail ho — pehle login page ka logo hamesha ghoomta rehta tha aur
+  // naam khali, yani customer ke liye page bas atka hua dikhta tha. Ab spinner
+  // rokte hain aur saari kitchens tak pahunchne ka rasta dete hain.
+  function markVendorLoadFailed(){
+    try{
+      const sp=document.getElementById('authLogoSpin'); if(sp) sp.classList.add('hidden');
+      if(VENDOR_BRAND && VENDOR_BRAND.name) return;   // brand mil gaya, sirf menu fail hua
+      const box=document.getElementById('authVendorFail'); if(box) box.classList.remove('hidden');
+      const sb=document.getElementById('authSocialBlock'); if(sb) sb.classList.add('hidden');
+    }catch(e){}
+  }
   function renderMealPanel(){
     clearTimeout(__mpTimer);
     __mpTimer=setTimeout(()=>{ __mpTimer=null; renderMealPanelNow(); }, 50);
@@ -5536,6 +5554,7 @@
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                     __vendorReady = true;
                     __bootstrapFailed = true;
+                    markVendorLoadFailed();
                     finishInit();
                     refreshLiveViews();
                 })
@@ -5545,6 +5564,7 @@
                     if (__bl) { __bl.classList.add('gone'); setTimeout(() => __bl.remove(), 400); }
                     __vendorReady = true;
                     __bootstrapFailed = true;
+                    markVendorLoadFailed();
                     finishInit();
                     refreshLiveViews();
                 });
