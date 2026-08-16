@@ -127,7 +127,6 @@
       #authPage .hero .logo-wrap { animation:none; }
       #authPage .hero .logo-wrap::before { animation:none; opacity:0.28; }
     }
-    #authPage .h1-platform { justify-content:center; margin-bottom:8px; }
     .auth-kname { font-size:22px; font-weight:800; color:var(--ink); line-height:1.2;
       letter-spacing:-0.3px; margin-top:10px; }
     .auth-kloc { font-size:13px; color:var(--muted); font-weight:500; margin:4px 0 8px; }
@@ -306,9 +305,6 @@
     }
     .h1-top.h1-centered .h1-tt { flex:none; width:100%; }
 
-    .h1-platform { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:800;
-      color:var(--muted); letter-spacing:0.2px; }
-    .h1-platform-ic { width:16px; height:16px; border-radius:5px; object-fit:cover; }
 
     .h1-rate { position:absolute; top:16px; left:16px; display:flex; flex-direction:column;
       align-items:center; gap:3px; z-index:2; }
