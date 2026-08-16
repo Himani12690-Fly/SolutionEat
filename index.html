@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=77d142f56e">
+  <link rel="stylesheet" href="styles.css?v=1a5f471cbb">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1317,7 +1317,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=77d142f56e"></script>
+  <script src="shared.js?v=1a5f471cbb"></script>
 <script>
   (function(){
     try{
@@ -2059,22 +2059,39 @@
     lbl.textContent = pushSubscribed() ? '🔔 Order Updates — ON' : 'Order Updates';
   }
   let notifCache=[], notifTimer=null;
+  // Server ko bhejte hain: 'isse purani mat bhejo'. Har poll ka jawab tab
+  // lagbhag khaali hota hai, isliye interval 60s se 15s karna saste me pad
+  // gaya — pehle 15s karte to backend par load 4x ho jaata.
+  let notifSince=0;
   function notifKey(n){ return (n.title||'')+'|'+(n.body||'')+'|'+(n.time||''); }
   function loadNotifications(){
     if(!isLoggedIn()) return;
-    const url=GOOGLE_SCRIPT_URL+'?action=mynotifications&token='+encodeURIComponent(SESSION.token)+'&vendorId='+VENDOR_ID+'&authVendorId='+((SESSION&&SESSION.vid)||VENDOR_ID);
+    const url=GOOGLE_SCRIPT_URL+'?action=mynotifications&since='+notifSince+'&token='+encodeURIComponent(SESSION.token)+'&vendorId='+VENDOR_ID+'&authVendorId='+((SESSION&&SESSION.vid)||VENDOR_ID);
     fetch(url).then(r=>r.json()).then(j=>{
       if(j.status==='success'){
         const seen=new Set(), uniq=[];
         (j.notifications||[]).forEach(n=>{ const k=notifKey(n); if(seen.has(k))return; seen.add(k); uniq.push(n); });
-        notifCache=uniq;
+        // Server ab sirf NAYI notifications bhejta hai (since filter), isliye
+        // replace nahi — merge. Purani cache wahin rehti hai, upar naya jud
+        // jaata hai. Isse har poll ka response 95% baar khaali hota hai.
+        if(uniq.length || !notifCache.length){
+          const merged=[...uniq, ...notifCache], mseen=new Set(), out=[];
+          merged.forEach(n=>{ const k=notifKey(n); if(mseen.has(k))return; mseen.add(k); out.push(n); });
+          notifCache=out.slice(0,200);
+          uniq.forEach(n=>{ const t=new Date(n.time).getTime(); if(isFinite(t)&&t>notifSince) notifSince=t; });
+        }
         pruneReadKeys();
         renderNotifBadge();
         const sheet=document.getElementById('notifSheet');
         if(sheet && !sheet.classList.contains('hidden')) renderNotifList();
       }
     }).catch(()=>{});
-    if(!notifTimer) notifTimer=setInterval(()=>{ if(isLoggedIn()) loadNotifications(); }, 60000);
+    // 60s -> 15s. Ye tabhi safe hua jab har poll sasta ho gaya (since filter).
+    // Aur tab chhupa ho to bilkul poll mat karo — na backend par bojh, na battery
+    // par. Wapas dikhte hi turant ek poll: user ko intezaar nahi karna padta.
+    if(!notifTimer) notifTimer=setInterval(()=>{
+      if(isLoggedIn() && document.visibilityState==='visible') loadNotifications();
+    }, 15000);
   }
   function recentNotifs(){
     const cutoff=Date.now()-24*60*60*1000;
@@ -5723,13 +5740,45 @@
 
   let alertTimer=null, ringCtx=null, ringTimer=null;
   let vendorNotifCache=[], vendorNotifTimer=null;
+  // Customer side jaisa hi: server ko last-seen timestamp bhejo, sirf naya wapas
+  // aayega. Isse 60s -> 15s karna sasta pad gaya.
+  let vendorNotifSince=0;
   function loadVendorNotifications(){
     if(!adminCreds) return;
-    apiPost({action:'vendornotifications', user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
-      if(j.status==='success'){ vendorNotifCache=j.notifications||[]; renderVendorNotifBadge(); }
+    apiPost({action:'vendornotifications', since:vendorNotifSince, user:adminCreds.user, pass:adminCreds.pass}).then(j=>{
+      if(j.status==='success'){
+        const fresh=j.notifications||[];
+        if(fresh.length || !vendorNotifCache.length){
+          const seen=new Set(), out=[];
+          [...fresh, ...vendorNotifCache].forEach(n=>{
+            const k=(n.title||'')+'|'+(n.body||'')+'|'+(n.time||'');
+            if(seen.has(k))return; seen.add(k); out.push(n);
+          });
+          vendorNotifCache=out.slice(0,200);
+          fresh.forEach(n=>{ const t=new Date(n.time).getTime(); if(isFinite(t)&&t>vendorNotifSince) vendorNotifSince=t; });
+        }
+        renderVendorNotifBadge();
+      }
     }).catch(()=>{});
-    if(!vendorNotifTimer) vendorNotifTimer=setInterval(()=>{ if(adminCreds) loadVendorNotifications(); }, 60000);
+    // Tab chhupa ho to poll band — vendor ka panel aksar background me khula
+    // rehta hai, wahan har 15s request bhejne ka koi faayda nahi. Wapas dikhte
+    // hi turant refresh hota hai (neeche visibilitychange).
+    if(!vendorNotifTimer) vendorNotifTimer=setInterval(()=>{
+      if(adminCreds && document.visibilityState==='visible') loadVendorNotifications();
+    }, 15000);
   }
+  // ── Tab wapas foreground me aate hi turant refresh ────────────────────────
+  // Ye "kabhi miss na ho" wala asli hissa hai. Phone jeb me tha, tab chhupa tha,
+  // poll ruka hua tha — user app kholta hai aur use 15s tak purana state dikhta
+  // rahe, ye sabse bura lagta hai. Ab visible hote hi ek poll turant chalta hai,
+  // to app kholte hi latest dikhta hai.
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState!=='visible') return;
+    try{ if(typeof isLoggedIn==='function' && isLoggedIn()) loadNotifications(); }catch(e){}
+    try{ if(typeof adminCreds!=='undefined' && adminCreds) loadVendorNotifications(); }catch(e){}
+    try{ if(typeof adminCreds!=='undefined' && adminCreds && typeof checkNewOrders==='function') checkNewOrders(); }catch(e){}
+  });
+
   function vendorNotifSeenKey(){ return 'fbt_admin_notif_seen'; }
   function vendorNotifClearedKey(){ return 'fbt_admin_notif_cleared_before'; }
   function visibleVendorNotifs(){
