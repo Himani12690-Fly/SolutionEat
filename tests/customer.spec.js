@@ -131,11 +131,18 @@ test.describe('Cart & pricing', () => {
 });
 
 test.describe('Promo', () => {
+  // Coupon row ab ek hi line hai: dropdown + Apply. Jo code list me nahi hai
+  // (jaise ye test codes) wo "enter another code" chunne par hi type hota
+  // hai — asli customer bhi wahi karta hai.
+  async function typePromo(page, code){
+    await page.selectOption('#promoSelect', '__manual__');
+    await page.fill('#promoCode', code);
+  }
   test('valid code apply hota hai aur total ghatta hai', async ({ page }) => {
     await openApp(page);
     await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
-    await page.fill('#promoCode', 'WELCOME50');
+    await typePromo(page, 'WELCOME50');
     await page.click('#promoApplyBtn');
     await page.waitForTimeout(400);
     await expect(page.locator('.promo-applied')).toContainText('WELCOME50');
@@ -146,7 +153,7 @@ test.describe('Promo', () => {
     await openApp(page);
     await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
-    await page.fill('#promoCode', 'NOPE99');
+    await typePromo(page, 'NOPE99');
     await page.click('#promoApplyBtn');
     await page.waitForTimeout(400);
     await expect(page.locator('#toast')).toContainText('Invalid coupon');
@@ -157,7 +164,7 @@ test.describe('Promo', () => {
     await openApp(page);
     await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
-    await page.fill('#promoCode', 'WELCOME50');
+    await typePromo(page, 'WELCOME50');
     await page.click('#promoApplyBtn');
     await page.waitForTimeout(400);
     await page.click('.pr-x');
@@ -173,7 +180,7 @@ test.describe('Promo', () => {
     })() });
     await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
-    await page.fill('#promoCode', 'WELCOME50');
+    await typePromo(page, 'WELCOME50');
     await page.click('#promoApplyBtn');
     await page.waitForTimeout(400);
     const total = await page.evaluate(() => window.cartTotalDisplay());

@@ -472,6 +472,12 @@
     .bulk-bar button { flex:1; min-width:46%; padding:12px 8px; border-radius:11px; border:1.5px solid var(--line); font-size:12px; font-weight:800; cursor:pointer; }
     .bulk-bar .bb-prep { border-color:var(--accent); color:#fff; background:var(--accent); font-weight:900; box-shadow:0 3px 10px rgba(99,102,241,0.35); }
     .bulk-bar .bb-done { border-color:var(--ok); color:#fff; background:var(--ok); font-weight:900; box-shadow:0 3px 10px rgba(22,163,74,0.3); }
+    .auth-vfail { text-align:center; background:var(--card); border:1.5px solid var(--line);
+      border-radius:14px; padding:20px 16px; }
+    .auth-vfail .avf-t { font-size:15px; font-weight:800; color:var(--ink); }
+    .auth-vfail .avf-s { font-size:12.5px; color:var(--muted); font-weight:600; margin-top:6px; line-height:1.5; }
+    .auth-vfail .avf-btn { margin-top:14px; width:100%; padding:13px 16px; border:none; border-radius:12px;
+      background:var(--accent); color:#fff; font-size:14px; font-weight:800; cursor:pointer; }
     .promo-box { margin-top:12px; }
     .promo-input { display:flex; gap:8px; }
     .promo-input input { flex:1; padding:11px 12px; border:1.5px solid var(--line); border-radius:11px; font-size:13px; font-weight:700; text-transform:uppercase; }
