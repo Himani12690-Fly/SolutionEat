@@ -11,7 +11,9 @@
     "setup": "npm install && npx playwright install chromium",
     "serve": "http-server -p 8080",
     "stamp": "node tools/stamp-version.js",
-    "verify:stamp": "node tools/stamp-version.js --check"
+    "verify:stamp": "node tools/stamp-version.js --check",
+    "verify:syntax": "node tools/check-syntax.js",
+    "perf": "node tools/perf-bench.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

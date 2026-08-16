@@ -14,7 +14,14 @@
 // rehna chahiye, isliye push wala hissa alag try/catch me isolate hai.
 
 const CACHE = 'fbt-v40';
-const ASSETS = ['./', './index.html', './manifest.json', './logo-round.png'];
+// './images/meal.jpg' — lunch/dinner ka default photo. Pehle ye 94 KB ki JPEG
+// chaaron HTML files ke ANDAR base64 me padi thi, isliye har user har load par
+// use utha leta tha chahe wo screen par dikhe ya nahi (ye sabse aakhri fallback
+// hai — vendor ne apna banner/variant photo daala ho to kabhi dikhti hi nahi).
+// Alag file banane se index.html 298 KB se 107 KB gzipped ho gaya. Yahan
+// precache isliye zaroori hai: neeche rule 5 cache-first to hai par cache me
+// daalta nahi, aur ASSETS me na hone par offline me ye image toot jaati.
+const ASSETS = ['./', './index.html', './manifest.json', './logo-round.png', './images/meal.jpg'];
 // Vendor logos / meal photos (cross-origin, Drive-hosted) ka apna bucket — app-shell
 // cache se alag rakha hai taaki naye deploy pe shell refresh ho par images bani rahein
 // (wahi to baar-baar dobara download ho rahi thi). Bounded — neeche trimImgCache().
