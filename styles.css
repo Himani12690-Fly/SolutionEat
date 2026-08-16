@@ -909,6 +909,12 @@
     #authPage .footer { padding-top:10px; }
 
     .has-bottom-nav #profileView { min-height:calc(100dvh - 88px); }
+    /* Login page ka footer vendor ka copyright nahi, apne platform ki pehchan
+       dikhata hai — har kitchen pe ek jaisa. */
+    .footer .f-plat { display:inline-flex; align-items:center; gap:7px; font-size:13px;
+      font-weight:900; color:var(--ink); letter-spacing:-0.2px; }
+    .footer .f-plat-ic { width:18px; height:18px; border-radius:5px; }
+    .footer .f-plat-sub { font-size:11px; color:var(--muted); font-weight:600; margin-top:4px; }
     .footer .f-brand { font-size:13px; font-weight:900; color:var(--ink); letter-spacing:-0.2px; }
     .footer .f-tag { font-size:10.5px; color:var(--muted); font-weight:500; margin-top:4px; line-height:1.45; }
     .footer .f-contact { display:inline-flex; align-items:center; gap:6px; margin-top:10px;
