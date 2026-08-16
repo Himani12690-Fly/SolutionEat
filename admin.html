@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=def719edfb">
+  <link rel="stylesheet" href="styles.css?v=f7e6654f10">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -591,6 +591,7 @@
       <div class="lp-sec-t" data-i="pfQuick"></div>
       <div class="pf-row" onclick="openShareKitchenSheet()"><span class="ic-tile tile-blue em">📤</span><span data-i="shareKitchen">Share this Kitchen</span><i>›</i></div>
       <div class="pf-row hidden" id="pfInstallApp" onclick="openInstallAppSheet()"><span class="ic-tile tile-purple em">📲</span><span data-i="installAppRow">Install App</span><i>›</i></div>
+      <div class="pf-row" id="pfCheckUpdate" onclick="manualCheckUpdate()"><span class="ic-tile tile-blue em">🔄</span><span data-i="checkUpdatesRow">Check for updates</span><i id="pfCheckUpdateArrow">›</i></div>
       <div class="pf-row" onclick="openRateSheet()"><span class="ic-tile tile-orange em">⭐</span><span data-i="rateKitchen"></span><i>›</i></div>
       <div class="pf-row" onclick="openQA()"><span class="pf-orb"><span class="pf-orb-ring"></span><span class="pf-orb-core">💬</span></span><span data-i="navAiShort"></span><i>›</i></div>
       <div class="pf-row" onclick="showAboutPage()"><span class="ic-tile tile-green"><svg class="ic"><use href="#ic-info"/></svg></span><span data-i="navAbout"></span><i>›</i></div>
@@ -793,7 +794,11 @@
             <span class="cfg-acc-car"></span>
           </div>
           <div class="cfg-acc-bd hidden" id="cfgp-delivery">
-        <div style="font-size:11.5px;color:var(--muted);margin-top:20px;margin-bottom:8px;">Home/Office delivery mode aur Companies list ab Super Admin ke paas hai — request karke badlwao.</div>
+        <div class="section-title" style="margin-top:16px;">📦 Order Modes</div>
+        <label class="cfg-chk"><input type="checkbox" id="cfg-homeEnabled" checked> 🚚 Delivery (customer ke address par)</label>
+        <label class="cfg-chk"><input type="checkbox" id="cfg-takeawayEnabled" checked> 🥡 Takeaway (customer khud lene aayega — koi delivery charge nahi)</label>
+        <div class="fld-hint">Kam se kam ek mode ON rakhna zaroori hai.</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:14px;margin-bottom:8px;">Office delivery aur Companies list Super Admin ke paas hai — request karke badlwao.</div>
         <div class="section-title" style="margin-top:20px;">💰 Delivery Charges <span style="font-size:11px;color:var(--muted);font-weight:600;">(home delivery)</span></div>
         <label class="cfg-chk"><input type="checkbox" id="cfg-deliveryEnabled" checked onchange="document.getElementById('deliveryFeeWrap').classList.toggle('hidden', !this.checked)"> 🛵 Charge delivery fee (OFF = free delivery for everyone)</label>
         <div id="deliveryFeeWrap">
@@ -987,7 +992,7 @@
         <p style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;" data-i="modeSub"></p>
         <div class="mode-cards">
           <div class="mode-card" id="mc-home" onclick="chooseMode('home')">
-            <div class="mc-i">🏠</div>
+            <div class="mc-i">🚚</div>
             <div class="mc-t" data-i="dtHome"></div>
             <div class="mc-s" data-i="dtHomeSub"></div>
           </div>
@@ -1132,7 +1137,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=def719edfb"></script>
+  <script src="shared.js?v=f7e6654f10"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -5499,6 +5504,8 @@
     const df=document.getElementById('cfg-deliveryFar'); if(df) df.value=(CFG.deliveryFar!=null?CFG.deliveryFar:20);
     const fs=document.getElementById('cfg-farSocieties'); if(fs) fs.value=(CFG.farSocieties||[]).join('\n');
     const dfWrap=document.getElementById('deliveryFeeWrap'); if(dfWrap) dfWrap.classList.toggle('hidden', CFG.deliveryEnabled===false);
+    const heBox=document.getElementById('cfg-homeEnabled'); if(heBox) heBox.checked=(CFG.homeEnabled!==false);
+    const taBox=document.getElementById('cfg-takeawayEnabled'); if(taBox) taBox.checked=(CFG.takeawayEnabled!==false);
     workingMealTypes=JSON.parse(JSON.stringify((CFG.mealTypes&&CFG.mealTypes.length)?CFG.mealTypes:defaultMealTypes()));
     renderMealTypeEditor();
     const lastAcc=storeGet('fbt_cfg_open');
@@ -5548,7 +5555,9 @@
     if(isNaN(deliveryRadiusKm)||deliveryRadiusKm<=0) deliveryRadiusKm=4;
     // 5 km upper cap — slab isi tak defined hai (backend me bhi yahi cap hai).
     if(deliveryRadiusKm>DELIVERY_MAX_RADIUS_KM) deliveryRadiusKm=DELIVERY_MAX_RADIUS_KM;
-    const cfg={ prices, addonsEnabled, mealTypes, township:CFG.township, societies:CFG.societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:CFG.closedDates, tempClosed:CFG.tempClosed, tempClosedMsg:CFG.tempClosedMsg, tempClosedUntil:CFG.tempClosedUntil, companies:CFG.companies, homeEnabled:CFG.homeEnabled, officeEnabled:CFG.officeEnabled, listInDiscovery:CFG.listInDiscovery, kitchenLat:workingKitchenLat, kitchenLng:workingKitchenLng, deliveryRadiusKm:deliveryRadiusKm, whatsappAuto:CFG.whatsappAuto,
+    const cfg={ prices, addonsEnabled, mealTypes, township:CFG.township, societies:CFG.societies, deliveryEnabled:deliveryEnabled, deliveryNear:deliveryNear, deliveryFar:deliveryFar, farSocieties:farSocieties, closedDates:CFG.closedDates, tempClosed:CFG.tempClosed, tempClosedMsg:CFG.tempClosedMsg, tempClosedUntil:CFG.tempClosedUntil, companies:CFG.companies, homeEnabled:(document.getElementById('cfg-homeEnabled')?document.getElementById('cfg-homeEnabled').checked:CFG.homeEnabled!==false),
+      takeawayEnabled:(document.getElementById('cfg-takeawayEnabled')?document.getElementById('cfg-takeawayEnabled').checked:CFG.takeawayEnabled!==false),
+      officeEnabled:CFG.officeEnabled, listInDiscovery:CFG.listInDiscovery, kitchenLat:workingKitchenLat, kitchenLng:workingKitchenLng, deliveryRadiusKm:deliveryRadiusKm, whatsappAuto:CFG.whatsappAuto,
       upiId:CFG.upiId, upiName:CFG.upiName, fssai:CFG.fssai, legalName:CFG.legalName, gstNumber:CFG.gstNumber };
     const btn=document.getElementById('saveConfigBtn'); btn.textContent='⏳ Saving...'; btn.disabled=true;
     apiPost({action:'saveConfig',user:adminCreds.user,pass:adminCreds.pass,config:cfg}).then(j=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; if(j.status==='success'){ cfg.variants=CFG.variants; cfg.banners=CFG.banners; CFG=cfg; storeSet('fbt_cfg',CFG); applyConfigToUI(); refreshAvailability(); showToast('✅ Setup saved!','success'); } else showToast('❌ '+(j.message||'Save failed'),'error'); }).catch(()=>{ btn.textContent='💾 Save Setup'; btn.disabled=false; showToast(t('errNetwork'),'error'); }); }
@@ -5574,9 +5583,14 @@
     }
     const m=modesAvailable();
     const wrap=document.getElementById('dtypeWrap');
-    if(wrap) wrap.classList.toggle('hidden', !(m.home&&m.office));
-    if(!m.home && m.office) setDeliveryType('office');
-    else if(m.home && !m.office) setDeliveryType('home');
+    // Checkout ka mode chip pehle sirf home+office dono hone par dikhta tha,
+    // isliye takeaway aane ke baad bhi customer aakhri page par mode badal
+    // nahi paata tha. Ab jab bhi ek se zyada mode ho, wahan bhi dikhta hai.
+    const modeCount=(m.home?1:0)+(m.office?1:0)+(m.takeaway?1:0);
+    if(wrap) wrap.classList.toggle('hidden', modeCount<2);
+    // Chuna hua mode ab band ho gaya ho to pehla khula mode le lo.
+    const okNow=(deliveryType==='home'&&m.home)||(deliveryType==='office'&&m.office)||(deliveryType==='takeaway'&&m.takeaway);
+    if(!okNow && modeCount>0) setDeliveryType(m.home?'home':(m.takeaway?'takeaway':'office'));
     renderModeChip();
     const puOpt=document.getElementById('pay-UPI');
     if(puOpt){ const hasUpi=!!CFG.upiId; puOpt.classList.toggle('hidden',!hasUpi); if(!hasUpi&&payment==='UPI')setPay('COD'); }
