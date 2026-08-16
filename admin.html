@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=7d090a4077">
+  <link rel="stylesheet" href="styles.css?v=6dc0ce63b9">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -743,14 +743,6 @@
           </div>
         </div>
 
-        <div class="cfg-acc hidden" id="cfgInstallApp" onclick="openInstallAppSheet()">
-          <div class="cfg-acc-hd">
-            <span class="cfg-acc-ic">📲</span>
-            <span class="cfg-acc-tx"><b data-i="installAppRow">Install App</b><i data-i="installAppSubAdmin">Kitchen panel ko home screen par add karo</i></span>
-            <span class="cfg-acc-car"></span>
-          </div>
-        </div>
-
         <div class="cfg-acc" id="cfga-kitchen">
           <div class="cfg-acc-hd" onclick="cfgToggle('kitchen')">
             <span class="cfg-acc-ic">🏪</span>
@@ -905,6 +897,7 @@
         <div class="more-item" id="adr-variants" onclick="adminBnGo('variants')"><span class="di-icon">🍱</span><span>Variants</span></div>
         <div class="more-item" id="adr-promos" onclick="adminBnGo('promos')"><span class="di-icon">🎟️</span><span>Promos</span></div>
         <div class="more-item" id="adr-billing" onclick="adminBnGo('billing')"><span class="di-icon">💳</span><span>Subscription</span></div>
+        <div class="more-item hidden" id="adrInstallApp" onclick="closeAdminMore();openInstallAppSheet()"><span class="di-icon">📲</span><span data-i="installAppRow">Install App</span></div>
         <div style="padding:10px 14px 4px;">
           <div class="lp-sec-t">🌐 Language</div>
           <select class="sh-select js-lang" id="langSelAdmin" onchange="setLangAdmin(this.value)"></select>
@@ -1116,7 +1109,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=7d090a4077"></script>
+  <script src="shared.js?v=6dc0ce63b9"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -1152,7 +1145,7 @@
   }
   // Install row do jagah hai — customer ke profile me aur vendor ke Setup me.
   // Dono ek saath dikhen/chhupein, isliye ek hi jagah se toggle karte hain.
-  const INSTALL_ROW_IDS = ['pfInstallApp','cfgInstallApp'];
+  const INSTALL_ROW_IDS = ['pfInstallApp','adrInstallApp'];
   function refreshInstallRows(){
     const show = canShowInstallRow();
     INSTALL_ROW_IDS.forEach(function(id){ const el=document.getElementById(id); if(el) el.classList.toggle('hidden', !show); });
@@ -1398,7 +1391,9 @@
   let __adminThemeActive=false;
   function enterAdminTheme(){
     __adminThemeActive=true;
-    const m = storeGet('fbt_theme_admin') || 'system';
+    // Default light — pehle 'system' tha, to vendor ka phone dark mode me hone
+    // par admin panel bhi dark khulta tha. Customer side pehle se light hai.
+    const m = storeGet('fbt_theme_admin') || 'light';
     applyTheme(m);
     const sel=document.getElementById('themeSelAdmin'); if(sel) sel.value=m;
     const la = storeGet('fbt_lang_admin'); if(la){ setLang(la); }

@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=7d090a4077">
+  <link rel="stylesheet" href="styles.css?v=6dc0ce63b9">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -960,7 +960,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=7d090a4077"></script>
+  <script src="shared.js?v=6dc0ce63b9"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
@@ -996,7 +996,7 @@
   }
   // Install row do jagah hai — customer ke profile me aur vendor ke Setup me.
   // Dono ek saath dikhen/chhupein, isliye ek hi jagah se toggle karte hain.
-  const INSTALL_ROW_IDS = ['pfInstallApp','cfgInstallApp'];
+  const INSTALL_ROW_IDS = ['pfInstallApp','adrInstallApp'];
   function refreshInstallRows(){
     const show = canShowInstallRow();
     INSTALL_ROW_IDS.forEach(function(id){ const el=document.getElementById(id); if(el) el.classList.toggle('hidden', !show); });
