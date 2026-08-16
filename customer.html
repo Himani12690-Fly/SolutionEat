@@ -22,6 +22,7 @@
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://accounts.google.com/gsi/client" async defer crossorigin="anonymous"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js" async defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js" defer crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js" defer crossorigin="anonymous"></script>
   <title>Order Tiffin — Fresh Homemade Tiffin</title>
@@ -36,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=fe89e1496a">
+  <link rel="stylesheet" href="styles.css?v=37df7fd6af">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -529,6 +530,7 @@
       <div class="form-group">
         <label data-i="payMethod"></label>
         <div class="pay-opts">
+          <div class="pay-opt hidden" id="pay-ONLINE" onclick="setPay('ONLINE')"><span data-i="payOnline"></span><span class="s" data-i="payOnlineSub"></span></div>
           <div class="pay-opt sel" id="pay-UPI" onclick="setPay('UPI')"><span data-i="payUPI"></span><span class="s" data-i="payUPIsub"></span></div>
           <div class="pay-opt" id="pay-COD" onclick="setPay('COD')"><span data-i="payCOD"></span><span class="s" data-i="payCODsub"></span></div>
         </div>
@@ -749,7 +751,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=fe89e1496a"></script>
+  <script src="shared.js?v=37df7fd6af"></script>
 <script>
   (function(){
     try{
@@ -3002,7 +3004,10 @@
   function validateCompany(){ const v=document.getElementById('company').value; v?setValid('company','err-company'):setError('company','err-company'); return !!v; }
   function validateEmpId(){ const el=document.getElementById('empId'); const v=el.value.trim().toUpperCase(); el.value=v; if(v) setValid('empId','err-empId'); else { el.classList.remove('error','valid'); const e=document.getElementById('err-empId'); if(e)e.classList.remove('show'); } return true; }
   function validateName(){ const v=document.getElementById('customerName').value.trim(); const ok=v.length>=2 && /^[a-zA-Z\s]+$/.test(v); ok?setValid('customerName','err-name'):setError('customerName','err-name'); return ok; }
-  function setPay(p){ payment=p; document.getElementById('pay-COD').classList.toggle('sel',p==='COD'); document.getElementById('pay-UPI').classList.toggle('sel',p==='UPI'); }
+  function setPay(p){
+    payment=p;
+    ['COD','UPI','ONLINE'].forEach(k=>{ const el=document.getElementById('pay-'+k); if(el) el.classList.toggle('sel', p===k); });
+  }
 
   function waForDate(dateStr, addr){
     const items=cart.filter(it=>it.deliveryDate===dateStr).sort(mealSort);
@@ -3125,6 +3130,35 @@
 
     let ok=0, dup=0, fail=0, sessionDead=false, serverTotal=0, couponWarn='', promoLine='';
     const results=[];
+
+    // Online payment: poori cart ka EK payment, aur order server tabhi banata
+    // hai jab signature verify ho jaye. Isliye normal order-loop skip.
+    if(payment==='ONLINE'){
+      payOnlineThenOrder({ token:SESSION.token, authVendorId:(SESSION&&SESSION.vid)||VENDOR_ID,
+                           orders: JSON.stringify(payloads.map(x=>x.p)) },
+        (paid, cj)=>{
+          const pb=document.getElementById('placeBtn');
+          if(!paid){
+            if(pb){ pb.disabled=false; pb.textContent=t('placeOrder')||'Place Order'; }
+            const cb=document.getElementById('checkoutBtn'); if(cb){ cb.disabled=false; }
+            renderCart();
+            return;
+          }
+          cart=[]; appliedPromo=null; saveCart(); editingRow=null;
+          renderMealTabs(); renderMealPanel(); updateCartBadge(); renderCart(); refreshOrderedMap();
+          showView('page2');
+          document.getElementById('orderFormWrap').classList.add('hidden');
+          document.getElementById('page2Bar').classList.add('hidden');
+          document.getElementById('successCard').classList.remove('hidden');
+          const bx=document.getElementById('upiPayBox');
+          if(bx){ bx.classList.remove('hidden'); bx.innerHTML=`<div class="cod-note">✅ ${t('payDone')} <b>₹${Number((cj&&cj.total)||0)}</b></div>`; }
+          if(cj && cj.partial) showToast('⚠️ '+t('payPartial'),'warning');
+          if(pb){ pb.disabled=false; pb.textContent=t('placeOrder')||'Place Order'; }
+          window.scrollTo(0,0);
+        });
+      return;
+    }
+
     (async ()=>{
       for(const {dstr,meal,p} of payloads){
         try{ const j=await apiPost(p);
@@ -3228,6 +3262,44 @@
       renderCart();
       showToast(t('errNetwork'),'error');
     });
+  }
+
+  // ── Razorpay: pehle paisa, tabhi order ────────────────────────────────────
+  // Amount aur order dono SERVER decide karta hai. Yahan se sirf checkout
+  // khulta hai; success ka dawa client nahi kar sakta — signature server par
+  // verify hoti hai, tabhi order banta hai.
+  function razorpayReady(){ return typeof Razorpay === 'function'; }
+  function payOnlineThenOrder(payload, onDone){
+    if(!razorpayReady()){ showToast('⚠️ '+t('payLoadFail'),'error'); onDone(false); return; }
+    apiPost(Object.assign({}, payload, { action:'preparepayment' })).then(j=>{
+      if(j.status==='invalid_session'){ handleInvalidSession(); onDone(false); return; }
+      if(j.status!=='success'){ showToast('❌ '+(j.message||t('payStartFail')),'error'); onDone(false); return; }
+      const rz = new Razorpay({
+        key: j.keyId,
+        order_id: j.razorpayOrderId,
+        amount: j.amount,
+        currency: 'INR',
+        name: (VENDOR_BRAND && VENDOR_BRAND.name) || 'myTiffin',
+        description: t('payOrderDesc'),
+        prefill: { name:(SESSION&&SESSION.name)||'', contact:(SESSION&&SESSION.phone)||'', email:(SESSION&&SESSION.email)||'' },
+        theme: { color:'#6366f1' },
+        modal: { ondismiss: function(){ showToast('⚠️ '+t('payCancelled'),'warning'); onDone(false); } },
+        handler: function(resp){
+          // Yahan tak aana "paid" ka proof nahi hai — server verify karega.
+          apiPost({ action:'confirmpayment',
+                    razorpay_order_id: resp.razorpay_order_id,
+                    razorpay_payment_id: resp.razorpay_payment_id,
+                    razorpay_signature: resp.razorpay_signature })
+            .then(cj=>{
+              if(cj && cj.status==='success'){ onDone(true, cj); }
+              else { showToast('❌ '+((cj&&cj.message)||t('payVerifyFail')),'error'); onDone(false); }
+            })
+            .catch(()=>{ showToast('❌ '+t('payVerifyFail'),'error'); onDone(false); });
+        }
+      });
+      rz.on('payment.failed', function(){ showToast('❌ '+t('payFailed'),'error'); onDone(false); });
+      rz.open();
+    }).catch(()=>{ showToast(t('errNetwork'),'error'); onDone(false); });
   }
 
   let payRef='';
@@ -3954,6 +4026,14 @@
     renderModeChip();
     const puOpt=document.getElementById('pay-UPI');
     if(puOpt){ const hasUpi=!!CFG.upiId; puOpt.classList.toggle('hidden',!hasUpi); if(!hasUpi&&payment==='UPI')setPay('COD'); }
+    // Online tabhi jab kitchen ne Razorpay set kiya ho (server batata hai) aur
+    // checkout script load ho chuki ho — warna option dikhe aur chale na.
+    const poOpt=document.getElementById('pay-ONLINE');
+    if(poOpt){
+      const canOnline = (CFG.razorpayEnabled===true) && (typeof Razorpay==='function');
+      poOpt.classList.toggle('hidden', !canOnline);
+      if(!canOnline && payment==='ONLINE') setPay(CFG.upiId?'UPI':'COD');
+    }
     const twEl=document.getElementById('township'); if(twEl) twEl.value=CFG.township||'';
     document.querySelectorAll('.fssai-line').forEach(e=>{ e.textContent = CFG.fssai ? ('FSSAI Reg. No: '+CFG.fssai) : ''; });
     }catch(err){
@@ -4052,7 +4132,11 @@
         nsKey('fbt_endpoint'), nsKey('fbt_lang'), nsKey('fbt_theme'),
         nsKey('fbt_timeprefs'), nsKey('fbt_addr'), nsKey('fbt_admin'), nsKey('fbt_super'),
         nsKey('fbt_view'), nsKey('fbt_cart'), nsKey('fbt_promo'), nsKey('fbt_lastrow'),
-        nsKey('fbt_onboarded')
+        nsKey('fbt_onboarded'),
+        // Notification "dekh liya / clear kar diya" ke markers — ye ud gaye to
+        // saare purane notifications wapas dikhne lagte hain.
+        nsKey('fbt_notif_read'), nsKey('fbt_notif_cleared_before'),
+        nsKey('fbt_admin_notif_seen'), nsKey('fbt_admin_notif_cleared_before')
       ]);
       const kill = [];
       for(let i=0;i<localStorage.length;i++){
