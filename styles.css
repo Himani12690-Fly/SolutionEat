@@ -375,6 +375,8 @@
     .c1-desc { font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:5px; font-weight:400;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
+    .c1-cutoff { font-size:11px; color:var(--accent-dark); font-weight:700; margin-top:9px; }
+
     .c1-actions { display:flex; align-items:center; justify-content:space-between; gap:10px;
       margin-top:11px; padding-top:11px; border-top:1px solid var(--line); }
     .c1card.c1-closed .c1-actions { border-top-color:transparent; padding-top:6px; }
@@ -1239,14 +1241,6 @@
     .toast.success { background:linear-gradient(135deg,var(--ok),#00a085); }
     .toast.warning { background:linear-gradient(135deg,#e67e22,#d35400); }
     .toast.error { background:linear-gradient(135deg,var(--danger),var(--danger)); }
-    .sh-box { border:2px dashed var(--accent); border-radius:14px; padding:12px; margin-bottom:16px; }
-    .sh-prev { margin-top:10px; max-height:300px; overflow-y:auto; border-top:1px solid var(--line); padding-top:8px; }
-    .sh-row { font-size:11.5px; line-height:1.55; padding:7px 0; border-bottom:1px solid var(--line); }
-    .sh-row:last-child { border-bottom:none; }
-    .sh-row b { display:block; font-size:12px; margin-bottom:2px; color:var(--accent); }
-    .sh-row span { display:block; color:var(--muted); }
-    .sh-acts { display:flex; gap:8px; margin-top:10px; }
-    .sh-acts .admin-btn { margin-top:0; font-size:13px; padding:11px 6px; }
     .hidden { display:none !important; }
 
   #bootLoader{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:'Segoe UI',system-ui,sans-serif;transition:opacity .25s;}

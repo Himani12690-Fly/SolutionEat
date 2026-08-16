@@ -122,7 +122,6 @@
       <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
       <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><div class="logo-spin" id="authLogoSpin"></div></div>
       <div class="auth-kname"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
-      <div class="auth-kloc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       <span class="hero-badge" data-i="secureLogin"></span>
     </div>
     <div class="section">
@@ -214,7 +213,6 @@
       <div class="h1-rate hidden" id="h1Rate"></div>
       <div class="h1-tt">
         <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
-        <div class="h1-loc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       </div>
     </div>
     <div id="kitchenAvailBanner" class="hidden" style="margin:0 16px 10px;"></div>
@@ -935,6 +933,19 @@
     if(h) return h+'h';
     return m+'m';
   }
+  // Meal card pe per-meal "closes in Xh Ym" — sirf us date-tab par jahan cutoff
+  // is waqt actually gin raha hai (normal meal ke liye Today, cutoffAheadDay
+  // meal — jaise breakfast — ke liye Tomorrow, kyunki uska cutoff aaj raat
+  // hi hai). Baaki tabs par poora window abhi khula hai, koi countdown nahi.
+  function mealCutoffLine(m, off){
+    const mt=mealType(m); if(!mt) return '';
+    const active = mt.cutoffAheadDay ? (off===1) : (off===0);
+    if(!active) return '';
+    const now=getISTNow(); const curMin=now.getHours()*60+now.getMinutes();
+    const diff=cutoffMins(m)-curMin;
+    if(diff<=0) return '';
+    return `<div class="c1-cutoff">⏳ ${t('closesInLbl')} ${fmtDuration(diff)}</div>`;
+  }
   function renderHomeAvailBanner(){
     const box=document.getElementById('kitchenAvailBanner'); if(!box) return;
     const info=kitchenAvailabilityInfo();
@@ -1586,10 +1597,13 @@
       + `<button class="c1-st-btn" aria-label="Add more" onclick="cartPlusMeal('${m}',event)">+</button>`
       + `</div>`;
     else btn=`<button class="c1-add" onclick="quickAdd('${m}',event)">${t('addToCart2')} +</button>`;
-    const vs=variantsFor(m);
-    const custLink = (orderable && vs.length>1)
-      ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>`
-      : (closed ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>` : `<span></span>`);
+    // "ADD +" khud hi customize sheet khol deta hai jab ek se zyada variant ho
+    // (doQuickAdd() dekho) — alag se "⚙️ Customize" link sirf wahi kaam
+    // duplicate karta tha, hata diya. Closed meal ke liye "📅 Schedule" link
+    // alag kaam karta hai (doosri date pe jump), wo as-is hai.
+    const custLink = closed
+      ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>`
+      : `<span></span>`;
     el.innerHTML = custLink+btn;
     const card=document.getElementById('mc-'+m); if(card) card.classList.toggle('c1-open',orderable); if(card) card.classList.toggle('c1-closed',!orderable);
     updateCartBadge();
@@ -2415,9 +2429,14 @@
           + `<button class="c1-st-btn" aria-label="Add more" onclick="cartPlusMeal('${m}',event)">+</button>`
           + `</div>`;
         else btn=`<button class="c1-add" onclick="quickAdd('${m}',event)">${t('addToCart2')} +</button>`;
-        const custLink = (orderable && vs.length>1)
-          ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>`
-          : (closed ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>` : `<span></span>`);
+        // "ADD +" khud hi customize sheet khol deta hai jab ek se zyada variant ho
+        // (doQuickAdd() dekho) — alag se "⚙️ Customize" link sirf wahi kaam
+        // duplicate karta tha, hata diya. Closed meal ke liye "📅 Schedule" link
+        // alag kaam karta hai (doosri date pe jump), wo as-is hai.
+        const custLink = closed
+          ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>`
+          : `<span></span>`;
+        const cutoffLine = orderable ? mealCutoffLine(m, dateOffset) : '';
         cardHtmlByKey[m] = `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
           <div class="c1-top" ${orderable?`onclick="openMealSheet('${m}')"`:''}>
             ${photo}
@@ -2429,6 +2448,7 @@
               ${meta.time?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
             </div>
           </div>
+          ${cutoffLine}
           <div class="c1-actions" id="mca-${m}">${custLink}${btn}</div>
         </div>`;
       });
@@ -3445,12 +3465,6 @@
   function setDscCityLabel(text){
     const el=document.getElementById('dscCity'); if(el && text) el.textContent = text;
   }
-  function refreshKitchenAreaLabel(){
-    if(typeof CFG!=='object' || CFG.kitchenLat==null || CFG.kitchenLng==null) return;
-    resolveAreaLabel(CFG.kitchenLat, CFG.kitchenLng, null, label=>{
-      document.querySelectorAll('.loc-place').forEach(el=>{ el.textContent = label; });
-    });
-  }
   function fallbackToBrowse(){
     dscShowOnly(['dscAreas','dscBrowseWrap','dscSearchWrap','dscLocRetry']);
     if(!dscAreas.length) loadDscAreas();
@@ -3798,12 +3812,6 @@
     document.title = (name||'Tiffin') + ' — Fresh Homemade Tiffin';
     if(name) applyVendorManifest(name, src, logo);
     const am=document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(am) am.setAttribute('content', name);
-    {
-      const areasRaw = VENDOR_BRAND.areas;
-      const areasStr = Array.isArray(areasRaw) ? areasRaw.join(',') : (areasRaw||'');
-      const area = areasStr.split(',')[0].trim() || 'Ahmedabad';
-      document.querySelectorAll('.loc-place').forEach(el=>{ el.textContent = area; });
-    }
     const wa = vendorWhatsapp(), pretty = waPretty(wa);
     const rEl = document.getElementById('h1Rate');
     if(rEl){
@@ -3951,7 +3959,6 @@
                             storeSet('fbt_cfg', CFG);
                         }
                         applyConfigToUI();
-                        refreshKitchenAreaLabel();
                         pickDefaultDate(); pickActiveMeal();
                         preloadImgs();
                       }catch(err){
@@ -4112,7 +4119,6 @@
                         storeSet('fbt_cfg', CFG);
                         if (old !== nw) changed = true;
                         applyConfigToUI();
-                        refreshKitchenAreaLabel();
                     }
                     if (j.vendor && j.vendor.name && JSON.stringify(j.vendor) !== JSON.stringify(VENDOR_BRAND)) {
                         VENDOR_BRAND = j.vendor;

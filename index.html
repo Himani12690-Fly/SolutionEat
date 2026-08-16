@@ -122,7 +122,6 @@
       <div class="h1-platform"><img src="icon-192.png" alt="" class="h1-platform-ic"><span>myTiffin</span></div>
       <div class="logo logo-wrap"><img class="vbrand-logo" id="authLogoImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-default-src="logo-round.png" alt=""><div class="logo-spin" id="authLogoSpin"></div></div>
       <div class="auth-kname"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
-      <div class="auth-kloc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       <span class="hero-badge" data-i="secureLogin"></span>
     </div>
     <div class="section">
@@ -214,7 +213,6 @@
       <div class="h1-rate hidden" id="h1Rate"></div>
       <div class="h1-tt">
         <div class="h1-name"><span class="vbrand-name" data-default-name="myTiffin"></span></div>
-        <div class="h1-loc">📍 <span class="loc-place">Ahmedabad</span> · Home &amp; Office delivery</div>
       </div>
     </div>
     <div id="kitchenAvailBanner" class="hidden" style="margin:0 16px 10px;"></div>
@@ -881,16 +879,6 @@
 
       <div id="aview-menu" class="hidden">
         <div class="section-title" style="margin-top:4px;">✏️ Menu Editor</div>
-        <div class="sh-box">
-          <button class="admin-btn" id="shuffleBtn" onclick="shuffleWeekMenu()">🎲 Shuffle Poora Hafta</button>
-          <span class="hint">Pool se 7 din ka naya menu banega. Save dabane tak kuch change nahi hota — pehle preview dekho.</span>
-          <div id="shufflePreview" class="sh-prev hidden"></div>
-          <div id="shuffleActions" class="sh-acts hidden">
-            <button class="admin-btn" id="saveShuffleBtn" onclick="saveShuffledWeek()">💾 Save Week</button>
-            <button class="admin-btn" id="reshuffleBtn" onclick="shuffleWeekMenu()">🔁 Again</button>
-            <button class="admin-btn" id="cancelShuffleBtn" style="background:var(--muted);" onclick="cancelShuffle()">✖ Cancel</button>
-          </div>
-        </div>
         <label class="fld">📅 Select day to edit</label>
         <select class="big" id="adminDaySelect" onchange="adminChangeDay()">
           <option value="monday">Monday</option><option value="tuesday">Tuesday</option>
@@ -920,16 +908,13 @@
             <span class="cfg-acc-car"></span>
           </div>
           <div class="cfg-acc-bd hidden" id="cfgp-kitchen">
-        <div style="font-size:11.5px;color:var(--muted);margin-top:20px;margin-bottom:8px;">Township/societies, Discovery on-off aur legal/payment info ab Super Admin ke paas hai — request karke badlwao.</div>
         <div class="section-title" style="margin-top:20px;">🎯 Kitchen Location (Nearby Radius)</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Society-list ke alawa — apni kitchen ka GPS location set karo, taaki radius ke andar wale customers bhi aapko dhoondh sakein, chahe unki building list me na ho. (Radius ke andar dikhna sirf awareness ke liye hai — order tabhi hoga jab customer ki exact society upar wali list me ho.)</div>
         <div id="kitchenLocStatus" style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;">📍 Abhi set nahi hai</div>
         <button type="button" class="admin-btn" id="captureLocBtn" onclick="captureKitchenLocation()">📍 Use my current location</button>
         <label class="fld" style="margin-top:14px;">Delivery Radius (km)</label>
         <input type="number" class="search-box" id="cfg-deliveryRadiusKm" min="1" max="50" value="4">
 
         <div class="section-title" style="margin-top:20px;">🔗 Aapki Kitchen ka QR Code</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Ye QR scan karke customer seedha aapki kitchen pe pahunch jaata hai — poster, packaging, WhatsApp status pe lagao. Discovery band ho tab bhi ye hamesha kaam karega.</div>
         <div style="text-align:center;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:18px;">
           <img id="vendorQrImg" src="" alt="Kitchen QR Code" style="width:180px;height:180px;border-radius:8px;">
           <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
@@ -950,7 +935,6 @@
           </div>
           <div class="cfg-acc-bd hidden" id="cfgp-meals">
         <div class="section-title" style="margin-top:20px;">🍽️ Meal Types</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">Har meal ka naam, emoji, serving window (isi se delivery time-slots banti hain), order cut-off, price aur daily capacity yahin set karo. Naya meal type add karwana ho (jaise "Evening Snacks") to Super Admin ko request karo.</div>
         <div id="mealTypeEditor"></div>
 
         <div class="section-title" style="margin-top:20px;">💰 Add-on Prices</div>
@@ -1005,7 +989,6 @@
 
       <div id="aview-variants" class="hidden">
         <div class="section-title" style="margin-top:4px;">🍱 Meal Variants & Photos</div>
-        <p style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Har meal ke apne variants banao (Mini/Full/Jumbo etc.) — naam, price, items aur photo. Ye sab app me customer ko dikhega.</p>
         <div class="var-meal-tabs" id="varMealTabs"></div>
         <div id="varList"></div>
         <button class="add-cart-btn" style="margin-top:12px;background:var(--ok);" onclick="addVariant()">➕ Add New Variant</button>
@@ -1014,7 +997,6 @@
 
       <div id="aview-promos" class="hidden">
         <div class="section-title" style="margin-top:4px;">🎟️ Promo Codes</div>
-        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Coupon banao — customer cart mein code daalega. Discount server-side verify hota hai. Multi-date cart par discount sirf pehli date ke order par lagta hai.</div>
         <div class="pf-box" style="margin-bottom:14px;">
           <div class="pm-sec-label">🎟️ Code &amp; Discount Type</div>
           <div class="pm-row"><input class="inp-mini" id="pmCode" placeholder="e.g. WELCOME50" style="text-transform:uppercase;"><select class="inp-mini" id="pmType"><option value="FLAT">FLAT ₹</option><option value="PERCENT">% OFF</option></select></div>
@@ -1091,7 +1073,6 @@
         <div style="padding:22px 20px 20px;">
           <div id="emgOpenBlock">
             <div style="font-size:15px;font-weight:900;text-align:center;">🚨 Emergency Close</div>
-            <div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:4px;">Kitchen ko turant band karo — sabke liye ordering ruk jayegi</div>
             <div style="font-weight:800;font-size:12px;margin-top:16px;">Kitne der ke liye?</div>
             <div id="emgDurationOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
               <div class="pay-opt" data-mins="60" onclick="pickEmergencyDuration(60)">1 Hour</div>
@@ -1487,6 +1468,19 @@
     if(h && m) return h+'h '+m+'m';
     if(h) return h+'h';
     return m+'m';
+  }
+  // Meal card pe per-meal "closes in Xh Ym" — sirf us date-tab par jahan cutoff
+  // is waqt actually gin raha hai (normal meal ke liye Today, cutoffAheadDay
+  // meal — jaise breakfast — ke liye Tomorrow, kyunki uska cutoff aaj raat
+  // hi hai). Baaki tabs par poora window abhi khula hai, koi countdown nahi.
+  function mealCutoffLine(m, off){
+    const mt=mealType(m); if(!mt) return '';
+    const active = mt.cutoffAheadDay ? (off===1) : (off===0);
+    if(!active) return '';
+    const now=getISTNow(); const curMin=now.getHours()*60+now.getMinutes();
+    const diff=cutoffMins(m)-curMin;
+    if(diff<=0) return '';
+    return `<div class="c1-cutoff">⏳ ${t('closesInLbl')} ${fmtDuration(diff)}</div>`;
   }
   function renderHomeAvailBanner(){
     const box=document.getElementById('kitchenAvailBanner'); if(!box) return;
@@ -2230,10 +2224,13 @@
       + `<button class="c1-st-btn" aria-label="Add more" onclick="cartPlusMeal('${m}',event)">+</button>`
       + `</div>`;
     else btn=`<button class="c1-add" onclick="quickAdd('${m}',event)">${t('addToCart2')} +</button>`;
-    const vs=variantsFor(m);
-    const custLink = (orderable && vs.length>1)
-      ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>`
-      : (closed ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>` : `<span></span>`);
+    // "ADD +" khud hi customize sheet khol deta hai jab ek se zyada variant ho
+    // (doQuickAdd() dekho) — alag se "⚙️ Customize" link sirf wahi kaam
+    // duplicate karta tha, hata diya. Closed meal ke liye "📅 Schedule" link
+    // alag kaam karta hai (doosri date pe jump), wo as-is hai.
+    const custLink = closed
+      ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>`
+      : `<span></span>`;
     el.innerHTML = custLink+btn;
     const card=document.getElementById('mc-'+m); if(card) card.classList.toggle('c1-open',orderable); if(card) card.classList.toggle('c1-closed',!orderable);
     updateCartBadge();
@@ -3059,9 +3056,14 @@
           + `<button class="c1-st-btn" aria-label="Add more" onclick="cartPlusMeal('${m}',event)">+</button>`
           + `</div>`;
         else btn=`<button class="c1-add" onclick="quickAdd('${m}',event)">${t('addToCart2')} +</button>`;
-        const custLink = (orderable && vs.length>1)
-          ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>`
-          : (closed ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>` : `<span></span>`);
+        // "ADD +" khud hi customize sheet khol deta hai jab ek se zyada variant ho
+        // (doQuickAdd() dekho) — alag se "⚙️ Customize" link sirf wahi kaam
+        // duplicate karta tha, hata diya. Closed meal ke liye "📅 Schedule" link
+        // alag kaam karta hai (doosri date pe jump), wo as-is hai.
+        const custLink = closed
+          ? `<span class="c1-cust" onclick="event.stopPropagation();jumpToMealDate('${m}')">📅 ${t('scheduleBtn')}</span>`
+          : `<span></span>`;
+        const cutoffLine = orderable ? mealCutoffLine(m, dateOffset) : '';
         cardHtmlByKey[m] = `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
           <div class="c1-top" ${orderable?`onclick="openMealSheet('${m}')"`:''}>
             ${photo}
@@ -3073,6 +3075,7 @@
               ${meta.time?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
             </div>
           </div>
+          ${cutoffLine}
           <div class="c1-actions" id="mca-${m}">${custLink}${btn}</div>
         </div>`;
       });
@@ -4088,12 +4091,6 @@
   }
   function setDscCityLabel(text){
     const el=document.getElementById('dscCity'); if(el && text) el.textContent = text;
-  }
-  function refreshKitchenAreaLabel(){
-    if(typeof CFG!=='object' || CFG.kitchenLat==null || CFG.kitchenLng==null) return;
-    resolveAreaLabel(CFG.kitchenLat, CFG.kitchenLng, null, label=>{
-      document.querySelectorAll('.loc-place').forEach(el=>{ el.textContent = label; });
-    });
   }
   function fallbackToBrowse(){
     dscShowOnly(['dscAreas','dscBrowseWrap','dscSearchWrap','dscLocRetry']);
@@ -5650,130 +5647,6 @@
     adminMenuWorking[day]=rec;
   }
   function adminChangeDay(){ readEditorInto(adminPrevDay); adminPrevDay=document.getElementById('adminDaySelect').value; loadEditorDay(adminPrevDay); }
-  const DISH_POOL = {
-    breakfastSets: [
-      ['🍚 Poha','🥜 Sev-Mamra','🍵 Chai'],
-      ['🥣 Upma','🥥 Coconut Chutney','🍵 Chai'],
-      ['🍘 Idli (3)','🥣 Sambar','🌶️ Chutney'],
-      ['🥞 Sada Dosa','🥣 Sambar','🌶️ Chutney'],
-      ['🫓 Aloo Paratha (2)','🥣 Curd','🥒 Achar'],
-      ['🫓 Paneer Paratha (2)','🥣 Curd','🧈 Butter'],
-      ['🫓 Methi Thepla (3)','🥣 Curd','🥒 Chundo'],
-      ['🍚 Sabudana Khichdi','🥣 Curd','🍵 Chai'],
-      ['🥞 Uttapam','🥣 Sambar','🌶️ Chutney'],
-      ['🍞 Masala Toast','🍟 Sev','🍵 Chai'],
-      ['🥣 Handvo','🍯 Green Chutney','🍵 Chai'],
-      ['🍥 Khaman Dhokla','🌶️ Fried Chilli','🍵 Chai'],
-      ['🥣 Khichu','🛢️ Til Oil','🥒 Achar'],
-      ['🫓 Puri Bhaji','🥣 Curd','🍵 Chai'],
-      ['🍚 Vaghareli Khichdi','🥛 Chaas','🥒 Achar'],
-      ['🥣 Fada Lapsi','🥛 Milk','🍵 Chai'],
-      ['🍲 Misal Pav','🧅 Onion','🍵 Chai'],
-      ['🥣 Rava Sheera','🫓 Puri (3)','🍵 Chai'],
-      ['🍥 Idada','🌶️ Chutney','🍵 Chai'],
-      ['🫓 Bhakri','🧈 Butter','🥣 Curd']
-    ],
-    sabzi: [
-      'Paneer Butter Masala','Shahi Paneer','Paneer Tikka Masala','Dal Makhani',
-      'Dal Tadka','Dal Fry','Rajma Masala','Chole Masala','Aloo Gobi','Aloo Matar',
-      'Mix Veg','Bhindi Masala','Sev Tameta','Ringan Bateta','Dudhi Chana',
-      'Gujarati Kadhi','Methi Muthiya','Vatana Bateta','Gawar Bateta','Kobi Vatana'
-    ],
-    lunchFixedSets: [
-      ['🍚 Jeera Rice','🫓 Roti (4)','🥣 Dal','🥗 Salad','🥒 Achar'],
-      ['🍚 Peas Pulao','🫓 Roti (4)','🥣 Dal Fry','🥗 Salad','🧈 Papad'],
-      ['🍚 Steam Rice','🫓 Roti (4)','🥣 Kadhi','🥗 Salad','🥛 Chaas'],
-      ['🍚 Veg Biryani','🫓 Roti (2)','🥒 Raita','🥗 Salad'],
-      ['🍚 Rice','🫓 Roti (4)','🥣 Dal Tadka','🥗 Kachumber','🍬 Sweet'],
-      ['🍚 Masala Bhaat','🫓 Roti (3)','🥣 Dal','🥛 Chaas','🥗 Salad'],
-      ['🍚 Dal Khichdi','🫓 Roti (2)','🥣 Kadhi','🥒 Achar','🥗 Salad'],
-      ['🍚 Jeera Rice','🫓 Puri (4)','🥣 Dal','🥗 Salad','🍮 Shrikhand']
-    ],
-    dinnerFixedSets: [
-      ['🍚 Steam Rice','🫓 Roti (4)','🥒 Raita','🥗 Salad'],
-      ['🍚 Rice','🫓 Roti (4)','🥣 Dal','🥗 Onion Salad','🍋 Lemon'],
-      ['🍚 Peas Pulao','🫓 Roti (4)','🥒 Raita','🥗 Salad'],
-      ['🍚 Jeera Rice','🫓 Roti (4)','🥣 Dal Fry','🧈 Papad','🥗 Salad'],
-      ['🍚 Veg Pulao','🫓 Naan (2)','🥒 Raita','🥗 Salad'],
-      ['🍚 Khichdi','🫓 Roti (2)','🥣 Kadhi','🥒 Achar','🥗 Salad'],
-      ['🍚 Rice','🫓 Bhakri (3)','🥣 Dal','🥛 Chaas','🥗 Salad'],
-      ['🍚 Steam Rice','🫓 Roti (4)','🥣 Dal Tadka','🥗 Kachumber','🍬 Sweet']
-    ]
-  };
-  const SHUFFLE_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-  let shuffleDraft = null;
-
-  function shuffleArr(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=x[i]; x[i]=x[j]; x[j]=t; } return x; }
-  function makeDealer(pool){
-    let deck = shuffleArr(pool);
-    return function(n, exclude){
-      const out=[], ex=exclude||[]; let guard=0;
-      while(out.length<n && guard++ < pool.length*4){
-        if(!deck.length) deck = shuffleArr(pool);
-        const item = deck.shift();
-        if(out.indexOf(item)<0 && ex.indexOf(item)<0) out.push(item);
-      }
-      return out;
-    };
-  }
-  function buildShuffledWeek(){
-    const bf = shuffleArr(DISH_POOL.breakfastSets);
-    const lf = shuffleArr(DISH_POOL.lunchFixedSets);
-    const df = shuffleArr(DISH_POOL.dinnerFixedSets);
-    const dealSabzi = makeDealer(DISH_POOL.sabzi);
-    const week={};
-    SHUFFLE_DAYS.forEach(function(day,i){
-      const lunchSab = dealSabzi(3, []);
-      const dinSab   = dealSabzi(3, lunchSab);
-      week[day] = {
-        breakfast: bf[i % bf.length].slice(),
-        lunch:  { sabziOptions: lunchSab, fixedItems: lf[i % lf.length].slice() },
-        dinner: { sabziOptions: dinSab,   fixedItems: df[i % df.length].slice() }
-      };
-      const old = (MENU && MENU[day] && MENU[day].meal4) ? MENU[day].meal4 : null;
-      if(old) week[day].meal4 = JSON.parse(JSON.stringify(old));
-    });
-    return week;
-  }
-  function shuffleWeekMenu(){
-    shuffleDraft = buildShuffledWeek();
-    renderShufflePreview();
-    showToast('🎲 Naya hafta ready — preview dekh ke Save karo.','info');
-  }
-  function renderShufflePreview(){
-    const box=document.getElementById('shufflePreview');
-    const acts=document.getElementById('shuffleActions');
-    if(!box) return;
-    if(!shuffleDraft){ box.innerHTML=''; box.classList.add('hidden'); if(acts) acts.classList.add('hidden'); return; }
-    let h='';
-    SHUFFLE_DAYS.forEach(function(d){
-      const x=shuffleDraft[d];
-      h += '<div class="sh-row"><b>'+esc(DAY_LABELS[d]||d)+'</b>'
-         + '<span>🌅 '+esc(x.breakfast.join(', '))+'</span>'
-         + '<span>☀️ '+esc(x.lunch.sabziOptions.join(' / '))+'</span>'
-         + '<span>🌙 '+esc(x.dinner.sabziOptions.join(' / '))+'</span></div>';
-    });
-    box.innerHTML=h;
-    box.classList.remove('hidden');
-    if(acts) acts.classList.remove('hidden');
-  }
-  function cancelShuffle(){ shuffleDraft=null; renderShufflePreview(); }
-  function saveShuffledWeek(){
-    if(!shuffleDraft){ showToast('⚠️ Pehle Shuffle karo.','warning'); return; }
-    if(!adminCreds || !adminCreds.user){ showToast('⚠️ Admin session nahi mila — dobara login karo.','warning'); return; }
-    const btn=document.getElementById('saveShuffleBtn'); const oldText=btn.textContent;
-    btn.textContent='⏳ Saving...'; btn.disabled=true;
-    const notifyEl=document.getElementById('cfg-notifyMenuUpdate');
-    apiPost({action:'saveMenuWeek',user:adminCreds.user,pass:adminCreds.pass,menu:shuffleDraft,notify:(notifyEl&&notifyEl.checked)?'1':'0'}).then(function(j){
-      btn.disabled=false; btn.textContent=oldText;
-      if(j.status!=='success'){ showToast('❌ '+(j.message||'Save failed'),'error'); return; }
-      if(j.menu){ MENU=j.menu; adminMenuWorking=JSON.parse(JSON.stringify(j.menu)); storeSet('fbt_menu',MENU); renderMealPanel(); }
-      loadEditorDay(adminPrevDay);
-      if(notifyEl) notifyEl.checked=false;
-      shuffleDraft=null; renderShufflePreview();
-      showToast('✅ Poore hafte ka menu saved!','success');
-    }).catch(function(){ btn.disabled=false; btn.textContent=oldText; showToast(t('errNetwork'),'error'); });
-  }
 
   function saveMenu(){
     readEditorInto(adminPrevDay);
@@ -6191,12 +6064,6 @@
     document.title = (name||'Tiffin') + ' — Fresh Homemade Tiffin';
     if(name) applyVendorManifest(name, src, logo);
     const am=document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(am) am.setAttribute('content', name);
-    {
-      const areasRaw = VENDOR_BRAND.areas;
-      const areasStr = Array.isArray(areasRaw) ? areasRaw.join(',') : (areasRaw||'');
-      const area = areasStr.split(',')[0].trim() || 'Ahmedabad';
-      document.querySelectorAll('.loc-place').forEach(el=>{ el.textContent = area; });
-    }
     const wa = vendorWhatsapp(), pretty = waPretty(wa);
     const rEl = document.getElementById('h1Rate');
     if(rEl){
@@ -6344,7 +6211,6 @@
                             storeSet('fbt_cfg', CFG);
                         }
                         applyConfigToUI();
-                        refreshKitchenAreaLabel();
                         pickDefaultDate(); pickActiveMeal();
                         preloadImgs();
                       }catch(err){
@@ -6524,7 +6390,6 @@
                         storeSet('fbt_cfg', CFG);
                         if (old !== nw) changed = true;
                         applyConfigToUI();
-                        refreshKitchenAreaLabel();
                     }
                     if (j.vendor && j.vendor.name && JSON.stringify(j.vendor) !== JSON.stringify(VENDOR_BRAND)) {
                         VENDOR_BRAND = j.vendor;
