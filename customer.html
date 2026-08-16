@@ -36,7 +36,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=fe89e1496a">
+  <link rel="stylesheet" href="styles.css?v=154660cefd">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -749,7 +749,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=fe89e1496a"></script>
+  <script src="shared.js?v=154660cefd"></script>
 <script>
   (function(){
     try{
@@ -4052,7 +4052,11 @@
         nsKey('fbt_endpoint'), nsKey('fbt_lang'), nsKey('fbt_theme'),
         nsKey('fbt_timeprefs'), nsKey('fbt_addr'), nsKey('fbt_admin'), nsKey('fbt_super'),
         nsKey('fbt_view'), nsKey('fbt_cart'), nsKey('fbt_promo'), nsKey('fbt_lastrow'),
-        nsKey('fbt_onboarded')
+        nsKey('fbt_onboarded'),
+        // Notification "dekh liya / clear kar diya" ke markers — ye ud gaye to
+        // saare purane notifications wapas dikhne lagte hain.
+        nsKey('fbt_notif_read'), nsKey('fbt_notif_cleared_before'),
+        nsKey('fbt_admin_notif_seen'), nsKey('fbt_admin_notif_cleared_before')
       ]);
       const kill = [];
       for(let i=0;i<localStorage.length;i++){
