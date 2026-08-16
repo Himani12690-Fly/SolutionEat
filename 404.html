@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>myTiffin</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#f5eee0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  img{width:56px;height:56px;border-radius:16px;animation:pulse 1.1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+</style>
+</head>
+<body>
+<img src="/icon-192.png" alt="">
+<script>
+  // GitHub Pages serves this file (HTTP 404) for any path with no matching
+  // file — the only such paths in this app are per-vendor clean URLs, e.g.
+  // mytiffin.cloud/hungryb. There's no server here to rewrite that into
+  // ?v=hungryb, so we do it client-side: redirect to index.html carrying
+  // the path segment as the existing ?v= vendor param, tagged __pathmode
+  // so shared.js's normalizePathModeUrl() can swap the address bar back to
+  // this same clean path once the vendor is resolved (see shared.js).
+  var seg = location.pathname.replace(/^\/+/, '').split('/')[0];
+  if (seg) {
+    var rest = location.search ? location.search.slice(1) : '';
+    var qs = 'v=' + encodeURIComponent(seg) + (rest ? '&' + rest : '') + '&__pathmode=1';
+    location.replace('/?' + qs + location.hash);
+  } else {
+    location.replace('/');
+  }
+</script>
+</body>
+</html>
