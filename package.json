@@ -9,7 +9,7 @@
     "test:volume": "playwright test tests/volume.spec.js",
     "test:report": "playwright show-report tests/reports",
     "setup": "npm install && npx playwright install chromium",
-    "serve": "http-server -p 8080",
+    "serve": "node tools/serve.js",
     "stamp": "node tools/stamp-version.js",
     "verify:stamp": "node tools/stamp-version.js --check",
     "verify:syntax": "node tools/check-syntax.js",

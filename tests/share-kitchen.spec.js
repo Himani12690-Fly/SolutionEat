@@ -1,6 +1,6 @@
 /**
  * Two "share my kitchen" entry points, both built on the same vendorOwnLink()
- * (?v=<VENDOR_ID>) + api.qrserver.com QR image already used for UPI payments:
+ * (clean /<VENDOR_ID> path) + api.qrserver.com QR image already used for UPI payments:
  * - Admin Setup -> Kitchen section: a QR the vendor can download/print, plus
  *   a copy-link button (works even with Discovery opted out — direct link
  *   never depends on it).
@@ -12,7 +12,7 @@ const { openApp: openAppRaw, adminLogin, freshState } = require('./helpers');
 const openApp = (page, opts) => openAppRaw(page, { vendor: 'nestandnosh', ...opts });
 
 test.describe('Admin — kitchen QR', () => {
-  test('Setup shows a QR + link for the vendor\'s own ?v= link', async ({ page }) => {
+  test('Setup shows a QR + link for the vendor\'s own clean link', async ({ page }) => {
     await openApp(page);
     await adminLogin(page);
     await page.evaluate(() => window.adminTab('config'));
@@ -22,9 +22,11 @@ test.describe('Admin — kitchen QR', () => {
       document.getElementById('vendorLinkText').textContent,
     ]);
     expect(imgSrc).toContain('api.qrserver.com');
-    expect(imgSrc).toContain(encodeURIComponent('?v=nestandnosh'));
+    // vendorOwnLink() ab origin + '/' + vendorId deta hai, ?v=<id> nahi —
+    // wahi link QR me encode hota hai aur neeche text me dikhta hai.
+    expect(imgSrc).toContain(encodeURIComponent('/nestandnosh'));
     expect(dlHref).toBe(imgSrc);
-    expect(linkText).toContain('?v=nestandnosh');
+    expect(linkText).toContain('/nestandnosh');
   });
 
   test('link stays correct even with Discovery opted out', async ({ page }) => {
@@ -36,7 +38,7 @@ test.describe('Admin — kitchen QR', () => {
     await adminLogin(page);
     await page.evaluate(() => window.adminTab('config'));
     const linkText = await page.evaluate(() => document.getElementById('vendorLinkText').textContent);
-    expect(linkText).toContain('?v=nestandnosh');
+    expect(linkText).toContain('/nestandnosh');
   });
 });
 
@@ -51,7 +53,7 @@ test.describe('Customer — share this kitchen', () => {
       document.getElementById('shareKitchenLinkText').textContent,
     ]);
     expect(imgSrc).toContain('api.qrserver.com');
-    expect(linkText).toContain('?v=nestandnosh');
+    expect(linkText).toContain('/nestandnosh');
   });
 
   test('closeShareKitchenSheet() hides it again', async ({ page }) => {

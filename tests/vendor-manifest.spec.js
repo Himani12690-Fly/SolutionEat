@@ -3,7 +3,8 @@
  * (one manifest.json for everyone), so applyVendorManifest() swaps the
  * <link rel="manifest"> to a data: URI per vendor at runtime. Two things
  * matter, not just the icon: start_url must point back at THIS vendor's own
- * ?v= link (otherwise the installed icon would open the bare platform site,
+ * clean /<vendor> link (otherwise the installed icon would open the bare
+ * platform site,
  * losing vendor context entirely), and the icon must never be the transparent
  * placeholder used before real vendor data arrives.
  */
@@ -22,8 +23,11 @@ test('manifest link becomes a per-vendor data: URI with the correct start_url', 
     const json = decodeURIComponent(href.replace('data:application/manifest+json,', ''));
     return JSON.parse(json);
   });
-  expect(manifest.start_url).toContain('?v=nestandnosh');
-  expect(manifest.scope).toBe(new URL(page.url()).pathname);
+  // URL ab ?v=<id> se maskarke clean /<id> path par aa gaya hai, aur
+  // start_url wahi clean path hai. scope jaan-boojh kar poora origin ('/')
+  // hai — warna installed app ek vendor ke path me hi kaid ho jaata.
+  expect(manifest.start_url).toBe('/nestandnosh');
+  expect(manifest.scope).toBe('/');
   expect(manifest.name).toContain('Nest & Nosh');
   expect(manifest.icons.length).toBeGreaterThan(0);
   expect(manifest.icons[0].src).toBeTruthy();
@@ -47,6 +51,6 @@ test('different vendors get different manifests (name + start_url both vendor-sp
     const href = document.getElementById('appManifestLink').href;
     return JSON.parse(decodeURIComponent(href.replace('data:application/manifest+json,', '')));
   });
-  expect(manifest.start_url).toContain('?v=shyamrasoi');
+  expect(manifest.start_url).toBe('/shyamrasoi');
   expect(manifest.name).toContain('Shyam Rasoi');
 });

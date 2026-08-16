@@ -5,15 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>myTiffin</title>
 <style>
-  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-    background:#f5eee0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
-  img{width:56px;height:56px;border-radius:16px;animation:pulse 1.1s ease-in-out infinite;}
-  @keyframes pulse{0%,100%{opacity:.55;}50%{opacity:1;}}
+  /* Ye page installed app ka PEHLA screen hai: manifest ka start_url clean
+     path (/<vendor>) hai, jise Pages 404 maan kar yahi file deta hai. Pehle
+     yahan bas raw icon-192.png chipka tha — app khulte hi ek bemaani sa
+     square logo. Ab wahi loader dikhta hai jo app ke andar chalta hai
+     (styles.css ka .dsc-loader), taaki install -> launch ek hi cheez lage.
+
+     Sab kuch inline hai — koi styles.css, koi font, koi image. Is page ka
+     kaam sirf redirect karna hai; ek bhi extra request us redirect ko slow
+     karti hai. Palette styles.css ke :root se copy ki hai. */
+  :root {
+    --accent:#6366f1; --accent-soft:#eef0ff;
+    --ink:#1e2233; --muted:#6b7280; --bg:#f5eee0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --accent:#818cf8; --accent-soft:#282a42;
+            --ink:#e7e9f5; --muted:#9ca0b5; --bg:#14151f; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px; padding:70px 20px;
+    text-align:center; background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  .dl-ring { width:56px; height:56px; position:relative; }
+  .dl-ring::before, .dl-ring::after { content:''; position:absolute; inset:0;
+    border-radius:50%; border:4px solid transparent; }
+  .dl-ring::before { border-top-color:var(--accent); border-right-color:var(--accent);
+    animation:dlspin .8s linear infinite; }
+  .dl-ring::after { border-bottom-color:var(--accent-soft); border-left-color:var(--accent-soft);
+    animation:dlspin 1.2s linear infinite reverse; }
+  .dl-emoji { position:absolute; inset:0; display:flex; align-items:center;
+    justify-content:center; font-size:22px; animation:dlpulse 1.1s ease-in-out infinite; }
+  .dl-t { font-size:15px; font-weight:900; color:var(--ink); }
+  .dl-s { font-size:12px; color:var(--muted); font-weight:600; margin-top:-8px; }
+  @keyframes dlspin { to { transform:rotate(360deg); } }
+  @keyframes dlpulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.18); } }
+  @media (prefers-reduced-motion: reduce) {
+    .dl-ring::before, .dl-ring::after, .dl-emoji { animation:none; }
+  }
 </style>
 </head>
 <body>
-<img src="/icon-192.png" alt="">
+<div class="dl-ring" aria-hidden="true"><div class="dl-emoji">🍱</div></div>
+<div class="dl-t">Opening your kitchen…</div>
+<div class="dl-s">Fresh home-style meals, loading up</div>
 <script>
+  // Theme app ne localStorage me save kiya hota hai. Redirect se pehle wahi
+  // background laga do, warna dark-mode user ko ek pal ke liye cream flash
+  // dikhta hai aur phir dark app — jo jhatka lagta hai.
+  try {
+    var saved = JSON.parse(localStorage.getItem('fbt_theme') || '""');
+    if (saved === 'dark' || (saved === 'system' &&
+        window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      var r = document.documentElement.style;
+      r.setProperty('--bg', '#14151f');   r.setProperty('--ink', '#e7e9f5');
+      r.setProperty('--muted', '#9ca0b5');r.setProperty('--accent', '#818cf8');
+      r.setProperty('--accent-soft', '#282a42');
+    }
+  } catch (e) {}
+
   // GitHub Pages serves this file (HTTP 404) for any path with no matching
   // file — the only such paths in this app are clean URLs: a customer
   // vendor link (mytiffin.cloud/hungryb) or an admin link
