@@ -21,7 +21,11 @@ const CACHE = 'fbt-v40';
 // Alag file banane se index.html 298 KB se 107 KB gzipped ho gaya. Yahan
 // precache isliye zaroori hai: neeche rule 5 cache-first to hai par cache me
 // daalta nahi, aur ASSETS me na hone par offline me ye image toot jaati.
-const ASSETS = ['./', './index.html', './manifest.json', './logo-round.png', './images/meal.jpg'];
+// logo-round.webp (PNG nahi): ye file yahan precache hoti hai, isliye har
+// pehli visit par download hoti thi — 72 KB, jabki UI me ye sirf tab dikhti
+// hai jab vendor ne apna logo na daala ho. WebP par wahi cheez 8 KB hai.
+// logo-round.png repo me bani hui hai (manifest/fallback), bas precache me nahi.
+const ASSETS = ['./', './index.html', './manifest.json', './logo-round.webp', './images/meal.jpg'];
 // Vendor logos / meal photos (cross-origin, Drive-hosted) ka apna bucket — app-shell
 // cache se alag rakha hai taaki naye deploy pe shell refresh ho par images bani rahein
 // (wahi to baar-baar dobara download ho rahi thi). Bounded — neeche trimImgCache().
@@ -142,7 +146,7 @@ try {
     const n = payload.notification || {};
     self.registration.showNotification(n.title || 'Nest & Nosh', {
       body: n.body || '',
-      icon: 'logo-round.png',
+      icon: 'logo-round.webp',
       data: payload.data || {}
     });
   });
@@ -162,7 +166,7 @@ if (!__pushReady) {
     const n = p.notification || {};
     e.waitUntil(self.registration.showNotification(n.title || 'Nest & Nosh', {
       body: n.body || '',
-      icon: 'logo-round.png',
+      icon: 'logo-round.webp',
       data: p.data || {}
     }));
   });

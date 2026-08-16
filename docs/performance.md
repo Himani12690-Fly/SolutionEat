@@ -45,38 +45,51 @@ gzip server start karta hai taaki numbers GitHub Pages jaise hon.
 
 | Network | FCP | usable | transfer |
 |---|---|---|---|
-| Fast 4G | 300 ms | 838 ms | 507 KB |
-| Slow 4G | 580 ms | 1482 ms | 507 KB |
-| Good 3G | 1148 ms | 3105 ms | 507 KB |
-| Slow 3G | 2728 ms | 10970 ms | 507 KB |
+| Fast 4G | 256 ms | 599 ms | 188 KB |
+| Slow 4G | 516 ms | 853 ms | 188 KB |
+| Good 3G | 1048 ms | 1527 ms | 188 KB |
+| Slow 3G | 2284 ms | 4544 ms | 188 KB |
+
+Yahan tak pahunchne me do round lage — dono me payload hi asli cheez tha,
+CPU nahi:
+
+| Network | shuru me | inline images nikaalne ke baad | icons ke baad |
+|---|---|---|---|
+| Fast 4G | 838 ms | 705 ms | **599 ms** |
+| Slow 4G | 1482 ms | 1000 ms | **853 ms** |
+| Good 3G | 3105 ms | 1964 ms | **1527 ms** |
+| Slow 3G | 10970 ms | 7143 ms | **4544 ms** |
+
+Wire payload 507 KB se 188 KB — 63% kam.
 
 Ye **pehli** visit hai (cold cache). Repeat visits par `sw.js` app-shell cache
 se serve karta hai, isliye bahut tez.
 
-### Ek asli bottleneck mila: inline base64 images
+### Jo do cheezein payload kha rahi thi (dono fix ho chuki hain)
 
-`index.html` me **do 125 KB JPEG base64 me inline** hain (MEAL_META ke default
-lunch/dinner photos). File ka 40% yahi hai — aur chaaron HTML files me hain.
+**1. Inline base64 images.** `index.html` me do 125 KB JPEG base64 me padi
+thi — file ka 40%, aur chaaron HTML files me. Wo kabhi dikhti bhi nahi thi:
+`mealPhoto()` `CFG.banners` -> variant ki photo -> `DEFAULT_IMG` ke SVG
+dekhta hai, `MEAL_META[m].img` ko nahi. `images/meal.jpg` me nikaal di —
+`index.html` 298 KB se 107 KB gzipped.
 
-| | gzipped |
-|---|---|
-| `index.html` abhi | 299 KB |
-| images alag files me nikaal dein to | **104 KB** |
+**2. Icons.** `logo-round.png` aur `icon-192.png` dono 192x192 par 32-bit
+RGBA the (colortype 6) — 72 KB aur 70 KB, yaani 2 bytes per pixel. PNG
+already compressed hai, to gzip inhe chhota karta hi nahi: wire par ye
+dono milke first load ka **44%** the.
 
-Faayda sirf 195 KB ka nahi:
+Aur inka istemaal chhota tha: `icon-192.png` footer badge me **18px** aur
+avatar me **34px** par render hota hai. `logo-round.png` kisi `<img src>`
+me tha hi nahi — wo `sw.js` ke precache se aata tha (aur ek chhupe hue
+`svLogoPreview` se, jo hidden hone ke bawajood download hota tha).
 
-- **Har update par dobara download hota hai.** Stamp badalne par naya
-  `index.html` aata hai — aur uske saath wahi 188 KB ki images jo kabhi badli
-  hi nahi. `sw.js` me vendor logos ke liye ye problem already solve ki gayi
-  thi (`IMG_CACHE`), in do images ke liye nahi.
-- Alag files parallel me download hoti hain aur HTML parse ko nahi rokti.
-- Binary JPEG base64 se ~33% chhota hota hai.
+WebP me: 70 KB -> 4.9 KB (128px) aur 72 KB -> 8.3 KB (192px).
 
-Karna kya hai: dono JPEG ko `images/lunch.jpg` / `images/dinner.jpg` me nikaalo,
-`MEAL_META` me path do, aur `sw.js` ke `ASSETS` me add karo (warna offline toot
-jayega).
-
----
+Dono PNG **repo me bani hui hain** — manifest ka install icon inhi ko
+use karta hai, aur har `<img>` par `onerror` fallback laga hai. Verify
+kiya: WebP block karke chalane par saari images PNG par gir jaati hain
+aur load hoti hain, zero errors. Regenerate karne ke liye `npm run icons`
+(`tools/make-icons.js`).
 
 ## 2. Backend — yahan asli limit hai
 
