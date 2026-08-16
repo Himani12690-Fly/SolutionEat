@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=3c6405ef68">
+  <link rel="stylesheet" href="styles.css?v=def719edfb">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1312,7 +1312,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=3c6405ef68"></script>
+  <script src="shared.js?v=def719edfb"></script>
 <script>
   (function(){
     try{
@@ -3176,7 +3176,7 @@
         const openA=(availAll[a]&&availAll[a].ok)?0:1, openB=(availAll[b]&&availAll[b].ok)?0:1;
         return openA-openB;
       });
-      const cardHtmlByKey={};
+      const cardHtmlByKey={}, cardPartsByKey={};
       orderedMealKeys.forEach(m=>{
         const meta=MEAL_META[m]||{};
         const av=availAll[m];
@@ -3211,6 +3211,16 @@
           ? scheduleLinkHtml(m)
           : `<span></span>`;
         const cutoffLine = orderable ? mealCutoffLine(m, dateOffset) : '';
+        // Static hissa = photo/naam/desc — ye date badalne se nahi badalta.
+        // Dynamic hissa = button, cutoff line, open/closed. Neeche in-place
+        // patch ke liye dono alag rakhte hain.
+        cardPartsByKey[m] = {
+          sig: String(photo)+'|'+String(desc)+'|'+String(meta.time||''),
+          cls: 'c1card ' + (orderable?'c1-open':'c1-closed'),
+          topClick: orderable ? `openMealSheet('${m}')` : '',
+          cutoff: cutoffLine,
+          actions: custLink + btn
+        };
         cardHtmlByKey[m] = `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
           <div class="c1-top" ${orderable?`onclick="openMealSheet('${m}')"`:''}>
             ${photo}
@@ -3237,19 +3247,42 @@
         if(firstPaint){ box.classList.add('mp-anim'); setTimeout(()=>box.classList.remove('mp-anim'),450); }
         else box.classList.remove('mp-anim');
         box.innerHTML = __html;
-        if(cards){ box.__cardsMounted=true; orderedMealKeys.forEach(m=>{ box.__cardHtml[m]=cardHtmlByKey[m]; }); }
+        if(cards){ box.__cardsMounted=true; box.__cardSig={}; orderedMealKeys.forEach(m=>{ box.__cardHtml[m]=cardHtmlByKey[m]; box.__cardSig[m]=cardPartsByKey[m].sig; }); }
         else box.__cardsMounted=false;
         return;
       }
       box.classList.remove('mp-anim');
       const __tmp=document.createElement('div');
+      box.__cardSig = box.__cardSig || {};
       orderedMealKeys.forEach(m=>{
         const html=cardHtmlByKey[m];
         if(box.__cardHtml[m]===html) return;
+        const parts=cardPartsByKey[m];
+        const oldEl=document.getElementById('mc-'+m);
+        // Photo/desc wahi hai to card ko replace mat karo — replaceWith naya
+        // <img> banata hai aur menu flick karta hai (Today<->Tomorrow me
+        // dikhta tha; Tomorrow<->Day After me nahi, kyunki wahan HTML hi same
+        // tha aur card chhua hi nahi jaata tha). Sirf badle hue hisse likho.
+        if(oldEl && parts && box.__cardSig[m]===parts.sig){
+          if(oldEl.className!==parts.cls) oldEl.className=parts.cls;
+          const top=oldEl.querySelector('.c1-top');
+          if(top){ if(parts.topClick) top.setAttribute('onclick',parts.topClick); else top.removeAttribute('onclick'); }
+          const act=oldEl.querySelector('#mca-'+m);
+          if(act && act.innerHTML!==parts.actions) act.innerHTML=parts.actions;
+          let cut=oldEl.querySelector('.c1-cutoff');
+          if(parts.cutoff){
+            __tmp.innerHTML=parts.cutoff;
+            const newCut=__tmp.firstElementChild;
+            if(cut){ if(cut.outerHTML!==parts.cutoff) cut.replaceWith(newCut); }
+            else if(act) oldEl.insertBefore(newCut, act);
+          } else if(cut){ cut.remove(); }
+          box.__cardHtml[m]=html;
+          return;
+        }
         box.__cardHtml[m]=html;
+        if(parts) box.__cardSig[m]=parts.sig;
         __tmp.innerHTML=html;
         const newEl=__tmp.firstElementChild;
-        const oldEl=document.getElementById('mc-'+m);
         if(oldEl) oldEl.replaceWith(newEl); else box.appendChild(newEl);
       });
       Object.keys(box.__cardHtml).forEach(k=>{
