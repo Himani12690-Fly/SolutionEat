@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=c205c32120">
+  <link rel="stylesheet" href="styles.css?v=3c6405ef68">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1064,6 +1064,22 @@
       </div>
     </div>
   </div>
+  <div class="sheet-overlay hidden" id="updateBox">
+    <div class="sheet" style="max-width:380px;">
+      <div style="padding:22px 20px 20px;text-align:center;">
+        <div style="font-size:38px;line-height:1;">🔄</div>
+        <div style="font-size:16px;font-weight:900;margin-top:10px;" data-i="updateTitle"></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:5px;line-height:1.55;" data-i="updateSub"></div>
+        <div id="updProg" class="hidden" style="margin-top:16px;">
+          <div class="upd-bar"><span id="updBarFill"></span></div>
+          <div id="updStep" style="font-size:11.5px;color:var(--muted);font-weight:700;margin-top:8px;"></div>
+        </div>
+        <button class="add-cart-btn" id="updBtn" style="margin-top:16px;" onclick="startAppUpdate()" data-i="updateBtn"></button>
+        <div id="updLater" style="margin-top:10px;font-size:12px;color:var(--muted);font-weight:700;cursor:pointer;" onclick="closeUpdateBox()" data-i="updateLater"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="sheet-overlay hidden" id="installAppSheet" onclick="if(event.target===this)closeInstallAppSheet()">
     <div class="sheet" style="max-width:380px;">
       <div style="padding:22px 20px 20px;text-align:center;">
@@ -1116,7 +1132,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=c205c32120"></script>
+  <script src="shared.js?v=3c6405ef68"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
