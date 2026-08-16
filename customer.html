@@ -1613,7 +1613,19 @@
     if(!cart.length) return;
     const a=storeGet('fbt_addr')||{};
     const ready = deliveryType==='office' ? (a.company&&a.empId) : (a.society&&a.flatNo);
-    if(ready){ goToCheckout(); setTimeout(()=>placeOrder(),60); }
+    if(ready){
+      // Ek tap = order — customer ko address-form page (page2) bilkul nahi
+      // dikhna chahiye. goToCheckout() wahi prefill/validate karta hai jo
+      // hamesha se karta tha (kuch badla nahi), sirf ise turant cartView pe
+      // wapas palat dete hain — same JS tick ke andar, isliye browser page2
+      // ko kabhi paint hi nahi karta (koi flash nahi). placeOrder() success
+      // hone par khud page2 (success/payment screen) reveal karega.
+      const cbtn=document.getElementById('checkoutBtn');
+      if(cbtn){ cbtn.disabled=true; cbtn.textContent='⏳ ...'; }
+      goToCheckout();
+      if(!document.getElementById('page2').classList.contains('hidden')) showView('cartView');
+      setTimeout(()=>placeOrder(),60);
+    }
     else goToCheckout();
   }
   function showOrdersPage(){ if(!isLoggedIn()){ showAuth(); return; } showView('ordersView'); loadMyOrders(fmtYMD(dateWithOffset(0)));
@@ -2692,7 +2704,13 @@
     html+= hasPromos ? `<div class="promo-box">${appliedPromo
       ?`<div class="promo-applied"><span>🎟️ ${appliedPromo.code} <b>−₹${pd}</b>${feeDates()>1?`<small>${t('promoFirstDateNote')}</small>`:''}</span><span class="pr-x" onclick="removePromo()">✕</span></div>`
       :`<div class="promo-chips">${CFG.promos.map(pp=>`<span class="promo-chip" onclick="pickPromo('${pp.code}')">🎟️ ${pp.code} · ${pp.label}${pp.firstOnly?' · 🆕':''}</span>`).join('')}</div><div class="promo-input"><input id="promoCode" placeholder="${t('promoHave')}" onkeydown="if(event.key==='Enter')applyPromo()"><button id="promoApplyBtn" onclick="applyPromo()">${t('promoApply')}</button></div>`}</div>` : '';
-    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${feeDates()>1?(' × '+feeDates()):''}</span><span>₹${deliveryFeeTotal()}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
+    // Saved address ho to delivery line me hi ek jagah dikha do — alag card/row
+    // nahi, checkout jaane se pehle customer ko yahin pata chal jaaye kahan
+    // jaa raha hai (one-tap order se pehle akhri visual check).
+    const svA=storeGet('fbt_addr')||{};
+    const svReady = deliveryType==='office' ? (svA.company&&svA.empId) : (svA.society&&svA.flatNo);
+    const svLine = svReady ? (deliveryType==='office' ? (svA.company+(svA.empId?(' · '+svA.empId):'')) : (svA.flatNo+', '+svA.society)) : '';
+    html+=`<div class="cart-break"><div class="cb-row"><span>${t('subtotalLbl')}</span><span>₹${cartSubtotal()}</span></div><div class="cb-row"><span>🛵 ${t('deliveryLbl')}${svLine?(' · '+esc(svLine)):''}${feeDates()>1?(' × '+feeDates()):''}</span><span>₹${deliveryFeeTotal()}</span></div>${appliedPromo?`<div class="cb-row" style="color:var(--ok);"><span>🎟️ ${t('discountLbl')} (${appliedPromo.code})</span><span>−₹${pd}</span></div>`:''}<div class="cb-row total"><span>${t('cartTotal')}</span><span>₹${cartTotalDisplay()}</span></div></div>`;
     box.innerHTML=html;
     if(cbt) cbt.textContent='₹'+cartTotalDisplay();
     if(cbtn) cbtn.disabled=false;
@@ -2837,12 +2855,18 @@
   }
 
   function placeOrder(){
-    if(!isLoggedIn()){ showAuth(); return; }
+    if(!isLoggedIn()){ renderCart(); showAuth(); return; }
     const okN=validateName();
     const okLoc=(deliveryType==='office')
       ? [validateCompany(), validateEmpId()].every(Boolean)
       : [validateSociety(), validateFlat()].every(Boolean);
-    if(!okLoc||!okN){ showToast(t('completeFields'),'warning'); return; }
+    // ⚠️ Ek-tap checkout (cartCheckout()) yahan tak pahunchne se PEHLE hi
+    // #checkoutBtn ko disabled/loading kar chuka hota hai (cart page se
+    // koi visible page2 form kabhi nahi dikhta jahan customer khud fix kar
+    // sake) — is validation-fail path se agar cart button reset na ho to
+    // hamesha ke liye "⏳ ..." pe atka reh jaata. Manual checkout flow ke
+    // liye ye extra call harmless hai (checkoutBtn already normal state me).
+    if(!okLoc||!okN){ showToast(t('completeFields'),'warning'); renderCart(); return; }
     {
       const stale=[];
       cart.forEach(it=>{
@@ -2926,6 +2950,7 @@
         handleInvalidSession();
         const pb=document.getElementById('placeBtn');
         if(pb){ pb.disabled=false; pb.textContent=t('placeOrder')||'Place Order'; }
+        renderCart();
         return;
       }
 
@@ -2975,6 +3000,10 @@
             showToast('⚠️ '+ok+' order'+(ok>1?'s':'')+' placed, '+fail+' could not go through — please try the remaining item'+(fail>1?'s':'')+' again.','warning');
             return;
           }
+          // Ek-tap checkout se yahan page2 (form) kabhi dikha hi nahi tha —
+          // pehli baar ab, success/payment screen ke roop me reveal hota hai.
+          // Manual checkout flow me ye already visible hai, so no-op.
+          showView('page2');
           document.getElementById('orderFormWrap').classList.add('hidden');
           document.getElementById('page2Bar').classList.add('hidden');
           document.getElementById('successCard').classList.remove('hidden');
@@ -2987,8 +3016,10 @@
         if(couponWarn) stepP('couponWarnToast', () => showToast('⚠️ Coupon: '+couponWarn,'warning'));
         stepP('scrollTop', () => window.scrollTo(0,0));
         btn.textContent=t('placeOrder'); btn.disabled=false;
+        renderCart();
       } else {
         btn.textContent=t('placeOrder'); btn.disabled=false;
+        renderCart();
         if(dup && !fail) showToast('⚠️ '+t('dupMsg'),'warning');
         else{
           const failRes=results.find(r=>r.fail);
@@ -3004,6 +3035,7 @@
     })().catch((e)=>{
       dbgLog({ ev:'placeOrder_unhandled', err:String((e&&e.message)||e).slice(0,140) });
       btn.textContent=t('placeOrder'); btn.disabled=false;
+      renderCart();
       showToast(t('errNetwork'),'error');
     });
   }
