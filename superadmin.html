@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="styles.css?v=b4048f2777">
+  <link rel="stylesheet" href="styles.css?v=7d090a4077">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -960,7 +960,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="shared.js?v=b4048f2777"></script>
+  <script src="shared.js?v=7d090a4077"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
@@ -994,14 +994,24 @@
     if(deferredInstallPrompt) return true;
     return /iP(hone|ad|od)/.test(navigator.userAgent);
   }
+  // Install row do jagah hai — customer ke profile me aur vendor ke Setup me.
+  // Dono ek saath dikhen/chhupein, isliye ek hi jagah se toggle karte hain.
+  const INSTALL_ROW_IDS = ['pfInstallApp','cfgInstallApp'];
+  function refreshInstallRows(){
+    const show = canShowInstallRow();
+    INSTALL_ROW_IDS.forEach(function(id){ const el=document.getElementById(id); if(el) el.classList.toggle('hidden', !show); });
+  }
+  function setInstallRowsHidden(hide){
+    INSTALL_ROW_IDS.forEach(function(id){ const el=document.getElementById(id); if(el) el.classList.toggle('hidden', !!hide); });
+  }
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
     deferredInstallPrompt = e;
-    const row=document.getElementById('pfInstallApp'); if(row) row.classList.toggle('hidden', !canShowInstallRow());
+    refreshInstallRows();
   });
   window.addEventListener('appinstalled', function(){
     deferredInstallPrompt = null;
-    const row=document.getElementById('pfInstallApp'); if(row) row.classList.add('hidden');
+    setInstallRowsHidden(true);
     try{ showToast(t('installAppInstalled'),'success'); }catch(e){}
   });
   function openInstallAppSheet(){
@@ -1019,7 +1029,7 @@
     prompt.userChoice.then(function(choice){
       closeInstallAppSheet();
       if(choice.outcome!=='accepted'){
-        const row=document.getElementById('pfInstallApp'); if(row) row.classList.remove('hidden');
+        refreshInstallRows();
       }
     }).catch(function(){});
   }
@@ -1763,7 +1773,7 @@
       const fl=document.getElementById('pfFlat'); if(fl)fl.value=saved.flatNo||'';
     }
     const ts=document.getElementById('themeSelProfile'); if(ts) ts.value = readTheme();
-    const ia=document.getElementById('pfInstallApp'); if(ia) ia.classList.toggle('hidden', !canShowInstallRow());
+    refreshInstallRows();
   }
   function savePfAddr(){
     const s=document.getElementById('pfSociety').value, f=document.getElementById('pfFlat').value.trim();
@@ -4439,11 +4449,16 @@
 
   function applyVendorManifest(name, iconSrc, hasRealLogo){
     try{
-      const startUrl = location.pathname + '?v=' + encodeURIComponent(VENDOR_ID);
+      // Vendor apne admin URL se install kare to icon admin panel khole,
+      // customer app nahi — dono ka start_url alag hona chahiye.
+      const isAdminCtx = (typeof HAS_ADMIN_PARAM !== 'undefined') && HAS_ADMIN_PARAM;
+      const startUrl = isAdminCtx
+        ? ('/admin/' + encodeURIComponent(ADMIN_PARAM))
+        : ('/' + encodeURIComponent(VENDOR_ID));
       const iconType = hasRealLogo ? 'image/png' : (iconSrc.indexOf('image/svg+xml')>=0 ? 'image/svg+xml' : 'image/png');
       const man = {
-        name: name + ' — Tiffin Ordering', short_name: name,
-        description: 'Order tiffin online from ' + name,
+        name: name + (isAdminCtx ? ' — Kitchen Admin' : ' — Tiffin Ordering'), short_name: name,
+        description: isAdminCtx ? ('Manage orders for ' + name) : ('Order tiffin online from ' + name),
         start_url: startUrl, scope: location.pathname,
         display: 'standalone', orientation: 'portrait',
         background_color: '#f5eee0', theme_color: '#6366f1',
