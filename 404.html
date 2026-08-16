@@ -15,20 +15,24 @@
 <img src="/icon-192.png" alt="">
 <script>
   // GitHub Pages serves this file (HTTP 404) for any path with no matching
-  // file — the only such paths in this app are per-vendor clean URLs, e.g.
-  // mytiffin.cloud/hungryb. There's no server here to rewrite that into
-  // ?v=hungryb, so we do it client-side: redirect to index.html carrying
-  // the path segment as the existing ?v= vendor param, tagged __pathmode
-  // so shared.js's normalizePathModeUrl() can swap the address bar back to
-  // this same clean path once the vendor is resolved (see shared.js).
-  var seg = location.pathname.replace(/^\/+/, '').split('/')[0];
-  if (seg) {
-    var rest = location.search ? location.search.slice(1) : '';
-    var qs = 'v=' + encodeURIComponent(seg) + (rest ? '&' + rest : '') + '&__pathmode=1';
-    location.replace('/?' + qs + location.hash);
-  } else {
-    location.replace('/');
+  // file — the only such paths in this app are clean URLs: a customer
+  // vendor link (mytiffin.cloud/hungryb) or an admin link
+  // (mytiffin.cloud/admin/hungryb). There's no server here to rewrite
+  // either into the query params the app already resolves (?v=/?admin=),
+  // so we do it client-side: redirect to index.html carrying the slug as
+  // that param, tagged __pathmode so shared.js's normalizePathModeUrl()
+  // can swap the address bar back to this same clean path once it's
+  // resolved (see shared.js).
+  var parts = location.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+  var rest = location.search ? location.search.slice(1) : '';
+  var qs = null;
+  if (parts[0] === 'admin' && parts[1]) {
+    qs = 'admin=' + encodeURIComponent(parts[1]) + (rest ? '&' + rest : '') + '&__pathmode=1';
+  } else if (parts[0]) {
+    qs = 'v=' + encodeURIComponent(parts[0]) + (rest ? '&' + rest : '') + '&__pathmode=1';
   }
+  if (qs) location.replace('/?' + qs + location.hash);
+  else location.replace('/');
 </script>
 </body>
 </html>
