@@ -45,12 +45,29 @@ test.describe('Admin Setup — Kitchen Location', () => {
     await page.evaluate(() => window.cfgToggle('kitchen')); // "Kitchen" accordion section starts collapsed
     await page.click('#captureLocBtn');
     await expect(page.locator('#kitchenLocStatus')).toContainText('23.0225');
-    await page.fill('#cfg-deliveryRadiusKm', '6');
+    await page.fill('#cfg-deliveryRadiusKm', '4.5');
     await page.evaluate(() => window.saveConfig());
     await page.waitForTimeout(400);
     expect(state.config.kitchenLat).toBeCloseTo(CUSTOMER_LAT, 3);
     expect(state.config.kitchenLng).toBeCloseTo(CUSTOMER_LNG, 3);
-    expect(state.config.deliveryRadiusKm).toBe(6);
+    expect(state.config.deliveryRadiusKm).toBe(4.5);
+  });
+
+  // Delivery fee slabs sirf 5 km tak defined hain, isliye vendor usse bada
+  // radius set nahi kar sakta — saveConfig() 5 par clamp kar deta hai. Pehle
+  // ye test 6 bhejta tha aur 6 hi wapas aane ki ummeed karta tha, jo ab
+  // jaan-boojh kar galat hai.
+  test('5 km se bada radius save par clamp ho jaata hai', async ({ page, context }) => {
+    const { state } = await openApp(page);
+    await context.grantPermissions(['geolocation'], { origin: 'http://localhost:8080' });
+    await context.setGeolocation({ latitude: CUSTOMER_LAT, longitude: CUSTOMER_LNG });
+    await adminLogin(page);
+    await page.evaluate(() => window.adminBnGo('config'));
+    await page.evaluate(() => window.cfgToggle('kitchen'));
+    await page.fill('#cfg-deliveryRadiusKm', '9');
+    await page.evaluate(() => window.saveConfig());
+    await page.waitForTimeout(400);
+    expect(state.config.deliveryRadiusKm).toBe(5);
   });
 });
 

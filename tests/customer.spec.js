@@ -80,14 +80,24 @@ test.describe('Cart & pricing', () => {
     expect(butter - plain).toBe(4);   // 16 − 12
   });
 
-  test('far society par delivery ₹20 lagti hai', async ({ page }) => {
-    await openApp(page, { addr:{ deliveryType:'home', society:'Eden', flatNo:'A-101' } });
+  // Pehle ye test society-based pricing check karta tha (Eden = 'far' = ₹20).
+  // Ab fee society se nahi, kitchen se distance se lagti hai, isliye same
+  // ₹20 ko uske asli trigger se check karte hain: 4-5 km wala slab.
+  test('door wale address par delivery ₹20 lagti hai (4-5 km slab)', async ({ page }) => {
+    const state = freshState();
+    state.config.deliveryRadiusKm = 5;   // 4.5 km isi ke andar aaye
+    await openApp(page, {
+      state,
+      // kitchen (23.0225, 72.5714) se ~4.5 km — 4-5 km slab = ₹20
+      addr: { deliveryType:'home', society:'Eden', flatNo:'A-101', lat: 23.063, lng: 72.5714 },
+    });
     await goTo(page, 'menu');
     await page.evaluate(() => window.addMealDirect('lunch'));
     await goTo(page, 'cart');
-    await page.evaluate(() => { document.getElementById('society').value = 'Eden'; });
-    await page.evaluate(() => window.renderCart());
     await page.waitForTimeout(200);
+    const km = await page.evaluate(() => window.deliveryDistanceKm());
+    expect(km).toBeGreaterThan(4);
+    expect(km).toBeLessThanOrEqual(5);
     await expect(page.locator('#cartBarTotal')).toHaveText('₹100');   // 80 + 20
   });
 

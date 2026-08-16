@@ -693,7 +693,14 @@ async function openApp(page, opts = {}) {
     if (istOverride) window.__TEST_IST_OVERRIDE = istOverride;   // app's getISTNow() reads this once at load
   }, { session:SESSION, theme:opts.theme,
        loggedIn: opts.loggedIn !== false,
-       addr: opts.addr || { deliveryType:'home', society:'Vrindavan', flatNo:'D-706' },
+       // Delivery fee ab society (near/far) se nahi, kitchen se distance se
+       // banta hai — aur distance saved address ke lat/lng se aati hai, live
+       // geolocation se nahi (dekho deliveryDistanceKm()). Bina lat/lng ke
+       // checkout hi block ho jaata tha aur fee 0 aati thi.
+       // 23.044983 = fixture kitchen (23.0225, 72.5714) se theek 2.5 km, yaani
+       // 2-3 km slab = ₹10 — wahi jo pehle 'near society' ka fee tha.
+       addr: opts.addr || { deliveryType:'home', society:'Vrindavan', flatNo:'D-706',
+                            lat: 23.044983, lng: 72.5714 },
        istOverride: opts.istOverride || null,
        skipOnboarding: opts.skipOnboarding !== false,
        vendor: opts.vendor || null });
