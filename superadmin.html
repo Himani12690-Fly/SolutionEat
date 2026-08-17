@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=78d12fec35">
+  <link rel="stylesheet" href="assets/styles.css?v=26866ef64d">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -765,6 +765,7 @@
             <div class="form-group"><label>Societies <span style="font-size:11px;color:var(--muted);font-weight:600;">(one per line)</span></label><textarea id="svcSocieties" rows="4" placeholder="Vrindavan&#10;Eden"></textarea></div>
             <label class="cfg-chk"><input type="checkbox" id="svcHomeEnabled"> 🏠 Home delivery (Society / Flat)</label>
             <label class="cfg-chk"><input type="checkbox" id="svcOfficeEnabled"> 🏢 Office delivery (Company / Employee ID)</label>
+            <label class="cfg-chk"><input type="checkbox" id="svcTakeawayEnabled"> 🥡 Takeaway (customer khud lene aayega)</label>
             <div class="form-group"><label>Companies <span style="font-size:11px;color:var(--muted);font-weight:600;">(Name | Building | Fee ₹, one per line)</span></label><textarea id="svcCompanies" rows="4" placeholder="MoneyPlant Fintech | Tower B | 20"></textarea></div>
             <label class="cfg-chk"><input type="checkbox" id="svcListInDiscovery"> 🔍 Discovery me dikhna hai</label>
             <label class="cfg-chk"><input type="checkbox" id="svcOnlinePay"> 💳 Online payment (Razorpay) chalu karein</label>
@@ -984,7 +985,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=78d12fec35"></script>
+  <script src="assets/shared.js?v=26866ef64d"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
@@ -4260,6 +4261,8 @@
       document.getElementById('svcSocieties').value=(svCurConfig.societies||[]).join('\n');
       document.getElementById('svcHomeEnabled').checked=(svCurConfig.homeEnabled!==false);
       document.getElementById('svcOfficeEnabled').checked=(svCurConfig.officeEnabled===true);
+      // Default ON — modesAvailable() bhi takeawayEnabled!==false hi maanta hai.
+      document.getElementById('svcTakeawayEnabled').checked=(svCurConfig.takeawayEnabled!==false);
       document.getElementById('svcCompanies').value=(svCurConfig.companies||[]).map(c=>[c.name,c.building||'',c.fee].join(' | ')).join('\n');
       document.getElementById('svcListInDiscovery').checked=(svCurConfig.listInDiscovery!==false);
       // Default OFF — isliye ===true. Vendor khud chalu nahi kar sakta, sirf superadmin.
@@ -4287,10 +4290,13 @@
       }).filter(c=>c.name);
       const homeEnabled=document.getElementById('svcHomeEnabled').checked;
       const officeEnabled=document.getElementById('svcOfficeEnabled').checked;
-      if(!homeEnabled&&!officeEnabled){ showToast('⚠️ Kam se kam ek delivery mode ON rakho.','warning'); return; }
+      const takeawayEnabled=document.getElementById('svcTakeawayEnabled').checked;
+      // Pehle yahan sirf home/office check hota tha, isliye sirf-takeaway wala
+      // vendor (pickup-only shop) save hi nahi ho paata tha. Ab wo valid hai.
+      if(!homeEnabled&&!officeEnabled&&!takeawayEnabled){ showToast('⚠️ Kam se kam ek delivery mode ON rakho.','warning'); return; }
       if(officeEnabled&&!companies.length){ showToast('⚠️ Office delivery ke liye kam se kam ek company add karo.','warning'); return; }
       patch={ township:document.getElementById('svcTownship').value.trim(), societies:societies,
-              homeEnabled:homeEnabled, officeEnabled:officeEnabled, companies:companies,
+              homeEnabled:homeEnabled, officeEnabled:officeEnabled, takeawayEnabled:takeawayEnabled, companies:companies,
               listInDiscovery:document.getElementById('svcListInDiscovery').checked,
               onlinePayEnabled:document.getElementById('svcOnlinePay').checked };
     } else if(group==='alerts'){
