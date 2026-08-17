@@ -124,34 +124,40 @@ test.describe('Public menu page', () => {
     expect(await page.evaluate(() => getComputedStyle(document.querySelector('.mc')).backgroundColor)).toBe('rgb(255, 255, 255)');
   });
 
-  test('kitchen ka WhatsApp number ho to bina login order kar sakte hain', async ({ page }) => {
+  test('kitchen ka WhatsApp number ho to har item ka apna one-tap order button hai', async ({ page }) => {
     await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '9876543210' } }) });
     await page.waitForSelector('.mc', { timeout: 15000 });
-    await expect(page.locator('#waBtn')).toBeVisible();
-    const href = await page.getAttribute('#waBtn', 'href');
+    // Poora menu ek saath bhejne ki jagah, har item (Mini/Full Tiffin) ka apna
+    // button hai — customer ko sirf apna item retype/reply nahi karna padta.
+    const vo = page.locator('.vr .vo').first();
+    await expect(vo).toBeVisible();
+    const href = await vo.getAttribute('href');
     // 10-digit number 91 ke saath jaana chahiye, warna wa.me link kaam nahi karta.
     expect(href).toContain('https://wa.me/919876543210?text=');
     expect(decodeURIComponent(href)).toContain('Nest & Nosh');
     await expect(page.locator('#foot')).toContainText('WhatsApp par login ki zaroorat nahi');
-    // Do barabar ke button ek dusre se ladte hain — WhatsApp mile to app/login
-    // us ke neeche chhoti line ban jaata hai.
-    await expect(page.locator('#orderBtn')).toHaveClass(/sub/);
+    // WhatsApp se seedha order ho sakta hai, isliye "Order Now" (app/login)
+    // yahan chhup jaata hai — sirf share bachta hai, wahi asli button ban jaata hai.
+    await expect(page.locator('#orderBtn')).toBeHidden();
+    await expect(page.locator('#shareBtn2')).not.toHaveClass(/sub/);
   });
 
-  test('WhatsApp number na ho to button dikhta hi nahi', async ({ page }) => {
+  test('WhatsApp number na ho to per-item button nahi dikhta, poora "Order Now" rehta hai', async ({ page }) => {
     // App me number na milne par platform owner ke number par fallback hota hai.
     // Yahan wo KABHI nahi — ye page ajnabiyon ka hai, aur kisi ka order galat
     // number par chala jaana sabse bura outcome hai.
     await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '' } }) });
     await page.waitForSelector('.mc', { timeout: 15000 });
-    await expect(page.locator('#waBtn')).toBeHidden();
+    await expect(page.locator('.vr .vo')).toHaveCount(0);
+    await expect(page.locator('#orderBtn')).toBeVisible();
+    await expect(page.locator('#shareBtn2')).toHaveClass(/sub/);
     await expect(page.locator('#foot')).toContainText('login zaroori hai');
   });
 
-  test('adhoora WhatsApp number bhi button nahi dikhata', async ({ page }) => {
+  test('adhoora WhatsApp number bhi per-item button nahi dikhata', async ({ page }) => {
     await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '98765' } }) });
     await page.waitForSelector('.mc', { timeout: 15000 });
-    await expect(page.locator('#waBtn')).toBeHidden();
+    await expect(page.locator('.vr .vo')).toHaveCount(0);
   });
 
   test('menu aane se pehle "Loading Today\'s Menu" dikhta hai', async ({ page }) => {
