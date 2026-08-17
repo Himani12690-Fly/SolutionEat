@@ -167,22 +167,40 @@ function handlePost(state, body) {
     if (!/^[a-z0-9]+$/.test(id)) return { status:'error', message:'Slug galat hai' };
     if (id === 'nestandnosh') return { status:'error', message:'default vendor ka slug hai' };
     const existing = state.vendors.find(v => v.vendorId === id);
+    const out = { status:'success' };
     if (!existing) {
-      if (!p.sheetId || !p.adminUser || !p.adminPass)
-        return { status:'error', message:'Sheet ID, Admin Username aur Password zaroori hain' };
-      if (state.vendors.some(v => v.sheetId === p.sheetId))
+      // Real backend: naye vendor ke liye sheetId / adminUser / adminPass khaali
+      // aa sakte hain — teenon wo khud bana leta hai (SpreadsheetApp.create,
+      // slug = username, random password). Auto-banaya password ek hi baar,
+      // isi response me, wapas aata hai.
+      let sheetId = String(p.sheetId || '').trim();
+      const adminUser = String(p.adminUser || '').trim() || id;
+      if (!sheetId) {
+        sheetId = 'AUTOSHEET_' + id;
+        out.sheetId = sheetId;
+        out.sheetUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/edit';
+      }
+      if (!p.adminPass) { out.adminUser = adminUser; out.adminPass = 'Gen' + id.slice(0, 4) + '7x'; }
+      if (state.vendors.some(v => v.sheetId === sheetId))
         return { status:'error', message:'Ye Sheet pehle se kisi vendor ke paas hai' };
       // Naya vendor — billing turant 'pending' se shuru (real backend jaisa hi: kabhi
       // paid nahi hua, due date aaj).
-      state.vendors.push({ vendorId:id, name:p.name || id, sheetId:p.sheetId,
-                           notifyEmail:p.notifyEmail || '', status:p.status || 'Active', isDefault:false,
+      state.vendors.push({ vendorId:id, name:p.name || id, sheetId,
+                           adminUser, notifyEmail:p.notifyEmail || '', status:p.status || 'Active', isDefault:false,
                            subStatus:'pending', subDueDate:todayIST(0), subLastPaid:'', subAmount:499 });
+      // FSSAI registry me nahi, vendor ki config me jaata hai — real backend
+      // saveVendor() ke aakhir me superSaveVendorConfig({fssai}) chalata hai.
+      if (p.fssai) {
+        if (!state.vendorConfigs[id]) state.vendorConfigs[id] = JSON.parse(JSON.stringify(CONFIG));
+        state.vendorConfigs[id].fssai = String(p.fssai).trim();
+      }
     } else {
       // Existing vendor edit (ya status toggle) — billing state chhedo mat.
       existing.name = p.name || existing.name;
       if (p.status) existing.status = p.status;
     }
-    return { status:'success', vendors:state.vendors };
+    out.vendors = state.vendors;
+    return out;
   }
   if (action === 'markvendorpaid') {
     if (!superOK) return denied;
