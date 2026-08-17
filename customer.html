@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=0b2b333a25">
+  <link rel="stylesheet" href="assets/styles.css?v=53bdec9a91">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -773,7 +773,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=0b2b333a25"></script>
+  <script src="assets/shared.js?v=53bdec9a91"></script>
 <script>
   (function(){
     try{
@@ -988,6 +988,16 @@
     const mt=mealType(m); if(!mt) return '';
     const active = mt.cutoffAheadDay ? (off===1) : (off===0);
     if(!active) return '';
+    // Sabse upar wala availability banner pehle se SABSE PEHLE band hone wale
+    // meal ka countdown dikhata hai. Wahi meal ke card par dobara likhna sirf
+    // duplicate hai — single-meal kitchen par to hu-ba-hu wahi line do baar
+    // dikhti thi. Baaki meals ki line rehti hai, kyunki banner unhe nahi dikhata.
+    if(off===0){
+      try{
+        const info=kitchenAvailabilityInfo();
+        if(info && info.state==='open' && info.mt && info.mt.key===m) return '';
+      }catch(e){}
+    }
     const now=getISTNow(); const curMin=now.getHours()*60+now.getMinutes();
     const diff=cutoffMins(m)-curMin;
     if(diff<=0) return '';
@@ -2813,10 +2823,14 @@
   }
 
   let sheetMeal='lunch';
+  let sheetFromVariantCard = false;
   function openMealSheet(m, vid){
     sheetMeal=m;
     builder[m]=freshBuilder()[m];
     if(vid) builder[m].tiffinType=vid;   // variant card se aaye to wahi pehle se chuna ho
+    // Variant card se aaye to variant pehle se tay hai — sheet me poori list
+    // dobara dikhana ulta confusing hai (customer ne abhi wahi to chuna tha).
+    sheetFromVariantCard = !!vid;
     renderMealSheet();
     document.getElementById('mealSheet').classList.remove('hidden');
     document.body.style.overflow='hidden';
@@ -2834,7 +2848,7 @@
     let vs=variantsFor(m);
     if(CFG.addonsEnabled && CFG.addonsEnabled.tiffinMini===false) vs=vs.filter(v=>v.id!=='mini');
     if(b.tiffinType==='mini' && !vs.find(v=>v.id==='mini') && vs[0]) b.tiffinType=vs[0].id;
-    if(vs.length<=1){ sizeBox.innerHTML=''; }
+    if(vs.length<=1 || sheetFromVariantCard){ sizeBox.innerHTML=''; }
     else {
       sizeBox.innerHTML=`<div class="sh-block">
         <div class="sh-block-title">${t('chooseSize')}</div>
@@ -3795,7 +3809,14 @@
         try{ storeSet('fbt_ordmap', { map:map, ts:Date.now() }); }catch(e){}
       }).catch(()=>{});
   }
-  function alreadyOrdered(dateStr, meal){ return orderedMap[dateStr+'|'+meal]||null; }
+  function alreadyOrdered(dateStr, meal){
+    // App ka default rule "ek meal, ek order per din" hai — tiffin subscription
+    // ke liye sahi. Par counter par bechne wali dukaan (jaise khichdi shop) me
+    // customer din me kai baar aa sakta hai; wahan ye rok order hi band kar
+    // deti thi. multiOrderPerDay ON hone par ye gate lagta hi nahi.
+    if(CFG.multiOrderPerDay===true) return null;
+    return orderedMap[dateStr+'|'+meal]||null;
+  }
 
   let myOrdersCache=[], myOrdersIsHist=false;
   let dscAreas = [], dscArea = null;
