@@ -216,7 +216,11 @@ test.describe('Public menu page', () => {
     // Message seedha, saaf hona chahiye — koi extra "Mujhe chahiye:" jaisi
     // filler line nahi, seedha item aur uska quantity/date.
     const msg = decodeURIComponent(href);
-    expect(msg).toContain('Hello 👋 *Nest & Nosh*');
+    expect(msg).toContain('Hello *Nest & Nosh*');
+    // 4-byte emoji (waving hand, meal icons) kuch WhatsApp/Android versions
+    // par deep-link text me "�" ban jaate hain — is message me bilkul
+    // nahi hone chahiye.
+    expect(msg).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
     expect(msg).not.toContain('Mujhe chahiye');
     expect(msg).toMatch(/x 1 \(\d{1,2} \w+\)/);
     // WhatsApp se seedha order ho sakta hai, isliye "Order Now" (app/login)
