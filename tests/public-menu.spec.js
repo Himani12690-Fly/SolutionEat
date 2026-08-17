@@ -62,6 +62,34 @@ test.describe('Public menu page', () => {
     expect(await page.locator('.vr').count()).toBeGreaterThan(0);
   });
 
+  test('din select karke uss din ka menu dekha ja sakta hai', async ({ page }) => {
+    await openMenu(page);
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    // Aaj se shuru karke agle 6 din — poora hafta cover hona chahiye.
+    await expect(page.locator('#daySelect option')).toHaveCount(7);
+
+    // "Aaj" test chalne ke din par depend nahi karna chahiye, isliye jo bhi
+    // aaj hai usse alag ek din chunte hain aur usi ka menu alag rakhte hain.
+    const todayKey = await page.$eval('#daySelect', el => el.value);
+    const DAY_KEYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const otherDay = DAY_KEYS.find(d => d !== todayKey);
+    const body = bootstrap();
+    body.menu[otherDay] = Object.assign({}, body.menu[otherDay], {
+      lunch: { sabziOptions: ['Distinct Day Sabzi'] },
+    });
+    await openMenu(page, { body });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+
+    let chips = await page.locator('.chip').allTextContents();
+    expect(chips).not.toContain('Distinct Day Sabzi');
+
+    await page.selectOption('#daySelect', otherDay);
+    chips = await page.locator('.chip').allTextContents();
+    expect(chips).toContain('Distinct Day Sabzi');
+    // Header bhi us naye din ke hisaab se badalta hai.
+    await expect(page.locator('#vdate')).toContainText(otherDay.charAt(0).toUpperCase() + otherDay.slice(1));
+  });
+
   test('app ka link usi kitchen par bhejta hai', async ({ page }) => {
     await openMenu(page, { vendor: 'hungrybirds' });
     await page.waitForSelector('.mc', { timeout: 15000 });
