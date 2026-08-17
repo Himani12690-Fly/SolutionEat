@@ -240,7 +240,10 @@ test(`Admin spot-check: ${ADMIN_SPOTCHECKS} vendors show only their own orders`,
       await page.evaluate(() => window.setMealFilter && window.setMealFilter('All'));
       await page.waitForFunction((w) => document.querySelectorAll('#ordersList .oc').length >= w, 8, { timeout: 15000 }).catch(() => {});
       const renderedCount = await page.locator('#ordersList .oc').count();
-      const renderedText = await page.locator('#ordersList').innerText().catch(() => '');
+      // textContent, innerText nahi: list ab "Poori list dekho" ke peeche collapse
+      // ho sakti hai, aur hidden element ka innerText '' hota hai — us soorat me ye
+      // cross-vendor leak check chup-chaap hamesha pass hone lagta.
+      const renderedText = await page.locator('#ordersList').textContent().catch(() => '');
       // Cross-vendor leak check: another vendor's marker name should never appear.
       const otherVendorLeak = renderedText.includes('V' + ((i + 1) % N_VENDORS) + ' ');
       return { vendorId, expected: 8, renderedCount, ok: renderedCount === 8 && !otherVendorLeak, otherVendorLeak };

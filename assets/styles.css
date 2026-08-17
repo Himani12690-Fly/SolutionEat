@@ -1193,6 +1193,35 @@
 
     .oc-call { display:inline-flex; align-items:center; gap:5px; background:var(--accent-soft); color:var(--accent-dark); font-weight:800; padding:5px 11px; border-radius:14px; text-decoration:none; font-size:12px; }
 
+    /* ── "Aaj Ka Kaam" — admin ka pehla screen ──────────────────────────────
+       Pehle yahan seedha 7 control (date tabs, society dropdown, kitchen card,
+       3 paise ke box, 5 filter chips) aur phir 6-line wale order card the — sab
+       ek hi weight par. Screen batati thi ki KYA HAI, ye nahi ki AB KYA KARNA HAI.
+       Ab sabse pehle ek hi sawaal ka jawab: abhi kitne tiffin banane hain. Poori
+       list hati nahi hai — #ordersDetail me waisi ki waisi hai, bas ek tap neeche
+       (aur vendor ne ek baar khol diya to khuli hi rehti hai, storeSet se yaad). */
+    .th { background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:18px 16px 16px; margin:4px 0 14px; text-align:center; }
+    .th-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; text-align:left; margin-bottom:14px; }
+    .th-name { font-size:15px; font-weight:900; color:var(--ink); line-height:1.25; }
+    .th-date { font-size:11.5px; font-weight:700; color:var(--muted); margin-top:2px; }
+    .th-open { flex:none; font-size:11px; font-weight:800; padding:4px 11px; border-radius:20px; background:var(--okbg); color:var(--ok); white-space:nowrap; }
+    .th-open.shut { background:var(--dangerbg); color:var(--danger); }
+    /* Ye number hi poora point hai — isliye baaki har cheez se saaf bada. */
+    .th-n { font-size:76px; font-weight:900; line-height:.9; letter-spacing:-.05em; color:var(--accent); font-variant-numeric:tabular-nums; }
+    .th-l { font-size:16.5px; font-weight:900; color:var(--ink); margin-top:6px; }
+    .th-s { font-size:12.5px; font-weight:700; color:var(--muted); margin-top:3px; }
+    .th-meals { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:16px 0 0; }
+    .th-pill { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:20px; font-size:12.5px; font-weight:800; background:var(--accent-soft); color:var(--accent-dark); border:1.5px solid transparent; cursor:pointer; }
+    .th-pill.sel { border-color:var(--accent); }
+    .th-go { display:block; width:100%; margin-top:18px; border:none; font-family:inherit; cursor:pointer; border-radius:14px; background:var(--accent); color:#fff; padding:16px 12px; font-size:16px; font-weight:900; line-height:1.3; }
+    .th-go.done { background:var(--ok); }
+    .th-go:disabled { opacity:.6; cursor:default; }
+    .th-cash { font-size:13px; font-weight:800; color:var(--ink); margin-top:14px; }
+    .th-cash b { color:var(--danger); font-variant-numeric:tabular-nums; }
+    .th-more { display:inline-block; font-size:13px; font-weight:800; color:var(--accent-dark); margin-top:16px; padding:6px 4px; cursor:pointer; }
+    .th-empty { font-size:16px; font-weight:900; color:var(--ink); padding:6px 0 2px; }
+    .th-pill:focus-visible, .th-go:focus-visible, .th-more:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
     .money-bar { display:flex; gap:8px; margin:4px 0 14px; }
     .money-bar .mb-cell { flex:1; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center; }
     .money-bar .mb-n { font-size:16px; font-weight:900; color:var(--ink); }
