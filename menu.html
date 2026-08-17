@@ -188,6 +188,17 @@
   var VID = slug();
   document.getElementById('orderBtn').href = '/?v=' + encodeURIComponent(VID);
 
+  // Address bar saaf rakhte hain. GitHub Pages jaisi static hosting par
+  // /<vendor>/menu ka koi real file nahi hota — 404.html isi wajah se
+  // /menu.html?v=<vendor> par redirect karta hai. Wahi asli page hai, par
+  // vendor ne jo clean link share kiya tha wahi URL bar me dikhna chahiye,
+  // "?v=" wala nahi. replaceState reload nahi karta, fetch/render pe koi
+  // asar nahi padta.
+  try {
+    var cleanPath = '/' + encodeURIComponent(VID) + '/menu';
+    if (location.pathname !== cleanPath) history.replaceState(null, '', cleanPath + location.hash);
+  } catch (e) {}
+
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
