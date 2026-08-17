@@ -25,10 +25,17 @@ function bootstrap(over = {}) {
   };
 }
 
-async function openMenu(page, { vendor = 'nestandnosh', body = null } = {}) {
+// 08:00 — Lunch (cutoff 09:00) aur Dinner (cutoff 15:00) dono abhi orderable
+// hain. Sirf Breakfast (cutoffAheadDay) "aaj" ke liye hamesha nikla hota hai —
+// uska cutoff pichhli raat ka hai. Fixed time isliye taaki cutoff-hiding
+// (menu.html) us par depend na kare ki suite kis waqt chal rahi hai.
+const DEFAULT_IST = '2026-08-17T08:00:00';
+
+async function openMenu(page, { vendor = 'nestandnosh', body = null, istOverride = DEFAULT_IST } = {}) {
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  await page.addInitScript((v) => { window.__TEST_IST_OVERRIDE = v; }, istOverride);
   await page.route('**/script.google.com/**', r => r.fulfill({
     status: 200, contentType: 'application/json',
     body: JSON.stringify(body || bootstrap()),
@@ -45,8 +52,10 @@ test.describe('Public menu page', () => {
     await expect(page.locator('#gBtn')).toHaveCount(0);
     await expect(page.locator('input[type="tel"]')).toHaveCount(0);
     await expect(page.locator('#vname')).toHaveText('Nest & Nosh');
-    // Har ON meal ka apna card.
-    const on = CONFIG.mealTypes.filter(m => m.enabled !== false).length;
+    // Har ON meal ka apna card — Breakfast ke alawa: uska cutoff pichhli
+    // raat ka hai (cutoffAheadDay), isliye "aaj" ke liye wo hamesha nikla
+    // hota hai aur list se hat jaata hai.
+    const on = CONFIG.mealTypes.filter(m => m.enabled !== false && !m.cutoffAheadDay).length;
     await expect(page.locator('.mc')).toHaveCount(on);
     expect(errors).toEqual([]);
   });
@@ -139,6 +148,27 @@ test.describe('Public menu page', () => {
     expect(lunch.cutoff).toBeTruthy();   // fixture cutoff ke bina test bekaar hai
   });
 
+  test('jis meal ka cutoff nikal gaya wo list se hi hat jaata hai', async ({ page }) => {
+    // 10:00 AM — Lunch ka cutoff (09:00) nikal chuka, Dinner ka (15:00) nahi.
+    // Disabled/struck-through dikhane ki jagah, ab order na ho sakne wala
+    // meal list me dikhta hi nahi.
+    await openMenu(page, { istOverride: '2026-08-17T10:00:00' });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Lunch' })).toHaveCount(0);
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Dinner' })).toHaveCount(1);
+  });
+
+  test('sabhi meals ka cutoff nikal jaaye to saaf message, khaali menu jaisa nahi', async ({ page }) => {
+    // 11:00 PM — Breakfast "aaj" ke liye pehle se hi nikla hota hai
+    // (cutoffAheadDay), aur is waqt Lunch/Dinner dono ka bhi nikal chuka hai.
+    await openMenu(page, { istOverride: '2026-08-17T23:00:00' });
+    // Ye "menu set nahi hua" wale generic message se alag hona chahiye —
+    // menu to hai, bas ab order karne ka time nikal gaya. toContainText() khud
+    // retry karta hai jab tak fetch/render poora nahi ho jaata.
+    await expect(page.locator('.ld')).toContainText('order time nikal gaya', { timeout: 15000 });
+    await expect(page.locator('.mc')).toHaveCount(0);
+  });
+
   test('phone dark mode me ho to bhi menu light rehta hai', async ({ page }) => {
     // Ye link ajnabiyon ko jaata hai — printed menu card ki tarah har phone par
     // ek hi tarah dikhna chahiye. App ke andar dark mode chalta hai, yahan nahi.
@@ -192,6 +222,7 @@ test.describe('Public menu page', () => {
     // Pehle do khaali grey dabbe the — ajnabi ko "page toot gaya" jaisa lagta hai.
     let release;
     const held = new Promise(r => { release = r; });
+    await page.addInitScript((v) => { window.__TEST_IST_OVERRIDE = v; }, DEFAULT_IST);
     await page.route('**/script.google.com/**', async r => {
       await held;
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(bootstrap()) });
