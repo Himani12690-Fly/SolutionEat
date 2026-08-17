@@ -84,6 +84,11 @@
   .vr .vn { font-size:13.5px; font-weight:900; }
   .vr .vi { font-size:11.5px; color:var(--muted); font-weight:600; margin-top:2px; }
   .vr .vp { font-size:13.5px; font-weight:900; color:var(--accent-dark); white-space:nowrap; }
+  /* Ek-tap order button — is item ka apna WhatsApp message, poora menu
+     retype/reply kiye bina. */
+  .vr .vo { flex:0 0 auto; align-self:center; width:34px; height:34px; border-radius:50%;
+    background:#25D366; color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:15px; text-decoration:none; }
 
   /* ── Bottom CTA (thumb zone) ── */
   .cta { position:fixed; left:0; right:0; bottom:0; background:var(--card);
@@ -226,9 +231,23 @@
     else if ((cfg.closedDates || []).indexOf(ymd(now)) >= 0) note = '⚠️ Aaj kitchen band hai.';
     if (note) { var nEl = document.getElementById('note'); nEl.textContent = note.trim(); nEl.hidden = false; }
 
-    // waLines: WhatsApp message me bhejne ke liye aaj ka menu, chhote text
-    // list ke roop me — taaki vendor ko pata chale customer kya dekh raha
-    // hai, aur customer ko copy-paste karke reply karna aasan ho.
+    var wa = waNumber(vendor.whatsapp);
+    var dateTxt = now.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+    // Ek item ka apna WhatsApp order link — customer ko sirf Mini Tiffin ya
+    // sirf Full Tiffin chahiye ho to poora menu retype/reply nahi karna padta,
+    // seedha us item ka pehle-se-bhara message khulta hai.
+    function itemWaHref(mt, v){
+      if (!wa) return '';
+      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '*\n\nMujhe chahiye: ' +
+                (mt.emoji || '🍽️') + ' ' + (mt.title || mt.key) + ' — ' + (v.name || '') +
+                (v.price ? ' (₹' + v.price + ')' : '') + ' x1\n(' + dateTxt + ')';
+      return 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
+    }
+
+    // waLines: WhatsApp message me bhejne ke liye aaj ka poora menu, chhote
+    // text list ke roop me — general order ya sawaal ke liye (neeche wala
+    // bottom button). Ek item order karna ho to us item ke apne button se
+    // (upar wala itemWaHref) seedha wahi ek cheez bhejta hai.
     var waLines = [];
     var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
       var key = mt.key;
@@ -261,7 +280,10 @@
             (v.img ? '<img src="' + esc(v.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
             '<div class="vb"><div class="vn">' + esc(v.name || '') + '</div>' +
             '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div></div>' +
-            (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') + '</div>';
+            (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') +
+            (wa ? '<a class="vo" href="' + itemWaHref(mt, v) + '" target="_blank" rel="noopener" aria-label="' +
+                  esc((v.name || 'Item') + ' order karo') + '">🛒</a>' : '') +
+            '</div>';
         }).join('');
       }
 
@@ -279,14 +301,12 @@
     document.getElementById('meals').innerHTML = html ||
       '<div class="ld">Is kitchen ka menu abhi set nahi hua hai.</div>';
 
-    // WhatsApp par order — login ke bina. Message me kitchen ka naam aur aaj ki
-    // date daal dete hain, aur ek khaali line chhod dete hain jahan customer
-    // apna order likhe. Chhoti kitchen aise hi kaam karti hai: chat me baat,
-    // phir order.
-    var wa = waNumber(vendor.whatsapp);
+    // WhatsApp par order — login ke bina. Ek item chahiye ho to uske apne
+    // 🛒 button se seedha wahi ek cheez bhej dete hain (upar). Ye bottom
+    // button poore menu ke saath general order/sawaal ke liye hai — jaise
+    // ek se zyada cheezein chahiye ho.
     if (wa) {
-      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* ka aaj ka menu dekha (' +
-                now.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ').\n\n';
+      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* ka aaj ka menu dekha (' + dateTxt + ').\n\n';
       if (waLines.length) msg += waLines.join('\n') + '\n\n';
       // Blank template pe customer ko pata nahi chalta kya likhna hai, aur
       // vendor ko context nahi milta. Ek example reply de dete hain — meal +
