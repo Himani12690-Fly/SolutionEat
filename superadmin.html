@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=0b2b333a25">
+  <link rel="stylesheet" href="assets/styles.css?v=53bdec9a91">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -811,6 +811,12 @@
                 waise hi rehte hain, taaki pehle se place ho chuke aage ke orders dikhte rahein.
               </div>
             </div>
+            <label class="cfg-chk"><input type="checkbox" id="svcMultiOrder"> 🔁 Ek customer din me kai baar order kar sake</label>
+            <div style="font-size:11.5px;color:var(--muted);margin:-2px 0 12px;line-height:1.6;">
+              <b>OFF</b> (default) — ek meal ka ek hi order per din per customer. Tiffin service ke liye sahi.<br>
+              <b>ON</b> — counter par bechne wali dukaan ke liye; customer jitni baar chahe order kar sakta hai.
+              Saath me us meal ka <b>"Max tiffins per order"</b> bhi badhaana mat bhoolna.
+            </div>
             <button class="admin-btn" onclick="svSaveConfigGroup('menu')">💾 Save Menu &amp; Ordering</button>
           </div>
         </div>
@@ -1015,7 +1021,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=0b2b333a25"></script>
+  <script src="assets/shared.js?v=53bdec9a91"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
@@ -2898,10 +2904,14 @@
   }
 
   let sheetMeal='lunch';
+  let sheetFromVariantCard = false;
   function openMealSheet(m, vid){
     sheetMeal=m;
     builder[m]=freshBuilder()[m];
     if(vid) builder[m].tiffinType=vid;   // variant card se aaye to wahi pehle se chuna ho
+    // Variant card se aaye to variant pehle se tay hai — sheet me poori list
+    // dobara dikhana ulta confusing hai (customer ne abhi wahi to chuna tha).
+    sheetFromVariantCard = !!vid;
     renderMealSheet();
     document.getElementById('mealSheet').classList.remove('hidden');
     document.body.style.overflow='hidden';
@@ -2919,7 +2929,7 @@
     let vs=variantsFor(m);
     if(CFG.addonsEnabled && CFG.addonsEnabled.tiffinMini===false) vs=vs.filter(v=>v.id!=='mini');
     if(b.tiffinType==='mini' && !vs.find(v=>v.id==='mini') && vs[0]) b.tiffinType=vs[0].id;
-    if(vs.length<=1){ sizeBox.innerHTML=''; }
+    if(vs.length<=1 || sheetFromVariantCard){ sizeBox.innerHTML=''; }
     else {
       sizeBox.innerHTML=`<div class="sh-block">
         <div class="sh-block-title">${t('chooseSize')}</div>
@@ -3788,7 +3798,14 @@
         try{ storeSet('fbt_ordmap', { map:map, ts:Date.now() }); }catch(e){}
       }).catch(()=>{});
   }
-  function alreadyOrdered(dateStr, meal){ return orderedMap[dateStr+'|'+meal]||null; }
+  function alreadyOrdered(dateStr, meal){
+    // App ka default rule "ek meal, ek order per din" hai — tiffin subscription
+    // ke liye sahi. Par counter par bechne wali dukaan (jaise khichdi shop) me
+    // customer din me kai baar aa sakta hai; wahan ye rok order hi band kar
+    // deti thi. multiOrderPerDay ON hone par ye gate lagta hi nahi.
+    if(CFG.multiOrderPerDay===true) return null;
+    return orderedMap[dateStr+'|'+meal]||null;
+  }
 
   let myOrdersCache=[], myOrdersIsHist=false;
   let dscAreas = [], dscArea = null;
@@ -4389,6 +4406,7 @@
       const advSel=document.getElementById('svcAdvanceDays');
       // Default 2 — purane vendors ka behaviour bilkul waisa hi rahe.
       if(advSel){ const a=parseInt(svCurConfig.advanceDays,10); advSel.value=String((a===0||a===1)?a:2); }
+      document.getElementById('svcMultiOrder').checked=(svCurConfig.multiOrderPerDay===true);
       const mtBox=document.getElementById('svCurrentMealTypes');
       if(mtBox) mtBox.textContent='Abhi ke meals: '+(svCurConfig.mealTypes||[]).map(m=>m.title).join(', ');
     }).catch(()=>{ showToast(t('errNetwork'),'error'); });
@@ -4424,7 +4442,8 @@
       patch={ whatsappAuto:document.getElementById('svcWhatsappAuto').checked };
     } else if(group==='menu'){
       patch={ variantCards:document.getElementById('svcVariantCards').checked,
-              advanceDays:parseInt(document.getElementById('svcAdvanceDays').value,10) };
+              advanceDays:parseInt(document.getElementById('svcAdvanceDays').value,10),
+              multiOrderPerDay:document.getElementById('svcMultiOrder').checked };
     }
     apiPost({action:'supersavevendorconfig', user:superCreds.user, pass:superCreds.pass, targetVendorId:__svCurId, patch:patch}).then(j=>{
       if(j.status==='success'){ showToast('✅ Saved!','success'); svCurConfig=j.config; }
