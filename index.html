@@ -138,6 +138,15 @@
       </div>
 
       <div id="authSocialBlock">
+        <!-- Login ke bina bhi ek seedha raasta: menu dekh lo. Google sign-in
+             apni jagah rehta hai un ke liye jo order karna chahte hain. -->
+        <a class="btn-primary" id="checkMenuBtn" style="text-decoration:none;">
+          <span style="font-size:19px;">🍽️</span> Check Our Menu
+        </a>
+        <div class="center-hint">Bina login ke aaj ka menu dekho.</div>
+
+        <div class="auth-or-sep"><span data-i="orDivider">or</span></div>
+
         <button type="button" class="g-btn" id="gBtn" onclick="googleRedirectLogin()">
           <svg class="g-ico" viewBox="0 0 48 48" aria-hidden="true">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -2716,6 +2725,7 @@
   function showAuth(){
     if(isLoggedIn()){ enterApp(); return; }
     googleCredential=null;
+    const cmBtn=document.getElementById('checkMenuBtn'); if(cmBtn) cmBtn.href=vendorMenuLink();
     const gp=document.getElementById('googlePhoneBox'); if(gp)gp.classList.add('hidden');
     const e1=document.getElementById('err-authPhone'); if(e1)e1.classList.remove('show');
     const e2=document.getElementById('authGoogleErr'); if(e2)e2.classList.remove('show');

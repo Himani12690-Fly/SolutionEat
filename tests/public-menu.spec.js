@@ -107,6 +107,16 @@ test.describe('Public menu page', () => {
     expect(await page.getAttribute('#orderBtn', 'href')).toBe('/?v=hungrybirds');
   });
 
+  test('?v= wale URL se load hone par bhi address bar clean /vendor/menu dikhata hai', async ({ page }) => {
+    // GitHub Pages par /<vendor>/menu ka koi real file nahi hota, isliye
+    // 404.html isko /menu.html?v=<vendor> par redirect karta hai. Wahi asli
+    // page hai — par address bar me vendor ne jo clean link share kiya tha
+    // wahi dikhna chahiye, "?v=" wala URL nahi.
+    await openMenu(page, { vendor: 'hungrybirds' });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    expect(new URL(page.url()).pathname).toBe('/hungrybirds/menu');
+  });
+
   test('WhatsApp na ho to app/login hi poora button rehta hai', async ({ page }) => {
     // Ye hi ek matra raasta bachta hai — ise chhota karna dead end bana dega.
     await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '' } }) });
