@@ -95,8 +95,10 @@ test.describe('Public menu page', () => {
     await page.selectOption('#daySelect', otherDay);
     chips = await page.locator('.chip').allTextContents();
     expect(chips).toContain('Distinct Day Sabzi');
-    // Header bhi us naye din ke hisaab se badalta hai.
-    await expect(page.locator('#vdate')).toContainText(otherDay.charAt(0).toUpperCase() + otherDay.slice(1));
+    // Dropdown khud hi selected din dikhata hai — header me alag se date
+    // dohrai nahi jaati.
+    const selectedLabel = await page.$eval('#daySelect', el => el.options[el.selectedIndex].textContent);
+    expect(selectedLabel).toContain(otherDay.charAt(0).toUpperCase() + otherDay.slice(1));
   });
 
   test('app ka link usi kitchen par bhejta hai', async ({ page }) => {
@@ -167,6 +169,25 @@ test.describe('Public menu page', () => {
     // retry karta hai jab tak fetch/render poora nahi ho jaata.
     await expect(page.locator('.ld')).toContainText('order time nikal gaya', { timeout: 15000 });
     await expect(page.locator('.mc')).toHaveCount(0);
+  });
+
+  test('cutoff nikalte hi list bina manual refresh ke khud update ho jaati hai', async ({ page }) => {
+    // Real wall-clock ke bajaye Playwright ka fake clock — istOverride yahan
+    // use nahi karte kyunki wo hamesha ek fixed time deta hai, aage badhta
+    // nahi. Yahan asli waqt "aage badhna" hi test ho raha hai. Test machine
+    // UTC me chalti hai, IST usse +5:30 hai — 03:25 UTC = 08:55 IST.
+    await page.clock.install({ time: new Date('2026-08-17T03:25:00Z') });
+    await page.route('**/script.google.com/**', r => r.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(bootstrap()),
+    }));
+    await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Lunch' })).toHaveCount(1);
+
+    // 9:00 AM (Lunch cutoff) paar karte hain. Refresh interval 60s hai,
+    // isliye usse thoda zyada aage badhte hain taaki ek tick zaroor chale.
+    await page.clock.fastForward('00:06:00');
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Lunch' })).toHaveCount(0);
   });
 
   test('phone dark mode me ho to bhi menu light rehta hai', async ({ page }) => {

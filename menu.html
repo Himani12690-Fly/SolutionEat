@@ -51,7 +51,6 @@
   .hd img { width:52px; height:52px; border-radius:50%; object-fit:cover;
     border:1px solid var(--line); background:var(--card); flex:0 0 auto; }
   .hd .nm { font-size:19px; font-weight:900; letter-spacing:-.2px; }
-  .hd .dt { font-size:12px; color:var(--muted); font-weight:700; margin-top:2px; }
 
   /* ── Day picker ── */
   .daysel { margin-bottom:14px; }
@@ -70,7 +69,6 @@
     padding:14px; margin-bottom:12px; }
   .mc-hd { display:flex; align-items:baseline; gap:8px; }
   .mc-ti { font-size:16px; font-weight:900; flex:1; min-width:0; }
-  .mc-pr { font-size:16px; font-weight:900; color:var(--accent-dark); white-space:nowrap; }
   /* Cutoff seedha meal ke naam ke peeche. Pehle iske liye do alag lines thi —
      serving window aur "aaj ka time nikal gaya" wala chip — aur teenon milkar
      card ka aadha hissa kha jaati thi. Customer ko ek hi cheez chahiye: kab
@@ -79,7 +77,11 @@
 
   .lbl { font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase;
     letter-spacing:.4px; margin:14px 0 7px; }
-  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  /* Sabzi ab apni alag "AAJ KI SABZI" heading nahi leti — label aur value
+     ek hi line me, jitni jagah lage utni hi. */
+  .sabzi-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+    margin-top:10px; font-size:12.5px; color:var(--muted); font-weight:700; }
+  .sabzi-row b { color:var(--ink); font-weight:900; }
   .chip { background:var(--accent-soft); color:var(--accent-dark); border-radius:20px;
     padding:5px 11px; font-size:12.5px; font-weight:800; }
 
@@ -136,11 +138,11 @@
          onerror="this.onerror=null;this.src='assets/icons/logo-round.png'">
     <div class="hd-tx">
       <div class="nm" id="vname">Aaj ka Menu</div>
-      <div class="dt" id="vdate">…</div>
     </div>
     <button class="hd-share" id="shareBtn" type="button" title="Share" aria-label="Share">🔗</button>
   </div>
-  <!-- Aaj se shuru, agle 6 din — vendor ka menu weekly template hai, isliye
+  <!-- Din/date yahan nahi dohraate — dropdown khud hi wo dikhata hai.
+       Aaj se shuru, agle 6 din — vendor ka menu weekly template hai, isliye
        koi bhi din chun kar dekha ja sakta hai. Pichhle din dikhane ka koi
        matlab nahi, order to aage ke liye hota hai. Data aane tak "hidden" —
        khaali dropdown dikhana bhi confusing hai. -->
@@ -285,9 +287,6 @@
       var isToday = dayKey === todayKey;
       var dateTxt = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
 
-      document.getElementById('vdate').textContent = (isToday ? 'Aaj ka menu · ' : 'Iss din ka menu · ') +
-        dt.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
-
       // Kitchen band — do tarah se: us din ki date closedDates me hai, ya
       // vendor ne "temporarily closed" kiya hua hai (ye hamesha lagu hota
       // hai, kisi bhi din ke liye). Menu phir bhi dikhate hain (customer ko
@@ -306,26 +305,24 @@
       var available = enabled.filter(function(mt){ return !cutoffPassed(mt, dt); });
       var html = available.map(function(mt){
         var key = mt.key;
-        var price = (cfg.prices || {})[key] || mt.price || 0;
         // cutoffAheadDay = cutoff PICHHLI raat ka hai. Bina likhe "Breakfast
         // (order by 10:00 PM)" ulta padhta hai.
         var cutTxt = mt.cutoff
           ? ' (order by ' + clock(mt.cutoff) + (mt.cutoffAheadDay ? ', ek raat pehle' : '') + ')'
           : '';
+        // Base price nahi dikhate — jo bikta hai wo Options me apne daam ke
+        // saath hai, ye ek alag number sirf confuse karta.
         var s = '<div class="mc"><div class="mc-hd"><div class="mc-ti">' +
                 esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) +
-                (cutTxt ? '<span class="mc-cut">' + esc(cutTxt) + '</span>' : '') + '</div>' +
-                (price ? '<div class="mc-pr">₹' + price + '</div>' : '') + '</div>';
+                (cutTxt ? '<span class="mc-cut">' + esc(cutTxt) + '</span>' : '') + '</div></div>';
 
         var rec = today[key];
         // hasVariants:false wale meal ka menu flat list hai (jaise breakfast),
         // baaki ka { sabziOptions }.
         var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
         if (sabzi.length) {
-          s += '<div class="lbl">' + (Array.isArray(rec)
-                 ? (isToday ? 'Aaj' : 'Is din')
-                 : (isToday ? 'Aaj ki sabzi' : 'Is din ki sabzi')) + '</div><div class="chips">' +
-               sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join('') + '</div>';
+          s += '<div class="sabzi-row"><b>' + (Array.isArray(rec) ? 'Menu' : 'Sabzi') + ':</b> ' +
+               sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join(' ') + '</div>';
         }
         var vs = ((cfg.variants || {})[key]) || [];
         if (vs.length) {
@@ -369,6 +366,17 @@
     sel.value = todayKey;
     sel.onchange = function(){ renderDay(sel.value); };
     renderDay(todayKey);
+
+    // Page khuli chhodi ho aur beech me kisi meal ka cutoff nikal jaaye,
+    // to customer ko manually refresh nahi karna padna chahiye — jo ab
+    // order nahi ho sakta wo khud hi hat jaana chahiye. "now"/"todayKey"
+    // dono taaza karte hain (raat 12 baje ke aage bhi sahi rahe), phir
+    // currently jo din dikh raha hai (sel.value) usi ko dobara render karte hain.
+    setInterval(function(){
+      now = istNow();
+      todayKey = DAYS[now.getDay()];
+      renderDay(sel.value);
+    }, 60000);
 
     // WhatsApp number ho to har item ka apna order button hai (upar) — is
     // bottom "Order Now" (app/login) ki zaroorat nahi rehti, share hi bachta
