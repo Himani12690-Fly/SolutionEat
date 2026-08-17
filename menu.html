@@ -30,11 +30,10 @@
     --ink:#1e2233; --muted:#6b7280; --bg:#f5eee0; --card:#ffffff;
     --line:#e6e2d8; --ok:#15803d; --okbg:#dcfce7; --warn:#b45309; --warnbg:#fef3c7;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --accent:#818cf8; --accent-soft:#282a42; --accent-dark:#a5b4fc;
-            --ink:#e7e9f5; --muted:#9ca0b5; --bg:#14151f; --card:#1c1e2b;
-            --line:#2b2e3f; --ok:#4ade80; --okbg:#14321f; --warn:#fbbf24; --warnbg:#3a2c0c; }
-  }
+  /* Ye page HAMESHA light hai — app ke andar dark mode chalta hai, par ye link
+     ajnabiyon ko jaata hai aur unke phone ka theme kuch bhi ho, menu ek hi
+     tarah dikhna chahiye (jaise ek printed menu card). Isliye na dark media
+     query, na localStorage se theme padhna. */
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; background:var(--bg); color:var(--ink); padding:0 0 108px;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -57,9 +56,11 @@
   .mc-hd { display:flex; align-items:baseline; gap:8px; }
   .mc-ti { font-size:16px; font-weight:900; flex:1; min-width:0; }
   .mc-pr { font-size:16px; font-weight:900; color:var(--accent-dark); white-space:nowrap; }
-  .mc-tm { font-size:11.5px; color:var(--muted); font-weight:700; margin-top:3px; }
-  .mc-late { display:inline-block; background:var(--warnbg); color:var(--warn);
-    border-radius:20px; padding:2px 9px; font-size:10.5px; font-weight:900; margin-top:6px; }
+  /* Cutoff seedha meal ke naam ke peeche. Pehle iske liye do alag lines thi —
+     serving window aur "aaj ka time nikal gaya" wala chip — aur teenon milkar
+     card ka aadha hissa kha jaati thi. Customer ko ek hi cheez chahiye: kab
+     tak order kar sakta hai. */
+  .mc-cut { font-size:11.5px; color:var(--muted); font-weight:700; }
 
   .lbl { font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase;
     letter-spacing:.4px; margin:14px 0 7px; }
@@ -136,22 +137,6 @@
   var DEFAULT_VENDOR = 'nestandnosh';
   var DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
-  // Theme app ne localStorage me rakha hota hai — dark-mode user ko cream flash
-  // na dikhe (404.html bhi yahi karta hai).
-  try {
-    var sv = JSON.parse(localStorage.getItem('fbt_theme') || '""');
-    var dark = sv === 'dark' || (sv === 'system' && window.matchMedia &&
-               matchMedia('(prefers-color-scheme: dark)').matches);
-    if (dark) {
-      var r = document.documentElement.style;
-      r.setProperty('--bg','#14151f');      r.setProperty('--card','#1c1e2b');
-      r.setProperty('--ink','#e7e9f5');     r.setProperty('--muted','#9ca0b5');
-      r.setProperty('--line','#2b2e3f');    r.setProperty('--accent','#818cf8');
-      r.setProperty('--accent-soft','#282a42'); r.setProperty('--accent-dark','#a5b4fc');
-      r.setProperty('--warn','#fbbf24');    r.setProperty('--warnbg','#3a2c0c');
-    }
-  } catch (e) {}
-
   function slug(){
     try {
       var q = new URLSearchParams(location.search);
@@ -212,25 +197,18 @@
     else if ((cfg.closedDates || []).indexOf(ymd(now)) >= 0) note = '⚠️ Aaj kitchen band hai.';
     if (note) { var nEl = document.getElementById('note'); nEl.textContent = note.trim(); nEl.hidden = false; }
 
-    var nowMins = now.getHours() * 60 + now.getMinutes();
     var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
       var key = mt.key;
       var price = (cfg.prices || {})[key] || mt.price || 0;
+      // cutoffAheadDay = cutoff PICHHLI raat ka hai. Bina likhe "Breakfast
+      // (order by 10:00 PM)" ulta padhta hai.
+      var cutTxt = mt.cutoff
+        ? ' (order by ' + clock(mt.cutoff) + (mt.cutoffAheadDay ? ', ek raat pehle' : '') + ')'
+        : '';
       var s = '<div class="mc"><div class="mc-hd"><div class="mc-ti">' +
-              esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) + '</div>' +
+              esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) +
+              (cutTxt ? '<span class="mc-cut">' + esc(cutTxt) + '</span>' : '') + '</div>' +
               (price ? '<div class="mc-pr">₹' + price + '</div>' : '') + '</div>';
-      if (mt.windowStart && mt.windowEnd)
-        s += '<div class="mc-tm">🕐 ' + esc(clock(mt.windowStart)) + ' – ' + esc(clock(mt.windowEnd)) +
-             (mt.cutoff ? ' · order by ' + esc(clock(mt.cutoff)) +
-               // cutoffAheadDay = cutoff PICHHLI raat ka hai. Ye bina likhe
-               // "7 AM breakfast, order by 10 PM" padhne me ulta lagta hai.
-               (mt.cutoffAheadDay ? ' (ek raat pehle)' : '') : '') + '</div>';
-      // Cutoff nikal gaya — sirf usi meal ke liye jiska cutoff USI din ka hai.
-      // cutoffAheadDay wale meal ka hisaab app ke andar hota hai; yahan uske
-      // baare me kuch keh dena galat ho sakta hai, isliye chup rehte hain.
-      var cut = mins(mt.cutoff);
-      if (cut !== null && !mt.cutoffAheadDay && nowMins > cut)
-        s += '<div class="mc-late">Aaj ka time nikal gaya — kal ke liye order karo</div>';
 
       var rec = today[key];
       // hasVariants:false wale meal ka menu flat list hai (jaise breakfast),

@@ -91,6 +91,31 @@ test.describe('Public menu page', () => {
     await expect(page.locator('.ld')).toContainText('load nahi hua');
   });
 
+  test('cutoff meal ke naam ke peeche hai — alag lines nahi', async ({ page }) => {
+    await openMenu(page);
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    // Pehle do alag lines thi: serving window aur "aaj ka time nikal gaya" chip.
+    // Customer ko ek hi cheez chahiye — kab tak order kar sakta hai.
+    await expect(page.locator('.mc-tm')).toHaveCount(0);
+    await expect(page.locator('.mc-late')).toHaveCount(0);
+    const lunch = CONFIG.mealTypes.find(m => m.key === 'lunch');
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Lunch' })).toContainText('order by');
+    expect(lunch.cutoff).toBeTruthy();   // fixture cutoff ke bina test bekaar hai
+  });
+
+  test('phone dark mode me ho to bhi menu light rehta hai', async ({ page }) => {
+    // Ye link ajnabiyon ko jaata hai — printed menu card ki tarah har phone par
+    // ek hi tarah dikhna chahiye. App ke andar dark mode chalta hai, yahan nahi.
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await openMenu(page);
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await page.evaluate(() => localStorage.setItem('fbt_theme', '"dark"'));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(245, 238, 224)');
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('.mc')).backgroundColor)).toBe('rgb(255, 255, 255)');
+  });
+
   test('page mobile par sideways scroll nahi karta', async ({ page }) => {
     await openMenu(page);
     await page.waitForSelector('.mc', { timeout: 15000 });
