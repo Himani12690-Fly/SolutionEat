@@ -142,8 +142,9 @@
   </div>
   <!-- Aaj se shuru, agle 6 din — vendor ka menu weekly template hai, isliye
        koi bhi din chun kar dekha ja sakta hai. Pichhle din dikhane ka koi
-       matlab nahi, order to aage ke liye hota hai. -->
-  <div class="daysel"><select id="daySelect" aria-label="Din select karo"></select></div>
+       matlab nahi, order to aage ke liye hota hai. Data aane tak "hidden" —
+       khaali dropdown dikhana bhi confusing hai. -->
+  <div class="daysel hidden" id="daysel"><select id="daySelect" aria-label="Din select karo"></select></div>
   <div id="note" class="note" hidden></div>
   <!-- Pehle yahan do khaali grey dabbe the. Ajnabi ko wo "page toot gaya" jaisa
        lagta hai; likh dena behtar hai ki ho kya raha hai. -->
@@ -151,7 +152,9 @@
   <div class="ft" id="foot"></div>
 </div>
 
-<div class="cta"><div class="cta-in">
+<!-- Ye bhi data aane tak hidden — order/share dono menu load hone se pehle
+     bekaar hain. -->
+<div class="cta hidden" id="cta"><div class="cta-in">
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
   <button class="btn sub" id="shareBtn2" type="button">🔗 Menu Share Karo</button>
 </div></div>
@@ -270,9 +273,9 @@
     // seedha us item ka pehle-se-bhara message khulta hai.
     function itemWaHref(mt, v, dateTxt){
       if (!wa) return '';
-      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '*\n\nMujhe chahiye: ' +
+      var msg = 'Hello 👋 *' + (vendor.name || 'Kitchen') + '*\n\n' +
                 (mt.emoji || '🍽️') + ' ' + (mt.title || mt.key) + ' — ' + (v.name || '') +
-                (v.price ? ' (₹' + v.price + ')' : '') + ' x1\n(' + dateTxt + ')';
+                (v.price ? ' (₹' + v.price + ')' : '') + ' x 1 (' + dateTxt + ')';
       return 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
     }
 
@@ -382,6 +385,11 @@
     // login hi order kar sakta hai.
     ft.push(wa ? 'WhatsApp par login ki zaroorat nahi' : 'Order karne ke liye login zaroori hai');
     document.getElementById('foot').innerHTML = ft.join(' · ');
+
+    // Sab kuch (day picker, order/share) ab hi dikhao — data poora load ho
+    // chuka hai aur sahi state me hai.
+    document.getElementById('daysel').classList.remove('hidden');
+    document.getElementById('cta').classList.remove('hidden');
   }
 
   fetch(SCRIPT_URL + '?action=bootstrap&vendorId=' + encodeURIComponent(VID))
