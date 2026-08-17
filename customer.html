@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=b936c49bb5">
+  <link rel="stylesheet" href="assets/styles.css?v=e0d1cb9018">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -773,7 +773,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=b936c49bb5"></script>
+  <script src="assets/shared.js?v=e0d1cb9018"></script>
 <script>
   (function(){
     try{
@@ -2573,22 +2573,34 @@
   }
   function selectMeal(m){ activeMeal=m; renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
 
+  // Kitne din aage tak customer order kar sakta hai. 2 = aaj/kal/parso (purana
+  // aur default behaviour), 1 = aaj+kal, 0 = sirf aaj. Jo vendor pre-order leta
+  // hi nahi (jaise counter par khichdi bechne wali dukaan) uske liye teen date
+  // chips sirf shor hain.
+  function advanceDaysAllowed(){
+    const n=parseInt(CFG.advanceDays,10);
+    return (n===0||n===1) ? n : 2;
+  }
   function renderMenuDateTime(){
     const box=document.getElementById('menuDateTime'); if(!box)return;
+    const maxAdv=advanceDaysAllowed();
+    if(maxAdv<=0){ box.innerHTML=''; return; }   // sirf aaj — chunne ko kuch hai hi nahi
     const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
     const dn=dayNames[LANG]||dayNames.en;
     let html='<div class="dt-chips">';
-    for(let o=0;o<=2;o++){
+    for(let o=0;o<=maxAdv;o++){
       const open = o===0 ? true : anyAvail(o);
       const sel = (o===dateOffset);
       html+=`<div class="dt-chip ${sel?'sel':''} ${open?'':'off'}" ${open?`onclick="menuChangeDate(${o})"`:''}>${esc(dn[o])}</div>`;
     }
     box.innerHTML = html+'</div>';
   }
-  function menuChangeDate(v){ const off=parseInt(v,10)||0; if(off!==0 && !anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
+  function menuChangeDate(v){ const off=parseInt(v,10)||0; if(off>advanceDaysAllowed())return; if(off!==0 && !anyAvail(off))return; dateOffset=off; builder=freshBuilder(); pickActiveMeal(); if(!statsCache[selDateStr()])loadPublicStats(selDateStr()); renderMealTabs(); renderMenuDateTime(); renderMealPanel(); }
   function scheduleTargetOff(m){
+    const maxAdv=advanceDaysAllowed();
+    if(maxAdv<1) return null;
     const a1=mealsAvail(1)[m], a2=mealsAvail(2)[m];
-    return (a1&&a1.ok) ? 1 : ((a2&&a2.ok) ? 2 : null);
+    return (a1&&a1.ok) ? 1 : ((maxAdv>=2 && a2&&a2.ok) ? 2 : null);
   }
   function scheduleLinkHtml(m){
     const off=scheduleTargetOff(m);
@@ -2597,8 +2609,7 @@
   }
   function jumpToMealDate(m){
     if(!isLoggedIn()){ showAuth(); return; }
-    const av1=mealsAvail(1)[m], av2=mealsAvail(2)[m];
-    const off = (av1&&av1.ok) ? 1 : ((av2&&av2.ok) ? 2 : null);
+    const off = scheduleTargetOff(m);
     if(off==null) return;
     menuChangeDate(off);
     selectMeal(m);
@@ -4205,6 +4216,7 @@
 
   function closeOrderModal(){ document.getElementById('orderModal').classList.add('hidden'); document.body.style.overflow=''; }
   function applyConfigToUI(){
+    if(dateOffset>advanceDaysAllowed()) dateOffset=0;
     try{
     renderVendorQr();
     MEALS=(CFG.mealTypes||[]).map(mt=>mt.key);
