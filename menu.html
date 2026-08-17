@@ -226,6 +226,10 @@
     else if ((cfg.closedDates || []).indexOf(ymd(now)) >= 0) note = '⚠️ Aaj kitchen band hai.';
     if (note) { var nEl = document.getElementById('note'); nEl.textContent = note.trim(); nEl.hidden = false; }
 
+    // waLines: WhatsApp message me bhejne ke liye aaj ka menu, chhote text
+    // list ke roop me — taaki vendor ko pata chale customer kya dekh raha
+    // hai, aur customer ko copy-paste karke reply karna aasan ho.
+    var waLines = [];
     var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
       var key = mt.key;
       var price = (cfg.prices || {})[key] || mt.price || 0;
@@ -260,6 +264,15 @@
             (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') + '</div>';
         }).join('');
       }
+
+      if (sabzi.length || vs.length) {
+        var head = (mt.emoji || '🍽️') + ' ' + (mt.title || key) + (price ? ' (₹' + price + ')' : '');
+        if (sabzi.length) head += ' — ' + sabzi.join(' / ');
+        waLines.push(head);
+        vs.forEach(function(v){
+          waLines.push('   • ' + (v.name || '') + (v.price ? ' — ₹' + v.price : ''));
+        });
+      }
       return s + '</div>';
     }).join('');
 
@@ -273,7 +286,12 @@
     var wa = waNumber(vendor.whatsapp);
     if (wa) {
       var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* ka aaj ka menu dekha (' +
-                now.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ').\n\nMujhe ye chahiye:\n';
+                now.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ').\n\n';
+      if (waLines.length) msg += waLines.join('\n') + '\n\n';
+      // Blank template pe customer ko pata nahi chalta kya likhna hai, aur
+      // vendor ko context nahi milta. Ek example reply de dete hain — meal +
+      // option + quantity — taaki dono taraf se saaf ho.
+      msg += 'Mujhe chahiye:\n(jaise "Lunch Full Tiffin x2")\n\n';
       var el = document.getElementById('waBtn');
       el.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
       el.classList.remove('hidden');
