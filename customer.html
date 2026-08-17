@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=53bdec9a91">
+  <link rel="stylesheet" href="assets/styles.css?v=6083c30051">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -773,7 +773,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=53bdec9a91"></script>
+  <script src="assets/shared.js?v=6083c30051"></script>
 <script>
   (function(){
     try{
@@ -2081,13 +2081,20 @@
       scope: 'openid email profile',
       nonce: nonce
     });
+    // ⚠️ redirect_uri hamesha bare origin hai (Google me wahi register hai), to
+    // Google wapas hamesha "/" par bhejta hai — yani DEFAULT vendor par. Vendor
+    // ka pata abhi tak sirf sessionStorage (g_ret) me tha, aur wo per-tab /
+    // per-context hoti hai: installed app se sign-in doosre context me khule to
+    // wapas aakar wo milti hi nahi, aur user default kitchen par pahunch jaata
+    // tha. state URL me wapas aata hai, isliye wo kabhi nahi khota.
+    p.set('state', 'v=' + encodeURIComponent(VENDOR_ID || ''));
     if(isWrappedApp()){
       let pendingId='';
       try{
         const a=new Uint8Array(12); crypto.getRandomValues(a);
         pendingId=Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');
       }catch(e){ pendingId=String(Date.now())+Math.random().toString(16).slice(2); }
-      p.set('state', pendingId);
+      p.set('state', 'p=' + encodeURIComponent(pendingId) + '&v=' + encodeURIComponent(VENDOR_ID || ''));
       p.set('redirect_uri', GOOGLE_REDIRECT_URI+'?authcomplete=1');
       window.open('https://accounts.google.com/o/oauth2/v2/auth?'+p.toString(), '_blank');
       pollPendingGoogleAuth(pendingId);
@@ -2144,7 +2151,10 @@
     if(!isAuthComplete) return false;
     const hash=location.hash||'';
     const hp=new URLSearchParams(hash.replace(/^#/,''));
-    const idt=hp.get('id_token'), pendingId=hp.get('state');
+    const idt=hp.get('id_token');
+    const __stRaw=hp.get('state')||'';
+    let pendingId=__stRaw;
+    try{ const sp=new URLSearchParams(__stRaw); if(sp.get('p')) pendingId=sp.get('p'); }catch(e){}
     try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
     const box=document.body;
     const wrap='position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;font-family:-apple-system,sans-serif;text-align:center;';
@@ -2194,6 +2204,14 @@
     }
     const hp=new URLSearchParams(hash.slice(1));
     const idt=hp.get('id_token');
+    // state se vendor — sessionStorage kho gayi ho tab bhi sahi kitchen par
+    // wapas jaayein. g_ret pehle se ho to usi ko rehne dete hain (koi behaviour
+    // change nahi); ye sirf khali case bharta hai.
+    try{
+      const sp=new URLSearchParams(hp.get('state')||'');
+      const sv=(sp.get('v')||'').trim().toLowerCase();
+      if(sv && !sessionStorage.getItem('g_ret')) sessionStorage.setItem('g_ret','?v='+encodeURIComponent(sv));
+    }catch(e){}
     try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
     if(!idt) return false;
     try{
