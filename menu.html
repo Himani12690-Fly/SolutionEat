@@ -189,7 +189,13 @@
     });
   }
   // Sab kuch IST me — kitchen wahi chalti hai, browser ka timezone kuch bhi ho.
-  function istNow(){ return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kolkata' })); }
+  // App ke getISTNow() jaisa hi __TEST_IST_OVERRIDE — tests ko cutoff-based
+  // filtering (neeche) ke liye ek fixed "abhi" chahiye, warna jis time pe
+  // suite chale usi par pass/fail depend kar jaata.
+  function istNow(){
+    if (window.__TEST_IST_OVERRIDE) return new Date(window.__TEST_IST_OVERRIDE);
+    return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kolkata' }));
+  }
   function ymd(d){
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
@@ -245,6 +251,20 @@
       return dt;
     }
 
+    // Us din ke us meal ka order-by time nikal chuka hai kya. cutoffAheadDay
+    // wale meal (jaise Breakfast) ka cutoff serving din se EK RAAT PEHLE hota
+    // hai — isliye asli cutoff moment din-1 par jaata hai. Ye formula har din
+    // ke liye kaam karta hai: aane wale din ka cutoff hamesha aage hota hai
+    // (dikhta rehta hai), guzre hue din ka hamesha peeche (chhup jaata hai).
+    function cutoffPassed(mt, dt){
+      var cMin = mins(mt.cutoff);
+      if (cMin === null) return false;
+      var moment = new Date(dt);
+      moment.setHours(0, cMin, 0, 0);
+      if (mt.cutoffAheadDay) moment.setDate(moment.getDate() - 1);
+      return now > moment;
+    }
+
     // Ek item ka apna WhatsApp order link — customer ko sirf Mini Tiffin ya
     // sirf Full Tiffin chahiye ho to poora menu retype/reply nahi karna padta,
     // seedha us item ka pehle-se-bhara message khulta hai.
@@ -276,7 +296,12 @@
       nEl.hidden = !note;
       if (note) nEl.textContent = note.trim();
 
-      var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
+      var enabled = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; });
+      // Jis meal ka cutoff nikal chuka hai, wo ab order nahi ho sakta —
+      // isliye list me hi nahi dikhate, disabled/struck-through dikhane se
+      // saaf hai ki hata dena.
+      var available = enabled.filter(function(mt){ return !cutoffPassed(mt, dt); });
+      var html = available.map(function(mt){
         var key = mt.key;
         var price = (cfg.prices || {})[key] || mt.price || 0;
         // cutoffAheadDay = cutoff PICHHLI raat ka hai. Bina likhe "Breakfast
@@ -318,8 +343,10 @@
         return s + '</div>';
       }).join('');
 
-      document.getElementById('meals').innerHTML = html ||
-        '<div class="ld">Is din ka menu abhi set nahi hua hai.</div>';
+      document.getElementById('meals').innerHTML = html || (enabled.length
+        ? '<div class="ld">' + (isToday ? 'Aaj' : 'Is din') + ' ke sabhi meals ka order time nikal gaya.<br>' +
+          '<span style="font-weight:600;">Koi aur din try karo.</span></div>'
+        : '<div class="ld">Is din ka menu abhi set nahi hua hai.</div>');
     }
 
     // Day picker — aaj se shuru karke agle 6 din. Vendor ka menu weekly
