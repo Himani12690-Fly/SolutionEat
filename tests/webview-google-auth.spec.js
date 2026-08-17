@@ -42,7 +42,13 @@ test('googleRedirectLogin() opens Google auth externally instead of navigating t
   expect(urls.length).toBe(1);
   expect(urls[0]).toContain('accounts.google.com/o/oauth2/v2/auth');
   expect(urls[0]).toContain('authcomplete%3D1'); // redirect_uri carries ?authcomplete=1, URL-encoded
-  expect(urls[0]).toMatch(/state=[a-f0-9]{24}/); // pendingId
+  // state ab do cheezein le jaata hai: p=<pendingId> aur v=<vendorId>. Vendor
+  // isliye ki redirect_uri hamesha bare origin hai — Google "/" par wapas
+  // bhejta hai, aur sessionStorage per-context hoti hai, to external tab me
+  // wo milti hi nahi. state URL me wapas aata hai, wo kabhi nahi khota.
+  const st = new URLSearchParams(new URL(urls[0]).searchParams.get('state'));
+  expect(st.get('p')).toMatch(/^[a-f0-9]{24}$/); // pendingId
+  expect(st.get('v')).toBe('nestandnosh');
   // The WebView itself must NOT have navigated away.
   expect(page.url()).not.toContain('accounts.google.com');
 });
@@ -58,7 +64,8 @@ test('WebView resumes the session once the external tab completes sign-in', asyn
   await page.evaluate(() => window.googleRedirectLogin());
   const pendingId = await page.evaluate(() => {
     const u = new URL(window.__openedUrls[0]);
-    return u.searchParams.get('state');
+    // state = "p=<pendingId>&v=<vendorId>" — pendingId sirf p wali key hai.
+    return new URLSearchParams(u.searchParams.get('state')).get('p');
   });
   expect(pendingId).toBeTruthy();
   // Simulate the external browser tab's consumeAuthCompleteHash() completing.
