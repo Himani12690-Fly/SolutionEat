@@ -55,7 +55,7 @@
       "name": "Kitchen hours & alerts",
       "files": [
         "tests/kitchen-hours.spec.js",
-        "tests/notifications.spec.js",
+        "tests/notifications.spec.js", "tests/order-ring.spec.js",
         "tests/ui.spec.js"
       ]
     },

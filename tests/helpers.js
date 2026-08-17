@@ -404,7 +404,9 @@ function handlePost(state, body) {
     if (!adminOK) return denied;
     const o = state.orders.find(x => x.row === parseInt(p.row, 10));
     if (!o) return { status:'error', message:'Invalid row' };
-    if (['Pending','Preparing','Delivered'].indexOf(p.status) < 0)
+    // 'Cancelled' = vendor ka reject. Order level par allowed hai, per-meal nahi
+    // (apps script me ADMIN_STATUS ke saath alag check hai) — yahan wahi mirror.
+    if (['Pending','Preparing','Delivered','Cancelled'].indexOf(p.status) < 0)
       return { status:'error', message:'Invalid status' };
     const prev = o.status;
     o.status = p.status;

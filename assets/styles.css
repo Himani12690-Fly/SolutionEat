@@ -524,6 +524,12 @@
     .nob-info { font-size:14px; opacity:0.92; margin-top:4px; }
     .nob-total { font-size:36px; font-weight:900; margin-top:12px; }
     .nob-btn { margin-top:24px; background:var(--card); color:#e11d48; border:none; border-radius:14px; padding:16px 32px; font-size:16px; font-weight:900; cursor:pointer; }
+    /* Ek "Dismiss" ki jagah ab do jawaab: le liya / nahi le sakte. Ghanti inhi
+       me se ek dabane par rukti hai, isliye dono thumb ke neeche full width. */
+    .nob-btns { margin-top:24px; display:flex; flex-direction:column; gap:10px; }
+    .nob-btns .nob-btn { margin-top:0; width:100%; }
+    .nob-btn.no { background:transparent; color:#fff; border:2px solid rgba(255,255,255,0.55); }
+    .nob-later { margin-top:16px; color:rgba(255,255,255,0.85); font-size:12.5px; text-decoration:underline; cursor:pointer; }
 
     .menu-topbar { display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--card); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
     .menu-topbar .mt-title { flex:1; min-width:0; }
