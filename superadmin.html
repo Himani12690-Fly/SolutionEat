@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=93c772bc38">
+  <link rel="stylesheet" href="assets/styles.css?v=0b2b333a25">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1015,7 +1015,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=93c772bc38"></script>
+  <script src="assets/shared.js?v=0b2b333a25"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
@@ -2866,7 +2866,10 @@
         const firstOfMeal = !vcard || c.idx===0;
         const topClick = vcard?`openMealSheetV('${m}',${vi})`:`openMealSheet('${m}')`;
         const priceLine = vcard ? `<div class="c1-price">₹${Number(vcard.price)||0}</div>` : '';
-        return `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${ckey}">
+        // Variant card par ADD upar wali row me — neeche ki alag row khali dikhti thi.
+        const compact = !!vcard;
+        const actionsHtml = `<div class="c1-actions" id="mca-${ckey}"${compact?' onclick="event.stopPropagation()"':''}>${custLink}${btn}</div>`;
+        return `<div class="c1card ${orderable?'c1-open':'c1-closed'}${compact?' c1-compact':''}" id="mc-${ckey}">
           <div class="c1-top" ${orderable?`onclick="${topClick}"`:''}>
             ${photo}
             <div class="c1-info">
@@ -2877,8 +2880,9 @@
               ${priceLine}
               ${(meta.time&&firstOfMeal)?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
             </div>
+            ${compact?actionsHtml:''}
           </div>
-          <div class="c1-actions" id="mca-${ckey}">${custLink}${btn}</div>
+          ${compact?'':actionsHtml}
         </div>`;
       }).join('');
       const __html = cards || `<div class="menu-closed">—</div>`;
