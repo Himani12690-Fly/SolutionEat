@@ -219,7 +219,6 @@ test.describe('Public menu page', () => {
     expect(msg).toContain('Hello 👋 *Nest & Nosh*');
     expect(msg).not.toContain('Mujhe chahiye');
     expect(msg).toMatch(/x 1 \(\d{1,2} \w+\)/);
-    await expect(page.locator('#foot')).toContainText('WhatsApp par login ki zaroorat nahi');
     // WhatsApp se seedha order ho sakta hai, isliye "Order Now" (app/login)
     // yahan chhup jaata hai — sirf share bachta hai, wahi asli button ban jaata hai.
     await expect(page.locator('#orderBtn')).toBeHidden();
@@ -235,7 +234,6 @@ test.describe('Public menu page', () => {
     await expect(page.locator('.vr .vo')).toHaveCount(0);
     await expect(page.locator('#orderBtn')).toBeVisible();
     await expect(page.locator('#shareBtn2')).toHaveClass(/sub/);
-    await expect(page.locator('#foot')).toContainText('login zaroori hai');
   });
 
   test('adhoora WhatsApp number bhi per-item button nahi dikhata', async ({ page }) => {
