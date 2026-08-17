@@ -63,7 +63,7 @@
       "name": "Install, sharing & discovery",
       "files": [
         "tests/apk-mode.spec.js",
-        "tests/pwa-install.spec.js",
+        "tests/public-menu.spec.js", "tests/pwa-install.spec.js",
         "tests/vendor-manifest.spec.js",
         "tests/share-kitchen.spec.js",
         "tests/nearby-kitchens.spec.js"

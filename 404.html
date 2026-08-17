@@ -82,7 +82,12 @@
   } else if (parts[0]) {
     qs = 'v=' + encodeURIComponent(parts[0]) + (rest ? '&' + rest : '');
   }
-  if (qs) location.replace('/?' + qs + location.hash);
+  // /<vendor>/menu — public menu page, login ke bina. Ye wahi link hai jo vendor
+  // WhatsApp par share karta hai, isliye clean rakha hai. Ye check vendor wale
+  // branch ke BAAD hai kyunki slug pehle chahiye.
+  if (parts[1] === 'menu' && parts[0] !== 'admin') {
+    location.replace('/menu.html?v=' + encodeURIComponent(parts[0]) + (rest ? '&' + rest : '') + location.hash);
+  } else if (qs) location.replace('/?' + qs + location.hash);
   else location.replace('/');
 </script>
 </body>
