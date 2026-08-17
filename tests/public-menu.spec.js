@@ -192,7 +192,12 @@ test.describe('Public menu page', () => {
     const href = await vo.getAttribute('href');
     // 10-digit number 91 ke saath jaana chahiye, warna wa.me link kaam nahi karta.
     expect(href).toContain('https://wa.me/919876543210?text=');
-    expect(decodeURIComponent(href)).toContain('Nest & Nosh');
+    // Message seedha, saaf hona chahiye — koi extra "Mujhe chahiye:" jaisi
+    // filler line nahi, seedha item aur uska quantity/date.
+    const msg = decodeURIComponent(href);
+    expect(msg).toContain('Hello 👋 *Nest & Nosh*');
+    expect(msg).not.toContain('Mujhe chahiye');
+    expect(msg).toMatch(/x 1 \(\d{1,2} \w+\)/);
     await expect(page.locator('#foot')).toContainText('WhatsApp par login ki zaroorat nahi');
     // WhatsApp se seedha order ho sakta hai, isliye "Order Now" (app/login)
     // yahan chhup jaata hai — sirf share bachta hai, wahi asli button ban jaata hai.
@@ -229,8 +234,14 @@ test.describe('Public menu page', () => {
     });
     await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#meals')).toContainText("Loading Today's Menu");
+    // Data load hone tak day picker aur order/share bar khaali/bekaar
+    // dikhte the — ab tak hidden rehte hain.
+    await expect(page.locator('#daysel')).toBeHidden();
+    await expect(page.locator('#cta')).toBeHidden();
     release();
     await page.waitForSelector('.mc', { timeout: 15000 });
+    await expect(page.locator('#daysel')).toBeVisible();
+    await expect(page.locator('#cta')).toBeVisible();
   });
 
   test('page mobile par sideways scroll nahi karta', async ({ page }) => {
