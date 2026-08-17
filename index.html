@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=08a5b28d11">
+  <link rel="stylesheet" href="assets/styles.css?v=86005bae87">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -844,6 +844,12 @@
     <div class="section" style="padding-bottom:110px;">
 
       <div id="aview-orders">
+        <div id="todayHero"></div>
+        <!-- Poori purani list — hataayi nahi, sirf "Poori list dekho" ke peeche.
+             Default me ye KHULI hai aur renderTodayHero() pehle render par ise
+             band karta hai. Ulta rakhne par, agar hero kabhi render na ho paaye,
+             vendor ko blank screen milti — ab worst case purani poori list hai. -->
+        <div id="ordersDetail">
         <span class="refresh-link" onclick="loadOrders()">🔄 Refresh</span>
         <div class="section-title" style="margin-top:4px;">🧾 Delivery Orders</div>
         <div class="date-tabs" id="orderDateTabs">
@@ -864,6 +870,7 @@
           <span class="chip" data-f="Cancelled" onclick="setOrderFilter('Cancelled')">🔴 Cancelled</span>
         </div>
         <div id="ordersList" style="padding-bottom:12px;"><div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>
+        </div>
       </div>
 
       <div id="aview-users" class="hidden">
@@ -1317,7 +1324,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=08a5b28d11"></script>
+  <script src="assets/shared.js?v=86005bae87"></script>
 <script>
   (function(){
     try{
@@ -5444,6 +5451,7 @@
     [0,1,2].forEach(o=>{ const b=document.getElementById('odt-'+o); if(b) b.innerHTML=dn[o]+'<br><span style="font-size:9.5px;font-weight:600;opacity:0.85;">'+fmtLabel(dateWithOffset(o))+'</span>'; });
   }
   function loadOrders(done){ if(!adminCreds){ if(done)done(false); return; } let ok=false; adminDateLabels(); fillSocFilter();
+    __heroState='loading'; renderTodayHero();
     const dateStr=fmtYMD(dateWithOffset(adminDateOffset));
     if(adminOrders.length){ renderOrders(); renderKitchen(); }
     else { const ol=document.getElementById('ordersList'); if(ol) ol.innerHTML='<div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div>'; }
@@ -5474,7 +5482,7 @@
         document.getElementById('ordersList').innerHTML='<div style="text-align:center;color:var(--danger);padding:20px;font-size:12.5px;">❌ Network error.<br><button class="admin-btn" style="margin-top:10px;width:auto;padding:6px 16px;" onclick="loadOrders()">🔄 Retry</button></div>';
         document.getElementById('kitchenSummary').innerHTML='<div style="text-align:center;color:var(--muted);padding:10px;font-size:12px;">Could not load.</div>';
       }
-    }).finally(()=>{ if(done)done(ok); });
+    }).finally(()=>{ __heroState = ok ? 'ok' : 'error'; renderTodayHero(); if(done)done(ok); });
   }
   function setOrderFilter(f){ orderFilter=f; const c=document.getElementById('filterChips').children; for(let i=0;i<c.length;i++)c[i].classList.toggle('sel',c[i].getAttribute('data-f')===f); renderOrders(); }
   let socFilter='All';
@@ -5501,7 +5509,11 @@
   function bulkStatus(from,to,btn){
     const rows=adminOrders.filter(o=>o.status===from&&socMatch(o)).map(o=>o.row);
     if(!rows.length)return;
-    if(!confirm(rows.length+' order(s) → '+to+'?'))return;
+    // Pehle yahan 'N order(s) → Preparing?' likha aata tha. Vendor ke liye
+    // "Preparing" system ka shabd hai, rasoi ka nahi — isliye seedhi baat.
+    const ask = { Preparing:'👨‍🍳 '+rows.length+' order banana shuru kar rahe hain?',
+                  Delivered:'✅ '+rows.length+' order nikal gaye?' };
+    if(!confirm(ask[to] || (rows.length+' order(s) → '+to+'?')))return;
     if(btn){ btn.disabled=true; btn.dataset.oldText=btn.textContent; btn.textContent='⏳ Updating...'; }
     apiPost({action:'setstatusbulk',user:adminCreds.user,pass:adminCreds.pass,rows:rows,status:to}).then(j=>{
       if(j.status==='success'){
@@ -5510,6 +5522,108 @@
         showToast('✅ '+j.updated+' orders → '+to,'success');
       } else { if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast('❌ '+(j.message||'Failed'),'error'); }
     }).catch(()=>{ if(btn){ btn.disabled=false; btn.textContent=btn.dataset.oldText||''; } showToast(t('errNetwork'),'error'); });
+  }
+  // ── "Aaj Ka Kaam" — admin landing ka pehla block ─────────────────────────
+  // Vendor ka pehla sawaal hamesha ek hi hota hai: "abhi kitna banana hai".
+  // Pehle uska jawab kitchen-card ke chhote grey text me tha, 7 control ke
+  // neeche — screen batati thi ki KYA HAI, ye nahi ki AB KYA KARNA HAI.
+  // Ab wahi number sabse upar aur sabse bada, saath me ek hi button.
+  // Poori list hataayi NAHI hai — #ordersDetail me waisi ki waisi hai, ek tap
+  // neeche; aur ek baar khol di to khuli hi rehti hai (storeSet se yaad).
+  let __heroState = 'loading';
+  const ORD_DETAIL_KEY = 'fbt_admin_ord_open';
+  let __ordDetailInit = false;
+
+  function ordersDetailEl(){ return document.getElementById('ordersDetail'); }
+  function toggleOrdersDetail(){
+    const d = ordersDetailEl(); if(!d) return;
+    const open = !d.classList.toggle('hidden');   // toggle() true deta hai jab class LAGI ho
+    try{ storeSet(ORD_DETAIL_KEY, open ? 1 : 0); }catch(e){}
+    renderTodayHero();
+    if(open) d.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  // Meal pill dabane ka matlab hai "ye wale dikhao" — isliye list bhi khol do,
+  // warna filter lag jaata hai par vendor ko kuch badalta hua dikhta hi nahi.
+  function heroMealFilter(m){
+    setMealFilter(m);
+    const d = ordersDetailEl();
+    if(d && d.classList.contains('hidden')) toggleOrdersDetail();
+  }
+  function todayHeroStats(){
+    const amtOf = v => { const n = parseInt(String(v==null?'':v).replace(/[^0-9.-]/g,''),10); return isNaN(n)?0:n; };
+    const live   = adminOrders.filter(o => o.status!=='Cancelled' && socMatch(o));
+    const active = live.filter(o => o.status==='Pending' || o.status==='Preparing');
+    const per = { breakfast:0, lunch:0, dinner:0, meal4:0 };
+    let total = 0;
+    active.forEach(o => Object.keys(per).forEach(m => { const q = Number(o[m+'Qty'])||0; per[m]+=q; total+=q; }));
+    // "Cash aana hai" = sirf wo COD jo abhi tak paid nahi hua. Money-bar saara
+    // COD jodta hai chahe paid ho chuka ho — wo number yahan galat hota.
+    let cash = 0;
+    live.forEach(o => { if(String(o.payment).toUpperCase()==='COD' && o.paymentStatus!=='Paid') cash += amtOf(o.total); });
+    return { total, per, cash,
+      homes: new Set(active.map(o => String(o.society)+'|'+String(o.flat))).size,
+      socs:  new Set(active.map(o => o.society).filter(Boolean)).size,
+      pend:  active.filter(o => o.status==='Pending').length,
+      prep:  active.filter(o => o.status==='Preparing').length,
+      doneCount: live.length - active.length,
+      liveCount: live.length };
+  }
+  function renderTodayHero(){
+    const box = document.getElementById('todayHero'); if(!box) return;
+    const d = ordersDetailEl();
+    if(d && !__ordDetailInit){ __ordDetailInit = true; if(storeGet(ORD_DETAIL_KEY)!==1) d.classList.add('hidden'); }
+
+    const when = ['Aaj','Kal','Parso'][adminDateOffset] || 'Aaj';
+    const shut = (typeof isKitchenEmergencyClosed==='function') && isKitchenEmergencyClosed();
+    const head = `<div class="th-top">
+        <div>
+          <div class="th-name">${esc((VENDOR_BRAND&&VENDOR_BRAND.name)||'Kitchen')}</div>
+          <div class="th-date">${esc(when)} · ${esc(fmtLabel(dateWithOffset(adminDateOffset)))}</div>
+        </div>
+        <span class="th-open ${shut?'shut':''}">${shut?'🚨 Band':'Khuli ✓'}</span>
+      </div>`;
+
+    if(__heroState==='loading' && !adminOrders.length){
+      box.innerHTML = `<div class="th">${head}<div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>`;
+      return;
+    }
+    if(__heroState==='error' && !adminOrders.length){
+      box.innerHTML = `<div class="th">${head}<div class="th-empty">😕 Data nahi aaya</div>
+        <button class="th-go" onclick="loadOrders()">🔄 Dobara koshish karo</button></div>`;
+      return;
+    }
+
+    const s = todayHeroStats();
+    const m4On = CFG.mealsEnabled && CFG.mealsEnabled.meal4===true;
+    const m4 = MEAL_META.meal4 || { emoji:'🍿' };
+    const pill = (m,emoji) => s.per[m]
+      ? `<span class="th-pill ${mealFilter===m?'sel':''}" onclick="heroMealFilter('${m}')">${emoji} ${s.per[m]}</span>` : '';
+    const pills = pill('breakfast','🌅') + pill('lunch','☀️') + pill('dinner','🌙') + (m4On?pill('meal4',m4.emoji):'');
+
+    let mid;
+    if(!s.liveCount){
+      mid = `<div class="th-empty">😴 ${esc(when)} abhi koi order nahi</div>`;
+    } else if(!s.total){
+      mid = `<div class="th-empty">🎉 ${esc(when)} ka kaam khatam</div>
+        <div class="th-s">Saare ${s.doneCount} order nikal gaye</div>`;
+    } else {
+      mid = `<div class="th-n">${s.total}</div>
+        <div class="th-l">tiffin banane hain</div>
+        <div class="th-s">${s.homes} ghar${s.socs>1?' · '+s.socs+' society':''}${s.doneCount?' · '+s.doneCount+' ho gaye':''}</div>
+        ${pills?`<div class="th-meals">${pills}</div>`:''}`;
+    }
+
+    // Ek waqt par sirf ek button — vendor ko chunna nahi padta, agla kadam
+    // hamesha wahi hota hai jo screen par likha hai.
+    let action = '';
+    if(s.pend)      action = `<button class="th-go" onclick="bulkStatus('Pending','Preparing',this)">👨‍🍳 Banana shuru kiya (${s.pend})</button>`;
+    else if(s.prep) action = `<button class="th-go done" onclick="bulkStatus('Preparing','Delivered',this)">✅ Sab nikal gaya (${s.prep})</button>`;
+
+    const more = `<span class="th-more" onclick="toggleOrdersDetail()">${
+      (d && !d.classList.contains('hidden')) ? 'Chhupa do ▴' : 'Poori list dekho ▾'}</span>`;
+
+    box.innerHTML = `<div class="th">${head}${mid}${action}${
+      s.cash ? `<div class="th-cash">💵 ${esc(when)} <b>₹${s.cash}</b> cash aana hai</div>` : ''}${more}</div>`;
   }
   function renderKitchen(){
     const active=adminOrders.filter(o=>(o.status==='Pending'||o.status==='Preparing')&&socMatch(o));
@@ -5542,6 +5656,7 @@
         ${dQty?`<div class="ks-drow" style="margin-top:8px;">🌙 <b>Dinner:</b> 🥗${detail.dinner.mini} Mini · 🍱${detail.dinner.full} Full<br>${sabziLine(detail.dinner.sabzi)}</div>`:''}
         ${m4Qty?`<div class="ks-drow" style="margin-top:8px;">${m4Meta.emoji} <b>${esc(m4Meta.title)}:</b> 🥗${detail.meal4.mini} Mini · 🍱${detail.meal4.full} Full<br>${sabziLine(detail.meal4.sabzi)}</div>`:''}
       </div>`:''}`;
+    renderTodayHero();
   }
   const STATUS_PRIORITY={Pending:0,Preparing:1,Delivered:2,Cancelled:3};
   function renderMoneyBar(list){
