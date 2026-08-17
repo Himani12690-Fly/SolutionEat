@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=26866ef64d">
+  <link rel="stylesheet" href="assets/styles.css?v=b936c49bb5">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1159,7 +1159,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=26866ef64d"></script>
+  <script src="assets/shared.js?v=b936c49bb5"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -2122,14 +2122,15 @@
     addChecking=false;
     showAlert({ icon:'✅', title:t('alreadyOrderedT').replace('{meal}', mealTitle(m)) });
   }
-  function quickAdd(m, ev){
+  function quickAdd(m, ev, vi){
+    const vid = (vi===undefined||vi===null||vi==='') ? null : variantIdAt(m, vi);
     if(ev&&ev.stopPropagation){ ev.stopPropagation(); }
     if(!isLoggedIn()){ showAuth(); return; }
 
     if(orderedMapReady){
       const already = alreadyOrdered(selDateStr(), m);
       if(already){ showAlreadyOrderedCard(m, already); return; }
-      doQuickAdd(m);
+      doQuickAdd(m, vid);
       refreshOrderedMap();
       return;
     }
@@ -2146,12 +2147,66 @@
       if(btn){ btn.innerHTML=oldTxt; btn.style.pointerEvents=''; }
       const already = alreadyOrdered(selDateStr(), m);
       if(already){ showAlreadyOrderedCard(m, already); return; }
-      doQuickAdd(m);
+      doQuickAdd(m, vid);
     }).catch(()=>{
       addChecking=false;
       if(btn){ btn.innerHTML=oldTxt; btn.style.pointerEvents=''; }
-      doQuickAdd(m);
+      doQuickAdd(m, vid);
     });
+  }
+  // ── Variant cards ────────────────────────────────────────────────────────
+  // Default (variantCards OFF): ek meal = ek card; tap karne par variants ki
+  // list sheet me. Jo vendor ek hi cheez bechta hai (jaise sirf khichdi), uske
+  // liye super admin ye ON kar sakta hai — tab har variant home screen par apna
+  // card ban jaata hai, normal menu jaisa.
+  //
+  // Ye SIRF customer home ka rendering hai. Cart, sheet, order payload aur
+  // backend bilkul waise hi rehte hain — ek hi meal ke alag-alag variants
+  // pehle se ek hi order me jaate hain ("2 Masala + 1 Sada", dekho order
+  // submit ka variantStr). Isliye admin, Apps Script aur sheet me kuch nahi
+  // badalta.
+  function variantCardsOn(){ return CFG.variantCards===true; }
+  function mealCardList(mealKeys){
+    const out=[];
+    mealKeys.forEach(m=>{
+      const vs=variantsFor(m)||[];
+      // Key DOM id me aur querySelector me dono jagah jaati hai, isliye variant
+      // ka INDEX use karte hain — vendor ka diya hua id (addVariant() 'v'+time
+      // banata hai, par purane data me kuch bhi ho sakta hai) selector tod
+      // sakta hai.
+      if(variantCardsOn() && vs.length>1) vs.forEach((v,i)=>out.push({ key:m+'__'+i, meal:m, variant:v, idx:i }));
+      else out.push({ key:m, meal:m, variant:null, idx:-1 });
+    });
+    return out;
+  }
+  function variantIdAt(m,i){ const vs=variantsFor(m)||[]; const v=vs[parseInt(i,10)]; return v?v.id:null; }
+  function openMealSheetV(m,i){ openMealSheet(m, variantIdAt(m,i)); }
+  function cartQtyForVariant(m,vid){
+    const d=selDateStr();
+    return cart.filter(x=>x.deliveryDate===d && x.meal===m && x.tiffinType===vid).reduce((s,x)=>s+(x.qty||0),0);
+  }
+  function cartRemoveVariant(m,i,ev){
+    if(ev&&ev.stopPropagation) ev.stopPropagation();
+    const vid=variantIdAt(m,i); if(!vid) return;
+    const d=selDateStr();
+    const it=cart.find(x=>x.deliveryDate===d && x.meal===m && x.tiffinType===vid);
+    if(!it) return;
+    if(it.qty>1) it.qty--; else cart=cart.filter(x=>x!==it);
+    updateCartBadge(); saveCart(); renderMealPanel();
+  }
+  function cartPlusVariant(m,i,ev){
+    if(ev&&ev.stopPropagation) ev.stopPropagation();
+    const vid=variantIdAt(m,i); if(!vid) return;
+    const d=selDateStr();
+    const it=cart.find(x=>x.deliveryDate===d && x.meal===m && x.tiffinType===vid);
+    if(!it) return;
+    // maxQtyPerOrder MEAL ka hai, variant ka nahi — isliye poore meal ka total
+    // ginte hain, warna 3 variant se limit 3x ho jaati.
+    const mt=mealType(m);
+    const maxQ=(mt&&parseInt(mt.maxQtyPerOrder,10))||1;
+    if(cartQtyFor(m)>=maxQ){ showLimitPopup(); return; }
+    it.qty++;
+    updateCartBadge(); saveCart(); renderMealPanel();
   }
   function cartQtyFor(m){
     const d=selDateStr();
@@ -2201,13 +2256,16 @@
     const card=document.getElementById('mc-'+m); if(card) card.classList.toggle('c1-open',orderable); if(card) card.classList.toggle('c1-closed',!orderable);
     updateCartBadge();
   }
-  function doQuickAdd(m){
-    if(cart.find(it=>it.deliveryDate===selDateStr()&&it.meal===m)){ openMealSheet(m); return; }
-    if(variantsFor(m).length>1){ openMealSheet(m); return; }
-    addMealDirect(m);
+  function doQuickAdd(m, vid){
+    // vid diya hai to variant pehle se chuna hua hai (variant card se aaya) —
+    // tab sheet kholne ki zaroorat nahi, seedha cart me.
+    if(cart.find(it=>it.deliveryDate===selDateStr()&&it.meal===m&&(!vid||it.tiffinType===vid))){ openMealSheet(m, vid); return; }
+    if(!vid && variantsFor(m).length>1){ openMealSheet(m); return; }
+    addMealDirect(m, vid);
   }
-  function addMealDirect(m){
+  function addMealDirect(m, vid){
     const b=freshBuilder()[m];
+    if(vid) b.tiffinType=vid;
     const v=findVariant(m,b.tiffinType);
     cart.push({ id:selDateStr()+'|'+m+'|'+b.tiffinType, deliveryDate:selDateStr(), deliveryLabel:fmtLabel(selDate()), day:selDayKey().charAt(0).toUpperCase()+selDayKey().slice(1),
       meal:m, qty:1, tiffinType:b.tiffinType, variantName:v.name, sabzi:b.sabzi||'',
@@ -3015,14 +3073,16 @@
         const openA=(availAll[a]&&availAll[a].ok)?0:1, openB=(availAll[b]&&availAll[b].ok)?0:1;
         return openA-openB;
       });
-      const cards = orderedMealKeys.map(m=>{
+      // Ek card = poora meal (default) ya ek variant (variantCards ON).
+      const cards = mealCardList(orderedMealKeys).map(c=>{
+        const m=c.meal, vcard=c.variant, ckey=c.key, vi=c.idx;
         const meta=MEAL_META[m]||{};
         const av=availAll[m];
-        const name=mealTitle(m);
         const vs=variantsFor(m);
-        const rich=vs.reduce((a,b)=>b.price>a.price?b:a,vs[0]);
+        const name=vcard?vcard.name:mealTitle(m);
+        const rich=vcard||vs.reduce((a,b)=>b.price>a.price?b:a,vs[0]);
         const desc=(rich.items&&rich.items.length?rich.items:[]).slice(0,6).join(' · ');
-        const ph=mealPhoto(m);
+        const ph=(vcard&&vcard.img&&IMG_OK[vcard.img])?vcard.img:mealPhoto(m);
         const photo = ph
           ? `<img class="c1-img c1-img-fade" src="${ph}" alt="">`
           : (HAS_VENDOR_PARAM && vendorHasOwnImg(m)
@@ -3032,30 +3092,35 @@
         const sold = !closed && capacityReached(m,selDateStr());
         const orderable = !closed && !sold;
         let btn;
-        const inCart = orderable ? cartQtyFor(m) : 0;
+        const inCart = orderable ? (vcard?cartQtyForVariant(m,vcard.id):cartQtyFor(m)) : 0;
         if(closed) btn=`<button class="c1-add off" disabled>${t('lpClosed')}</button>`;
         else if(sold) btn=`<button class="c1-add off" disabled>🔴 ${t('soldOutTitle')}</button>`;
         else if(inCart>0) btn=`<div class="c1-step" onclick="event.stopPropagation()">`
-          + `<button class="c1-st-btn" aria-label="Remove" onclick="cartRemoveMeal('${m}',event)">−</button>`
+          + `<button class="c1-st-btn" aria-label="Remove" onclick="${vcard?`cartRemoveVariant('${m}',${vi},event)`:`cartRemoveMeal('${m}',event)`}">−</button>`
           + `<span class="c1-st-n">${inCart}</span>`
-          + `<button class="c1-st-btn" aria-label="Add more" onclick="cartPlusMeal('${m}',event)">+</button>`
+          + `<button class="c1-st-btn" aria-label="Add more" onclick="${vcard?`cartPlusVariant('${m}',${vi},event)`:`cartPlusMeal('${m}',event)`}">+</button>`
           + `</div>`;
-        else btn=`<button class="c1-add" onclick="quickAdd('${m}',event)">${t('addToCart2')} +</button>`;
-        const custLink = (orderable && vs.length>1)
+        else btn=`<button class="c1-add" onclick="quickAdd('${m}',event${vcard?`,${vi}`:''})">${t('addToCart2')} +</button>`;
+        // Variant card par "Customize" bemaani hai — variant pehle se chuna hua hai.
+        const custLink = (orderable && !vcard && vs.length>1)
           ? `<span class="c1-cust" onclick="event.stopPropagation();openMealSheet('${m}')">⚙️ ${t('customizeBtn')}</span>`
           : (closed ? scheduleLinkHtml(m) : `<span></span>`);
-        return `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${m}">
-          <div class="c1-top" ${orderable?`onclick="openMealSheet('${m}')"`:''}>
+        const firstOfMeal = !vcard || c.idx===0;
+        const topClick = vcard?`openMealSheetV('${m}',${vi})`:`openMealSheet('${m}')`;
+        const priceLine = vcard ? `<div class="c1-price">₹${Number(vcard.price)||0}</div>` : '';
+        return `<div class="c1card ${orderable?'c1-open':'c1-closed'}" id="mc-${ckey}">
+          <div class="c1-top" ${orderable?`onclick="${topClick}"`:''}>
             ${photo}
             <div class="c1-info">
               <div class="c1-h">
-                <span class="c1-nw"><span class="c1-veg"></span><span class="c1-name">${meta.emoji||''} ${name}</span></span>
+                <span class="c1-nw"><span class="c1-veg"></span><span class="c1-name">${vcard?'':(meta.emoji||'')} ${name}</span></span>
               </div>
               <div class="c1-desc">${desc}</div>
-              ${meta.time?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
+              ${priceLine}
+              ${(meta.time&&firstOfMeal)?`<div class="c1-time" style="font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;">🕒 ${meta.time}</div>`:''}
             </div>
           </div>
-          <div class="c1-actions" id="mca-${m}">${custLink}${btn}</div>
+          <div class="c1-actions" id="mca-${ckey}">${custLink}${btn}</div>
         </div>`;
       }).join('');
       const __html = cards || `<div class="menu-closed">—</div>`;
@@ -3071,9 +3136,10 @@
   }
 
   let sheetMeal='lunch';
-  function openMealSheet(m){
+  function openMealSheet(m, vid){
     sheetMeal=m;
     builder[m]=freshBuilder()[m];
+    if(vid) builder[m].tiffinType=vid;   // variant card se aaye to wahi pehle se chuna ho
     renderMealSheet();
     document.getElementById('mealSheet').classList.remove('hidden');
     document.body.style.overflow='hidden';

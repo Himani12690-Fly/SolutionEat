@@ -1245,6 +1245,11 @@
     .om-toggle { margin:14px 0 0; text-align:center; font-size:13px; font-weight:800; color:var(--accent-dark); cursor:pointer; padding:8px; }
     .om-go:focus-visible, .om-sm:focus-visible, .om-undo:focus-visible, .om-toggle:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 
+    /* Variant card par price — alag-alag variant ke daam alag hote hain, isliye
+       card par dikhna zaroori hai. Single-card mode me price pehle bhi nahi tha
+       aur ab bhi nahi, taaki existing vendors ka menu waisa hi dikhe. */
+    .c1-price { font-size:14.5px; font-weight:900; color:var(--ink); margin-top:4px; font-variant-numeric:tabular-nums; }
+
     .money-bar { display:flex; gap:8px; margin:4px 0 14px; }
     .money-bar .mb-cell { flex:1; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:10px 8px; text-align:center; }
     .money-bar .mb-n { font-size:16px; font-weight:900; color:var(--ink); }
