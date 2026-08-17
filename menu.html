@@ -275,8 +275,13 @@
     // seedha us item ka pehle-se-bhara message khulta hai.
     function itemWaHref(mt, v, dateTxt){
       if (!wa) return '';
-      var msg = 'Hello 👋 *' + (vendor.name || 'Kitchen') + '*\n\n' +
-                (mt.emoji || '🍽️') + ' ' + (mt.title || mt.key) + ' — ' + (v.name || '') +
+      // Emoji (waving hand, meal icons) yahan jaan-bujh kar nahi daalte —
+      // wa.me?text= deep link ke through kuch emoji (4-byte wale, jaise 👋
+      // ya 🌙) kai Android/WhatsApp versions par "�" ban jaate hain. Page
+      // par emoji theek dikhte hain (browser render karta hai), par is
+      // message me safe rehne ke liye chhod dete hain.
+      var msg = 'Hello *' + (vendor.name || 'Kitchen') + '*\n\n' +
+                (mt.title || mt.key) + ' — ' + (v.name || '') +
                 (v.price ? ' (₹' + v.price + ')' : '') + ' x 1 (' + dateTxt + ')';
       return 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
     }
