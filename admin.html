@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=fc2eee24d1">
+  <link rel="stylesheet" href="assets/styles.css?v=3521f95d5c">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -789,6 +789,15 @@
             <button type="button" class="admin-btn" style="width:auto;padding:9px 16px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="copyVendorLink()">🔗 Link Copy Karo</button>
           </div>
           <div id="vendorLinkText" style="font-size:10.5px;color:var(--muted);margin-top:10px;word-break:break-all;"></div>
+          <!-- Doosra link: sirf aaj ka menu, login ke bina khulta hai. Naya
+               customer app ka link kholta hai to login page milta hai; ye link
+               use pehle menu dikha deta hai. -->
+          <div style="border-top:1px dashed var(--line);margin-top:14px;padding-top:14px;">
+            <div style="font-size:12px;font-weight:800;color:var(--ink);">🍽️ Aaj ka Menu ka link</div>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:3px;">Login ke bina khulta hai — jis din bhi koi kholega, usi din ka menu dikhega.</div>
+            <div id="vendorMenuLinkText" style="font-size:10.5px;color:var(--muted);margin-top:8px;word-break:break-all;"></div>
+            <button type="button" class="admin-btn" style="width:auto;padding:9px 16px;margin-top:10px;background:var(--card);color:var(--ink);border:1.5px solid var(--line);" onclick="copyVendorMenuLink()">🔗 Menu Link Copy Karo</button>
+          </div>
         </div>
 
           </div>
@@ -1170,7 +1179,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=fc2eee24d1"></script>
+  <script src="assets/shared.js?v=3521f95d5c"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -3875,6 +3884,10 @@
     img.src=qr; img.onerror=function(){ img.style.display='none'; };
     const dl=document.getElementById('vendorQrDownload'); if(dl) dl.href=qr;
     const lt=document.getElementById('vendorLinkText'); if(lt) lt.textContent=link;
+    const mt=document.getElementById('vendorMenuLinkText'); if(mt) mt.textContent=vendorMenuLink();
+  }
+  function copyVendorMenuLink(){
+    try{ navigator.clipboard.writeText(vendorMenuLink()).then(()=>showToast('📋 '+t('copied'),'success')).catch(()=>{}); }catch(e){}
   }
   function copyVendorLink(){
     try{ navigator.clipboard.writeText(vendorOwnLink()).then(()=>showToast('📋 '+t('copied'),'success')).catch(()=>{}); }catch(e){}
@@ -4374,7 +4387,11 @@
   }
   function closeRateSheet(){ document.getElementById('rateSheet').classList.add('hidden'); }
 
-  function vendorMenuLink(){ return vendorOwnLink()+'/menu'; }
+  // ⚠️ vendorOwnLink() har file me ek jaisa NAHI hai — admin.html me wo
+  // '/admin.html?v=<slug>' deta hai, aur uske aage '/menu' lagane se link
+  // '?v=hb/menu' ban jaata tha (toota hua). Menu link hamesha clean path hai,
+  // isliye seedha origin + slug se banate hain.
+  function vendorMenuLink(){ return location.origin+'/'+encodeURIComponent(VENDOR_ID)+'/menu'; }
   function shareMenuLinkNow(){
     const link=vendorMenuLink();
     const name=(VENDOR_BRAND&&VENDOR_BRAND.name)||'this kitchen';

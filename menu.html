@@ -30,11 +30,10 @@
     --ink:#1e2233; --muted:#6b7280; --bg:#f5eee0; --card:#ffffff;
     --line:#e6e2d8; --ok:#15803d; --okbg:#dcfce7; --warn:#b45309; --warnbg:#fef3c7;
   }
-  @media (prefers-color-scheme: dark) {
-    :root { --accent:#818cf8; --accent-soft:#282a42; --accent-dark:#a5b4fc;
-            --ink:#e7e9f5; --muted:#9ca0b5; --bg:#14151f; --card:#1c1e2b;
-            --line:#2b2e3f; --ok:#4ade80; --okbg:#14321f; --warn:#fbbf24; --warnbg:#3a2c0c; }
-  }
+  /* Ye page HAMESHA light hai — app ke andar dark mode chalta hai, par ye link
+     ajnabiyon ko jaata hai aur unke phone ka theme kuch bhi ho, menu ek hi
+     tarah dikhna chahiye (jaise ek printed menu card). Isliye na dark media
+     query, na localStorage se theme padhna. */
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   body { margin:0; background:var(--bg); color:var(--ink); padding:0 0 108px;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
@@ -43,6 +42,13 @@
 
   /* ── Header ── */
   .hd { display:flex; align-items:center; gap:12px; padding:18px 0 14px; }
+  .hd .hd-tx { flex:1; min-width:0; }
+  /* Share vendor ka apna kaam hai, customer ka nahi — isliye ye neeche wale
+     thumb-zone se hat kar header me chala gaya. Neeche sirf wo do cheezein
+     bachi hain jo customer ko karni hain: order. */
+  .hd-share { flex:0 0 auto; width:38px; height:38px; border-radius:50%;
+    border:1.5px solid var(--line); background:transparent; color:var(--muted);
+    font-size:15px; cursor:pointer; font-family:inherit; }
   .hd img { width:52px; height:52px; border-radius:50%; object-fit:cover;
     border:1px solid var(--line); background:var(--card); flex:0 0 auto; }
   .hd .nm { font-size:19px; font-weight:900; letter-spacing:-.2px; }
@@ -57,9 +63,11 @@
   .mc-hd { display:flex; align-items:baseline; gap:8px; }
   .mc-ti { font-size:16px; font-weight:900; flex:1; min-width:0; }
   .mc-pr { font-size:16px; font-weight:900; color:var(--accent-dark); white-space:nowrap; }
-  .mc-tm { font-size:11.5px; color:var(--muted); font-weight:700; margin-top:3px; }
-  .mc-late { display:inline-block; background:var(--warnbg); color:var(--warn);
-    border-radius:20px; padding:2px 9px; font-size:10.5px; font-weight:900; margin-top:6px; }
+  /* Cutoff seedha meal ke naam ke peeche. Pehle iske liye do alag lines thi —
+     serving window aur "aaj ka time nikal gaya" wala chip — aur teenon milkar
+     card ka aadha hissa kha jaati thi. Customer ko ek hi cheez chahiye: kab
+     tak order kar sakta hai. */
+  .mc-cut { font-size:11.5px; color:var(--muted); font-weight:700; }
 
   .lbl { font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase;
     letter-spacing:.4px; margin:14px 0 7px; }
@@ -81,13 +89,21 @@
   .cta { position:fixed; left:0; right:0; bottom:0; background:var(--card);
     border-top:1px solid var(--line); padding:12px 14px calc(12px + env(safe-area-inset-bottom));
     display:flex; gap:10px; justify-content:center; }
-  .cta-in { max-width:520px; width:100%; display:flex; gap:10px; }
+  .cta-in { max-width:520px; width:100%; display:flex; flex-direction:column; gap:6px; }
   .btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
     background:var(--accent); color:#fff; border:0; border-radius:14px; padding:15px;
     font-size:15px; font-weight:900; text-decoration:none; cursor:pointer;
-    font-family:inherit; }
-  .btn.gh { flex:0 0 auto; background:transparent; color:var(--accent-dark);
-    border:1.5px solid var(--line); padding:15px 16px; }
+    font-family:inherit; white-space:nowrap; }
+  /* WhatsApp ka apna rang — customer ise pehchanta hai, isliye ise app wale
+     accent me rangna ulta hota. Ye button tabhi dikhta hai jab kitchen ka
+     WhatsApp number set ho (neeche render me). */
+  .btn.wa { background:#25D366; color:#0b3d20; }
+  /* Do barabar ke button ek dusre se ladte hain. Order karne ka asli raasta ek
+     hi hona chahiye; app/login us se chhota. Par jab kitchen ka WhatsApp number
+     na ho, tab login HI ek matra raasta hai — us case me ye class lagti hi
+     nahi aur wahi full button rehta hai. */
+  .btn.sub { background:transparent; color:var(--muted); font-size:12.5px;
+    font-weight:800; padding:6px; text-decoration:underline; }
 
   .ft { text-align:center; color:var(--muted); font-size:11px; font-weight:600;
     padding:16px 0 4px; line-height:1.7; }
@@ -100,8 +116,7 @@
     animation:sp .7s linear infinite; }
   @keyframes sp { to { transform:rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .ld .sp { animation:none; } }
-  .sk { height:104px; background:var(--card); border:1px solid var(--line);
-    border-radius:16px; margin-bottom:12px; opacity:.55; }
+  .hidden { display:none !important; }
 </style>
 </head>
 <body>
@@ -109,19 +124,22 @@
   <div class="hd">
     <img id="logo" alt="" src="assets/icons/logo-round.webp"
          onerror="this.onerror=null;this.src='assets/icons/logo-round.png'">
-    <div>
+    <div class="hd-tx">
       <div class="nm" id="vname">Aaj ka Menu</div>
       <div class="dt" id="vdate">…</div>
     </div>
+    <button class="hd-share" id="shareBtn" type="button" title="Share" aria-label="Share">🔗</button>
   </div>
   <div id="note" class="note" hidden></div>
-  <div id="meals"><div class="sk"></div><div class="sk"></div></div>
+  <!-- Pehle yahan do khaali grey dabbe the. Ajnabi ko wo "page toot gaya" jaisa
+       lagta hai; likh dena behtar hai ki ho kya raha hai. -->
+  <div id="meals"><div class="ld"><div class="sp"></div>Loading Today's Menu…</div></div>
   <div class="ft" id="foot"></div>
 </div>
 
 <div class="cta"><div class="cta-in">
+  <a class="btn wa hidden" id="waBtn" target="_blank" rel="noopener">💬 WhatsApp pe order karo</a>
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
-  <button class="btn gh" id="shareBtn" type="button" title="Share">🔗</button>
 </div></div>
 
 <script>
@@ -135,22 +153,6 @@
   var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdMXlSwNdqO84OspsUe2jAEeDL-hbwjwLcKL-fo6YObB6Se-dvTxX2iS5BMz2t8bV6/exec';
   var DEFAULT_VENDOR = 'nestandnosh';
   var DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-
-  // Theme app ne localStorage me rakha hota hai — dark-mode user ko cream flash
-  // na dikhe (404.html bhi yahi karta hai).
-  try {
-    var sv = JSON.parse(localStorage.getItem('fbt_theme') || '""');
-    var dark = sv === 'dark' || (sv === 'system' && window.matchMedia &&
-               matchMedia('(prefers-color-scheme: dark)').matches);
-    if (dark) {
-      var r = document.documentElement.style;
-      r.setProperty('--bg','#14151f');      r.setProperty('--card','#1c1e2b');
-      r.setProperty('--ink','#e7e9f5');     r.setProperty('--muted','#9ca0b5');
-      r.setProperty('--line','#2b2e3f');    r.setProperty('--accent','#818cf8');
-      r.setProperty('--accent-soft','#282a42'); r.setProperty('--accent-dark','#a5b4fc');
-      r.setProperty('--warn','#fbbf24');    r.setProperty('--warnbg','#3a2c0c');
-    }
-  } catch (e) {}
 
   function slug(){
     try {
@@ -188,6 +190,18 @@
     return h12 + ':' + mm + ' ' + ap;
   }
 
+  // App ke normalizeWa() jaisa hi: 10 digit ko 91 laga do, 0 se shuru hone wala
+  // 910… theek karo. App me number na milne par platform owner ke number par
+  // fallback hota hai — YAHAN wo bilkul nahi karna. Ye page ajnabiyon ka hai;
+  // kisi aur kitchen ka order galat number par chala jaana sabse bura outcome
+  // hai. Number na ho to button hi nahi dikhta.
+  function waNumber(raw){
+    var d = String(raw || '').replace(/\D/g, '');
+    if (d.length === 10) d = '91' + d;
+    if (d.length === 13 && d.slice(0,3) === '910') d = '91' + d.slice(3);
+    return (d.length === 12 && d.slice(0,2) === '91') ? d : '';
+  }
+
   function fail(msg, sub){
     document.getElementById('meals').innerHTML =
       '<div class="ld">' + esc(msg) + (sub ? '<br><span style="font-weight:600;">' + esc(sub) + '</span>' : '') + '</div>';
@@ -212,25 +226,18 @@
     else if ((cfg.closedDates || []).indexOf(ymd(now)) >= 0) note = '⚠️ Aaj kitchen band hai.';
     if (note) { var nEl = document.getElementById('note'); nEl.textContent = note.trim(); nEl.hidden = false; }
 
-    var nowMins = now.getHours() * 60 + now.getMinutes();
     var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
       var key = mt.key;
       var price = (cfg.prices || {})[key] || mt.price || 0;
+      // cutoffAheadDay = cutoff PICHHLI raat ka hai. Bina likhe "Breakfast
+      // (order by 10:00 PM)" ulta padhta hai.
+      var cutTxt = mt.cutoff
+        ? ' (order by ' + clock(mt.cutoff) + (mt.cutoffAheadDay ? ', ek raat pehle' : '') + ')'
+        : '';
       var s = '<div class="mc"><div class="mc-hd"><div class="mc-ti">' +
-              esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) + '</div>' +
+              esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) +
+              (cutTxt ? '<span class="mc-cut">' + esc(cutTxt) + '</span>' : '') + '</div>' +
               (price ? '<div class="mc-pr">₹' + price + '</div>' : '') + '</div>';
-      if (mt.windowStart && mt.windowEnd)
-        s += '<div class="mc-tm">🕐 ' + esc(clock(mt.windowStart)) + ' – ' + esc(clock(mt.windowEnd)) +
-             (mt.cutoff ? ' · order by ' + esc(clock(mt.cutoff)) +
-               // cutoffAheadDay = cutoff PICHHLI raat ka hai. Ye bina likhe
-               // "7 AM breakfast, order by 10 PM" padhne me ulta lagta hai.
-               (mt.cutoffAheadDay ? ' (ek raat pehle)' : '') : '') + '</div>';
-      // Cutoff nikal gaya — sirf usi meal ke liye jiska cutoff USI din ka hai.
-      // cutoffAheadDay wale meal ka hisaab app ke andar hota hai; yahan uske
-      // baare me kuch keh dena galat ho sakta hai, isliye chup rehte hain.
-      var cut = mins(mt.cutoff);
-      if (cut !== null && !mt.cutoffAheadDay && nowMins > cut)
-        s += '<div class="mc-late">Aaj ka time nikal gaya — kal ke liye order karo</div>';
 
       var rec = today[key];
       // hasVariants:false wale meal ka menu flat list hai (jaise breakfast),
@@ -259,10 +266,30 @@
     document.getElementById('meals').innerHTML = html ||
       '<div class="ld">Is kitchen ka menu abhi set nahi hua hai.</div>';
 
+    // WhatsApp par order — login ke bina. Message me kitchen ka naam aur aaj ki
+    // date daal dete hain, aur ek khaali line chhod dete hain jahan customer
+    // apna order likhe. Chhoti kitchen aise hi kaam karti hai: chat me baat,
+    // phir order.
+    var wa = waNumber(vendor.whatsapp);
+    if (wa) {
+      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* ka aaj ka menu dekha (' +
+                now.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ').\n\nMujhe ye chahiye:\n';
+      var el = document.getElementById('waBtn');
+      el.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
+      el.classList.remove('hidden');
+      // WhatsApp mil gaya to wahi asli button hai — app/login us ke neeche ek
+      // chhoti line ban jaata hai.
+      var ob = document.getElementById('orderBtn');
+      ob.classList.add('sub');
+      ob.textContent = 'ya app se order karo (login chahiye)';
+    }
+
     var ft = [];
     if (cfg.fssai) ft.push('FSSAI: ' + esc(cfg.fssai));
     if (cfg.township) ft.push(esc(cfg.township));
-    ft.push('Order karne ke liye login zaroori hai');
+    // WhatsApp ka raasta ho to "login zaroori hai" likhna galat hai — wo bina
+    // login hi order kar sakta hai.
+    ft.push(wa ? 'WhatsApp par login ki zaroorat nahi' : 'Order karne ke liye login zaroori hai');
     document.getElementById('foot').innerHTML = ft.join(' · ');
   }
 
