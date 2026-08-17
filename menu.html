@@ -266,14 +266,18 @@
     document.getElementById('meals').innerHTML = html ||
       '<div class="ld">Is kitchen ka menu abhi set nahi hua hai.</div>';
 
-    // WhatsApp par order — login ke bina. Message me kitchen ka naam aur aaj ki
-    // date daal dete hain, aur ek khaali line chhod dete hain jahan customer
-    // apna order likhe. Chhoti kitchen aise hi kaam karti hai: chat me baat,
-    // phir order.
+    // WhatsApp par order — login ke bina.
+    //
+    // ⚠️ Message POORA hona chahiye, aise hi bhej dene layak. Pehle ye
+    // "Mujhe ye chahiye:" par khatam hota tha aur neeche khaali line chhodta tha,
+    // ye soch kar ki customer wahan apna order likhega. Asli phone par ulta
+    // hua: customer ko samajh hi nahi aaya ki usse kya likhna hai. Ab ye ek
+    // seedha vaakya hai — customer bas send dabata hai, aur kitchen aage
+    // poochh leti hai (chat me order aise hi chalta hai).
     var wa = waNumber(vendor.whatsapp);
     if (wa) {
-      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* ka aaj ka menu dekha (' +
-                now.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ').\n\nMujhe ye chahiye:\n';
+      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* se aaj (' +
+                now.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ') ka order karna hai.';
       var el = document.getElementById('waBtn');
       el.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
       el.classList.remove('hidden');

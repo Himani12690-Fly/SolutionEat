@@ -131,7 +131,12 @@ test.describe('Public menu page', () => {
     const href = await page.getAttribute('#waBtn', 'href');
     // 10-digit number 91 ke saath jaana chahiye, warna wa.me link kaam nahi karta.
     expect(href).toContain('https://wa.me/919876543210?text=');
-    expect(decodeURIComponent(href)).toContain('Nest & Nosh');
+    const msg = decodeURIComponent(href.split('?text=')[1]);
+    expect(msg).toContain('Nest & Nosh');
+    // Message aise hi bhejne layak hona chahiye. Pehle ye "Mujhe ye chahiye:"
+    // par khatam hota tha — customer ko samajh nahi aaya ki usse kya likhna hai.
+    expect(msg.trim()).toMatch(/order karna hai\.$/);
+    expect(msg).not.toContain('chahiye:');
     await expect(page.locator('#foot')).toContainText('WhatsApp par login ki zaroorat nahi');
     // Do barabar ke button ek dusre se ladte hain — WhatsApp mile to app/login
     // us ke neeche chhoti line ban jaata hai.
