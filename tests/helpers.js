@@ -490,7 +490,19 @@ function handlePost(state, body) {
     // kar deta tha (p.menu ab bheja hi nahi jaata).
     if (!adminOK) return denied;
     if (!p.day || !p.dayData) return { status:'error', message:'day/dayData required' };
-    state.menu[p.day] = p.dayData;
+    // Real backend mergeMenuDay() chalata hai: editor se ab fixedItems (aur
+    // variants-band meal ka items list) aate hi nahi, aur khaali aane par purana
+    // content mitana nahi hai. Mock isko mirror karta hai, warna "data preserve
+    // hota hai" wala test yahan pass hoke asli backend par fail hota.
+    const oldDay = state.menu[p.day] || {};
+    const merged = {};
+    Object.keys(p.dayData).forEach(k => {
+      const nv = p.dayData[k], ov = oldDay[k];
+      if (Array.isArray(nv)) { merged[k] = nv.length ? nv : (Array.isArray(ov) ? ov : []); return; }
+      merged[k] = { sabziOptions: nv.sabziOptions,
+                    fixedItems: (nv.fixedItems && nv.fixedItems.length) ? nv.fixedItems : ((ov || {}).fixedItems || []) };
+    });
+    state.menu[p.day] = merged;
     return { status:'success', menu: state.menu };
   }
   if (action === 'savemenuweek') {
