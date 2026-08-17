@@ -89,7 +89,7 @@
   .cta { position:fixed; left:0; right:0; bottom:0; background:var(--card);
     border-top:1px solid var(--line); padding:12px 14px calc(12px + env(safe-area-inset-bottom));
     display:flex; gap:10px; justify-content:center; }
-  .cta-in { max-width:520px; width:100%; display:flex; gap:10px; }
+  .cta-in { max-width:520px; width:100%; display:flex; flex-direction:column; gap:6px; }
   .btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
     background:var(--accent); color:#fff; border:0; border-radius:14px; padding:15px;
     font-size:15px; font-weight:900; text-decoration:none; cursor:pointer;
@@ -98,6 +98,12 @@
      accent me rangna ulta hota. Ye button tabhi dikhta hai jab kitchen ka
      WhatsApp number set ho (neeche render me). */
   .btn.wa { background:#25D366; color:#0b3d20; }
+  /* Do barabar ke button ek dusre se ladte hain. Order karne ka asli raasta ek
+     hi hona chahiye; app/login us se chhota. Par jab kitchen ka WhatsApp number
+     na ho, tab login HI ek matra raasta hai — us case me ye class lagti hi
+     nahi aur wahi full button rehta hai. */
+  .btn.sub { background:transparent; color:var(--muted); font-size:12.5px;
+    font-weight:800; padding:6px; text-decoration:underline; }
 
   .ft { text-align:center; color:var(--muted); font-size:11px; font-weight:600;
     padding:16px 0 4px; line-height:1.7; }
@@ -110,8 +116,6 @@
     animation:sp .7s linear infinite; }
   @keyframes sp { to { transform:rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .ld .sp { animation:none; } }
-  .sk { height:104px; background:var(--card); border:1px solid var(--line);
-    border-radius:16px; margin-bottom:12px; opacity:.55; }
   .hidden { display:none !important; }
 </style>
 </head>
@@ -127,12 +131,14 @@
     <button class="hd-share" id="shareBtn" type="button" title="Share" aria-label="Share">🔗</button>
   </div>
   <div id="note" class="note" hidden></div>
-  <div id="meals"><div class="sk"></div><div class="sk"></div></div>
+  <!-- Pehle yahan do khaali grey dabbe the. Ajnabi ko wo "page toot gaya" jaisa
+       lagta hai; likh dena behtar hai ki ho kya raha hai. -->
+  <div id="meals"><div class="ld"><div class="sp"></div>Loading Today's Menu…</div></div>
   <div class="ft" id="foot"></div>
 </div>
 
 <div class="cta"><div class="cta-in">
-  <a class="btn wa hidden" id="waBtn" target="_blank" rel="noopener">💬 WhatsApp</a>
+  <a class="btn wa hidden" id="waBtn" target="_blank" rel="noopener">💬 WhatsApp pe order karo</a>
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
 </div></div>
 
@@ -271,6 +277,11 @@
       var el = document.getElementById('waBtn');
       el.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
       el.classList.remove('hidden');
+      // WhatsApp mil gaya to wahi asli button hai — app/login us ke neeche ek
+      // chhoti line ban jaata hai.
+      var ob = document.getElementById('orderBtn');
+      ob.classList.add('sub');
+      ob.textContent = 'ya app se order karo (login chahiye)';
     }
 
     var ft = [];
