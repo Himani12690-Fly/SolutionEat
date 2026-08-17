@@ -15,7 +15,7 @@ const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
 const HTML = ['index.html', 'customer.html', 'admin.html', 'superadmin.html'];
-const JS = ['shared.js'];
+const JS = ['assets/shared.js'];
 
 let failures = 0;
 let checked = 0;

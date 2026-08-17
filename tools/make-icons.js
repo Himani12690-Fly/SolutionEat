@@ -23,9 +23,9 @@ const ROOT = path.join(__dirname, '..');
 
 // out: kya banana hai | size: kis resolution par | why: kahan use hota hai
 const JOBS = [
-  { src: 'icon-192.png',   out: 'icon-192.webp',   size: 128,
+  { src: 'assets/icons/icon-192.png',   out: 'assets/icons/icon-192.webp',   size: 128,
     why: 'footer badge 18px + zo-avatar 34px — 128 se 3x DPR bhi cover' },
-  { src: 'logo-round.png', out: 'logo-round.webp', size: 192,
+  { src: 'assets/icons/logo-round.png', out: 'assets/icons/logo-round.webp', size: 192,
     why: 'vendor-logo fallback (auth/boot par bada dikh sakta hai) + SW precache' },
 ];
 
