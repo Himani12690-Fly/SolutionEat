@@ -526,6 +526,10 @@
     .nob-btn { margin-top:24px; background:var(--card); color:#e11d48; border:none; border-radius:14px; padding:16px 32px; font-size:16px; font-weight:900; cursor:pointer; }
     /* Ek "Dismiss" ki jagah ab do jawaab: le liya / nahi le sakte. Ghanti inhi
        me se ek dabane par rukti hai, isliye dono thumb ke neeche full width. */
+    /* Login page ka "bina login menu dekho" link — g-btn ka layout, par
+       secondary look, taaki asli login button hi primary lage. */
+    .peek-menu { background:var(--accent-soft); color:var(--accent-dark); border:0;
+      text-decoration:none; justify-content:center; font-weight:800; margin-bottom:12px; }
     .nob-btns { margin-top:24px; display:flex; flex-direction:column; gap:10px; }
     .nob-btns .nob-btn { margin-top:0; width:100%; }
     .nob-btn.no { background:transparent; color:#fff; border:2px solid rgba(255,255,255,0.55); }

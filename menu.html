@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aaj ka Menu</title>
+<meta name="description" content="Aaj ka menu — bina login dekho.">
+<!--
+  PUBLIC MENU PAGE — login ki zaroorat nahi.
+
+  Kyun banaya: pehla-baar wala customer vendor ka link kholta tha aur seedha
+  LOGIN page par pahunchta tha. "Menu dekhne ke liye login kyun?" — sahi sawaal.
+  Ab ye page aaj ka menu dikhata hai, aur order karne par hi login maangta hai.
+
+  Backend me kuch badla nahi: 'bootstrap' action pehle se hi bina auth chalta
+  hai (doGet, koi session check nahi) aur menu + config + vendor brand teenon
+  ek hi request me deta hai.
+
+  Sab kuch INLINE hai — na styles.css, na shared.js. Do wajah:
+    1. Ye page ajnabi logon ko WhatsApp par share hota hai. Unke liye pehli
+       load sabse tez honi chahiye; ek extra request bhi der karti hai.
+    2. shared.js poore app ke DOM ko maan kar chalta hai (ALL_VIEWS, session,
+       update-box wagera). Ek chhote se read-only page ko wo saara samaan
+       nahi chahiye.
+  Palette styles.css ke :root se copy ki hai (404.html bhi wahi karta hai).
+-->
+<style>
+  :root {
+    --accent:#6366f1; --accent-soft:#eef0ff; --accent-dark:#4f46e5;
+    --ink:#1e2233; --muted:#6b7280; --bg:#f5eee0; --card:#ffffff;
+    --line:#e6e2d8; --ok:#15803d; --okbg:#dcfce7; --warn:#b45309; --warnbg:#fef3c7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --accent:#818cf8; --accent-soft:#282a42; --accent-dark:#a5b4fc;
+            --ink:#e7e9f5; --muted:#9ca0b5; --bg:#14151f; --card:#1c1e2b;
+            --line:#2b2e3f; --ok:#4ade80; --okbg:#14321f; --warn:#fbbf24; --warnbg:#3a2c0c; }
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:var(--bg); color:var(--ink); padding:0 0 108px;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    font-size:14px; line-height:1.5; }
+  .wrap { max-width:520px; margin:0 auto; padding:0 14px; }
+
+  /* ── Header ── */
+  .hd { display:flex; align-items:center; gap:12px; padding:18px 0 14px; }
+  .hd img { width:52px; height:52px; border-radius:50%; object-fit:cover;
+    border:1px solid var(--line); background:var(--card); flex:0 0 auto; }
+  .hd .nm { font-size:19px; font-weight:900; letter-spacing:-.2px; }
+  .hd .dt { font-size:12px; color:var(--muted); font-weight:700; margin-top:2px; }
+
+  .note { background:var(--warnbg); color:var(--warn); border-radius:12px;
+    padding:12px 14px; font-size:12.5px; font-weight:800; margin-bottom:14px; }
+
+  /* ── Meal card ── */
+  .mc { background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:14px; margin-bottom:12px; }
+  .mc-hd { display:flex; align-items:baseline; gap:8px; }
+  .mc-ti { font-size:16px; font-weight:900; flex:1; min-width:0; }
+  .mc-pr { font-size:16px; font-weight:900; color:var(--accent-dark); white-space:nowrap; }
+  .mc-tm { font-size:11.5px; color:var(--muted); font-weight:700; margin-top:3px; }
+  .mc-late { display:inline-block; background:var(--warnbg); color:var(--warn);
+    border-radius:20px; padding:2px 9px; font-size:10.5px; font-weight:900; margin-top:6px; }
+
+  .lbl { font-size:11px; font-weight:900; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.4px; margin:14px 0 7px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { background:var(--accent-soft); color:var(--accent-dark); border-radius:20px;
+    padding:5px 11px; font-size:12.5px; font-weight:800; }
+
+  /* ── Variant row ── */
+  .vr { display:flex; gap:10px; padding:10px 0; border-top:1px dashed var(--line); }
+  .vr:first-of-type { border-top:0; }
+  .vr img { width:54px; height:54px; border-radius:10px; object-fit:cover;
+    flex:0 0 auto; background:var(--accent-soft); }
+  .vr .vb { flex:1; min-width:0; }
+  .vr .vn { font-size:13.5px; font-weight:900; }
+  .vr .vi { font-size:11.5px; color:var(--muted); font-weight:600; margin-top:2px; }
+  .vr .vp { font-size:13.5px; font-weight:900; color:var(--accent-dark); white-space:nowrap; }
+
+  /* ── Bottom CTA (thumb zone) ── */
+  .cta { position:fixed; left:0; right:0; bottom:0; background:var(--card);
+    border-top:1px solid var(--line); padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    display:flex; gap:10px; justify-content:center; }
+  .cta-in { max-width:520px; width:100%; display:flex; gap:10px; }
+  .btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
+    background:var(--accent); color:#fff; border:0; border-radius:14px; padding:15px;
+    font-size:15px; font-weight:900; text-decoration:none; cursor:pointer;
+    font-family:inherit; }
+  .btn.gh { flex:0 0 auto; background:transparent; color:var(--accent-dark);
+    border:1.5px solid var(--line); padding:15px 16px; }
+
+  .ft { text-align:center; color:var(--muted); font-size:11px; font-weight:600;
+    padding:16px 0 4px; line-height:1.7; }
+  .ft a { color:var(--muted); }
+
+  /* ── Loader / error ── */
+  .ld { text-align:center; padding:56px 20px; color:var(--muted); font-size:13px; font-weight:700; }
+  .ld .sp { width:34px; height:34px; margin:0 auto 14px; border-radius:50%;
+    border:3px solid var(--accent-soft); border-top-color:var(--accent);
+    animation:sp .7s linear infinite; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .ld .sp { animation:none; } }
+  .sk { height:104px; background:var(--card); border:1px solid var(--line);
+    border-radius:16px; margin-bottom:12px; opacity:.55; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <img id="logo" alt="" src="assets/icons/logo-round.webp"
+         onerror="this.onerror=null;this.src='assets/icons/logo-round.png'">
+    <div>
+      <div class="nm" id="vname">Aaj ka Menu</div>
+      <div class="dt" id="vdate">…</div>
+    </div>
+  </div>
+  <div id="note" class="note" hidden></div>
+  <div id="meals"><div class="sk"></div><div class="sk"></div></div>
+  <div class="ft" id="foot"></div>
+</div>
+
+<div class="cta"><div class="cta-in">
+  <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
+  <button class="btn gh" id="shareBtn" type="button" title="Share">🔗</button>
+</div></div>
+
+<script>
+(function(){
+  'use strict';
+  // App ka default deployment. Vendor ka apna alag deployment ho to bhi PEHLI
+  // request yahi jaati hai — shared deployment registry se vendor resolve karta
+  // hai. (App khud bhi bilkul yahi karta hai: pehla bootstrap default URL par,
+  // uske baad response ke vendor.scriptUrl par switch. Ye page ek hi request
+  // karta hai, isliye switch ki zaroorat nahi.)
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdMXlSwNdqO84OspsUe2jAEeDL-hbwjwLcKL-fo6YObB6Se-dvTxX2iS5BMz2t8bV6/exec';
+  var DEFAULT_VENDOR = 'nestandnosh';
+  var DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+  // Theme app ne localStorage me rakha hota hai — dark-mode user ko cream flash
+  // na dikhe (404.html bhi yahi karta hai).
+  try {
+    var sv = JSON.parse(localStorage.getItem('fbt_theme') || '""');
+    var dark = sv === 'dark' || (sv === 'system' && window.matchMedia &&
+               matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) {
+      var r = document.documentElement.style;
+      r.setProperty('--bg','#14151f');      r.setProperty('--card','#1c1e2b');
+      r.setProperty('--ink','#e7e9f5');     r.setProperty('--muted','#9ca0b5');
+      r.setProperty('--line','#2b2e3f');    r.setProperty('--accent','#818cf8');
+      r.setProperty('--accent-soft','#282a42'); r.setProperty('--accent-dark','#a5b4fc');
+      r.setProperty('--warn','#fbbf24');    r.setProperty('--warnbg','#3a2c0c');
+    }
+  } catch (e) {}
+
+  function slug(){
+    try {
+      var q = new URLSearchParams(location.search);
+      var v = (q.get('v') || q.get('vendorId') || '').trim().toLowerCase();
+      if (v) return v;
+      // /<slug>/menu se aaye ho (404.html redirect) to bhi ?v= lag chuka hota
+      // hai; ye sirf seedhe /menu.html kholne wala fallback hai.
+      var p = location.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+      if (p.length > 1 && p[p.length - 1].indexOf('menu') === 0) return p[0].toLowerCase();
+      return DEFAULT_VENDOR;
+    } catch (e) { return DEFAULT_VENDOR; }
+  }
+  var VID = slug();
+  document.getElementById('orderBtn').href = '/?v=' + encodeURIComponent(VID);
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  // Sab kuch IST me — kitchen wahi chalti hai, browser ka timezone kuch bhi ho.
+  function istNow(){ return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kolkata' })); }
+  function ymd(d){
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function mins(hhmm){
+    var m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm || ''));
+    return m ? (parseInt(m[1],10) * 60 + parseInt(m[2],10)) : null;
+  }
+  function clock(hhmm){
+    var t = mins(hhmm); if (t === null) return '';
+    var h = Math.floor(t/60), mm = String(t%60).padStart(2,'0');
+    var ap = h >= 12 ? 'PM' : 'AM'; var h12 = h % 12 || 12;
+    return h12 + ':' + mm + ' ' + ap;
+  }
+
+  function fail(msg, sub){
+    document.getElementById('meals').innerHTML =
+      '<div class="ld">' + esc(msg) + (sub ? '<br><span style="font-weight:600;">' + esc(sub) + '</span>' : '') + '</div>';
+  }
+
+  function render(d){
+    var cfg = d.config || {}, menu = d.menu || {}, vendor = d.vendor || {};
+    var now = istNow();
+    var day = DAYS[now.getDay()];
+    var today = menu[day] || {};
+
+    if (vendor.name) { document.getElementById('vname').textContent = vendor.name; document.title = vendor.name + ' — Aaj ka Menu'; }
+    if (vendor.logo) document.getElementById('logo').src = vendor.logo;
+    document.getElementById('vdate').textContent = 'Aaj ka menu · ' +
+      now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
+
+    // Kitchen band — do tarah se: aaj ki date closedDates me hai, ya vendor ne
+    // "temporarily closed" kiya hua hai. Menu phir bhi dikhate hain (customer ko
+    // pata chalna chahiye kya milta hai), bas upar saaf likh dete hain.
+    var note = '';
+    if (cfg.tempClosed === true) note = '⚠️ Kitchen abhi orders nahi le rahi. ' + (cfg.tempClosedMsg || '');
+    else if ((cfg.closedDates || []).indexOf(ymd(now)) >= 0) note = '⚠️ Aaj kitchen band hai.';
+    if (note) { var nEl = document.getElementById('note'); nEl.textContent = note.trim(); nEl.hidden = false; }
+
+    var nowMins = now.getHours() * 60 + now.getMinutes();
+    var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
+      var key = mt.key;
+      var price = (cfg.prices || {})[key] || mt.price || 0;
+      var s = '<div class="mc"><div class="mc-hd"><div class="mc-ti">' +
+              esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) + '</div>' +
+              (price ? '<div class="mc-pr">₹' + price + '</div>' : '') + '</div>';
+      if (mt.windowStart && mt.windowEnd)
+        s += '<div class="mc-tm">🕐 ' + esc(clock(mt.windowStart)) + ' – ' + esc(clock(mt.windowEnd)) +
+             (mt.cutoff ? ' · order by ' + esc(clock(mt.cutoff)) +
+               // cutoffAheadDay = cutoff PICHHLI raat ka hai. Ye bina likhe
+               // "7 AM breakfast, order by 10 PM" padhne me ulta lagta hai.
+               (mt.cutoffAheadDay ? ' (ek raat pehle)' : '') : '') + '</div>';
+      // Cutoff nikal gaya — sirf usi meal ke liye jiska cutoff USI din ka hai.
+      // cutoffAheadDay wale meal ka hisaab app ke andar hota hai; yahan uske
+      // baare me kuch keh dena galat ho sakta hai, isliye chup rehte hain.
+      var cut = mins(mt.cutoff);
+      if (cut !== null && !mt.cutoffAheadDay && nowMins > cut)
+        s += '<div class="mc-late">Aaj ka time nikal gaya — kal ke liye order karo</div>';
+
+      var rec = today[key];
+      // hasVariants:false wale meal ka menu flat list hai (jaise breakfast),
+      // baaki ka { sabziOptions }.
+      var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
+      if (sabzi.length) {
+        s += '<div class="lbl">' + (Array.isArray(rec) ? 'Aaj' : 'Aaj ki sabzi') + '</div><div class="chips">' +
+             sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join('') + '</div>';
+      }
+      var vs = ((cfg.variants || {})[key]) || [];
+      if (vs.length) {
+        s += '<div class="lbl">Options</div>';
+        s += vs.map(function(v){
+          return '<div class="vr">' +
+            // Vendor ki photo Drive par hoti hai. Link toot jaaye to khaali dabba
+            // dikhne se accha hai ki image hi hat jaaye.
+            (v.img ? '<img src="' + esc(v.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
+            '<div class="vb"><div class="vn">' + esc(v.name || '') + '</div>' +
+            '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div></div>' +
+            (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') + '</div>';
+        }).join('');
+      }
+      return s + '</div>';
+    }).join('');
+
+    document.getElementById('meals').innerHTML = html ||
+      '<div class="ld">Is kitchen ka menu abhi set nahi hua hai.</div>';
+
+    var ft = [];
+    if (cfg.fssai) ft.push('FSSAI: ' + esc(cfg.fssai));
+    if (cfg.township) ft.push(esc(cfg.township));
+    ft.push('Order karne ke liye login zaroori hai');
+    document.getElementById('foot').innerHTML = ft.join(' · ');
+  }
+
+  fetch(SCRIPT_URL + '?action=bootstrap&vendorId=' + encodeURIComponent(VID))
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j || j.status !== 'success') { fail('Ye kitchen mili nahi.', 'Link dobara check karo.'); return; }
+      render(j);
+    })
+    .catch(function(){ fail('Menu load nahi hua.', 'Internet check karke page refresh karo.'); });
+
+  document.getElementById('shareBtn').onclick = function(){
+    var url = location.origin + '/' + VID + '/menu';
+    var title = document.getElementById('vname').textContent;
+    if (navigator.share) { navigator.share({ title: title, text: 'Aaj ka menu dekho', url: url }).catch(function(){}); return; }
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(function(){ this.textContent = '✓'; }.bind(this)).catch(function(){});
+    }
+  };
+})();
+</script>
+</body>
+</html>
