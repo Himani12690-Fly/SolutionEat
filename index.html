@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=e0d1cb9018">
+  <link rel="stylesheet" href="assets/styles.css?v=93c772bc38">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1370,7 +1370,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=e0d1cb9018"></script>
+  <script src="assets/shared.js?v=93c772bc38"></script>
 <script>
   (function(){
     try{
@@ -1855,14 +1855,19 @@
     const box=document.getElementById('modeChip'); if(!box)return;
     const m=modesAvailable();
     const modeCount=(m.home?1:0)+(m.office?1:0)+(m.takeaway?1:0);
-    if(modeCount<2){ box.innerHTML=''; return; }
+    // Pehle yahan `if(modeCount<2){ box.innerHTML=''; return; }` tha — yani jab
+    // vendor ke paas ek hi mode ho to chip poori tarah gayab. Takeaway-only
+    // kitchen par customer ko kabhi pata hi nahi chalta tha ki khana lene khud
+    // jaana hai. Ab chip hamesha dikhta hai; sirf "Change" link tab hi aata hai
+    // jab sach me badalne ko kuch ho.
+    if(!modeCount){ box.innerHTML=''; return; }
     const a=storeGet('fbt_addr')||{};
     const isOff=(deliveryType==='office'), isTa=isTakeaway();
     const line=isTa ? '' : (isOff ? ((a.company||'')+(a.empId?(' · '+a.empId):'')) : ((a.society||'')+(a.flatNo?(' · '+a.flatNo):'')));
     box.innerHTML=`<div class="mode-chip">
       <span class="mch-i">${isTa?'🥡':(isOff?'🏢':'🏠')}</span>
       <span class="mch-x"><span class="mch-t">${isTa?t('dtTakeaway'):(isOff?t('dtOffice'):t('dtHome'))}</span><div class="mch-s">${line||t(isTa?'dtTakeawaySub':(isOff?'dtOfficeSub':'dtHomeSub'))}</div></span>
-      <span class="mch-c" onclick="openModeModal(true)">${t('modeChange')}</span>
+      ${modeCount>1?`<span class="mch-c" onclick="openModeModal(true)">${t('modeChange')}</span>`:''}
     </div>`;
   }
   function companyByName(n){ return (CFG.companies||[]).find(c=>String(c.name).toLowerCase().trim()===String(n||'').toLowerCase().trim())||null; }
