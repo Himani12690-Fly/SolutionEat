@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=6083c30051">
+  <link rel="stylesheet" href="assets/styles.css?v=4abe290668">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1003,7 +1003,13 @@
     <div class="nob-name" id="nobName"></div>
     <div class="nob-info" id="nobInfo"></div>
     <div class="nob-total" id="nobTotal"></div>
-    <button class="nob-btn" onclick="dismissNewOrder()">✓ Dismiss &amp; View Orders</button>
+    <!-- Pehle sirf "Dismiss" tha — ghanti band ho jaati thi bina order handle kiye.
+         Ab do saaf raaste hain, aur ghanti inhi me se ek dabane par hi rukti hai. -->
+    <div class="nob-btns">
+      <button class="nob-btn ok" onclick="answerNewOrder('Preparing')">&#9989; Order le liya</button>
+      <button class="nob-btn no" onclick="answerNewOrder('Cancelled')">&#10060; Nahi le sakte</button>
+    </div>
+    <div class="nob-later" onclick="dismissNewOrder()">Abhi list dekho &mdash; ghanti bajti rahegi</div>
   </div>
 </div>
   <div class="sheet-overlay hidden" id="modeModal">
@@ -1159,7 +1165,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=6083c30051"></script>
+  <script src="assets/shared.js?v=4abe290668"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -5236,7 +5242,14 @@
     }catch(e){ }
   }
 
-  let alertTimer=null, ringCtx=null, ringTimer=null;
+  // Ring ab <audio loop> se bajti hai, WebAudio+setInterval se nahi. Wajah:
+  // background/screen-off me browser setInterval ko ~1/min tak throttle kar deta
+  // hai (ghanti ruk jaati thi), par chal rahe media ko nahi rokta — loop wala
+  // audio element hi ek tareeka hai jo screen band hone par bhi bajta rehta hai.
+  let alertTimer=null, ringTimer=null;
+  let ringAudio=null, ringUrl='', ringWatch=null, ringStartedAt=0, ringUnlocked=false;
+  const RING_ROWS_KEY='fbt_ring_rows';   // jin orders par ghanti abhi baaki hai
+  const RING_MAX_MS=5*60*1000;           // atki hui ghanti se bachne ka hard cap
   let vendorNotifCache=[], vendorNotifTimer=null;
   // Customer side jaisa hi: server ko last-seen timestamp bhejo, sirf naya wapas
   // aayega. Isse 60s -> 15s karna sasta pad gaya.
@@ -5340,21 +5353,91 @@
       renderVendorNotifList();
     }
   }
-  function startRing(){
-    stopRing();
+  // 2 second ka ring cycle WAV me bana kar loop kar dete hain. Koi file ship nahi
+  // ki — offline cache, version stamping aur ek extra network request, teeno bach
+  // gaye, aur ghanti offline bhi bajti hai.
+  function ringSrc(){
+    if(ringUrl) return ringUrl;
+    const sr=8000, n=sr*2, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+    const put=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+    put(0,'RIFF'); v.setUint32(4, 36+n*2, true); put(8,'WAVEfmt ');
+    v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+    v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+    put(36,'data'); v.setUint32(40, n*2, true);
+    for(let i=0;i<n;i++){
+      const t=i/sr; let a=0;
+      const beep=(s,e,f)=>{ if(t>=s&&t<e) a+=Math.sin(2*Math.PI*f*t)*Math.min(1,(t-s)*40,(e-t)*40)*0.6; };
+      beep(0,0.40,880); beep(0.50,0.90,880); beep(1.00,1.40,988);
+      v.setInt16(44+i*2, Math.max(-1,Math.min(1,a))*32767, true);
+    }
+    try{ ringUrl=URL.createObjectURL(new Blob([buf],{type:'audio/wav'})); }catch(e){}
+    return ringUrl;
+  }
+  // Autoplay policy: pehli baar bajane ke liye user gesture chahiye, warna order
+  // aane par play() chup-chaap reject ho jaata. Login ka tap hi wo gesture hai —
+  // wahan element ko chup-chaap play/pause karke "unlock" kar lete hain.
+  function ringEl(){
+    if(!ringAudio){ try{ ringAudio=new Audio(ringSrc()); ringAudio.loop=true; ringAudio.volume=1; }catch(e){} }
+    return ringAudio;
+  }
+  function unlockRing(){
+    if(ringUnlocked) return;
+    const a=ringEl(); if(!a) return;
     try{
-      ringCtx = ringCtx || new (window.AudioContext||window.webkitAudioContext)();
-      if(ringCtx.resume) ringCtx.resume();
-      const beep=(t,f)=>{ const o=ringCtx.createOscillator(), g=ringCtx.createGain(); o.type='square'; o.frequency.value=f; o.connect(g); g.connect(ringCtx.destination); g.gain.setValueAtTime(0.001,t); g.gain.exponentialRampToValueAtTime(0.6,t+0.02); g.gain.exponentialRampToValueAtTime(0.001,t+0.38); o.start(t); o.stop(t+0.42); };
-      const cycle=()=>{ try{ const t=ringCtx.currentTime; beep(t,880); beep(t+0.5,880); beep(t+1.0,988); navigator.vibrate&&navigator.vibrate([350,150,350]); }catch(e){} };
-      cycle(); ringTimer=setInterval(cycle,1800);
+      const p=a.play();
+      if(p&&p.then) p.then(()=>{ a.pause(); a.currentTime=0; ringUnlocked=true; }).catch(()=>{});
     }catch(e){}
   }
-  function stopRing(){ if(ringTimer){ clearInterval(ringTimer); ringTimer=null; } }
+  function startRing(){
+    if(!ringStartedAt) ringStartedAt=Date.now();
+    const a=ringEl();
+    if(a){
+      try{
+        const p=a.play();
+        // Gesture nahi mila tha to pehle tap par dobara koshish.
+        if(p&&p.catch) p.catch(()=>{ document.addEventListener('pointerdown', function once(){ document.removeEventListener('pointerdown', once); try{ a.play(); }catch(e){} }); });
+      }catch(e){}
+    }
+    // Vibration audio ke saath chalti hai — phone silent pe ho tab yahi bachata hai.
+    if(!ringTimer){
+      const buzz=()=>{ try{ navigator.vibrate&&navigator.vibrate([350,150,350]); }catch(e){} };
+      buzz(); ringTimer=setInterval(buzz,1800);
+    }
+    if(!ringWatch) ringWatch=setInterval(ringWatchTick,1000);
+  }
+  function stopRing(){
+    if(ringTimer){ clearInterval(ringTimer); ringTimer=null; }
+    if(ringWatch){ clearInterval(ringWatch); ringWatch=null; }
+    ringStartedAt=0;
+    try{ if(ringAudio){ ringAudio.pause(); ringAudio.currentTime=0; } }catch(e){}
+    try{ navigator.vibrate&&navigator.vibrate(0); }catch(e){}
+  }
+  // Ghanti tab band ho jab order sach me accept ya reject ho jaaye — sirf banner
+  // hatane se nahi. Isliye row numbers yaad rakhte hain (reload/app-kill ke baad
+  // bhi, isliye storage me) aur har second dekhte hain ki wo abhi Pending hai ya nahi.
+  function ringRows(){ try{ return JSON.parse(storeGet(RING_ROWS_KEY)||'[]')||[]; }catch(e){ return []; } }
+  function setRingRows(a){ try{ storeSet(RING_ROWS_KEY, JSON.stringify((a||[]).slice(-20))); }catch(e){} }
+  function clearRingRow(row){ setRingRows(ringRows().filter(r=>r!==row)); }
+  // ringWatch ek top-level `let` hai — window par nahi aata, isliye tests ke liye
+  // ye chhota sa probe. "Ghanti abhi chal rahi hai ya nahi" ka ek hi sach.
+  function ringActive(){ return !!ringWatch; }
+  function ringWatchTick(){
+    const rows=ringRows();
+    if(!rows.length){ stopRing(); return; }
+    if(ringStartedAt && Date.now()-ringStartedAt>RING_MAX_MS){ setRingRows([]); stopRing(); return; }
+    // Band sirf tab jab row list me MILE aur Pending na ho. Na mile to bajti rahe —
+    // ho sakta hai vendor ne kisi doosri date ka tab khol rakha ho.
+    const left=rows.filter(r=>{ const o=adminOrders.find(x=>x.row===r); return !o || o.status==='Pending'; });
+    if(left.length!==rows.length) setRingRows(left);
+    if(!left.length) stopRing();
+  }
   function initOrderAlerts(){
     try{ if(window.Notification&&Notification.permission!=='granted') Notification.requestPermission(); }catch(e){}
-    try{ ringCtx = ringCtx || new (window.AudioContext||window.webkitAudioContext)(); if(ringCtx.resume) ringCtx.resume(); }catch(e){}
+    unlockRing();
     if(!adminCreds){ return; }
+    // App band thi / phone reboot hua — jo order tab tak accept-reject nahi hua,
+    // uski ghanti wapas se shuru honi chahiye.
+    if(ringRows().length) startRing();
     apiPost({action:'lastorder', user:adminCreds.user, pass:adminCreds.pass})
       .then(j=>{ if(j.status==='success') storeSet('fbt_lastrow', j.lastRow||0); })
       .catch(()=>{})
@@ -5370,14 +5453,24 @@
         const prev=parseInt(storeGet('fbt_lastrow')||0,10)||0;
         if(j.lastRow>prev){
           storeSet('fbt_lastrow',j.lastRow);
-          showNewOrderAlert(j.latest||{}, j.lastRow-prev);
+          showNewOrderAlert(j.latest||{}, j.lastRow-prev, j.lastRow);
           loadOrders();
           loadUsers();
         }
       }).catch(()=>{});
   }
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && adminCreds) checkNewOrders(); });
-  function showNewOrderAlert(o,count){
+  // Service worker se push ka signal. Background me 20s wala poll throttle ho
+  // jaata hai (browser timers slow kar deta hai), isliye push seedha bata deta
+  // hai ki naya order aa gaya — ghanti ka intezaar 20s nahi rehta.
+  try{
+    navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', function(ev){
+      const d=(ev.data&&ev.data.fbtPush)||null;
+      if(d && adminCreds && /^(new_order|order_edited)/.test(String(d.type||''))) checkNewOrders();
+    });
+  }catch(e){}
+  function showNewOrderAlert(o,count,row){
+    if(row){ const rs=ringRows(); if(rs.indexOf(row)<0){ rs.push(row); setRingRows(rs); } }
     startRing();
     try{ if(window.Notification&&Notification.permission==='granted') new Notification('🆕 New Order — '+(o.total||''),{ body:(o.name||'')+' · '+(o.society||'')+' '+(o.flat||''), tag:'fbt-order' }); }catch(e){}
     const nm=document.getElementById('nobName'); if(nm)nm.textContent=o.name||'New order';
@@ -5385,7 +5478,34 @@
     const tt=document.getElementById('nobTotal'); if(tt)tt.textContent=o.total||'';
     const b=document.getElementById('newOrderBanner'); if(b)b.classList.remove('hidden');
   }
-  function dismissNewOrder(){ stopRing(); const b=document.getElementById('newOrderBanner'); if(b)b.classList.add('hidden'); setOrderDate(0); }
+  function hideNewOrderBanner(){ const b=document.getElementById('newOrderBanner'); if(b)b.classList.add('hidden'); setOrderDate(0); }
+  // Banner se seedha accept/reject. Banner ke paas order ka phone nahi hota
+  // (lastorder sirf naam/total bhejta hai) aur server setStatus par phone match
+  // karta hai — isliye pehle orders load karke asli order dhoondte hain, phir
+  // wahi updateStatus() chalate hain jo list me chalta hai.
+  function answerNewOrder(status){
+    const rows=ringRows();
+    hideNewOrderBanner();
+    if(!rows.length){ stopRing(); return; }
+    const act=()=>{
+      let missed=0;
+      rows.forEach(r=>{
+        const o=adminOrders.find(x=>x.row===r);
+        if(o && o.status==='Pending'){ updateStatus(r,status); return; }
+        // List me mila hi nahi — order kisi aur date ka hai (list sirf chuni hui
+        // date ki hoti hai). Ghanti band karo, par chup-chaap nahi: vendor ko
+        // pata hona chahiye ki wo order abhi handle nahi hua.
+        if(!o) missed++;
+        clearRingRow(r);
+      });
+      if(missed) showToast('🔔 Ghanti band. Ye order aaj ki list me nahi hai — date badal kar dekh lo.','error');
+      ringWatchTick();
+    };
+    if(rows.every(r=>adminOrders.find(x=>x.row===r))) act();
+    else loadOrders(act);
+  }
+  // Purana naam — ab ye sirf banner hataata hai, ghanti nahi rokta.
+  function dismissNewOrder(){ hideNewOrderBanner(); }
   function updateStatus(row,status){ const o=adminOrders.find(x=>x.row===row); if(!o||!adminCreds)return; const old=o.status, oldMs=o.mealStatus;
     o.status=status;
     o.mealStatus=Object.assign({},o.mealStatus||{},{breakfast:status,lunch:status,dinner:status});

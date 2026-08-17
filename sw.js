@@ -13,7 +13,7 @@
 // importScripts fail ho sakta hai — us case me bhi offline cache poora kaam karta
 // rehna chahiye, isliye push wala hissa alag try/catch me isolate hai.
 
-const CACHE = 'fbt-v41';
+const CACHE = 'fbt-v42';
 // './images/meal.jpg' — lunch/dinner ka default photo. Pehle ye 94 KB ki JPEG
 // chaaron HTML files ke ANDAR base64 me padi thi, isliye har user har load par
 // use utha leta tha chahe wo screen par dikhe ya nahi (ye sabse aakhri fallback
@@ -132,6 +132,45 @@ const FIREBASE_CONFIG = {
 
 let __pushReady = false;
 
+// Notification banane ki ek hi jagah — firebase wala handler aur raw fallback,
+// dono yahi bulate hain. Do jagah likhne se pehle dono alag-alag behave karte the.
+//
+// Naye order ke liye teen cheezein extra:
+//   requireInteraction — notification khud se gayab na ho, vendor ke haath lagne
+//                        tak screen par rahe.
+//   tag + renotify     — har reminder purani notification ki JAGAH aaye (dher
+//                        nahi lagega) par awaaz phir bhi kare.
+//   vibrate            — phone silent par ho tab bhi pata chale.
+//
+// ⚠️ Ye options tabhi lagte hain jab server DATA-only message bheje. Agar message
+// me "notification" block hai to Android use khud dikhata hai aur service worker
+// ko poochta tak nahi — na loop, na requireInteraction. Apps Script me naye order
+// wala push isliye data-only bhejna zaroori hai.
+function showPush(payload) {
+  const p = payload || {};
+  const n = p.notification || {};
+  const d = p.data || {};
+  const title = n.title || d.title || 'Nest & Nosh';
+  const body = n.body || d.body || '';
+  const isOrder = /^(new_order|order_edited)/.test(String(d.type || ''));
+  const opts = {
+    body: body,
+    icon: 'assets/icons/logo-round.webp',
+    data: d,
+    tag: isOrder ? 'fbt-new-order' : undefined,
+    renotify: isOrder || undefined,
+    requireInteraction: isOrder || undefined,
+    vibrate: isOrder ? [400, 200, 400, 200, 400] : undefined
+  };
+  // App khuli par background me ho to timers throttle ho jaate hain aur uska
+  // 20s wala poll ruk jaata hai. Push yahan seedha bata deta hai, taaki ghanti
+  // turant baje — page khud decide karta hai kya karna hai.
+  const tell = self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then(function (list) { list.forEach(function (c) { try { c.postMessage({ fbtPush: d }); } catch (_) {} }); })
+    .catch(function () {});
+  return Promise.all([self.registration.showNotification(title, opts), tell]);
+}
+
 // ⚠️ importScripts try/catch ke ANDAR hai. Pehle ye top-level pe khula pada tha —
 // offline install ya gstatic down hone pe ye throw karta aur POORA SW install fail
 // ho jaata, yani offline cache bhi chala jaata. Ab worst case sirf push miss hota hai.
@@ -143,12 +182,7 @@ try {
   // App band ho (background / tab closed) tab bhi ye push dikhata hai. Foreground
   // (app khula) ke liye index.html ka onMessage() handler chalta hai.
   messaging.onBackgroundMessage(function (payload) {
-    const n = payload.notification || {};
-    self.registration.showNotification(n.title || 'Nest & Nosh', {
-      body: n.body || '',
-      icon: 'assets/icons/logo-round.webp',
-      data: payload.data || {}
-    });
+    showPush(payload);
   });
   __pushReady = true;
 } catch (e) {
@@ -163,12 +197,7 @@ if (!__pushReady) {
     let p = {};
     try { p = e.data ? e.data.json() : {}; }
     catch (_) { p = { notification: { body: e.data ? e.data.text() : '' } }; }
-    const n = p.notification || {};
-    e.waitUntil(self.registration.showNotification(n.title || 'Nest & Nosh', {
-      body: n.body || '',
-      icon: 'assets/icons/logo-round.webp',
-      data: p.data || {}
-    }));
+    e.waitUntil(showPush(p));
   });
 }
 
