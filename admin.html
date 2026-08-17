@@ -33,7 +33,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=4abe290668">
+  <link rel="stylesheet" href="assets/styles.css?v=815155c19f">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1165,7 +1165,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=4abe290668"></script>
+  <script src="assets/shared.js?v=815155c19f"></script>
 <script>
   const APP_ROLE = 'admin';
   (function(){
@@ -5667,10 +5667,16 @@
   const DAY_LABELS={monday:'Monday',tuesday:'Tuesday',wednesday:'Wednesday',thursday:'Thursday',friday:'Friday',saturday:'Saturday',sunday:'Sunday'};
   function renderMenuEditorMeals(){
     const box=document.getElementById('menuEditorMeals'); if(!box) return;
+    // Pehle yahan har meal ke 2 box the: "Sabzi Options" aur "Fixed Items"
+    // (Roti 4 / 1 Sabzi / Salad), aur variants-band meal ka apna "Items" box.
+    // Do wajah se hataye:
+    //   1. fixedItems poore app me kahin DIKHTA hi nahi tha — sirf likha jaata tha.
+    //   2. Wahi cheez variants me pehle se likhi hoti hai (variant ke items).
+    // Ab is din ke liye badalne wali ek hi cheez bachi hai — sabzi.
     box.innerHTML=MEALS.map(m=>{
       const mt=mealType(m)||{}; const label=(mt.emoji||'🍽️')+' '+(mt.title||m);
-      if(mt.hasVariants===false) return `<div class="edit-label">${esc(label)} Items <span class="hint">(one per line)</span></div><textarea id="ed-${m}" rows="4"></textarea>`;
-      return `<div class="edit-label">${esc(label)} — Sabzi Options</div><textarea id="ed-${m}Sabzi" rows="3"></textarea><div class="edit-label">${esc(label)} — Fixed Items</div><textarea id="ed-${m}Fixed" rows="4"></textarea>`;
+      if(mt.hasVariants===false) return `<div class="edit-label">${esc(label)} <span class="hint">— items Variants me set hote hain</span></div>`;
+      return `<div class="edit-label">${esc(label)} — Sabzi Options <span class="hint">(one per line)</span></div><textarea id="ed-${m}Sabzi" rows="3"></textarea>`;
     }).join('');
   }
   function loadEditorDay(day){
@@ -5688,10 +5694,15 @@
     const btn=document.getElementById('saveMenuBtn'); if(btn) btn.textContent='💾 Save '+(DAY_LABELS[day]||day); }
   function readEditorInto(day){
     const L=id=>{ const el=document.getElementById(id); return el?el.value.split('\n').map(s=>s.trim()).filter(Boolean):[]; };
+    // Jin fields ko editor se hata diya (fixedItems, aur variants-band meal ka
+    // items list) unka purana data waisa hi le jaate hain. UI badalne se vendor
+    // ka likha hua content mit jaana galat hoga — server bhi wahi karta hai.
+    const prev=adminMenuWorking[day]||{};
     const rec={};
     MEALS.forEach(m=>{
       const mt=mealType(m)||{};
-      rec[m] = mt.hasVariants===false ? L('ed-'+m) : { sabziOptions:L('ed-'+m+'Sabzi'), fixedItems:L('ed-'+m+'Fixed') };
+      if(mt.hasVariants===false) rec[m]=Array.isArray(prev[m])?prev[m]:[];
+      else rec[m]={ sabziOptions:L('ed-'+m+'Sabzi'), fixedItems:((prev[m]||{}).fixedItems)||[] };
     });
     adminMenuWorking[day]=rec;
   }
@@ -5700,8 +5711,17 @@
   function saveMenu(){
     readEditorInto(adminPrevDay);
     const day=adminPrevDay, d=adminMenuWorking[day], lbl=DAY_LABELS[day]||day;
-    if(!d.breakfast.length||!d.lunch.sabziOptions.length||!d.lunch.fixedItems.length||!d.dinner.sabziOptions.length||!d.dinner.fixedItems.length){
-      showToast('⚠️ '+lbl+' menu incomplete.','warning'); return;
+    // Ab sirf Sabzi Options zaroori hai. Pehle breakfast/lunch/dinner teeno ke
+    // items + fixedItems HARDCODED required the — ye teen keys ke bahar ka koi
+    // custom meal type is check me aata hi nahi tha, aur do fields to ab form
+    // me hi nahi hain.
+    const missing=MEALS.filter(m=>{
+      const mt=mealType(m)||{};
+      if(mt.enabled===false||mt.hasVariants===false) return false;
+      return !(((d[m]||{}).sabziOptions||[]).length);
+    }).map(m=>(mealType(m)||{}).title||m);
+    if(missing.length){
+      showToast('⚠️ '+lbl+': '+missing.join(', ')+' ke sabzi options bharo.','warning'); return;
     }
     const btn=document.getElementById('saveMenuBtn'); const oldText=btn.textContent; btn.textContent='⏳ Saving...'; btn.disabled=true;
     const notifyEl=document.getElementById('cfg-notifyMenuUpdate');

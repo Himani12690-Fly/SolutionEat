@@ -193,7 +193,7 @@ test.describe('Admin menu & config', () => {
     expect(state.menu.monday.lunch.sabziOptions).toEqual(['Kadhi','Bhindi Masala']);
   });
 
-  test('khaali menu save nahi hota', async ({ page }) => {
+  test('sabzi options khaali ho to save nahi hota', async ({ page }) => {
     const state = freshState();
     await openApp(page, { state });
     await adminLogin(page);
@@ -202,7 +202,40 @@ test.describe('Admin menu & config', () => {
     await page.fill('#ed-lunchSabzi', '');
     await page.click('#saveMenuBtn');
     await page.waitForTimeout(300);
-    await expect(page.locator('#toast')).toContainText('incomplete');
+    // Message ab batata hai KIS meal ka kya missing hai — pehle sirf
+    // "menu incomplete" tha.
+    await expect(page.locator('#toast')).toContainText('sabzi options');
+  });
+
+  // Menu editor me pehle har meal ke 2-3 box the. "Fixed Items" (Roti 4 /
+  // 1 Sabzi / Salad) poore app me kahin dikhta hi nahi tha, aur wahi cheez
+  // variants me likhi hoti hai — isliye wo aur breakfast ka items box hata
+  // diye. Ek din ke liye badalne wali ek hi cheez bachi: sabzi.
+  test('menu editor me sirf sabzi options ke box hain', async ({ page }) => {
+    await openApp(page);
+    await adminLogin(page);
+    await page.evaluate(() => window.adminBnGo('menu'));
+    await page.waitForTimeout(300);
+    await expect(page.locator('#ed-lunchSabzi')).toHaveCount(1);
+    await expect(page.locator('#ed-dinnerSabzi')).toHaveCount(1);
+    await expect(page.locator('#ed-lunchFixed')).toHaveCount(0);
+    await expect(page.locator('#ed-dinnerFixed')).toHaveCount(0);
+    await expect(page.locator('#ed-breakfast')).toHaveCount(0);
+  });
+
+  test('hate hue fields ka purana data save par mitta nahi', async ({ page }) => {
+    const state = freshState();
+    await openApp(page, { state });
+    await adminLogin(page);
+    await page.evaluate(() => window.adminBnGo('menu'));
+    await page.waitForTimeout(300);
+    await page.fill('#ed-lunchSabzi', 'Kadhi');
+    await page.click('#saveMenuBtn');
+    await page.waitForTimeout(500);
+    // UI se field hatane ka matlab vendor ka likha hua content udana nahi hai.
+    expect(state.menu.monday.lunch.sabziOptions).toEqual(['Kadhi']);
+    expect(state.menu.monday.lunch.fixedItems).toEqual(['Jeera Rice','Roti (4)']);
+    expect(state.menu.monday.breakfast).toEqual(['Poha','Chai']);
   });
 
   test('price update customer side pe dikhta hai', async ({ page }) => {

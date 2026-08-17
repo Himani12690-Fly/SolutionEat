@@ -32,7 +32,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=4abe290668">
+  <link rel="stylesheet" href="assets/styles.css?v=815155c19f">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -670,42 +670,59 @@
       <div class="pf-box">
         <div style="font-size:14px;font-weight:900;margin-bottom:12px;" id="svFormTitle">➕ Naya Vendor Add Karo</div>
 
+        <!-- Naya kitchen banane ke liye SIRF ye 4 cheezein maangi jaati hain.
+             Sheet, admin login, config — sab server khud bana leta hai. Pehle
+             yahan 8 field the aur sabse mushkil wala insaan ke haath me tha:
+             Google Sheet khud banao, ID copy karo, script account ko Editor
+             access do. Wahi step sabse zyada fail hota tha. -->
         <div class="cfg-acc" id="svfa-identity">
           <div class="cfg-acc-hd" onclick="svFormToggle('identity')">
             <span class="cfg-acc-ic">🏢</span>
-            <span class="cfg-acc-tx"><b>Business Info</b><i>Naam, areas, cuisine, logo</i></span>
+            <span class="cfg-acc-tx"><b>Kitchen</b><i>FSSAI, naam, logo — bas itna</i></span>
             <span class="cfg-acc-car"></span>
           </div>
           <div class="cfg-acc-bd hidden" id="svfp-identity">
-        <div class="form-group" style="margin-top:16px;"><label>Business Naam</label><input type="text" id="svName" placeholder="e.g. Rasoi Express"></div>
-        <div class="form-group"><label>Vendor Slug — sirf chhota naam, poora URL nahi</label><input type="text" id="svId" placeholder="shyamrasoi"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Sirf naam likho — jaise <b>shyamrasoi</b>. (<b>?v=</b> mat likhna, wo apne aap lagta hai)</div></div>
-        <div class="form-group"><label>📍 Areas — discovery me yahi dikhega</label><input type="text" id="svAreas" placeholder="Gota, Chandkheda, Vastrapur"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Comma se alag karo. Customer isi se apne area ki kitchens dhoondega.</div></div>
-        <div class="form-group"><label>🍽️ Cuisine (optional)</label><input type="text" id="svCuisine" placeholder="Gujarati, Punjabi, Home-style"></div>
+        <div class="form-group" style="margin-top:16px;"><label>1️⃣ FSSAI Registration No.</label><input type="text" id="svFssaiNew" placeholder="e.g. 20724XXXXXXXXXX"></div>
+        <div class="form-group"><label>2️⃣ Kitchen ka chhota naam (link me yahi aayega)</label><input type="text" id="svId" placeholder="shyamrasoi"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Sirf lowercase letters/numbers — jaise <b>shyamrasoi</b>. Link banega: <b>mytiffin.cloud/shyamrasoi</b></div></div>
+        <div class="form-group"><label>3️⃣ Display naam (customer ko yahi dikhega)</label><input type="text" id="svName" placeholder="e.g. Shyam Rasoi"></div>
         <div class="form-group">
-          <label>🖼️ Vendor Icon/Logo (optional)</label>
+          <label>4️⃣ Logo</label>
           <div style="display:flex;align-items:center;gap:10px;">
             <img id="svLogoPreview" src="assets/icons/logo-round.webp" onerror="this.onerror=null;this.src='assets/icons/logo-round.png'" alt="" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;">
-            <button type="button" class="admin-btn" style="flex:0 0 auto;width:auto;padding:8px 14px;" onclick="pickVendorLogo()">📤 Upload Icon</button>
+            <button type="button" class="admin-btn" style="flex:0 0 auto;width:auto;padding:8px 14px;" onclick="pickVendorLogo()">📤 Upload Logo</button>
             <span id="svLogoStatus" style="font-size:11px;color:var(--muted);"></span>
           </div>
           <input type="hidden" id="svLogo">
-          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;">JPG/PNG/WebP — automatically compressed to ~400-500KB.</div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:4px;">JPG/PNG/WebP — apne aap compress ho jaata hai.</div>
         </div>
-        <div class="form-group"><label>💰 Min Order ₹ (optional)</label><input type="number" id="svMinOrder" placeholder="150"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.6;">Baaki sab apne aap: Google Sheet ban jaayegi, admin login ban jaayega (Create ke baad screen par dikhega), menu aur settings default se shuru.</div>
+          </div>
+        </div>
+
+        <div class="cfg-acc" id="svfa-optional">
+          <div class="cfg-acc-hd" onclick="svFormToggle('optional')">
+            <span class="cfg-acc-ic">📍</span>
+            <span class="cfg-acc-tx"><b>Areas &amp; Cuisine</b><i>Optional — baad me bhi bhar sakte ho</i></span>
+            <span class="cfg-acc-car"></span>
+          </div>
+          <div class="cfg-acc-bd hidden" id="svfp-optional">
+        <div class="form-group" style="margin-top:16px;"><label>📍 Areas — discovery me yahi dikhega</label><input type="text" id="svAreas" placeholder="Gota, Chandkheda, Vastrapur"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Comma se alag karo. Customer isi se apne area ki kitchens dhoondega.</div></div>
+        <div class="form-group"><label>🍽️ Cuisine</label><input type="text" id="svCuisine" placeholder="Gujarati, Punjabi, Home-style"></div>
+        <div class="form-group"><label>💰 Min Order ₹</label><input type="number" id="svMinOrder" placeholder="150"></div>
           </div>
         </div>
 
         <div class="cfg-acc" id="svfa-technical">
           <div class="cfg-acc-hd" onclick="svFormToggle('technical')">
             <span class="cfg-acc-ic">🔧</span>
-            <span class="cfg-acc-tx"><b>Technical Setup</b><i>Sheet ID, deployment, admin login</i></span>
+            <span class="cfg-acc-tx"><b>Technical Setup</b><i>Sab optional — khud ban jaata hai</i></span>
             <span class="cfg-acc-car"></span>
           </div>
           <div class="cfg-acc-bd hidden" id="svfp-technical">
-        <div class="form-group" style="margin-top:16px;"><label>Google Sheet ID</label><input type="text" id="svSheetId" placeholder="1T6tTy_I-C8VH8JKOsB8...."><div style="font-size:10.5px;color:var(--muted);margin-top:4px;"><b>Blank</b> nayi Google Sheet banao (sheets.new) aur uska URL yahan paste kar do — tabs, menu, settings sab apne aap ban jayenge.</div></div>
+        <div class="form-group" style="margin-top:16px;"><label>Google Sheet ID — <span style="color:var(--ok);">khaali chhodo</span></label><input type="text" id="svSheetId" placeholder="khaali = sheet khud ban jaayegi"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Khaali chhodne par sheet script khud banata hai, apni hi Drive me — isliye share karne ki zaroorat nahi. Sirf tab bharo jab koi bani-banai sheet use karni ho.</div></div>
         <div class="form-group"><label>Apps Script URL — <span style="color:var(--ok);">optional, khaali chhod do</span></label><input type="text" id="svScriptUrl" placeholder="khaali = shared deployment (theek hai)"><div style="font-size:10.5px;color:var(--muted);margin-top:4px;">Sirf tab bharo jab is vendor ka apna alag deployment ho (25+ vendors ke baad zaroori hota hai).</div></div>
-        <div class="form-group"><label>Admin Username</label><input type="text" id="svAdminUser"></div>
-        <div class="form-group"><label>Admin Password</label><input type="text" id="svAdminPass"></div>
+        <div class="form-group"><label>Admin Username — <span style="color:var(--ok);">khaali = kitchen ka chhota naam</span></label><input type="text" id="svAdminUser" placeholder="khaali chhodo"></div>
+        <div class="form-group"><label>Admin Password — <span style="color:var(--ok);">khaali = khud ban jaayega</span></label><input type="text" id="svAdminPass" placeholder="khaali chhodo"></div>
           </div>
         </div>
 
@@ -731,7 +748,15 @@
           </div>
         </div>
 
-        <button class="admin-btn" id="svSaveBtn" style="margin-top:16px;" onclick="saveVendorFE()">✅ Vendor Create Karo</button>
+        <button class="admin-btn" id="svSaveBtn" style="margin-top:16px;" onclick="saveVendorFE()">✅ Kitchen Banao</button>
+        <!-- Auto-generated password sirf isi ek response me aata hai (server par
+             hash hoke jaata hai) — isliye ise screen par dikhana zaroori hai,
+             warna Super Admin ke paas vendor ko dene ke liye kuch nahi hoga. -->
+        <div id="svNewCreds" class="hidden" style="margin-top:14px;padding:14px;border-radius:12px;background:var(--okbg);border:1.5px solid var(--ok);">
+          <div style="font-weight:900;font-size:13px;color:var(--ok);margin-bottom:8px;">✅ Kitchen ban gaya — ye login vendor ko de do</div>
+          <div id="svNewCredsBody" style="font-size:13px;line-height:1.9;word-break:break-all;"></div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:8px;">⚠️ Password dobara nahi dikhega. Abhi copy kar lo.</div>
+        </div>
       </div>
 
       <div class="pf-box" id="svConfigSection" style="margin-top:14px;">
@@ -1021,7 +1046,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=4abe290668"></script>
+  <script src="assets/shared.js?v=815155c19f"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
@@ -4320,14 +4345,17 @@
     if(!v){
       document.getElementById('superTopTitle').textContent='➕ Naya Vendor';
       document.getElementById('svFormTitle').textContent='➕ Naya Vendor Add Karo';
-      ['svName','svId','svSheetId','svScriptUrl','svAdminUser','svAdminPass','svEmail','svWhatsapp','svTgToken','svTgChat','svAreas','svCuisine','svLogo','svMinOrder'].forEach(fid=>{ const el=document.getElementById(fid); if(el)el.value=''; });
+      ['svName','svId','svSheetId','svScriptUrl','svAdminUser','svAdminPass','svEmail','svWhatsapp','svTgToken','svTgChat','svAreas','svCuisine','svLogo','svMinOrder','svFssaiNew'].forEach(fid=>{ const el=document.getElementById(fid); if(el)el.value=''; });
+      const cb0=document.getElementById('svNewCreds'); if(cb0) cb0.classList.add('hidden');
       document.getElementById('svLogoPreview').src='assets/icons/logo-round.webp';
       document.getElementById('svLogoStatus').textContent='';
       const tgSt0=document.getElementById('svTgStatus'); if(tgSt0) tgSt0.textContent='';
-      document.getElementById('svSaveBtn').textContent='✅ Vendor Create Karo';
+      document.getElementById('svSaveBtn').textContent='✅ Kitchen Banao';
       billBox.classList.add('hidden'); danger.classList.add('hidden');
       if(cfgSec) cfgSec.classList.add('hidden');
-      svFormOpenAll();
+      // Pehle yahan svFormOpenAll() tha — teenon accordion khule, ~12 field ek
+      // saath. Naya kitchen banane ke liye sirf pehla group chahiye.
+      svFormToggle('identity');
       return;
     }
     __svCurName=v.name||'';
@@ -4365,7 +4393,7 @@
     svLoadConfig();
     document.getElementById('svUsersList').innerHTML='<p style="font-size:12px;color:var(--muted);">Tap 🔄 Refresh to load.</p>';
   }
-  const SVF_TABS=['identity','technical','notify'];
+  const SVF_TABS=['identity','optional','technical','notify'];
   function svFormCloseAll(){
     SVF_TABS.forEach(function(k){
       const pane=document.getElementById('svfp-'+k); if(pane) pane.classList.add('hidden');
@@ -4662,9 +4690,13 @@
       areas:document.getElementById('svAreas').value.trim(),
       cuisine:document.getElementById('svCuisine').value.trim(),
       logo:document.getElementById('svLogo').value.trim(),
+      fssai:(document.getElementById('svFssaiNew')||{}).value ? document.getElementById('svFssaiNew').value.trim() : '',
       minOrder:document.getElementById('svMinOrder').value.trim() };
-    if(!d.name||!vendorId||!d.adminUser||(!isEditingExisting&&!d.adminPass)){
-      showToast('⚠️ Naam, Slug, Admin username zaroori hain.'+(isEditingExisting?'':' Naya vendor banane ke liye password bhi zaroori hai.'),'warning');
+    // Sirf ye do cheezein zaroori hain. Sheet ID, admin username aur password
+    // khaali ho to server khud bana leta hai (edit me khaali password ka matlab
+    // pehle jaisa hi — wo behaviour pehle se tha).
+    if(!d.name||!vendorId){
+      showToast('⚠️ Kitchen ka chhota naam aur display naam — ye do zaroori hain.','warning');
       return;
     }
     const btn=document.getElementById('svSaveBtn'); const oldTxt=btn.textContent; btn.disabled=true; btn.textContent='⏳ Saving…';
@@ -4673,9 +4705,23 @@
       if(j.status==='success'){
         superVendors=j.vendors||superVendors;
         showToast('✅ Save ho gaya','success');
+        // Naya login/sheet bana ho to list par mat kudo — password sirf abhi dikhega.
+        if(j.adminPass || j.sheetUrl){ showNewVendorCreds(vendorId, j); return; }
         superGoList();
       } else showToast('❌ '+(j.message||'Failed'),'error');
     }).catch(()=>{ btn.disabled=false; btn.textContent=oldTxt; showToast(t('errNetwork'),'error'); });
+  }
+  function showNewVendorCreds(vendorId, j){
+    const box=document.getElementById('svNewCreds'), body=document.getElementById('svNewCredsBody');
+    if(!box||!body) return;
+    const link=location.origin+'/'+vendorId;
+    let h='🔗 Kitchen link: <b>'+esc(link)+'</b>';
+    if(j.adminUser) h+='<br>👤 Admin username: <b>'+esc(j.adminUser)+'</b>';
+    if(j.adminPass) h+='<br>🔑 Admin password: <b>'+esc(j.adminPass)+'</b>';
+    if(j.sheetUrl) h+='<br>📊 Sheet: <a href="'+esc(j.sheetUrl)+'" target="_blank" rel="noopener">khol kar dekho</a>';
+    body.innerHTML=h;
+    box.classList.remove('hidden');
+    box.scrollIntoView({behavior:'smooth', block:'center'});
   }
   function closeOrderModal(){ document.getElementById('orderModal').classList.add('hidden'); document.body.style.overflow=''; }
   function varSetMeal(m){ varActiveMeal=m; renderVariantsEditor(); }
