@@ -65,6 +65,10 @@ test.describe('Super Admin — vendor config (Delivery Setup)', () => {
     await openGroup(page, 'delivery');
     await page.uncheck('#svcHomeEnabled');
     await page.uncheck('#svcOfficeEnabled');
+    // Takeaway bhi band — warna ye ab ek valid pickup-only vendor hai aur save
+    // sahi me chalna chahiye (neeche wala test). Guard tabhi lagta hai jab
+    // teeno OFF hon.
+    await page.uncheck('#svcTakeawayEnabled');
     await page.click('button:has-text("Save Delivery Setup")');
     await page.waitForTimeout(300);
     await expect(page.locator('#toast')).toContainText('delivery mode');
@@ -72,6 +76,24 @@ test.describe('Super Admin — vendor config (Delivery Setup)', () => {
     // lazy vendorConfigs entry) — the assertion that matters is that the
     // blocked save never flipped homeEnabled, not that the entry is absent.
     expect(state.vendorConfigs.nestandnosh.homeEnabled).not.toBe(false);
+  });
+
+  test('sirf takeaway wala vendor save ho jaata hai (pickup-only shop)', async ({ page }) => {
+    const state = freshState();
+    await openApp(page, { state });
+    await superLogin(page);
+    await openVendor(page);
+    await openGroup(page, 'delivery');
+    await page.uncheck('#svcHomeEnabled');
+    await page.uncheck('#svcOfficeEnabled');
+    await page.check('#svcTakeawayEnabled');
+    await page.click('button:has-text("Save Delivery Setup")');
+    await page.waitForTimeout(300);
+    await expect(page.locator('#toast')).not.toContainText('delivery mode');
+    const cfg = state.vendorConfigs.nestandnosh;
+    expect(cfg.homeEnabled).toBe(false);
+    expect(cfg.officeEnabled).toBe(false);
+    expect(cfg.takeawayEnabled).toBe(true);
   });
 
   test('office mode ON requires at least one company', async ({ page }) => {
