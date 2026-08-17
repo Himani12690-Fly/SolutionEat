@@ -37,7 +37,7 @@
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
 
-  <link rel="stylesheet" href="assets/styles.css?v=86005bae87">
+  <link rel="stylesheet" href="assets/styles.css?v=78d12fec35">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -850,26 +850,41 @@
              band karta hai. Ulta rakhne par, agar hero kabhi render na ho paaye,
              vendor ko blank screen milti — ab worst case purani poori list hai. -->
         <div id="ordersDetail">
-        <span class="refresh-link" onclick="loadOrders()">🔄 Refresh</span>
-        <div class="section-title" style="margin-top:4px;">🧾 Delivery Orders</div>
+        <!-- .refresh-link float:right hai; pehle ise section-title se apni line
+             milti thi. Title hata to ye date tabs par chadh gaya — wrapper ek
+             block formatting context banata hai taaki apni line mile. -->
+        <div style="overflow:hidden;"><span class="refresh-link" onclick="loadOrders()">🔄 Refresh</span></div>
         <div class="date-tabs" id="orderDateTabs">
           <button class="dt-btn active" onclick="setOrderDate(0)" id="odt-0">Today</button>
           <button class="dt-btn" onclick="setOrderDate(1)" id="odt-1">Tomorrow</button>
           <button class="dt-btn" onclick="setOrderDate(2)" id="odt-2">Day After</button>
         </div>
+        <!-- Ek hi society hone par ye dropdown chhup jaata hai (fillSocFilter) —
+             "All Locations (1)" par tap karke bhi kuch nahi hota tha. -->
         <select class="sh-select" id="ordSocFilter" onchange="setSocFilter(this.value)" style="margin-bottom:10px;"></select>
         <div class="cust-filter-bar hidden" id="custFilterBar"><span></span><b onclick="clearCustFilter()">✕ Clear</b></div>
-        <div class="bulk-bar" id="bulkBar"></div>
-        <div class="kitchen-card" id="kitchenSummary"><div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>
-        <div class="money-bar" id="moneyBar"></div>
+        <!-- Bulk bar yahan se hata diya — wahi do button ab hero me hain, bade
+             aur saaf bhasha me. Element rakhne se faayda nahi tha: renderBulkBar()
+             inline style.display set karta hai, jo .hidden class ko haraa deta.
+             Ab wo function apne `if(!bar)return;` par no-op ho jaata hai. -->
+        <!-- Teen chip, rasoi ki bhasha me. Pehle paanch the aur unme se teen
+             system ke shabd the (Pending / Preparing / Delivered). Purane filter
+             keys code aur tests me abhi bhi chalte hain — sirf dikhna kam hua. -->
         <div id="filterChips">
-          <span class="chip sel" data-f="All" onclick="setOrderFilter('All')">All</span>
-          <span class="chip" data-f="Pending" onclick="setOrderFilter('Pending')">🟡 Pending</span>
-          <span class="chip" data-f="Preparing" onclick="setOrderFilter('Preparing')">🔵 Preparing</span>
-          <span class="chip" data-f="Delivered" onclick="setOrderFilter('Delivered')">🟢 Delivered</span>
-          <span class="chip" data-f="Cancelled" onclick="setOrderFilter('Cancelled')">🔴 Cancelled</span>
+          <span class="chip sel" data-f="All" onclick="setOrderFilter('All')">Sab</span>
+          <span class="chip" data-f="Active" onclick="setOrderFilter('Active')">🟡 Baaki hai</span>
+          <span class="chip" data-f="Delivered" onclick="setOrderFilter('Delivered')">🟢 Ho gaya</span>
         </div>
         <div id="ordersList" style="padding-bottom:12px;"><div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>
+        <!-- Kitchen summary aur COD/UPI ka hisaab list ke UPAR khade the, jabki
+             dono cheezein order dekhne ke baad chahiye hoti hain. Ab neeche, ek
+             tap ke peeche. Element hataaye nahi — render code aur tests inhe
+             waise hi likhte/padhte hain. -->
+        <div class="om-toggle" onclick="toggleOrdersMath()"><span id="ordersMathLbl">📊 Hisaab aur cooking detail ▾</span></div>
+        <div id="ordersMath" class="hidden">
+          <div class="kitchen-card" id="kitchenSummary"><div class="mini-spin-wrap"><div class="mini-spin"></div><span>Loading data…</span></div></div>
+          <div class="money-bar" id="moneyBar"></div>
+        </div>
         </div>
       </div>
 
@@ -1324,7 +1339,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=86005bae87"></script>
+  <script src="assets/shared.js?v=78d12fec35"></script>
 <script>
   (function(){
     try{
@@ -5494,8 +5509,22 @@
     const comps=(CFG.companies||[]).map(c=>({v:c.name,l:'🏢 '+c.name+cLabel(c.name)}));
     const opts=[{v:'All',l:'📍 All Locations ('+adminOrders.length+')'}].concat(socs,comps);
     sel.innerHTML=opts.map(o=>`<option value="${o.v}" ${socFilter===o.v?'selected':''}>${o.l}</option>`).join('');
+    syncSocFilterVisibility();
   }
   function setSocFilter(v){ socFilter=v; renderOrders(); renderKitchen(); }
+  // Ek hi society ho to dropdown me sirf "All Locations (1)" bachta tha — ek
+  // control jo kuch karta hi nahi. Aise me use dikhao hi mat.
+  function syncSocFilterVisibility(){
+    const sel=document.getElementById('ordSocFilter'); if(!sel) return;
+    const spread = new Set(adminOrders.map(o=>o.society).filter(Boolean));
+    sel.classList.toggle('hidden', spread.size<=1);
+  }
+  function toggleOrdersMath(){
+    const m=document.getElementById('ordersMath'); if(!m) return;
+    const open=!m.classList.toggle('hidden');
+    const l=document.getElementById('ordersMathLbl');
+    if(l) l.textContent = open ? '📊 Hisaab chhupa do ▴' : '📊 Hisaab aur cooking detail ▾';
+  }
   function renderBulkBar(){
     const bar=document.getElementById('bulkBar'); if(!bar)return;
     const pend=adminOrders.filter(o=>o.status==='Pending'&&socMatch(o));
@@ -5711,14 +5740,22 @@
     }).catch(()=>{ if(btn){ btn.disabled=false; btn.textContent=(st==='Preparing'?'👨‍🍳 Start':'✅ Done'); } showToast(t('errNetwork'),'error'); });
   }
   function renderOrders(){
-    const list=adminOrders.filter(o=>(orderFilter==='All'||o.status===orderFilter)&&socMatch(o)&&mealMatch(o))
+    // 'Active' = Pending + Preparing, yani "abhi baaki hai". Purane single-status
+    // keys (Pending/Preparing/Delivered/Cancelled) waise hi kaam karte hain.
+    const statusOk = o => orderFilter==='All' ? true
+      : orderFilter==='Active' ? (o.status==='Pending'||o.status==='Preparing')
+      : o.status===orderFilter;
+    const list=adminOrders.filter(o=>statusOk(o)&&socMatch(o)&&mealMatch(o))
       .slice().sort((a,b)=> (STATUS_PRIORITY[a.status]-STATUS_PRIORITY[b.status]) || String(a.time||'').localeCompare(String(b.time||'')));
     const box=document.getElementById('ordersList');
     renderBulkBar();
     renderMoneyBar(adminOrders.filter(o=>socMatch(o)));
     const grouped = mealFilter!=='All';
     const socWrap=document.getElementById('ordSocFilter'), chipsWrap=document.getElementById('filterChips'), bulkWrap=document.getElementById('bulkBar');
-    if(socWrap) socWrap.classList.toggle('hidden', grouped);
+    // grouped view me dropdown waise bhi bekaar hai; warna syncSocFilterVisibility()
+    // decide karta hai (ek hi location par dikhana nahi). Seedha toggle(grouped)
+    // karne se non-grouped me wo hidden class hat jaati thi.
+    if(socWrap){ if(grouped) socWrap.classList.add('hidden'); else syncSocFilterVisibility(); }
     if(chipsWrap) chipsWrap.classList.toggle('hidden', grouped);
     if(bulkWrap) bulkWrap.classList.toggle('hidden', grouped);
     if(grouped){ renderOrdersGrouped(list.filter(o=>o.status!=='Cancelled')); return; }
@@ -5730,7 +5767,7 @@
         <div class="oc-top"><span class="oc-name">${esc(o.name)}</span><span class="oc-status st-${o.status}">${STATUS_LABEL[o.status]||o.status}</span></div>
         <div class="oc-meal-box">${orderMealsText(o)}${o.note&&o.note!=='None'?'<br><span style="color:var(--muted);">📝 '+esc(o.note)+'</span>':''}${o.promo?'<br><span style="color:var(--ok);font-weight:800;">🎟️ '+esc(o.promo)+'</span>':''}</div>
         <div class="oc-info"><span>${o.deliveryType==='office'?`🏢 ${esc(o.society)} · Emp ${esc(o.flat)}`:`🏠 ${esc(o.society)} ${esc(o.flat)}`}</span><a class="oc-call" href="tel:+91${o.phone}" onclick="event.stopPropagation()">📞 ${o.phone}</a></div>
-        <div class="oc-info"><span>🕐 ${o.time}</span><span>💳 ${o.payment}${o.paymentStatus==='Paid'?(o.status==='Cancelled'?' <span class="paid-badge" style="background:var(--dangerbg);color:var(--danger);">REFUND DUE</span>':' <span class="paid-badge">PAID</span>'):''} · 💰 <b>${o.total}</b></span></div>
+        <div class="oc-info"><span></span><span>💳 ${o.payment}${o.paymentStatus==='Paid'?(o.status==='Cancelled'?' <span class="paid-badge" style="background:var(--dangerbg);color:var(--danger);">REFUND DUE</span>':' <span class="paid-badge">PAID</span>'):''} · 💰 <b>${o.total}</b></span></div>
         ${quick}</div>`;
     }).join('');
   }
@@ -5799,17 +5836,28 @@
     if(o.promo) body+=`<div class="om-addr" style="color:var(--ok);">🎟️ <b>${esc(o.promo)}</b></div>`;
     body+=`<div class="om-addr">${o.deliveryType==='office'?'🏢':'🏠'} <b>${esc(o.society)} ${esc(o.flat)}</b><br>📞 <a href="tel:+91${encodeURIComponent(o.phone)}">${esc(o.phone)}</a><br>🕐 Ordered: ${esc(o.time)}</div>`;
     body+=`<div class="om-total"><span class="t-lbl">💳 ${o.payment}${o.paymentStatus==='Paid'?(o.status==='Cancelled'?' · ⚠️ REFUND DUE':' · ✓ PAID'):''} · Total</span><span class="t-amt">${o.total}</span></div>`;
+    // Pehle yahan 5 barabar-size button the — teen status (Pending/Preparing/
+    // Done, teeno system ke shabd) aur do aur. Vendor ko har baar chunna padta
+    // tha. Ab agla kadam ek hi bada button hai, baaki sab chhota aur neeche.
     if(o.status!=='Cancelled'){
-      body+=`<div class="om-status-btns">
-        <button class="sb-pend ${o.status==='Pending'?'act':''}" style="${o.status==='Pending'?'border-color:var(--warn);background:var(--warnbg);color:var(--warn);':''}" onclick="updateStatus(${o.row},'Pending');openOrderModal(${o.row})">🕒 Pending</button>
-        <button class="sb-prep ${o.status==='Preparing'?'act':''}" style="${o.status==='Preparing'?'border-color:var(--accent);background:var(--accent-soft);color:var(--accent-dark);':''}" onclick="updateStatus(${o.row},'Preparing');openOrderModal(${o.row})">👨‍🍳 Preparing</button>
-        <button class="sb-done ${o.status==='Delivered'?'act':''}" style="${o.status==='Delivered'?'border-color:var(--ok);background:var(--okbg);color:var(--ok);':''}" onclick="updateStatus(${o.row},'Delivered');openOrderModal(${o.row})">✅ Done</button>
-      </div>`;
+      if(o.status==='Pending')
+        body+=`<button class="om-go" onclick="updateStatus(${o.row},'Preparing');openOrderModal(${o.row})">👨‍🍳 Banana shuru karo</button>`;
+      else if(o.status==='Preparing')
+        body+=`<button class="om-go done" onclick="updateStatus(${o.row},'Delivered');openOrderModal(${o.row})">✅ Ho gaya</button>`;
+      else
+        body+=`<div class="om-done-note">✅ Ye order nikal gaya</div>`;
+      if(o.status!=='Pending')
+        body+=`<div class="om-undo" onclick="updateStatus(${o.row},'${o.status==='Preparing'?'Pending':'Preparing'}');openOrderModal(${o.row})">↩︎ Ek kadam peeche</div>`;
     }
-    body+=`<div class="om-status-btns" style="margin-top:8px;">
-      <button style="${o.paymentStatus==='Paid'?'border-color:var(--ok);background:var(--okbg);color:var(--ok);':''}" onclick="togglePaid(${o.row},'${o.paymentStatus||'Unpaid'}',this)">${o.paymentStatus==='Paid'?'✓ Paid — Mark Unpaid':'💳 Mark as Paid'}</button>
-      <button onclick="waUpdate(${o.row})">📲 WhatsApp Update</button>
+    // Paisa: sirf wahi dikhao jo abhi karna hai. "Mark Unpaid" ek galti sudharne
+    // ka kaam hai, roz ka nahi — isliye wo chhoti link ban gaya.
+    const paid = o.paymentStatus==='Paid';
+    body+=`<div class="om-small-row">
+      ${paid ? `<span class="om-paid">✓ Paisa mil chuka</span>`
+             : `<button class="om-sm pay" onclick="togglePaid(${o.row},'Unpaid',this)">💵 Paisa mil gaya</button>`}
+      <button class="om-sm" onclick="waUpdate(${o.row})">📲 WhatsApp</button>
     </div>`;
+    if(paid) body+=`<div class="om-undo" onclick="togglePaid(${o.row},'Paid',this)">↩︎ Galti se? Unpaid karo</div>`;
     document.getElementById('omBody').innerHTML=body;
     document.getElementById('orderModal').classList.remove('hidden');
     document.body.style.overflow='hidden';
