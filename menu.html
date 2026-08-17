@@ -42,6 +42,13 @@
 
   /* ── Header ── */
   .hd { display:flex; align-items:center; gap:12px; padding:18px 0 14px; }
+  .hd .hd-tx { flex:1; min-width:0; }
+  /* Share vendor ka apna kaam hai, customer ka nahi — isliye ye neeche wale
+     thumb-zone se hat kar header me chala gaya. Neeche sirf wo do cheezein
+     bachi hain jo customer ko karni hain: order. */
+  .hd-share { flex:0 0 auto; width:38px; height:38px; border-radius:50%;
+    border:1.5px solid var(--line); background:transparent; color:var(--muted);
+    font-size:15px; cursor:pointer; font-family:inherit; }
   .hd img { width:52px; height:52px; border-radius:50%; object-fit:cover;
     border:1px solid var(--line); background:var(--card); flex:0 0 auto; }
   .hd .nm { font-size:19px; font-weight:900; letter-spacing:-.2px; }
@@ -86,9 +93,11 @@
   .btn { flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
     background:var(--accent); color:#fff; border:0; border-radius:14px; padding:15px;
     font-size:15px; font-weight:900; text-decoration:none; cursor:pointer;
-    font-family:inherit; }
-  .btn.gh { flex:0 0 auto; background:transparent; color:var(--accent-dark);
-    border:1.5px solid var(--line); padding:15px 16px; }
+    font-family:inherit; white-space:nowrap; }
+  /* WhatsApp ka apna rang — customer ise pehchanta hai, isliye ise app wale
+     accent me rangna ulta hota. Ye button tabhi dikhta hai jab kitchen ka
+     WhatsApp number set ho (neeche render me). */
+  .btn.wa { background:#25D366; color:#0b3d20; }
 
   .ft { text-align:center; color:var(--muted); font-size:11px; font-weight:600;
     padding:16px 0 4px; line-height:1.7; }
@@ -103,6 +112,7 @@
   @media (prefers-reduced-motion: reduce) { .ld .sp { animation:none; } }
   .sk { height:104px; background:var(--card); border:1px solid var(--line);
     border-radius:16px; margin-bottom:12px; opacity:.55; }
+  .hidden { display:none !important; }
 </style>
 </head>
 <body>
@@ -110,10 +120,11 @@
   <div class="hd">
     <img id="logo" alt="" src="assets/icons/logo-round.webp"
          onerror="this.onerror=null;this.src='assets/icons/logo-round.png'">
-    <div>
+    <div class="hd-tx">
       <div class="nm" id="vname">Aaj ka Menu</div>
       <div class="dt" id="vdate">…</div>
     </div>
+    <button class="hd-share" id="shareBtn" type="button" title="Share" aria-label="Share">🔗</button>
   </div>
   <div id="note" class="note" hidden></div>
   <div id="meals"><div class="sk"></div><div class="sk"></div></div>
@@ -121,8 +132,8 @@
 </div>
 
 <div class="cta"><div class="cta-in">
+  <a class="btn wa hidden" id="waBtn" target="_blank" rel="noopener">💬 WhatsApp</a>
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
-  <button class="btn gh" id="shareBtn" type="button" title="Share">🔗</button>
 </div></div>
 
 <script>
@@ -171,6 +182,18 @@
     var h = Math.floor(t/60), mm = String(t%60).padStart(2,'0');
     var ap = h >= 12 ? 'PM' : 'AM'; var h12 = h % 12 || 12;
     return h12 + ':' + mm + ' ' + ap;
+  }
+
+  // App ke normalizeWa() jaisa hi: 10 digit ko 91 laga do, 0 se shuru hone wala
+  // 910… theek karo. App me number na milne par platform owner ke number par
+  // fallback hota hai — YAHAN wo bilkul nahi karna. Ye page ajnabiyon ka hai;
+  // kisi aur kitchen ka order galat number par chala jaana sabse bura outcome
+  // hai. Number na ho to button hi nahi dikhta.
+  function waNumber(raw){
+    var d = String(raw || '').replace(/\D/g, '');
+    if (d.length === 10) d = '91' + d;
+    if (d.length === 13 && d.slice(0,3) === '910') d = '91' + d.slice(3);
+    return (d.length === 12 && d.slice(0,2) === '91') ? d : '';
   }
 
   function fail(msg, sub){
@@ -237,10 +260,25 @@
     document.getElementById('meals').innerHTML = html ||
       '<div class="ld">Is kitchen ka menu abhi set nahi hua hai.</div>';
 
+    // WhatsApp par order — login ke bina. Message me kitchen ka naam aur aaj ki
+    // date daal dete hain, aur ek khaali line chhod dete hain jahan customer
+    // apna order likhe. Chhoti kitchen aise hi kaam karti hai: chat me baat,
+    // phir order.
+    var wa = waNumber(vendor.whatsapp);
+    if (wa) {
+      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* ka aaj ka menu dekha (' +
+                now.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ').\n\nMujhe ye chahiye:\n';
+      var el = document.getElementById('waBtn');
+      el.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
+      el.classList.remove('hidden');
+    }
+
     var ft = [];
     if (cfg.fssai) ft.push('FSSAI: ' + esc(cfg.fssai));
     if (cfg.township) ft.push(esc(cfg.township));
-    ft.push('Order karne ke liye login zaroori hai');
+    // WhatsApp ka raasta ho to "login zaroori hai" likhna galat hai — wo bina
+    // login hi order kar sakta hai.
+    ft.push(wa ? 'WhatsApp par login ki zaroorat nahi' : 'Order karne ke liye login zaroori hai');
     document.getElementById('foot').innerHTML = ft.join(' · ');
   }
 
