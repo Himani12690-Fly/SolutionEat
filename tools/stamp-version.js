@@ -20,7 +20,7 @@ const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..');
 const PAGES = ['index.html', 'customer.html', 'admin.html', 'superadmin.html'];
-const ASSETS = ['shared.js', 'styles.css'];
+const ASSETS = ['assets/shared.js', 'assets/styles.css'];
 
 // Version = in files ke content ka hash. Content badla to hi version badlega,
 // yani wahi commit dobara stamp karne se bekaar ka diff nahi banta.
@@ -38,14 +38,14 @@ function computeVersion() {
 
 function stripStamps(html) {
   return html
-    .replace(/(src="shared\.js)(\?v=[A-Za-z0-9]+)?"/g, '$1"')
-    .replace(/(href="styles\.css)(\?v=[A-Za-z0-9]+)?"/g, '$1"');
+    .replace(/(src="assets\/shared\.js)(\?v=[A-Za-z0-9]+)?"/g, '$1"')
+    .replace(/(href="assets\/styles\.css)(\?v=[A-Za-z0-9]+)?"/g, '$1"');
 }
 
 function applyStamp(html, version) {
   return stripStamps(html)
-    .replace(/src="shared\.js"/g, `src="shared.js?v=${version}"`)
-    .replace(/href="styles\.css"/g, `href="styles.css?v=${version}"`);
+    .replace(/src="assets\/shared\.js"/g, `src="assets/shared.js?v=${version}"`)
+    .replace(/href="assets\/styles\.css"/g, `href="assets/styles.css?v=${version}"`);
 }
 
 const check = process.argv.includes('--check');

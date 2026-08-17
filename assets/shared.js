@@ -694,8 +694,8 @@
       { key:'updStepFetch', run: function(){
           return Promise.all([
             fetch('/index.html', { cache:'reload' }).catch(function(){}),
-            fetch('/shared.js'+v, { cache:'reload' }).catch(function(){}),
-            fetch('/styles.css'+v, { cache:'reload' }).catch(function(){})
+            fetch('/assets/shared.js'+v, { cache:'reload' }).catch(function(){}),
+            fetch('/assets/styles.css'+v, { cache:'reload' }).catch(function(){})
           ]);
         } },
       // 2. Purana app-shell cache hatao. Image cache (fbt-img) chhod do —

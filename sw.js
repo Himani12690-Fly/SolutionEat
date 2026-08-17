@@ -13,7 +13,7 @@
 // importScripts fail ho sakta hai — us case me bhi offline cache poora kaam karta
 // rehna chahiye, isliye push wala hissa alag try/catch me isolate hai.
 
-const CACHE = 'fbt-v40';
+const CACHE = 'fbt-v41';
 // './images/meal.jpg' — lunch/dinner ka default photo. Pehle ye 94 KB ki JPEG
 // chaaron HTML files ke ANDAR base64 me padi thi, isliye har user har load par
 // use utha leta tha chahe wo screen par dikhe ya nahi (ye sabse aakhri fallback
@@ -25,7 +25,7 @@ const CACHE = 'fbt-v40';
 // pehli visit par download hoti thi — 72 KB, jabki UI me ye sirf tab dikhti
 // hai jab vendor ne apna logo na daala ho. WebP par wahi cheez 8 KB hai.
 // logo-round.png repo me bani hui hai (manifest/fallback), bas precache me nahi.
-const ASSETS = ['./', './index.html', './manifest.json', './logo-round.webp', './images/meal.jpg'];
+const ASSETS = ['./', './index.html', './assets/manifest.json', './assets/icons/logo-round.webp', './images/meal.jpg'];
 // Vendor logos / meal photos (cross-origin, Drive-hosted) ka apna bucket — app-shell
 // cache se alag rakha hai taaki naye deploy pe shell refresh ho par images bani rahein
 // (wahi to baar-baar dobara download ho rahi thi). Bounded — neeche trimImgCache().
@@ -146,7 +146,7 @@ try {
     const n = payload.notification || {};
     self.registration.showNotification(n.title || 'Nest & Nosh', {
       body: n.body || '',
-      icon: 'logo-round.webp',
+      icon: 'assets/icons/logo-round.webp',
       data: payload.data || {}
     });
   });
@@ -166,7 +166,7 @@ if (!__pushReady) {
     const n = p.notification || {};
     e.waitUntil(self.registration.showNotification(n.title || 'Nest & Nosh', {
       body: n.body || '',
-      icon: 'logo-round.webp',
+      icon: 'assets/icons/logo-round.webp',
       data: p.data || {}
     }));
   });
