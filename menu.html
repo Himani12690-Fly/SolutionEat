@@ -43,9 +43,8 @@
   /* ── Header ── */
   .hd { display:flex; align-items:center; gap:12px; padding:18px 0 14px; }
   .hd .hd-tx { flex:1; min-width:0; }
-  /* Share vendor ka apna kaam hai, customer ka nahi — isliye ye neeche wale
-     thumb-zone se hat kar header me chala gaya. Neeche sirf wo do cheezein
-     bachi hain jo customer ko karni hain: order. */
+  /* Share yahan bhi hai (jaldi milta hai) aur bottom CTA me bhi (thumb-zone,
+     jab poora attention wahi ho). Dono ek hi doShare() se chalte hain. */
   .hd-share { flex:0 0 auto; width:38px; height:38px; border-radius:50%;
     border:1.5px solid var(--line); background:transparent; color:var(--muted);
     font-size:15px; cursor:pointer; font-family:inherit; }
@@ -53,6 +52,15 @@
     border:1px solid var(--line); background:var(--card); flex:0 0 auto; }
   .hd .nm { font-size:19px; font-weight:900; letter-spacing:-.2px; }
   .hd .dt { font-size:12px; color:var(--muted); font-weight:700; margin-top:2px; }
+
+  /* ── Day picker ── */
+  .daysel { margin-bottom:14px; }
+  .daysel select { width:100%; padding:13px 40px 13px 14px; border-radius:12px;
+    border:1.5px solid var(--line); background-color:var(--card); color:var(--ink);
+    font-size:14.5px; font-weight:900; font-family:inherit; appearance:none;
+    -webkit-appearance:none; cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%236b7280' d='M5.25 7.5 10 12.25 14.75 7.5Z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center; }
 
   .note { background:var(--warnbg); color:var(--warn); border-radius:12px;
     padding:12px 14px; font-size:12.5px; font-weight:800; margin-bottom:14px; }
@@ -87,8 +95,9 @@
   /* Ek-tap order button — is item ka apna WhatsApp message, poora menu
      retype/reply kiye bina. */
   .vr .vo { flex:0 0 auto; align-self:center; width:34px; height:34px; border-radius:50%;
-    background:#25D366; color:#fff; display:flex; align-items:center; justify-content:center;
-    font-size:15px; text-decoration:none; }
+    background:#25D366; display:flex; align-items:center; justify-content:center;
+    text-decoration:none; }
+  .vr .vo svg { width:17px; height:17px; }
 
   /* ── Bottom CTA (thumb zone) ── */
   .cta { position:fixed; left:0; right:0; bottom:0; background:var(--card);
@@ -99,14 +108,10 @@
     background:var(--accent); color:#fff; border:0; border-radius:14px; padding:15px;
     font-size:15px; font-weight:900; text-decoration:none; cursor:pointer;
     font-family:inherit; white-space:nowrap; }
-  /* WhatsApp ka apna rang — customer ise pehchanta hai, isliye ise app wale
-     accent me rangna ulta hota. Ye button tabhi dikhta hai jab kitchen ka
-     WhatsApp number set ho (neeche render me). */
-  .btn.wa { background:#25D366; color:#0b3d20; }
-  /* Do barabar ke button ek dusre se ladte hain. Order karne ka asli raasta ek
-     hi hona chahiye; app/login us se chhota. Par jab kitchen ka WhatsApp number
-     na ho, tab login HI ek matra raasta hai — us case me ye class lagti hi
-     nahi aur wahi full button rehta hai. */
+  /* Do barabar ke button ek dusre se ladte hain. WhatsApp number ho to har
+     item ka apna order button hai (upar); yahan neeche sirf share bachta hai,
+     aur wahi asli/pura button ban jaata hai. WhatsApp na ho to "Order Now"
+     hi asli raasta hai, share uske neeche ek chhoti line ban jaata hai. */
   .btn.sub { background:transparent; color:var(--muted); font-size:12.5px;
     font-weight:800; padding:6px; text-decoration:underline; }
 
@@ -135,6 +140,10 @@
     </div>
     <button class="hd-share" id="shareBtn" type="button" title="Share" aria-label="Share">🔗</button>
   </div>
+  <!-- Aaj se shuru, agle 6 din — vendor ka menu weekly template hai, isliye
+       koi bhi din chun kar dekha ja sakta hai. Pichhle din dikhane ka koi
+       matlab nahi, order to aage ke liye hota hai. -->
+  <div class="daysel"><select id="daySelect" aria-label="Din select karo"></select></div>
   <div id="note" class="note" hidden></div>
   <!-- Pehle yahan do khaali grey dabbe the. Ajnabi ko wo "page toot gaya" jaisa
        lagta hai; likh dena behtar hai ki ho kya raha hai. -->
@@ -143,8 +152,8 @@
 </div>
 
 <div class="cta"><div class="cta-in">
-  <a class="btn wa hidden" id="waBtn" target="_blank" rel="noopener">💬 WhatsApp pe order karo</a>
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
+  <button class="btn sub" id="shareBtn2" type="button">🔗 Menu Share Karo</button>
 </div></div>
 
 <script>
@@ -215,28 +224,31 @@
   function render(d){
     var cfg = d.config || {}, menu = d.menu || {}, vendor = d.vendor || {};
     var now = istNow();
-    var day = DAYS[now.getDay()];
-    var today = menu[day] || {};
+    var todayKey = DAYS[now.getDay()];
 
     if (vendor.name) { document.getElementById('vname').textContent = vendor.name; document.title = vendor.name + ' — Aaj ka Menu'; }
     if (vendor.logo) document.getElementById('logo').src = vendor.logo;
-    document.getElementById('vdate').textContent = 'Aaj ka menu · ' +
-      now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
-
-    // Kitchen band — do tarah se: aaj ki date closedDates me hai, ya vendor ne
-    // "temporarily closed" kiya hua hai. Menu phir bhi dikhate hain (customer ko
-    // pata chalna chahiye kya milta hai), bas upar saaf likh dete hain.
-    var note = '';
-    if (cfg.tempClosed === true) note = '⚠️ Kitchen abhi orders nahi le rahi. ' + (cfg.tempClosedMsg || '');
-    else if ((cfg.closedDates || []).indexOf(ymd(now)) >= 0) note = '⚠️ Aaj kitchen band hai.';
-    if (note) { var nEl = document.getElementById('note'); nEl.textContent = note.trim(); nEl.hidden = false; }
 
     var wa = waNumber(vendor.whatsapp);
-    var dateTxt = now.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+    // WhatsApp ka asli logo — emoji alag alag phone par alag/dhundhla dikhta
+    // hai, ye hamesha ek jaisa saaf dikhta hai.
+    var WA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" fill-rule="evenodd" d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.663.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824zm-3.423-14.416c-6.607 0-11.98 5.373-11.982 11.981-.001 2.111.55 4.175 1.595 5.996l-1.635 5.972 6.116-1.604c1.751.955 3.724 1.459 5.9 1.46h.005c6.607 0 11.98-5.373 11.982-11.982.002-3.2-1.244-6.211-3.507-8.475-2.264-2.264-5.275-3.509-8.474-3.509z"/></svg>';
+
+    // Vendor ka menu ek weekly template hai (Monday..Sunday, date-bound nahi),
+    // isliye "selected day" ke liye asli calendar date chahiye — sirf label
+    // aur WhatsApp message me. Hamesha aaj ya aane wale 6 dinon me se ek
+    // (pichhla din dikhana bekaar hai, order to aage ke liye hota hai).
+    function dateForDay(dayKey){
+      var offset = (DAYS.indexOf(dayKey) - now.getDay() + 7) % 7;
+      var dt = new Date(now);
+      dt.setDate(dt.getDate() + offset);
+      return dt;
+    }
+
     // Ek item ka apna WhatsApp order link — customer ko sirf Mini Tiffin ya
     // sirf Full Tiffin chahiye ho to poora menu retype/reply nahi karna padta,
     // seedha us item ka pehle-se-bhara message khulta hai.
-    function itemWaHref(mt, v){
+    function itemWaHref(mt, v, dateTxt){
       if (!wa) return '';
       var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '*\n\nMujhe chahiye: ' +
                 (mt.emoji || '🍽️') + ' ' + (mt.title || mt.key) + ' — ' + (v.name || '') +
@@ -244,83 +256,97 @@
       return 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
     }
 
-    // waLines: WhatsApp message me bhejne ke liye aaj ka poora menu, chhote
-    // text list ke roop me — general order ya sawaal ke liye (neeche wala
-    // bottom button). Ek item order karna ho to us item ke apne button se
-    // (upar wala itemWaHref) seedha wahi ek cheez bhejta hai.
-    var waLines = [];
-    var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
-      var key = mt.key;
-      var price = (cfg.prices || {})[key] || mt.price || 0;
-      // cutoffAheadDay = cutoff PICHHLI raat ka hai. Bina likhe "Breakfast
-      // (order by 10:00 PM)" ulta padhta hai.
-      var cutTxt = mt.cutoff
-        ? ' (order by ' + clock(mt.cutoff) + (mt.cutoffAheadDay ? ', ek raat pehle' : '') + ')'
-        : '';
-      var s = '<div class="mc"><div class="mc-hd"><div class="mc-ti">' +
-              esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) +
-              (cutTxt ? '<span class="mc-cut">' + esc(cutTxt) + '</span>' : '') + '</div>' +
-              (price ? '<div class="mc-pr">₹' + price + '</div>' : '') + '</div>';
+    function renderDay(dayKey){
+      var today = menu[dayKey] || {};
+      var dt = dateForDay(dayKey);
+      var isToday = dayKey === todayKey;
+      var dateTxt = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
 
-      var rec = today[key];
-      // hasVariants:false wale meal ka menu flat list hai (jaise breakfast),
-      // baaki ka { sabziOptions }.
-      var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
-      if (sabzi.length) {
-        s += '<div class="lbl">' + (Array.isArray(rec) ? 'Aaj' : 'Aaj ki sabzi') + '</div><div class="chips">' +
-             sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join('') + '</div>';
-      }
-      var vs = ((cfg.variants || {})[key]) || [];
-      if (vs.length) {
-        s += '<div class="lbl">Options</div>';
-        s += vs.map(function(v){
-          return '<div class="vr">' +
-            // Vendor ki photo Drive par hoti hai. Link toot jaaye to khaali dabba
-            // dikhne se accha hai ki image hi hat jaaye.
-            (v.img ? '<img src="' + esc(v.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
-            '<div class="vb"><div class="vn">' + esc(v.name || '') + '</div>' +
-            '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div></div>' +
-            (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') +
-            (wa ? '<a class="vo" href="' + itemWaHref(mt, v) + '" target="_blank" rel="noopener" aria-label="' +
-                  esc((v.name || 'Item') + ' order karo') + '">🛒</a>' : '') +
-            '</div>';
-        }).join('');
-      }
+      document.getElementById('vdate').textContent = (isToday ? 'Aaj ka menu · ' : 'Iss din ka menu · ') +
+        dt.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
 
-      if (sabzi.length || vs.length) {
-        var head = (mt.emoji || '🍽️') + ' ' + (mt.title || key) + (price ? ' (₹' + price + ')' : '');
-        if (sabzi.length) head += ' — ' + sabzi.join(' / ');
-        waLines.push(head);
-        vs.forEach(function(v){
-          waLines.push('   • ' + (v.name || '') + (v.price ? ' — ₹' + v.price : ''));
-        });
-      }
-      return s + '</div>';
-    }).join('');
+      // Kitchen band — do tarah se: us din ki date closedDates me hai, ya
+      // vendor ne "temporarily closed" kiya hua hai (ye hamesha lagu hota
+      // hai, kisi bhi din ke liye). Menu phir bhi dikhate hain (customer ko
+      // pata chalna chahiye kya milta hai), bas upar saaf likh dete hain.
+      var note = '';
+      if (cfg.tempClosed === true) note = '⚠️ Kitchen abhi orders nahi le rahi. ' + (cfg.tempClosedMsg || '');
+      else if ((cfg.closedDates || []).indexOf(ymd(dt)) >= 0) note = isToday ? '⚠️ Aaj kitchen band hai.' : '⚠️ Is din kitchen band hai.';
+      var nEl = document.getElementById('note');
+      nEl.hidden = !note;
+      if (note) nEl.textContent = note.trim();
 
-    document.getElementById('meals').innerHTML = html ||
-      '<div class="ld">Is kitchen ka menu abhi set nahi hua hai.</div>';
+      var html = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; }).map(function(mt){
+        var key = mt.key;
+        var price = (cfg.prices || {})[key] || mt.price || 0;
+        // cutoffAheadDay = cutoff PICHHLI raat ka hai. Bina likhe "Breakfast
+        // (order by 10:00 PM)" ulta padhta hai.
+        var cutTxt = mt.cutoff
+          ? ' (order by ' + clock(mt.cutoff) + (mt.cutoffAheadDay ? ', ek raat pehle' : '') + ')'
+          : '';
+        var s = '<div class="mc"><div class="mc-hd"><div class="mc-ti">' +
+                esc((mt.emoji || '🍽️') + ' ' + (mt.title || key)) +
+                (cutTxt ? '<span class="mc-cut">' + esc(cutTxt) + '</span>' : '') + '</div>' +
+                (price ? '<div class="mc-pr">₹' + price + '</div>' : '') + '</div>';
 
-    // WhatsApp par order — login ke bina. Ek item chahiye ho to uske apne
-    // 🛒 button se seedha wahi ek cheez bhej dete hain (upar). Ye bottom
-    // button poore menu ke saath general order/sawaal ke liye hai — jaise
-    // ek se zyada cheezein chahiye ho.
-    if (wa) {
-      var msg = 'Namaste 🙏 *' + (vendor.name || 'Kitchen') + '* ka aaj ka menu dekha (' + dateTxt + ').\n\n';
-      if (waLines.length) msg += waLines.join('\n') + '\n\n';
-      // Blank template pe customer ko pata nahi chalta kya likhna hai, aur
-      // vendor ko context nahi milta. Ek example reply de dete hain — meal +
-      // option + quantity — taaki dono taraf se saaf ho.
-      msg += 'Mujhe chahiye:\n(jaise "Lunch Full Tiffin x2")\n\n';
-      var el = document.getElementById('waBtn');
-      el.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent(msg);
-      el.classList.remove('hidden');
-      // WhatsApp mil gaya to wahi asli button hai — app/login us ke neeche ek
-      // chhoti line ban jaata hai.
-      var ob = document.getElementById('orderBtn');
-      ob.classList.add('sub');
-      ob.textContent = 'ya app se order karo (login chahiye)';
+        var rec = today[key];
+        // hasVariants:false wale meal ka menu flat list hai (jaise breakfast),
+        // baaki ka { sabziOptions }.
+        var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
+        if (sabzi.length) {
+          s += '<div class="lbl">' + (Array.isArray(rec)
+                 ? (isToday ? 'Aaj' : 'Is din')
+                 : (isToday ? 'Aaj ki sabzi' : 'Is din ki sabzi')) + '</div><div class="chips">' +
+               sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join('') + '</div>';
+        }
+        var vs = ((cfg.variants || {})[key]) || [];
+        if (vs.length) {
+          s += '<div class="lbl">Options</div>';
+          s += vs.map(function(v){
+            return '<div class="vr">' +
+              // Vendor ki photo Drive par hoti hai. Link toot jaaye to khaali dabba
+              // dikhne se accha hai ki image hi hat jaaye.
+              (v.img ? '<img src="' + esc(v.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
+              '<div class="vb"><div class="vn">' + esc(v.name || '') + '</div>' +
+              '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div></div>' +
+              (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') +
+              (wa ? '<a class="vo" href="' + itemWaHref(mt, v, dateTxt) + '" target="_blank" rel="noopener" aria-label="' +
+                    esc((v.name || 'Item') + ' order karo') + '">' + WA_ICON + '</a>' : '') +
+              '</div>';
+          }).join('');
+        }
+        return s + '</div>';
+      }).join('');
+
+      document.getElementById('meals').innerHTML = html ||
+        '<div class="ld">Is din ka menu abhi set nahi hua hai.</div>';
     }
+
+    // Day picker — aaj se shuru karke agle 6 din. Vendor ka menu weekly
+    // template hai isliye har din ka menu pehle se maujood hai, koi extra
+    // request nahi lagti din badalne par.
+    var sel = document.getElementById('daySelect');
+    sel.innerHTML = '';
+    for (var i = 0; i < 7; i++) {
+      var dayKey = DAYS[(now.getDay() + i) % 7];
+      var dt = dateForDay(dayKey);
+      var opt = document.createElement('option');
+      opt.value = dayKey;
+      opt.textContent = (i === 0 ? 'Aaj · ' : i === 1 ? 'Kal · ' : '') +
+        dt.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
+      sel.appendChild(opt);
+    }
+    sel.value = todayKey;
+    sel.onchange = function(){ renderDay(sel.value); };
+    renderDay(todayKey);
+
+    // WhatsApp number ho to har item ka apna order button hai (upar) — is
+    // bottom "Order Now" (app/login) ki zaroorat nahi rehti, share hi bachta
+    // hai aur wahi asli button ban jaata hai. Number na ho to "Order Now" hi
+    // ek matra raasta hai, share uske neeche chhoti line rehti hai.
+    var ob = document.getElementById('orderBtn'), sb = document.getElementById('shareBtn2');
+    ob.classList.toggle('hidden', !!wa);
+    sb.classList.toggle('sub', !wa);
 
     var ft = [];
     if (cfg.fssai) ft.push('FSSAI: ' + esc(cfg.fssai));
@@ -339,14 +365,18 @@
     })
     .catch(function(){ fail('Menu load nahi hua.', 'Internet check karke page refresh karo.'); });
 
-  document.getElementById('shareBtn').onclick = function(){
+  // Header ka 🔗 icon aur bottom ka "Menu Share Karo" — dono isi ek function
+  // se chalte hain, taaki menu link kahin se bhi, kisi ko bhi bheja ja sake.
+  function doShare(){
     var url = location.origin + '/' + VID + '/menu';
     var title = document.getElementById('vname').textContent;
     if (navigator.share) { navigator.share({ title: title, text: 'Aaj ka menu dekho', url: url }).catch(function(){}); return; }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(function(){ this.textContent = '✓'; }.bind(this)).catch(function(){});
     }
-  };
+  }
+  document.getElementById('shareBtn').onclick = doShare;
+  document.getElementById('shareBtn2').onclick = doShare;
 })();
 </script>
 </body>
