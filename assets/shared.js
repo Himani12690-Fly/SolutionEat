@@ -375,7 +375,89 @@
     }
     document.documentElement.setAttribute('data-theme', effective === 'dark' ? 'dark' : 'light');
     const tc=document.querySelector('meta[name="theme-color"]');
-    if (tc) tc.setAttribute('content', effective === 'dark' ? '#14151f' : '#6366f1');
+    if (tc) tc.setAttribute('content', effective === 'dark' ? '#17140f' : '#e35c2b');
+    applyCachedPlatformAccent();
+  }
+
+  // Super admin ka platform-wide accent color (Chrome jaisa theme picker —
+  // superadmin.html me). Ek base hex se light/dark dono ke liye poora accent
+  // set derive karte hain (--accent/-dark/-soft/-glow), taaki 20+ colors ke
+  // liye har ek ke alag shades hand-pick na karne pade. Sab customer/vendor
+  // pages (index/customer/admin/superadmin) is se guzarte hain, isliye yaha
+  // shared.js me hai — menu.html/land.html/become-a-vendor.html/404.html
+  // apna chhota copy rakhte hain (wo shared.js load nahi karte).
+  const PLATFORM_THEMES = [
+    { id:'orange',     name:'Orange',     hex:'#e35c2b' },
+    { id:'red',        name:'Red',        hex:'#dc2626' },
+    { id:'rose',       name:'Rose',       hex:'#e11d5f' },
+    { id:'pink',       name:'Pink',       hex:'#ec4899' },
+    { id:'fuchsia',    name:'Fuchsia',    hex:'#c026d3' },
+    { id:'purple',     name:'Purple',     hex:'#9333ea' },
+    { id:'violet',     name:'Violet',     hex:'#7c3aed' },
+    { id:'indigo',     name:'Indigo',     hex:'#4f46e5' },
+    { id:'blue',       name:'Blue',       hex:'#2563eb' },
+    { id:'sky',        name:'Sky',        hex:'#0284c7' },
+    { id:'cyan',       name:'Cyan',       hex:'#0891b2' },
+    { id:'teal',       name:'Teal',       hex:'#0d9488' },
+    { id:'emerald',    name:'Emerald',    hex:'#059669' },
+    { id:'green',      name:'Green',      hex:'#16a34a' },
+    { id:'lime',       name:'Lime',       hex:'#65a30d' },
+    { id:'yellow',     name:'Yellow',     hex:'#ca8a04' },
+    { id:'amber',      name:'Amber',      hex:'#d97706' },
+    { id:'terracotta', name:'Terracotta', hex:'#c1502e' },
+    { id:'brown',      name:'Brown',      hex:'#8a5a3b' },
+    { id:'maroon',     name:'Maroon',     hex:'#9f1d3d' },
+    { id:'slate',      name:'Slate',      hex:'#475569' },
+    { id:'gray',       name:'Gray',       hex:'#57534e' }
+  ];
+  function hexToRgb(hex){
+    const h = String(hex||'').trim().replace('#','');
+    const n = h.length===3 ? h.split('').map(c=>c+c).join('') : h;
+    if(!/^[0-9a-fA-F]{6}$/.test(n)) return null;
+    const v = parseInt(n,16);
+    return { r:(v>>16)&255, g:(v>>8)&255, b:v&255 };
+  }
+  function mixHex(hex, toward, amount){
+    const a=hexToRgb(hex), b=hexToRgb(toward);
+    if(!a || !b) return hex;
+    const mix=(x,y)=>Math.round(x+(y-x)*amount);
+    return '#'+[mix(a.r,b.r),mix(a.g,b.g),mix(a.b,b.b)].map(c=>c.toString(16).padStart(2,'0')).join('');
+  }
+  function rgbaHex(hex, a){
+    const c = hexToRgb(hex);
+    return c ? `rgba(${c.r},${c.g},${c.b},${a})` : `rgba(227,92,43,${a})`;
+  }
+  function platformThemeHex(idOrHex){
+    const preset = PLATFORM_THEMES.find(p=>p.id===idOrHex);
+    return preset ? preset.hex : idOrHex;
+  }
+  function applyPlatformAccent(idOrHex){
+    const hex = platformThemeHex(idOrHex);
+    if(!hexToRgb(hex)) return;
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const r = document.documentElement.style;
+    if(!dark){
+      r.setProperty('--accent', hex);
+      r.setProperty('--accent-dark', mixHex(hex,'#000000',0.18));
+      r.setProperty('--accent-soft', mixHex(hex,'#ffffff',0.88));
+      r.setProperty('--accent-glow', rgbaHex(hex,0.18));
+    } else {
+      const lighter = mixHex(hex,'#ffffff',0.22);
+      r.setProperty('--accent', lighter);
+      r.setProperty('--accent-dark', mixHex(hex,'#ffffff',0.4));
+      r.setProperty('--accent-soft', mixHex(hex,'#000000',0.82));
+      r.setProperty('--accent-glow', rgbaHex(lighter,0.24));
+    }
+  }
+  function applyCachedPlatformAccent(){
+    let v = '';
+    try{ v = localStorage.getItem('fbt_platform_theme') || ''; }catch(e){}
+    if(v) applyPlatformAccent(v);
+  }
+  function setPlatformAccent(idOrHex){
+    if(!idOrHex) return;
+    applyPlatformAccent(idOrHex);
+    try{ localStorage.setItem('fbt_platform_theme', idOrHex); }catch(e){}
   }
 
   function readTheme(){
