@@ -239,7 +239,10 @@ test.describe('Public menu page', () => {
     await expect(page.locator('#addrErr')).toBeVisible();
     expect(await page.evaluate(() => window.__openedUrls.length)).toBe(0);
 
-    await page.fill('#addrTownship', 'Godrej Garden City');
+    // Township aur society dono dropdown se aate hain (vendor ki apni Setup
+    // se — CONFIG.township aur CONFIG.societies), sirf flat number type hota hai.
+    await expect(page.locator('#addrTownship')).toHaveValue('Godrej Garden City');
+    await page.selectOption('#addrSociety', 'Vrindavan');
     await page.fill('#addrFlat', 'A-1204');
     await page.click('#addrModal button:has-text("Place Order")');
     await expect(page.locator('#addrModal')).toBeHidden();
@@ -250,9 +253,9 @@ test.describe('Public menu page', () => {
     expect(urls[0]).toContain('https://wa.me/919876543210?text=');
     const msg = decodeURIComponent(urls[0].split('?text=')[1]);
     expect(msg).toContain('Hello *Nest & Nosh*');
-    // Address modal me jo bhara, wahi message me jaana chahiye — isi ke liye
+    // Dropdown se jo select hua, wahi message me jaana chahiye — isi ke liye
     // to modal hai.
-    expect(msg).toContain('Godrej Garden City, A-1204');
+    expect(msg).toContain('Godrej Garden City, Vrindavan, A-1204');
     // 4-byte emoji (waving hand, meal icons) kuch WhatsApp/Android versions
     // par deep-link text me "�" ban jaate hain — is message me bilkul
     // nahi hone chahiye.
@@ -263,6 +266,50 @@ test.describe('Public menu page', () => {
     // yahan chhup jaata hai — sirf share bachta hai, wahi asli button ban jaata hai.
     await expect(page.locator('#orderBtn')).toBeHidden();
     await expect(page.locator('#shareBtn2')).not.toHaveClass(/sub/);
+  });
+
+  test('order button par icon ke saath "Order" likha hota hai, aur price naam ke baju me hi hai', async ({ page }) => {
+    await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '9876543210' } }) });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    // Khaali gol icon dekh kar "click karne se order hoga" samajh nahi aata
+    // tha — ab button khud "Order" bolta hai.
+    await expect(page.locator('.vr .vo').first()).toContainText('Order');
+    // "Mini Tiffin — ₹60" ek hi jagah, alag right-aligned column nahi.
+    await expect(page.locator('.vr .vn').filter({ hasText: 'Mini Tiffin' }).first()).toContainText('₹60');
+  });
+
+  test('vendor ke societies na ho to sidha free-text building field aata hai', async ({ page }) => {
+    await page.addInitScript(() => { window.__openedUrls = []; window.open = (u) => { window.__openedUrls.push(u); return null; }; });
+    await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '9876543210' }, config: { societies: [] } }) });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await page.locator('.vr .vo').first().click();
+    await expect(page.locator('#addrModal')).toBeVisible();
+    // Society dropdown ki zaroorat hi nahi jab vendor ne koi building list
+    // nahi banayi — free-text field seedha dikhna chahiye.
+    await expect(page.locator('#addrSocietyRow')).toBeHidden();
+    await expect(page.locator('#addrSocietyOtherRow')).toBeVisible();
+    await page.fill('#addrSocietyOther', 'Sunshine Apartments');
+    await page.fill('#addrFlat', 'B-12');
+    await page.click('#addrModal button:has-text("Place Order")');
+    const urls = await page.evaluate(() => window.__openedUrls);
+    const msg = decodeURIComponent(urls[0].split('?text=')[1]);
+    expect(msg).toContain('Godrej Garden City, Sunshine Apartments, B-12');
+  });
+
+  test('society dropdown me "Other" chun kar bhi apni building type ki ja sakti hai', async ({ page }) => {
+    await page.addInitScript(() => { window.__openedUrls = []; window.open = (u) => { window.__openedUrls.push(u); return null; }; });
+    await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '9876543210' } }) });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await page.locator('.vr .vo').first().click();
+    await expect(page.locator('#addrSocietyOtherRow')).toBeHidden();
+    await page.selectOption('#addrSociety', '__other__');
+    await expect(page.locator('#addrSocietyOtherRow')).toBeVisible();
+    await page.fill('#addrSocietyOther', 'Palm Residency');
+    await page.fill('#addrFlat', 'C-3');
+    await page.click('#addrModal button:has-text("Place Order")');
+    const urls = await page.evaluate(() => window.__openedUrls);
+    const msg = decodeURIComponent(urls[0].split('?text=')[1]);
+    expect(msg).toContain('Godrej Garden City, Palm Residency, C-3');
   });
 
   test('address modal ka Cancel WhatsApp khole bina band ho jaata hai', async ({ page }) => {
