@@ -87,6 +87,10 @@
   // branch ke BAAD hai kyunki slug pehle chahiye.
   if (parts[1] === 'menu' && parts[0] !== 'admin') {
     location.replace('/menu.html?v=' + encodeURIComponent(parts[0]) + (rest ? '&' + rest : '') + location.hash);
+  // /<vendor>/land — the ad-landing page (land.html), same clean-link
+  // pattern as /menu above. Short, memorable URL for paid ad destinations.
+  } else if (parts[1] === 'land' && parts[0] !== 'admin') {
+    location.replace('/land.html?v=' + encodeURIComponent(parts[0]) + (rest ? '&' + rest : '') + location.hash);
   } else if (qs) location.replace('/?' + qs + location.hash);
   else location.replace('/');
 </script>
