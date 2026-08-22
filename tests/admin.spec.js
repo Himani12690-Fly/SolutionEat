@@ -193,6 +193,28 @@ test.describe('Admin menu & config', () => {
     expect(state.menu.monday.lunch.sabziOptions).toEqual(['Kadhi','Bhindi Masala']);
   });
 
+  test('sirf non-sabzi variants (jaise Khichdi) waali meal ke liye sabzi options zaroori nahi', async ({ page }) => {
+    // Pehle hardcoded tha ki har variants-wali meal ke sabzi options bharna
+    // zaroori hai, chahe uski koi variant sabzi use hi na karti ho. Jo kitchen
+    // sirf alag tarah ki Khichdi bechti hai, use ye force nahi hona chahiye.
+    const state = freshState();
+    state.config.variants.lunch = [
+      { id:'moong', name:'Moong Khichdi', price:70, items:['Khichdi','Papad','Achar'], usesSabzi:false },
+      { id:'masoor', name:'Masoor Khichdi', price:80, items:['Khichdi','Papad','Achar'], usesSabzi:false }
+    ];
+    await openApp(page, { state });
+    await adminLogin(page);
+    await page.evaluate(() => window.adminBnGo('menu'));
+    await page.waitForTimeout(300);
+    await page.fill('#ed-lunchSabzi', '');
+    await page.click('#saveMenuBtn');
+    await page.waitForTimeout(500);
+    // Dinner abhi bhi tiffin hai (default sabzi bhara hua) — save clean hona
+    // chahiye, koi "sabzi options bharo" warning nahi.
+    await expect(page.locator('#toast')).toContainText('ka menu saved');
+    expect(state.menu.monday.lunch.sabziOptions).toEqual([]);
+  });
+
   test('sabzi options khaali ho to save nahi hota', async ({ page }) => {
     const state = freshState();
     await openApp(page, { state });
@@ -292,6 +314,22 @@ test.describe('Admin variants', () => {
     await page.click('#saveVarBtn');
     await page.waitForTimeout(500);
     expect(state.config.variants.lunch.length).toBe(3);
+  });
+
+  test('variant ka "roz ka sabzi poochna hai" checkbox save hota hai', async ({ page }) => {
+    const state = freshState();
+    await openApp(page, { state });
+    await adminLogin(page);
+    await page.evaluate(() => window.adminBnGo('variants'));
+    await page.waitForTimeout(300);
+    // Default fixture ke variants "Full Tiffin"/"Mini Tiffin" hain, isliye
+    // checkbox andaza se already checked hona chahiye.
+    const box = page.locator('#varList .var-card').first().locator('.cfg-chk input[type="checkbox"]');
+    await expect(box).toBeChecked();
+    await box.uncheck();
+    await page.click('#saveVarBtn');
+    await page.waitForTimeout(500);
+    expect(state.config.variants.lunch[0].usesSabzi).toBe(false);
   });
 
   test('aakhri variant delete nahi hota', async ({ page }) => {
