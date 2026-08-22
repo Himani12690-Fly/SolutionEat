@@ -177,10 +177,10 @@
        always for the future. Stays hidden until data arrives — an empty
        dropdown is confusing too. -->
   <div class="daysel hidden" id="daysel"><select id="daySelect" aria-label="Select day"></select></div>
-  <!-- Real order numbers from the backend (publicstats action, the same one
-       the app itself uses) — "preparing" = actively being made right now
-       (Live), "ordered" = total placed for the day so far (Already Order).
-       No fake/fabricated counts. -->
+  <!-- Real page-visit counts from the backend's trackvisit action (see
+       docs/apps-script-live-visits.md) — how many have the page open right
+       now (Live ordering) and how many have visited today (Already Order).
+       No fake/fabricated counts; stays hidden until the backend responds. -->
   <div class="stats-bar hidden" id="statsBar">
     <div class="stat-pill"><span class="dot"></span><span class="lab">Live ordering</span><b id="statLive">0</b></div>
     <div class="stat-pill"><span class="lab">Already Order</span><b id="statDone">0</b></div>
@@ -305,6 +305,53 @@
       '<div class="ld">' + esc(msg) + (sub ? '<br><span style="font-weight:600;">' + esc(sub) + '</span>' : '') + '</div>';
   }
 
+  // "Live ordering" / "Already Order" — asli page-visit counts, backend ke
+  // naye trackvisit action se (docs/apps-script-live-visits.md). Sirf tab
+  // dikhte hain jab wo action jawaab de — backend abhi update nahi hua to
+  // stats bar hidden hi rehta hai, baaki page normally chalta hai.
+  //
+  // Ek session (isi tab me) ke liye ek hi id — sessionStorage me. Refresh
+  // karne par wahi id, isliye "Already Order" (aaj ke ab tak ke distinct
+  // visits) dobara nahi badhta; naya tab/device naya count hota hai.
+  function visitSessionId(){
+    try {
+      var id = sessionStorage.getItem('mt_visit_sid');
+      if (!id) {
+        id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        sessionStorage.setItem('mt_visit_sid', id);
+      }
+      return id;
+    } catch (e) { return 'anon-' + Date.now(); }
+  }
+
+  // Pehli call par first=1 — backend "Already Order" sirf isi baar badhata
+  // hai. Uske baad har ~45s ek heartbeat (first nahi) jo sirf "Live
+  // ordering" ko taaza rakhta hai (backend 90s baad stale session hata deta
+  // hai — TTL heartbeat interval se thoda zyada, ek miss hone se bhi count
+  // se nahi girna chahiye).
+  function pingVisit(first){
+    if (SCRIPT_URL.indexOf('http') !== 0) return;
+    var sid = visitSessionId();
+    var alreadyCounted = false;
+    try { alreadyCounted = sessionStorage.getItem('mt_visit_counted') === '1'; } catch (e) {}
+    var isFirst = !!first && !alreadyCounted;
+    fetch(SCRIPT_URL + '?action=trackvisit&vendorId=' + encodeURIComponent(VID) +
+          '&sessionId=' + encodeURIComponent(sid) + (isFirst ? '&first=1' : ''))
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        // Backend abhi tak trackvisit na samajhta ho (docs abhi paste nahi
+        // hui) to bhi status:'success' wapas aa sakta hai kisi aur shape
+        // me — sirf status check kaafi nahi, live/total genuinely numbers
+        // honi chahiye warna stats bar "undefined" dikha degi.
+        if (!j || j.status !== 'success' || typeof j.live !== 'number' || typeof j.total !== 'number') return;
+        if (isFirst) { try { sessionStorage.setItem('mt_visit_counted', '1'); } catch (e) {} }
+        document.getElementById('statLive').textContent = j.live;
+        document.getElementById('statDone').textContent = j.total;
+        document.getElementById('statsBar').classList.remove('hidden');
+      })
+      .catch(function(){});
+  }
+
   // Order WhatsApp par jaane se pehle delivery address maangte hain — vendor
   // ko pata chalna chahiye kahan bhejna hai, aur customer ko khud type nahi
   // karna padta. CURRENT_WA/CURRENT_VENDOR_NAME render() me set hote hain,
@@ -393,35 +440,11 @@
              (v.price ? ' (₹' + v.price + ')' : '') + ' x 1 (' + dateTxt + ')';
     }
 
-    // Backend ke asli order numbers dikhate hain — koi fabricated/fake count
-    // nahi. "preparing" = abhi kitchen me active (Live ordering), "ordered" =
-    // us din ke liye ab tak place hue orders (Already Order). Wahi
-    // publicstats action jo app khud customer ke liye use karta hai.
-    function loadStats(dateStr){
-      if (SCRIPT_URL.indexOf('http') !== 0) return;
-      fetch(SCRIPT_URL + '?action=publicstats&date=' + dateStr + '&vendorId=' + encodeURIComponent(VID))
-        .then(function(r){ return r.json(); })
-        .then(function(j){
-          if (!j || j.status !== 'success' || !j.stats) return;
-          var live = 0, done = 0;
-          (cfg.mealTypes || []).forEach(function(mt){
-            var s = j.stats[mt.key];
-            if (s) { live += (s.preparing || 0); done += (s.ordered || 0); }
-          });
-          document.getElementById('statLive').textContent = live;
-          document.getElementById('statDone').textContent = done;
-          document.getElementById('statsBar').classList.remove('hidden');
-        })
-        .catch(function(){});
-    }
-
     function renderDay(dayKey){
       var today = menu[dayKey] || {};
       var dt = dateForDay(dayKey);
       var isToday = dayKey === todayKey;
       var dateTxt = dt.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
-
-      loadStats(ymd(dt));
 
       // Kitchen band — do tarah se: us din ki date closedDates me hai, ya
       // vendor ne "temporarily closed" kiya hua hai (ye hamesha lagu hota
@@ -503,16 +526,21 @@
     sel.value = todayKey;
     sel.onchange = function(){ renderDay(sel.value); };
     renderDay(todayKey);
+    pingVisit(true);
 
     // Page khuli chhodi ho aur beech me kisi meal ka cutoff nikal jaaye,
     // to customer ko manually refresh nahi karna padna chahiye — jo ab
     // order nahi ho sakta wo khud hi hat jaana chahiye. "now"/"todayKey"
     // dono taaza karte hain (raat 12 baje ke aage bhi sahi rahe), phir
     // currently jo din dikh raha hai (sel.value) usi ko dobara render karte hain.
+    // Isi tick ke saath heartbeat bhi bhej dete hain — "Live ordering" ko
+    // backend par stale hone se pehle taaza rakhne ke liye alag timer nahi
+    // chahiye.
     setInterval(function(){
       now = istNow();
       todayKey = DAYS[now.getDay()];
       renderDay(sel.value);
+      pingVisit(false);
     }, 60000);
 
     // WhatsApp number ho to har item ka apna order button hai (upar) — is
