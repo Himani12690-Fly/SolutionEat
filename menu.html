@@ -54,7 +54,14 @@
   html { background:var(--bg); }
   body { margin:0; background:var(--bg); color:var(--ink); padding:0 0 108px;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    font-size:14px; line-height:1.5; min-height:100vh; min-height:100dvh;
+    font-size:14px; line-height:1.5;
+    /* 100vh Android Chrome par address-bar-visible state me bhi "poora"
+       viewport maan leta hai (jab wo abhi dikh rahi hoti hai) — content us
+       bade andaze ke hisaab se stretch ho jaata, footer/CTA ke beech ek
+       bada khaali gap chhod deta. 100svh hamesha SABSE CHHOTA guaranteed
+       visible area hai (toolbar dikhi ho ya nahi), isliye kabhi overshoot
+       nahi karta. */
+    min-height:100vh; min-height:100svh;
     display:flex; flex-direction:column; }
   /* flex:1 + #meals ka apna flex:1 (neeche) — footer hamesha content ke
      turant baad, page ke bilkul end (CTA bar ke upar) tak khinch jaata hai,
