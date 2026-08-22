@@ -174,15 +174,34 @@ test.describe('Public menu page', () => {
     await expect(page.locator('.mc-ti').filter({ hasText: 'Dinner' })).toHaveCount(1);
   });
 
-  test('sabhi meals ka cutoff nikal jaaye to saaf message, khaali menu jaisa nahi', async ({ page }) => {
-    // 11:00 PM — Breakfast "aaj" ke liye pehle se hi nikla hota hai
-    // (cutoffAheadDay), aur is waqt Lunch/Dinner dono ka bhi nikal chuka hai.
-    await openMenu(page, { istOverride: '2026-08-17T23:00:00' });
-    // Ye "menu set nahi hua" wale generic message se alag hona chahiye —
-    // menu to hai, bas ab order karne ka time nikal gaya. toContainText() khud
-    // retry karta hai jab tak fetch/render poora nahi ho jaata.
+  test('aaj ke sabhi cutoff nikal jaayein to agla orderable din khud-ba-khud dikhta hai', async ({ page }) => {
+    // 11:00 PM, Monday 17 Aug — aaj (Monday) ke Breakfast/Lunch/Dinner
+    // sabka cutoff nikal chuka hai. Kal (Tuesday) ka Breakfast bhi nikal
+    // chuka hai (cutoffAheadDay — cutoff aaj raat 22:00 tha), par Tuesday
+    // ke Lunch/Dinner ka cutoff Tuesday din me hi hai, abhi nahi nikla.
+    // Page ab "Today" par khaali/closed dikhane ke bajaye khud Tuesday par
+    // skip kar jaata hai jahan waqai order karne layak kuch bacha hai.
+    const errors = await openMenu(page, { istOverride: '2026-08-17T23:00:00' });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await expect(page.locator('#daySelect')).toHaveValue('tuesday');
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Breakfast' })).toHaveCount(0);
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Lunch' })).toHaveCount(1);
+    await expect(page.locator('.mc-ti').filter({ hasText: 'Dinner' })).toHaveCount(1);
+    expect(errors).toEqual([]);
+  });
+
+  test('cutoff-passed din ko manually select karne par bhi saaf closed message dikhta hai', async ({ page }) => {
+    // Auto-select ab hamesha pehla orderable din chunta hai (upar wala
+    // test), is liye "closed" state dekhne ke liye ab manually us din par
+    // jaana padta hai jiska cutoff nikal chuka ho — renderDay() ka
+    // closed-message wahan abhi bhi sahi kaam karta hai, sirf initial
+    // auto-select ab kabhi is state par khud nahi rukta.
+    const errors = await openMenu(page, { istOverride: '2026-08-17T23:00:00' });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await page.locator('#daySelect').selectOption('monday'); // aaj — sabka cutoff nikal chuka hai
     await expect(page.locator('.ld')).toContainText('Ordering has closed', { timeout: 15000 });
     await expect(page.locator('.mc')).toHaveCount(0);
+    expect(errors).toEqual([]);
   });
 
   test('cutoff nikalte hi list bina manual refresh ke khud update ho jaati hai', async ({ page }) => {
