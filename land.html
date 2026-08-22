@@ -89,7 +89,7 @@
   /* ── Pricing ── */
   .sec-t{font-size:21px;text-align:center;margin-bottom:16px;}
   .price-list{display:grid;gap:10px;margin-bottom:30px;}
-  .price-card{background:var(--card);border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 16px -10px rgba(43,33,24,.14);}
+  .price-card{background:var(--card);border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 16px -10px rgba(43,33,24,.14);cursor:pointer;}
   .price-card.pop{background:var(--accent);color:#fff;}
   .price-name{font-size:14.5px;font-weight:800;}
   .price-sub{font-size:12px;font-weight:600;opacity:.75;margin-top:2px;}
@@ -238,14 +238,34 @@
     return (d.length === 12 && d.slice(0,2) === '91') ? d : '';
   }
 
+  // Filled in once the vendor's real WhatsApp number is known (see render()
+  // below) — plan cards use it to open a pre-filled chat instead of just
+  // linking to the menu, so tapping a plan feels like it went somewhere.
+  var CURRENT_WA = '';
+
+  function planWaMessage(p){
+    return 'Hi! I\'m interested in the ' + p.name + ' (' + p.sub + '). Please connect with me soon — thank you for having me!';
+  }
+
   function renderPricing(){
     var box = document.getElementById('priceList');
-    box.innerHTML = PRICING_PLANS.map(function(p){
-      return '<div class="price-card' + (p.popular ? ' pop' : '') + '">' +
+    box.innerHTML = PRICING_PLANS.map(function(p, i){
+      return '<a class="price-card' + (p.popular ? ' pop' : '') + '" href="#" data-plan-index="' + i + '">' +
         '<div><div class="price-name">' + esc(p.name) + (p.popular ? ' · Popular' : '') + '</div>' +
         '<div class="price-sub">' + esc(p.sub) + '</div></div>' +
-        '<div class="price-amt">' + (p.amount != null ? '₹' + p.amount : 'Contact us') + '</div></div>';
+        '<div class="price-amt">' + (p.amount != null ? '₹' + p.amount : 'Contact us') + '</div></a>';
     }).join('');
+    Array.prototype.forEach.call(box.querySelectorAll('.price-card'), function(el){
+      el.addEventListener('click', function(e){
+        e.preventDefault();
+        var plan = PRICING_PLANS[Number(el.getAttribute('data-plan-index'))];
+        if (CURRENT_WA) {
+          window.open('https://wa.me/' + CURRENT_WA + '?text=' + encodeURIComponent(planWaMessage(plan)), '_blank', 'noopener');
+        } else {
+          location.href = document.getElementById('menuBtn').href;
+        }
+      });
+    });
   }
 
   function istNow(){
@@ -300,6 +320,7 @@
     if (vendor.logo) logoWrap.innerHTML = '<img src="' + esc(vendor.logo) + '" alt="" onerror="this.parentElement.textContent=\'🍱\';">';
 
     var wa = waNumber(vendor.whatsapp);
+    CURRENT_WA = wa;
     var waIcon = document.getElementById('waIcon');
     if (wa) {
       waIcon.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hi! I saw your ad — can I see today\'s tiffin menu?');
