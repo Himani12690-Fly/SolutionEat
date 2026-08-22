@@ -262,11 +262,23 @@
     var enabled = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; });
     var items = [];
     for (var i = 0; i < enabled.length && !items.length; i++) {
-      var rec = today[enabled[i].key];
-      var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
-      if (sabzi.length) { items = sabzi; break; }
-      var vs = ((cfg.variants || {})[enabled[i].key]) || [];
-      if (vs.length && vs[0].items && vs[0].items.length) items = vs[0].items;
+      var key = enabled[i].key;
+      var rec = today[key];
+      var sabziToday = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
+      var vs = ((cfg.variants || {})[key]) || [];
+      var baseItems = (vs.length && vs[0].items && vs[0].items.length) ? vs[0].items : [];
+      if (baseItems.length) {
+        // Full thali (roti/rice/dal/...) — swap the generic "Sabzi" line for
+        // today's actual sabzi so the ad shows the real plate, not just one item.
+        var swapped = false;
+        var list = baseItems.map(function(it){
+          if (!swapped && sabziToday.length && /sabzi/i.test(it)) { swapped = true; return sabziToday.join(' / '); }
+          return it;
+        });
+        items = swapped ? list : list.concat(sabziToday);
+      } else if (sabziToday.length) {
+        items = sabziToday;
+      }
     }
     if (!items.length) {
       box.innerHTML = '<div class="thali-empty">Ask us on WhatsApp for today\'s full menu.</div>';
