@@ -47,6 +47,29 @@ test.describe('Cart & pricing', () => {
     expect(total).toBe(70);   // 60 + 10
   });
 
+  test('non-tiffin variant (jaise Paav Bhaji) ke liye sabzi selector nahi maangta', async ({ page }) => {
+    // Pehle sirf naam/items me "tiffin"/"sabzi" word dekh kar andaza lagaya
+    // jaata tha — ek fixed thali (Paav Bhaji, Pulaav) bhi galat se sabzi
+    // maangne lagti thi. Ab vendor variant editor me khud usesSabzi:false
+    // set kar sakta hai.
+    const state = freshState();
+    state.config.variants.lunch.push({ id:'paavbhaji', name:'Paav Bhaji', price:70, items:['Paav (2)','Bhaji'], usesSabzi:false });
+    await openApp(page, { state });
+    await goTo(page, 'menu');
+    await page.evaluate(() => window.openMealSheet('lunch'));
+    await page.evaluate(() => window.shSetSize('paavbhaji'));
+    await page.waitForTimeout(100);
+    // .sh-select ek generic class hai (poore app me kai fields use karte hain) —
+    // sirf meal sheet ke customize block ke andar dekhna hai.
+    await expect(page.locator('#shCustomBlock select.sh-select')).toHaveCount(0);
+    // Sabzi na chunne ki wajah se "Add to Cart" bhi blocked nahi hona chahiye.
+    const before = await page.evaluate(() => window.cart.length);
+    await page.evaluate(() => window.shAddToCartConfirmed());
+    await page.waitForTimeout(100);
+    const after = await page.evaluate(() => window.cart.length);
+    expect(after).toBe(before + 1);
+  });
+
   test('add-ons total mein jud rahe hain', async ({ page }) => {
     await openApp(page);
     await goTo(page, 'menu');

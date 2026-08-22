@@ -211,11 +211,17 @@
     return !!(day && day[m] && (day[m].sabziOptions||[]).length);
   }
   // Sabzi/roti sirf tiffin waale variant ke saath jaati hai — Paav Bhaji ya
-  // Veg Pulaav ke sath nahi. Naam/id me "tiffin" ho, ya variant ke apne items
-  // me hi sabzi likhi ho, tabhi selection dikhegi.
+  // Veg Pulaav ke sath nahi. Vendor variant editor me khud ye set kar sakta
+  // hai (v.usesSabzi) — jab set na ho (purana data), naam/id me "tiffin" ho
+  // ya variant ke apne items me hi "sabzi" likha ho to hi selection dikhegi.
+  // Sirf naam/items par bharosa karna galat tha: koi bhi variant jiske items
+  // me "sabzi" word aaye (jaise ek side dish literally "Sabzi" naam ka) ya
+  // jo kisi tiffin variant se copy-paste hua ho, galat se sabzi-required ban
+  // jaata tha, chahe wo actually ek fixed thali ho (Paav Bhaji, Pulaav).
   function variantUsesSabzi(m, variantId){
     if(m==='breakfast') return false;
     const v=findVariant(m, variantId); if(!v) return false;
+    if(typeof v.usesSabzi === 'boolean') return v.usesSabzi;
     if((((v.name||'')+' '+(v.id||'')).toLowerCase()).indexOf('tiffin')>=0) return true;
     return (v.items||[]).some(x=>String(x).toLowerCase().indexOf('sabzi')>=0);
   }

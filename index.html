@@ -55,7 +55,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="assets/styles.css?v=a981a17739">
+  <link rel="stylesheet" href="assets/styles.css?v=bf9386ea8a">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -1447,7 +1447,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=a981a17739"></script>
+  <script src="assets/shared.js?v=bf9386ea8a"></script>
 <script>
   (function(){
     try{
@@ -6666,9 +6666,15 @@
     // items + fixedItems HARDCODED required the — ye teen keys ke bahar ka koi
     // custom meal type is check me aata hi nahi tha, aur do fields to ab form
     // me hi nahi hain.
+    // Aur ye sirf tab zaroori hai jab us meal ka koi variant actually sabzi
+    // use karta ho — jo kitchen sirf Khichdi (ya koi bhi non-sabzi thali)
+    // banati hai, use har din ke liye sabzi options bharne ko force nahi
+    // karna chahiye jab uski koi variant hi sabzi maangti nahi.
     const missing=MEALS.filter(m=>{
       const mt=mealType(m)||{};
       if(mt.enabled===false||mt.hasVariants===false) return false;
+      const vs=(CFG.variants&&CFG.variants[m])||[];
+      if(!vs.some(v=>variantUsesSabzi(m,v.id))) return false;
       return !(((d[m]||{}).sabziOptions||[]).length);
     }).map(m=>(mealType(m)||{}).title||m);
     if(missing.length){
@@ -6763,6 +6769,12 @@
     const box=document.getElementById('varList');
     box.innerHTML=list.map((v,i)=>{
       const img=v.img?`<img src="${v.img}" alt="">`:'🍱';
+      // Purana data (usesSabzi kabhi set hi nahi hua) ke liye wahi naam/items
+      // wala andaza jo variantUsesSabzi() (shared.js) use karta hai — sirf
+      // checkbox ki default dikhaane ke liye, jab tak vendor khud na badle.
+      const usesSabzi = typeof v.usesSabzi==='boolean' ? v.usesSabzi
+        : ((((v.name||'')+' '+(v.id||'')).toLowerCase().indexOf('tiffin')>=0) ||
+           (v.items||[]).some(x=>String(x).toLowerCase().indexOf('sabzi')>=0));
       return `<div class="var-card">
         <div class="vc-top">
           <div class="var-photo" onclick="pickVariantPhoto(${i})">${img}<div class="vp-edit">📷 Photo</div></div>
@@ -6772,6 +6784,12 @@
               <input type="number" value="${v.price}" placeholder="Price ₹" oninput="varEdit(${i},'price',this.value)">
             </div>
             <textarea placeholder="Items (ek line me ek — e.g.&#10;Roti (5)&#10;Daal&#10;Chawal)" oninput="varEdit(${i},'itemsText',this.value)">${(v.items||[]).join('\n')}</textarea>
+            <!-- Naam/items me "tiffin"/"sabzi" word dekh kar andaza lagaya jaata
+                 tha ki customer se roz ka curry poochna hai ya nahi — isse ek
+                 fixed thali (Paav Bhaji, Pulaav) bhi galat se sabzi maangne
+                 lagti thi agar items me kahin "sabzi" likha ho. Ab vendor
+                 khud tay karta hai. -->
+            <label class="cfg-chk" style="margin-top:6px;"><input type="checkbox" ${usesSabzi?'checked':''} onchange="varEdit(${i},'usesSabzi',this.checked)"> 🍛 Order karte waqt roz ka sabzi/curry poochna hai</label>
             <div class="var-up-status" id="varUp${i}"></div>
           </div>
         </div>
@@ -6785,6 +6803,7 @@
     if(field==='name') v.name=val;
     else if(field==='price') v.price=parseInt(val,10)||0;
     else if(field==='itemsText') v.items=val.split('\n').map(s=>s.trim()).filter(Boolean);
+    else if(field==='usesSabzi') v.usesSabzi=!!val;
   }
   function addVariant(){
     if(!varDraft)openVariantsEditor();
