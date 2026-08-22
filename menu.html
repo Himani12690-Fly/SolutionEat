@@ -498,7 +498,10 @@
         if (isFirst) { try { sessionStorage.setItem('mt_visit_counted', '1'); } catch (e) {} }
         document.getElementById('statLive').textContent = j.live;
         document.getElementById('statDone').textContent = j.total;
-        document.getElementById('statsBar').classList.remove('hidden');
+        // "0 · 0" backfires — a stranger from an ad/forward reads it as
+        // "nobody uses this kitchen" and trusts it less, not more. Only
+        // show the bar once there's an actual number worth showing.
+        document.getElementById('statsBar').classList.toggle('hidden', j.live < 1 && j.total < 3);
       })
       .catch(function(){});
   }
@@ -742,7 +745,25 @@
         dt.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
       sel.appendChild(opt);
     }
-    var initialDay = (__lastSelectedDay && DAYS.indexOf(__lastSelectedDay) >= 0) ? __lastSelectedDay : todayKey;
+    // A first-time visitor always used to land on "Today" — even when every
+    // meal's order-by time had already passed and Today had nothing
+    // orderable. That's a dead end: they see "Ordering has closed for
+    // today's meals" and bounce, instead of the next day that's actually
+    // still open. Skip ahead to the first day (of the 7 shown) with
+    // something orderable; only fall back to Today if none of them do.
+    function dayHasAvailable(dayKey){
+      var dt = dateForDay(dayKey);
+      var enabledMts = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; });
+      return enabledMts.some(function(mt){ return !cutoffPassed(mt, dt); });
+    }
+    var initialDay = (__lastSelectedDay && DAYS.indexOf(__lastSelectedDay) >= 0) ? __lastSelectedDay : null;
+    if (!initialDay) {
+      for (var di = 0; di < 7; di++) {
+        var candidate = DAYS[(now.getDay() + di) % 7];
+        if (dayHasAvailable(candidate)) { initialDay = candidate; break; }
+      }
+      if (!initialDay) initialDay = todayKey;
+    }
     sel.value = initialDay;
     sel.onchange = function(){ __lastSelectedDay = sel.value; renderDay(sel.value); };
     renderDay(initialDay);
