@@ -124,12 +124,11 @@
   .vr .vi { font-size:11.5px; color:var(--muted); font-weight:600; margin-top:2px; }
   /* Ek-tap order button — is item ka apna WhatsApp message, poora menu
      retype/reply kiye bina. Ek khaali gol icon "click karne se kya hoga"
-     saaf nahi karta tha — ab ek pill hai jisme icon ke saath "Order" likha
-     hai, taaki clickable/actionable dikhe. */
-  .vr .vo { flex:0 0 auto; align-self:center; height:34px; padding:0 14px; border-radius:20px;
-    background:#25D366; display:flex; align-items:center; justify-content:center; gap:6px;
+     saaf nahi karta tha — ab ek pill hai jisme seedha "Order" likha hai,
+     taaki clickable/actionable dikhe. */
+  .vr .vo { flex:0 0 auto; align-self:center; height:34px; padding:0 16px; border-radius:20px;
+    background:#25D366; display:flex; align-items:center; justify-content:center;
     text-decoration:none; color:#fff; font-size:12.5px; font-weight:900; white-space:nowrap; }
-  .vr .vo svg { width:15px; height:15px; flex:0 0 auto; }
 
   /* ── Bottom CTA (thumb zone) ── */
   .cta { position:fixed; left:0; right:0; bottom:0; background:var(--card);
@@ -183,10 +182,42 @@
     animation:sp .7s linear infinite; }
   @keyframes sp { to { transform:rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .ld .sp { animation:none; } }
+
+  /* ── Full-page loader ── */
+  .pageload { position:fixed; inset:0; z-index:100; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    transition:opacity .35s ease, transform .35s ease; }
+  .pageload-logo { width:76px; height:76px; border-radius:50%; object-fit:cover;
+    border:1px solid var(--line); background:var(--card);
+    animation:plPulse 1.6s ease-in-out infinite; }
+  .pageload-text { font-size:13.5px; font-weight:800; color:var(--muted); }
+  @keyframes plPulse { 0%,50%,100% { transform:scale(1); opacity:1; } 25% { transform:scale(1.08); opacity:.7; } }
+  @media (prefers-reduced-motion: reduce) { .pageload-logo { animation:none; } }
+  /* Splash fades+scales away, real page fades+slides up right behind it —
+     the "reveal" is timed from JS (revealPage()), not just a page-load
+     animation, so it plays exactly when the menu is ready, not before. */
+  .pageload.gone { opacity:0; transform:scale(1.06); pointer-events:none; }
+  .wrap, .cta { opacity:0; }
+  body.ready .wrap, body.ready .cta { animation:pageIn .5s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes pageIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .wrap, .cta { opacity:1; }
+    body.ready .wrap, body.ready .cta { animation:none; }
+  }
+
   .hidden { display:none !important; }
 </style>
 </head>
 <body>
+<!-- Full-page splash — hides the whole page (header shimmer, spinner, all
+     of it) behind one clean branded screen until the menu is actually
+     ready to show. Removed with a fade+scale once render() runs the first
+     time (cache or fetch, whichever comes first). -->
+<div class="pageload" id="pageLoad">
+  <img class="pageload-logo" id="plLogo" alt=""
+       src="/assets/icons/logo-round.webp" onerror="this.style.visibility='hidden'">
+  <div class="pageload-text">Loading Menu…</div>
+</div>
 <div class="wrap">
   <div class="hd">
     <!-- Blank pixel + shimmer tak koi real src nahi — cache/fetch se jo bhi
@@ -350,9 +381,25 @@
     return (d.length === 12 && d.slice(0,2) === '91') ? d : '';
   }
 
+  // Splash screen ek hi baar hatta hai — pehli baar jab kuch bhi dikhane
+  // laayak state aa jaaye (render() ho ya fail()), chahe cache se ho ya
+  // fetch se. Dobara call harmless (revealed rehta hai).
+  var __revealed = false;
+  function revealPage(){
+    if (__revealed) return;
+    __revealed = true;
+    var pl = document.getElementById('pageLoad');
+    if (pl) {
+      pl.classList.add('gone');
+      setTimeout(function(){ if (pl.parentNode) pl.parentNode.removeChild(pl); }, 400);
+    }
+    document.body.classList.add('ready');
+  }
+
   function fail(msg, sub){
     document.getElementById('meals').innerHTML =
       '<div class="ld">' + esc(msg) + (sub ? '<br><span style="font-weight:600;">' + esc(sub) + '</span>' : '') + '</div>';
+    revealPage();
   }
 
   // render() cache se ek baar aur fetch se ek baar — dono baar chal sakta
@@ -494,6 +541,7 @@
 
   function render(d){
     var cfg = d.config || {}, menu = d.menu || {}, vendor = d.vendor || {};
+    revealPage();
     var now = istNow();
     var todayKey = DAYS[now.getDay()];
 
@@ -545,12 +593,6 @@
       societyRow.classList.add('hidden');
       otherRow.classList.remove('hidden');
     }
-    // A clear "place order" glyph (shopping bag) — WhatsApp's own logo made
-    // the button read as a chat/share action, not an order. The order
-    // itself still goes out over WhatsApp; that's just the delivery
-    // mechanism, not what the button should visually say.
-    var ORDER_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>';
-
     // Vendor ka menu ek weekly template hai (Monday..Sunday, date-bound nahi),
     // isliye "selected day" ke liye asli calendar date chahiye — sirf label
     // aur WhatsApp message me. Hamesha aaj ya aane wale 6 dinon me se ek
@@ -644,7 +686,7 @@
               '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div></div>' +
               (wa ? '<a class="vo" href="#" onclick="mtOpenAddrModal(this);return false;" data-msg="' +
                     esc(itemMsgLine(mt, v, dateTxt)) + '" aria-label="' +
-                    esc('Order ' + (v.name || 'this item')) + '">' + ORDER_ICON + '<span>Order</span></a>' : '') +
+                    esc('Order ' + (v.name || 'this item')) + '">Order</a>' : '') +
               '</div>';
           }).join('');
         }
@@ -720,7 +762,16 @@
   // jaaye (ya bahut slow ho) to bhi cache dikh raha hoga, error kabhi nahi
   // dikhana jab tak customer ke paas dikhane ko kuch ho.
   var cached = readCache();
-  if (cached) render(cached);
+  if (cached) {
+    // Splash abhi bhi upar hai (render() isi ke andar se hataayega) —
+    // vendor ka apna logo pata hai to generic app icon ki jagah wahi
+    // dikhaate hain, us ek frame ke liye bhi sahi.
+    if (cached.vendor && cached.vendor.logo) {
+      var plLogo = document.getElementById('plLogo');
+      if (plLogo) plLogo.src = cached.vendor.logo;
+    }
+    render(cached);
+  }
 
   fetch(SCRIPT_URL + '?action=bootstrap&vendorId=' + encodeURIComponent(VID))
     .then(function(r){ return r.json(); })
