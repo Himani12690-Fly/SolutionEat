@@ -27,7 +27,8 @@ function report(file, label, err) {
 }
 
 // src= wale <script> skip karo — unka apna file alag se check hota hai.
-const INLINE = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g;
+// type="application/ld+json" (ya koi aur non-JS type) bhi skip — wo JSON hai, JS nahi.
+const INLINE = /<script(?![^>]*\bsrc=)(?![^>]*\btype=["'](?!(?:text\/javascript|application\/javascript|module)["']))[^>]*>([\s\S]*?)<\/script>/g;
 
 for (const file of HTML) {
   const full = path.join(ROOT, file);
