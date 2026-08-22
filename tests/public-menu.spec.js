@@ -289,16 +289,17 @@ test.describe('Public menu page', () => {
     await expect(page.locator('.vr .vo')).toHaveCount(0);
   });
 
-  test('backend ke asli order numbers "Live ordering" / "Already Order" me dikhte hain', async ({ page }) => {
-    // Fabricated/fake counter nahi — wahi publicstats action jo app khud
-    // customer ke liye use karta hai (loadPublicStats, index.html).
+  test('backend ke asli visit counts "Live ordering" / "Already Order" me dikhte hain', async ({ page }) => {
+    // Fabricated/fake counter nahi — naya trackvisit backend action
+    // (docs/apps-script-live-visits.md), jo asli page visits count karta hai.
     await page.addInitScript((v) => { window.__TEST_IST_OVERRIDE = v; }, DEFAULT_IST);
+    let capturedParams = null;
     await page.route('**/script.google.com/**', r => {
       const u = new URL(r.request().url());
-      if (u.searchParams.get('action') === 'publicstats') {
+      if (u.searchParams.get('action') === 'trackvisit') {
+        capturedParams = Object.fromEntries(u.searchParams);
         return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-          status: 'success',
-          stats: { lunch: { ordered: 5, preparing: 2 }, dinner: { ordered: 3, preparing: 1 } },
+          status: 'success', live: 4, total: 19,
         }) });
       }
       r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(bootstrap()) });
@@ -306,10 +307,34 @@ test.describe('Public menu page', () => {
     await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.mc', { timeout: 15000 });
     await expect(page.locator('#statsBar')).toBeVisible();
-    // Live ordering = "preparing" (abhi kitchen me active): 2 (lunch) + 1 (dinner).
-    await expect(page.locator('#statLive')).toHaveText('3');
-    // Already Order = "ordered" (us din ke liye ab tak place): 5 (lunch) + 3 (dinner).
-    await expect(page.locator('#statDone')).toHaveText('8');
+    await expect(page.locator('#statLive')).toHaveText('4');
+    await expect(page.locator('#statDone')).toHaveText('19');
+    // Pehli ping vendorId + sessionId + first=1 ke saath jaani chahiye —
+    // backend isi se "already visited" ka distinct-session count rakhta hai.
+    expect(capturedParams.vendorId).toBe('nestandnosh');
+    expect(capturedParams.sessionId).toBeTruthy();
+    expect(capturedParams.first).toBe('1');
+  });
+
+  test('reload karne par dobara "first" visit count nahi hota', async ({ page }) => {
+    await page.addInitScript((v) => { window.__TEST_IST_OVERRIDE = v; }, DEFAULT_IST);
+    const firsts = [];
+    await page.route('**/script.google.com/**', r => {
+      const u = new URL(r.request().url());
+      if (u.searchParams.get('action') === 'trackvisit') {
+        firsts.push(u.searchParams.get('first'));
+        return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+          status: 'success', live: 1, total: 1,
+        }) });
+      }
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(bootstrap()) });
+    });
+    await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#statsBar:not(.hidden)', { timeout: 15000 });
+    // sessionStorage tab ke andar reload se bachta hai — naya tab hi naya visit.
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('#statsBar:not(.hidden)', { timeout: 15000 });
+    expect(firsts).toEqual(['1', null]);
   });
 
   test('menu aane se pehle "Loading Today\'s Menu" dikhta hai', async ({ page }) => {
