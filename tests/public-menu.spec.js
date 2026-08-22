@@ -137,7 +137,7 @@ test.describe('Public menu page', () => {
   test('galat kitchen link par saaf message, khaali page nahi', async ({ page }) => {
     await openMenu(page, { vendor: 'nosuchkitchen', body: { status: 'error', message: 'vendor_not_found' } });
     await page.waitForSelector('.ld', { timeout: 15000 });
-    await expect(page.locator('.ld')).toContainText('mili nahi');
+    await expect(page.locator('.ld')).toContainText('not found');
   });
 
   test('backend down ho to bhi kuch samajh me aata hai', async ({ page }) => {
@@ -145,7 +145,7 @@ test.describe('Public menu page', () => {
     await page.route('**/script.google.com/**', r => r.abort());
     await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.ld', { timeout: 15000 });
-    await expect(page.locator('.ld')).toContainText('load nahi hua');
+    await expect(page.locator('.ld')).toContainText('Could not load the menu');
   });
 
   test('cutoff meal ke naam ke peeche hai — alag lines nahi', async ({ page }) => {
@@ -177,7 +177,7 @@ test.describe('Public menu page', () => {
     // Ye "menu set nahi hua" wale generic message se alag hona chahiye —
     // menu to hai, bas ab order karne ka time nikal gaya. toContainText() khud
     // retry karta hai jab tak fetch/render poora nahi ho jaata.
-    await expect(page.locator('.ld')).toContainText('order time nikal gaya', { timeout: 15000 });
+    await expect(page.locator('.ld')).toContainText('Ordering has closed', { timeout: 15000 });
     await expect(page.locator('.mc')).toHaveCount(0);
   });
 
@@ -214,19 +214,41 @@ test.describe('Public menu page', () => {
   });
 
   test('kitchen ka WhatsApp number ho to har item ka apna one-tap order button hai', async ({ page }) => {
+    // window.open stub karte hain — asli wa.me tak navigate nahi karna,
+    // sirf ye check karna hai final URL kya bana.
+    await page.addInitScript(() => { window.__openedUrls = []; window.open = (u) => { window.__openedUrls.push(u); return null; }; });
     await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '9876543210' } }) });
     await page.waitForSelector('.mc', { timeout: 15000 });
     // Poora menu ek saath bhejne ki jagah, har item (Mini/Full Tiffin) ka apna
     // button hai — customer ko sirf apna item retype/reply nahi karna padta.
     const vo = page.locator('.vr .vo').first();
     await expect(vo).toBeVisible();
-    const href = await vo.getAttribute('href');
+
+    // Tap karte hi seedha WhatsApp nahi khulta — pehle delivery address
+    // modal aata hai, taaki vendor ko pata chale order kahan bhejna hai.
+    await vo.click();
+    await expect(page.locator('#addrModal')).toBeVisible();
+    expect(await page.evaluate(() => window.__openedUrls.length)).toBe(0);
+
+    // Address bhare bina confirm karne par error, WhatsApp abhi bhi nahi khulta.
+    await page.click('#addrModal button:has-text("Place Order")');
+    await expect(page.locator('#addrErr')).toBeVisible();
+    expect(await page.evaluate(() => window.__openedUrls.length)).toBe(0);
+
+    await page.fill('#addrTownship', 'Godrej Garden City');
+    await page.fill('#addrFlat', 'A-1204');
+    await page.click('#addrModal button:has-text("Place Order")');
+    await expect(page.locator('#addrModal')).toBeHidden();
+
+    const urls = await page.evaluate(() => window.__openedUrls);
+    expect(urls.length).toBe(1);
     // 10-digit number 91 ke saath jaana chahiye, warna wa.me link kaam nahi karta.
-    expect(href).toContain('https://wa.me/919876543210?text=');
-    // Message seedha, saaf hona chahiye — koi extra "Mujhe chahiye:" jaisi
-    // filler line nahi, seedha item aur uska quantity/date.
-    const msg = decodeURIComponent(href);
+    expect(urls[0]).toContain('https://wa.me/919876543210?text=');
+    const msg = decodeURIComponent(urls[0].split('?text=')[1]);
     expect(msg).toContain('Hello *Nest & Nosh*');
+    // Address modal me jo bhara, wahi message me jaana chahiye — isi ke liye
+    // to modal hai.
+    expect(msg).toContain('Godrej Garden City, A-1204');
     // 4-byte emoji (waving hand, meal icons) kuch WhatsApp/Android versions
     // par deep-link text me "�" ban jaate hain — is message me bilkul
     // nahi hone chahiye.
@@ -237,6 +259,17 @@ test.describe('Public menu page', () => {
     // yahan chhup jaata hai — sirf share bachta hai, wahi asli button ban jaata hai.
     await expect(page.locator('#orderBtn')).toBeHidden();
     await expect(page.locator('#shareBtn2')).not.toHaveClass(/sub/);
+  });
+
+  test('address modal ka Cancel WhatsApp khole bina band ho jaata hai', async ({ page }) => {
+    await page.addInitScript(() => { window.__openedUrls = []; window.open = (u) => { window.__openedUrls.push(u); return null; }; });
+    await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '9876543210' } }) });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await page.locator('.vr .vo').first().click();
+    await expect(page.locator('#addrModal')).toBeVisible();
+    await page.click('#addrModal button:has-text("Cancel")');
+    await expect(page.locator('#addrModal')).toBeHidden();
+    expect(await page.evaluate(() => window.__openedUrls.length)).toBe(0);
   });
 
   test('WhatsApp number na ho to per-item button nahi dikhta, poora "Order Now" rehta hai', async ({ page }) => {
@@ -254,6 +287,29 @@ test.describe('Public menu page', () => {
     await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '98765' } }) });
     await page.waitForSelector('.mc', { timeout: 15000 });
     await expect(page.locator('.vr .vo')).toHaveCount(0);
+  });
+
+  test('backend ke asli order numbers "Live ordering" / "Already Order" me dikhte hain', async ({ page }) => {
+    // Fabricated/fake counter nahi — wahi publicstats action jo app khud
+    // customer ke liye use karta hai (loadPublicStats, index.html).
+    await page.addInitScript((v) => { window.__TEST_IST_OVERRIDE = v; }, DEFAULT_IST);
+    await page.route('**/script.google.com/**', r => {
+      const u = new URL(r.request().url());
+      if (u.searchParams.get('action') === 'publicstats') {
+        return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+          status: 'success',
+          stats: { lunch: { ordered: 5, preparing: 2 }, dinner: { ordered: 3, preparing: 1 } },
+        }) });
+      }
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(bootstrap()) });
+    });
+    await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await expect(page.locator('#statsBar')).toBeVisible();
+    // Live ordering = "preparing" (abhi kitchen me active): 2 (lunch) + 1 (dinner).
+    await expect(page.locator('#statLive')).toHaveText('3');
+    // Already Order = "ordered" (us din ke liye ab tak place): 5 (lunch) + 3 (dinner).
+    await expect(page.locator('#statDone')).toHaveText('8');
   });
 
   test('menu aane se pehle "Loading Today\'s Menu" dikhta hai', async ({ page }) => {
