@@ -151,12 +151,16 @@
   .vr .vn { font-size:13.5px; font-weight:900; }
   .vr .vn .vp { font-weight:900; color:var(--accent-dark); }
   .vr .vi { font-size:11.5px; color:var(--muted); font-weight:600; margin-top:2px; }
+  /* Curry chip jab ek specific variant ke andar dikhta hai (neeche
+     variantUsesSabzi() dekho) — bahar wale .sabzi-row se chhota, taaki
+     card ke andar sahi feel de, ek alag heading jaisa na lage. */
+  .vr .sabzi-row { margin-top:5px; }
   /* Ek-tap order button — is item ka apna WhatsApp message, poora menu
      retype/reply kiye bina. Ek khaali gol icon "click karne se kya hoga"
      saaf nahi karta tha — ab ek pill hai jisme seedha "Order" likha hai,
      taaki clickable/actionable dikhe. */
   .vr .vo { flex:0 0 auto; align-self:center; height:34px; padding:0 16px; border-radius:20px;
-    background:#25D366; display:flex; align-items:center; justify-content:center;
+    background:var(--accent); display:flex; align-items:center; justify-content:center;
     text-decoration:none; color:#fff; font-size:12.5px; font-weight:900; white-space:nowrap; }
 
   /* ── Bottom CTA (thumb zone) ── */
@@ -700,22 +704,41 @@
         var rec = today[key];
         // hasVariants:false wale meal ka menu flat list hai (jaise breakfast),
         // baaki ka { sabziOptions }.
-        var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
-        if (sabzi.length) {
-          s += '<div class="sabzi-row"><b>' + (Array.isArray(rec) ? 'Menu' : 'Curry') + ':</b> ' +
+        var isFlatMenu = Array.isArray(rec);
+        var sabzi = isFlatMenu ? rec : ((rec && rec.sabziOptions) || []);
+        // Flat-menu wala "Menu:" poore meal type par lagu hota hai (Breakfast
+        // ka koi variant hi nahi hota), isliye upar hi dikhta hai. "Curry:"
+        // sirf un variants ke saath jaata hai jo waqai sabzi maangte hain
+        // (neeche variantUsesSabzi()) — Paav Bhaji/Veg Pulaav jaisi fixed
+        // thali ke sath ek na-lagu curry dikhana confusing tha.
+        if (isFlatMenu && sabzi.length) {
+          s += '<div class="sabzi-row"><b>Menu:</b> ' +
                sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join(' ') + '</div>';
+        }
+        // shared.js ke variantUsesSabzi() jaisa hi — sabzi/roti sirf tiffin
+        // wale variant ke saath jaati hai. Vendor khud v.usesSabzi set kar
+        // sakta hai; jab set na ho, naam me "tiffin" ya items me "sabzi" ho
+        // to hi maana jaata hai.
+        function variantUsesSabzi(v){
+          if (typeof v.usesSabzi === 'boolean') return v.usesSabzi;
+          if (((v.name || '') + ' ' + (v.id || '')).toLowerCase().indexOf('tiffin') >= 0) return true;
+          return (v.items || []).some(function(x){ return String(x).toLowerCase().indexOf('sabzi') >= 0; });
         }
         var vs = ((cfg.variants || {})[key]) || [];
         if (vs.length) {
           s += '<div class="lbl">Options</div>';
           s += vs.map(function(v){
+            var curryChip = (!isFlatMenu && sabzi.length && variantUsesSabzi(v))
+              ? '<div class="sabzi-row"><b>Curry:</b> ' +
+                sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join(' ') + '</div>'
+              : '';
             return '<div class="vr">' +
               // Vendor ki photo Drive par hoti hai. Link toot jaaye to khaali dabba
               // dikhne se accha hai ki image hi hat jaaye.
               (v.img ? '<img src="' + esc(v.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
               '<div class="vb"><div class="vn">' + esc(v.name || '') +
               (v.price ? ' <span class="vp">— ₹' + v.price + '</span>' : '') + '</div>' +
-              '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div></div>' +
+              '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div>' + curryChip + '</div>' +
               (wa ? '<a class="vo" href="#" onclick="mtOpenAddrModal(this);return false;" data-msg="' +
                     esc(itemMsgLine(mt, v, dateTxt)) + '" aria-label="' +
                     esc('Order ' + (v.name || 'this item')) + '">Order</a>' : '') +
