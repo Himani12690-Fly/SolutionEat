@@ -416,6 +416,42 @@
 </footer>
 
 <script>
+  // Super admin ka platform-wide accent color (superadmin.html me set hota
+  // hai; is page ka koi apna backend call nahi hai, isliye sirf wahi cached
+  // value laga dete hain jo kisi doosre page (app/menu/land) ne pehle se
+  // localStorage me chhodi ho — same shared.js PLATFORM_THEMES ids).
+  (function(){
+    var ACCENT_IDS = { orange:'#e35c2b', red:'#dc2626', rose:'#e11d5f', pink:'#ec4899',
+      fuchsia:'#c026d3', purple:'#9333ea', violet:'#7c3aed', indigo:'#4f46e5', blue:'#2563eb',
+      sky:'#0284c7', cyan:'#0891b2', teal:'#0d9488', emerald:'#059669', green:'#16a34a',
+      lime:'#65a30d', yellow:'#ca8a04', amber:'#d97706', terracotta:'#c1502e', brown:'#8a5a3b',
+      maroon:'#9f1d3d', slate:'#475569', gray:'#57534e' };
+    function mixHex(hex, toward, amt){
+      var hv = parseInt(hex.replace('#',''),16), tv = parseInt(toward.replace('#',''),16);
+      function mix(a,b){ return Math.round(a+(b-a)*amt); }
+      var r = mix((hv>>16)&255,(tv>>16)&255), g = mix((hv>>8)&255,(tv>>8)&255), b = mix(hv&255,tv&255);
+      return '#' + [r,g,b].map(function(c){ return c.toString(16).padStart(2,'0'); }).join('');
+    }
+    try {
+      var idOrHex = localStorage.getItem('fbt_platform_theme');
+      if (!idOrHex) return;
+      var hex = ACCENT_IDS[idOrHex] || idOrHex;
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+      var dark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches;
+      var r = document.documentElement.style;
+      if (!dark) {
+        r.setProperty('--accent', hex);
+        r.setProperty('--accent-dark', mixHex(hex,'#000000',0.18));
+        r.setProperty('--accent-soft', mixHex(hex,'#ffffff',0.88));
+      } else {
+        var lighter = mixHex(hex,'#ffffff',0.22);
+        r.setProperty('--accent', lighter);
+        r.setProperty('--accent-dark', mixHex(hex,'#ffffff',0.4));
+        r.setProperty('--accent-soft', mixHex(hex,'#000000',0.82));
+      }
+    } catch (e) {}
+  })();
+
   var OWNER_WHATSAPP = '917043491481';
   function sendLead(){
     var name = document.getElementById('cfName').value.trim();

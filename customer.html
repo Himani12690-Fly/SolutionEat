@@ -40,7 +40,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="assets/styles.css?v=bf83516b18">
+  <link rel="stylesheet" href="assets/styles.css?v=37f245d762">
   <style>
     /* Serif display font for headings only — Manrope stays for body/labels.
        Scoped here (not assets/styles.css) so admin.html/superadmin.html,
@@ -785,7 +785,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=bf83516b18"></script>
+  <script src="assets/shared.js?v=37f245d762"></script>
 <script>
   (function(){
     try{
@@ -4517,6 +4517,7 @@
                             if (!CFG.mealTypes || !CFG.mealTypes.length) CFG.mealTypes = defaultMealTypes();
                             storeSet('fbt_cfg', CFG);
                         }
+                        if (j.platformTheme) setPlatformAccent(j.platformTheme);
                         applyConfigToUI();
                         pickDefaultDate(); pickActiveMeal();
                         preloadImgs();
@@ -4681,6 +4682,7 @@
                         if (old !== nw) changed = true;
                         applyConfigToUI();
                     }
+                    if (j.platformTheme) setPlatformAccent(j.platformTheme);
                     if (j.vendor && j.vendor.name && JSON.stringify(j.vendor) !== JSON.stringify(VENDOR_BRAND)) {
                         VENDOR_BRAND = j.vendor;
                         storeSet('fbt_brand', VENDOR_BRAND);

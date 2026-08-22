@@ -170,6 +170,33 @@
   var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdMXlSwNdqO84OspsUe2jAEeDL-hbwjwLcKL-fo6YObB6Se-dvTxX2iS5BMz2t8bV6/exec';
   var DEFAULT_VENDOR = 'nestandnosh';
 
+  // Super admin ka platform-wide accent color (superadmin.html me set hota
+  // hai, shared.js ka PLATFORM_THEMES yahi ids use karta hai). Ye page
+  // hamesha light hai, isliye sirf light shades derive karte hain.
+  var ACCENT_IDS = { orange:'#e35c2b', red:'#dc2626', rose:'#e11d5f', pink:'#ec4899',
+    fuchsia:'#c026d3', purple:'#9333ea', violet:'#7c3aed', indigo:'#4f46e5', blue:'#2563eb',
+    sky:'#0284c7', cyan:'#0891b2', teal:'#0d9488', emerald:'#059669', green:'#16a34a',
+    lime:'#65a30d', yellow:'#ca8a04', amber:'#d97706', terracotta:'#c1502e', brown:'#8a5a3b',
+    maroon:'#9f1d3d', slate:'#475569', gray:'#57534e' };
+  function mixHex(hex, toward, amt){
+    var hv = parseInt(hex.replace('#',''),16), tv = parseInt(toward.replace('#',''),16);
+    function mix(a,b){ return Math.round(a+(b-a)*amt); }
+    var r = mix((hv>>16)&255,(tv>>16)&255), g = mix((hv>>8)&255,(tv>>8)&255), b = mix(hv&255,tv&255);
+    return '#' + [r,g,b].map(function(c){ return c.toString(16).padStart(2,'0'); }).join('');
+  }
+  function applyPlatformAccent(idOrHex){
+    var hex = ACCENT_IDS[idOrHex] || idOrHex;
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    var r = document.documentElement.style;
+    r.setProperty('--accent', hex);
+    r.setProperty('--accent-dark', mixHex(hex,'#000000',0.18));
+    r.setProperty('--accent-soft', mixHex(hex,'#ffffff',0.88));
+  }
+  try {
+    var __cachedAccent = localStorage.getItem('fbt_platform_theme');
+    if (__cachedAccent) applyPlatformAccent(__cachedAccent);
+  } catch (e) {}
+
   // ⚠️ EDIT THESE THREE LINES before pointing ads at this page — nobody
   // configured real subscription pricing for you, and a made-up number on
   // a page you're paying to advertise is worse than an honest placeholder.
@@ -285,6 +312,7 @@
     .then(function(j){
       clearTimeout(timer);
       if (!j || j.status !== 'success') { render({}); return; }
+      if (j.platformTheme) { applyPlatformAccent(j.platformTheme); try { localStorage.setItem('fbt_platform_theme', j.platformTheme); } catch (e) {} }
       render(j);
     })
     .catch(function(){ render({}); });

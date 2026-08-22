@@ -53,14 +53,47 @@
   // Theme app ne localStorage me save kiya hota hai. Redirect se pehle wahi
   // background laga do, warna dark-mode user ko ek pal ke liye cream flash
   // dikhta hai aur phir dark app — jo jhatka lagta hai.
+  var __isDark = false;
   try {
     var saved = JSON.parse(localStorage.getItem('fbt_theme') || '""');
-    if (saved === 'dark' || (saved === 'system' &&
-        window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    __isDark = saved === 'dark' || (saved === 'system' &&
+        window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    if (__isDark) {
       var r = document.documentElement.style;
       r.setProperty('--bg', '#17140f');   r.setProperty('--ink', '#e7e9f5');
       r.setProperty('--muted', '#9ca0b5');r.setProperty('--accent', '#f0743d');
       r.setProperty('--accent-soft', '#3a2418');
+    }
+  } catch (e) {}
+
+  // Super admin ka platform-wide accent color (superadmin.html me set hota
+  // hai; shared.js ka PLATFORM_THEMES yahi ids use karta hai). Ye page ek
+  // pal ke liye hi dikhta hai (redirect se pehle), isliye bas cached value
+  // laga dete hain — koi naya network call nahi.
+  try {
+    var ACCENT_IDS = { orange:'#e35c2b', red:'#dc2626', rose:'#e11d5f', pink:'#ec4899',
+      fuchsia:'#c026d3', purple:'#9333ea', violet:'#7c3aed', indigo:'#4f46e5', blue:'#2563eb',
+      sky:'#0284c7', cyan:'#0891b2', teal:'#0d9488', emerald:'#059669', green:'#16a34a',
+      lime:'#65a30d', yellow:'#ca8a04', amber:'#d97706', terracotta:'#c1502e', brown:'#8a5a3b',
+      maroon:'#9f1d3d', slate:'#475569', gray:'#57534e' };
+    var idOrHex = localStorage.getItem('fbt_platform_theme');
+    var hex = idOrHex ? (ACCENT_IDS[idOrHex] || idOrHex) : null;
+    if (hex && /^#[0-9a-fA-F]{6}$/.test(hex)) {
+      function mixHex(h, toward, amt){
+        var hv = parseInt(h.replace('#',''),16), tv = parseInt(toward.replace('#',''),16);
+        function mix(a,b){ return Math.round(a+(b-a)*amt); }
+        var rr = mix((hv>>16)&255,(tv>>16)&255), g = mix((hv>>8)&255,(tv>>8)&255), b = mix(hv&255,tv&255);
+        return '#' + [rr,g,b].map(function(c){ return c.toString(16).padStart(2,'0'); }).join('');
+      }
+      var r2 = document.documentElement.style;
+      if (!__isDark) {
+        r2.setProperty('--accent', hex);
+        r2.setProperty('--accent-soft', mixHex(hex,'#ffffff',0.88));
+      } else {
+        var lighter = mixHex(hex,'#ffffff',0.22);
+        r2.setProperty('--accent', lighter);
+        r2.setProperty('--accent-soft', mixHex(hex,'#000000',0.82));
+      }
     }
   } catch (e) {}
 
