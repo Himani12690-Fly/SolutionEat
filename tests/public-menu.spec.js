@@ -137,7 +137,7 @@ test.describe('Public menu page', () => {
   test('galat kitchen link par saaf message, khaali page nahi', async ({ page }) => {
     await openMenu(page, { vendor: 'nosuchkitchen', body: { status: 'error', message: 'vendor_not_found' } });
     await page.waitForSelector('.ld', { timeout: 15000 });
-    await expect(page.locator('.ld')).toContainText('mili nahi');
+    await expect(page.locator('.ld')).toContainText('not found');
   });
 
   test('backend down ho to bhi kuch samajh me aata hai', async ({ page }) => {
@@ -145,7 +145,7 @@ test.describe('Public menu page', () => {
     await page.route('**/script.google.com/**', r => r.abort());
     await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('.ld', { timeout: 15000 });
-    await expect(page.locator('.ld')).toContainText('load nahi hua');
+    await expect(page.locator('.ld')).toContainText('Could not load the menu');
   });
 
   test('cutoff meal ke naam ke peeche hai — alag lines nahi', async ({ page }) => {
@@ -177,7 +177,7 @@ test.describe('Public menu page', () => {
     // Ye "menu set nahi hua" wale generic message se alag hona chahiye —
     // menu to hai, bas ab order karne ka time nikal gaya. toContainText() khud
     // retry karta hai jab tak fetch/render poora nahi ho jaata.
-    await expect(page.locator('.ld')).toContainText('order time nikal gaya', { timeout: 15000 });
+    await expect(page.locator('.ld')).toContainText('Ordering has closed', { timeout: 15000 });
     await expect(page.locator('.mc')).toHaveCount(0);
   });
 
@@ -231,13 +231,13 @@ test.describe('Public menu page', () => {
     expect(await page.evaluate(() => window.__openedUrls.length)).toBe(0);
 
     // Address bhare bina confirm karne par error, WhatsApp abhi bhi nahi khulta.
-    await page.click('#addrModal button:has-text("WhatsApp Kholo")');
+    await page.click('#addrModal button:has-text("Place Order")');
     await expect(page.locator('#addrErr')).toBeVisible();
     expect(await page.evaluate(() => window.__openedUrls.length)).toBe(0);
 
     await page.fill('#addrTownship', 'Godrej Garden City');
     await page.fill('#addrFlat', 'A-1204');
-    await page.click('#addrModal button:has-text("WhatsApp Kholo")');
+    await page.click('#addrModal button:has-text("Place Order")');
     await expect(page.locator('#addrModal')).toBeHidden();
 
     const urls = await page.evaluate(() => window.__openedUrls);

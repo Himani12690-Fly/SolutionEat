@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aaj ka Menu</title>
-<meta name="description" content="Aaj ka menu — bina login dekho.">
+<title>Today's Menu</title>
+<meta name="description" content="Today's menu — no login needed.">
 <!--
   PUBLIC MENU PAGE — login ki zaroorat nahi.
 
@@ -133,11 +133,12 @@
     padding:16px 0 4px; line-height:1.7; }
   .ft a { color:var(--muted); }
 
-  /* ── Delivery-address modal (WhatsApp order se pehle) ── */
+  /* ── Delivery-address modal (order se pehle) — center dialog, not a
+     bottom sheet, so it reads as a deliberate step, not a slide-up menu. */
   .modal-ovl { position:fixed; inset:0; background:rgba(30,34,51,.5); z-index:50;
-    display:flex; align-items:flex-end; justify-content:center; }
-  .modal-box { background:var(--card); width:100%; max-width:520px; border-radius:20px 20px 0 0;
-    padding:20px 20px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -8px 24px rgba(0,0,0,.15); }
+    display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal-box { background:var(--card); width:100%; max-width:400px; border-radius:20px;
+    padding:20px; box-shadow:0 12px 32px rgba(0,0,0,.2); }
   .modal-ti { font-size:17px; font-weight:900; }
   .modal-sub { font-size:12.5px; color:var(--muted); font-weight:600; margin:4px 0 16px; }
   .modal-fld { margin-bottom:12px; }
@@ -166,46 +167,46 @@
     <img id="logo" alt="" src="assets/icons/logo-round.webp"
          onerror="this.onerror=null;this.src='assets/icons/logo-round.png'">
     <div class="hd-tx">
-      <div class="nm" id="vname">Aaj ka Menu</div>
+      <div class="nm" id="vname">Today's Menu</div>
     </div>
     <button class="hd-share" id="shareBtn" type="button" title="Share" aria-label="Share">🔗</button>
   </div>
-  <!-- Din/date yahan nahi dohraate — dropdown khud hi wo dikhata hai.
-       Aaj se shuru, agle 6 din — vendor ka menu weekly template hai, isliye
-       koi bhi din chun kar dekha ja sakta hai. Pichhle din dikhane ka koi
-       matlab nahi, order to aage ke liye hota hai. Data aane tak "hidden" —
-       khaali dropdown dikhana bhi confusing hai. -->
-  <div class="daysel hidden" id="daysel"><select id="daySelect" aria-label="Din select karo"></select></div>
-  <!-- Backend ke asli order numbers (publicstats action, jo app khud bhi
-       use karta hai) — "preparing" = abhi kitchen me ban raha hai (Live),
-       "ordered" = us din ke liye ab tak place hue orders (Already Order).
-       Koi fake/fabricated count nahi. -->
+  <!-- Day/date isn't repeated here — the dropdown itself shows it.
+       Starts at today, next 6 days — the vendor's menu is a weekly template,
+       so any day can be checked. No point showing past days; ordering is
+       always for the future. Stays hidden until data arrives — an empty
+       dropdown is confusing too. -->
+  <div class="daysel hidden" id="daysel"><select id="daySelect" aria-label="Select day"></select></div>
+  <!-- Real order numbers from the backend (publicstats action, the same one
+       the app itself uses) — "preparing" = actively being made right now
+       (Live), "ordered" = total placed for the day so far (Already Order).
+       No fake/fabricated counts. -->
   <div class="stats-bar hidden" id="statsBar">
     <div class="stat-pill"><span class="dot"></span><span class="lab">Live ordering</span><b id="statLive">0</b></div>
     <div class="stat-pill"><span class="lab">Already Order</span><b id="statDone">0</b></div>
   </div>
   <div id="note" class="note" hidden></div>
-  <!-- Pehle yahan do khaali grey dabbe the. Ajnabi ko wo "page toot gaya" jaisa
-       lagta hai; likh dena behtar hai ki ho kya raha hai. -->
+  <!-- Used to be two empty grey boxes here. To a stranger that reads as
+       "the page is broken" — better to say what's actually happening. -->
   <div id="meals"><div class="ld"><div class="sp"></div>Loading Today's Menu…</div></div>
   <div class="ft" id="foot"></div>
 </div>
 
-<!-- Ye bhi data aane tak hidden — order/share dono menu load hone se pehle
-     bekaar hain. -->
+<!-- Also hidden until data arrives — order/share are both useless before
+     the menu has loaded. -->
 <div class="cta hidden" id="cta"><div class="cta-in">
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
-  <button class="btn sub" id="shareBtn2" type="button">🔗 Menu Share Karo</button>
+  <button class="btn sub" id="shareBtn2" type="button">🔗 Share Menu</button>
 </div></div>
 
-<!-- WhatsApp order se pehle delivery address — bina isske vendor ko pata
-     nahi chalta order kahan bhejna hai, aur customer ko khud type karna
-     padta. Ek tap se item order ho jaata hai, ye modal sirf address maangta
-     hai, phir message me jod ke WhatsApp khol deta hai. -->
+<!-- Delivery address before the order goes out — without this the vendor
+     doesn't know where to deliver, and the customer has to type it out
+     themselves every time. One tap starts an order; this dialog just asks
+     for the address, then sends it on WhatsApp. -->
 <div class="modal-ovl hidden" id="addrModal" onclick="if(event.target===this) mtCloseAddrModal();">
   <div class="modal-box">
     <div class="modal-ti">📍 Delivery Address</div>
-    <div class="modal-sub">WhatsApp par order jaane se pehle, bata do kahan deliver karna hai.</div>
+    <div class="modal-sub">Before your order goes out, tell us where to deliver it.</div>
     <div class="modal-fld">
       <label for="addrTownship">Township / Building Name</label>
       <input type="text" id="addrTownship" placeholder="e.g. Godrej Garden City">
@@ -214,10 +215,10 @@
       <label for="addrFlat">Flat / House No.</label>
       <input type="text" id="addrFlat" placeholder="e.g. A-1204">
     </div>
-    <div class="modal-err hidden" id="addrErr">Dono fields bharo.</div>
+    <div class="modal-err hidden" id="addrErr">Please fill in both fields.</div>
     <div class="modal-actions">
       <button type="button" class="btn sub" onclick="mtCloseAddrModal()">Cancel</button>
-      <button type="button" class="btn" onclick="mtConfirmAddr()">💬 WhatsApp Kholo</button>
+      <button type="button" class="btn" onclick="mtConfirmAddr()">Place Order</button>
     </div>
   </div>
 </div>
@@ -329,7 +330,7 @@
     if (!township || !flat) { document.getElementById('addrErr').classList.remove('hidden'); return; }
     try { localStorage.setItem(ADDR_KEY, JSON.stringify({ township: township, flat: flat })); } catch (e) {}
     // Yahan bhi koi astral-plane emoji nahi (📍 jaisa) — wahi wa.me?text=
-    // deep-link "�" wala issue, WA_ICON comment me upar note kiya hai.
+    // deep-link "�" wala issue, itemMsgLine() ke comment me upar note kiya hai.
     var full = 'Hello *' + (CURRENT_VENDOR_NAME || 'Kitchen') + '*\n\n' + mtPendingMsg +
                '\n\nAddress: ' + township + ', ' + flat;
     // Modal ke button click se seedha chalta hai — user-gesture chain
@@ -343,15 +344,17 @@
     var now = istNow();
     var todayKey = DAYS[now.getDay()];
 
-    if (vendor.name) { document.getElementById('vname').textContent = vendor.name; document.title = vendor.name + ' — Aaj ka Menu'; }
+    if (vendor.name) { document.getElementById('vname').textContent = vendor.name; document.title = vendor.name + ' — Menu'; }
     if (vendor.logo) document.getElementById('logo').src = vendor.logo;
 
     var wa = waNumber(vendor.whatsapp);
     CURRENT_WA = wa;
     CURRENT_VENDOR_NAME = vendor.name || 'Kitchen';
-    // WhatsApp ka asli logo — emoji alag alag phone par alag/dhundhla dikhta
-    // hai, ye hamesha ek jaisa saaf dikhta hai.
-    var WA_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" fill-rule="evenodd" d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.663.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824zm-3.423-14.416c-6.607 0-11.98 5.373-11.982 11.981-.001 2.111.55 4.175 1.595 5.996l-1.635 5.972 6.116-1.604c1.751.955 3.724 1.459 5.9 1.46h.005c6.607 0 11.98-5.373 11.982-11.982.002-3.2-1.244-6.211-3.507-8.475-2.264-2.264-5.275-3.509-8.474-3.509z"/></svg>';
+    // A clear "place order" glyph (shopping bag) — WhatsApp's own logo made
+    // the button read as a chat/share action, not an order. The order
+    // itself still goes out over WhatsApp; that's just the delivery
+    // mechanism, not what the button should visually say.
+    var ORDER_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>';
 
     // Vendor ka menu ek weekly template hai (Monday..Sunday, date-bound nahi),
     // isliye "selected day" ke liye asli calendar date chahiye — sirf label
@@ -425,8 +428,8 @@
       // hai, kisi bhi din ke liye). Menu phir bhi dikhate hain (customer ko
       // pata chalna chahiye kya milta hai), bas upar saaf likh dete hain.
       var note = '';
-      if (cfg.tempClosed === true) note = '⚠️ Kitchen abhi orders nahi le rahi. ' + (cfg.tempClosedMsg || '');
-      else if ((cfg.closedDates || []).indexOf(ymd(dt)) >= 0) note = isToday ? '⚠️ Aaj kitchen band hai.' : '⚠️ Is din kitchen band hai.';
+      if (cfg.tempClosed === true) note = '⚠️ This kitchen isn\'t taking orders right now. ' + (cfg.tempClosedMsg || '');
+      else if ((cfg.closedDates || []).indexOf(ymd(dt)) >= 0) note = isToday ? '⚠️ Closed today.' : '⚠️ Closed on this day.';
       var nEl = document.getElementById('note');
       nEl.hidden = !note;
       if (note) nEl.textContent = note.trim();
@@ -441,7 +444,7 @@
         // cutoffAheadDay = cutoff PICHHLI raat ka hai. Bina likhe "Breakfast
         // (order by 10:00 PM)" ulta padhta hai.
         var cutTxt = mt.cutoff
-          ? ' (order by ' + clock(mt.cutoff) + (mt.cutoffAheadDay ? ', ek raat pehle' : '') + ')'
+          ? ' (order by ' + clock(mt.cutoff) + (mt.cutoffAheadDay ? ', the night before' : '') + ')'
           : '';
         // Base price nahi dikhate — jo bikta hai wo Options me apne daam ke
         // saath hai, ye ek alag number sirf confuse karta.
@@ -454,7 +457,7 @@
         // baaki ka { sabziOptions }.
         var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
         if (sabzi.length) {
-          s += '<div class="sabzi-row"><b>' + (Array.isArray(rec) ? 'Menu' : 'Sabzi') + ':</b> ' +
+          s += '<div class="sabzi-row"><b>' + (Array.isArray(rec) ? 'Menu' : 'Curry') + ':</b> ' +
                sabzi.map(function(x){ return '<span class="chip">' + esc(x) + '</span>'; }).join(' ') + '</div>';
         }
         var vs = ((cfg.variants || {})[key]) || [];
@@ -470,7 +473,7 @@
               (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') +
               (wa ? '<a class="vo" href="#" onclick="mtOpenAddrModal(this);return false;" data-msg="' +
                     esc(itemMsgLine(mt, v, dateTxt)) + '" aria-label="' +
-                    esc((v.name || 'Item') + ' order karo') + '">' + WA_ICON + '</a>' : '') +
+                    esc('Order ' + (v.name || 'this item')) + '">' + ORDER_ICON + '</a>' : '') +
               '</div>';
           }).join('');
         }
@@ -478,9 +481,9 @@
       }).join('');
 
       document.getElementById('meals').innerHTML = html || (enabled.length
-        ? '<div class="ld">' + (isToday ? 'Aaj' : 'Is din') + ' ke sabhi meals ka order time nikal gaya.<br>' +
-          '<span style="font-weight:600;">Koi aur din try karo.</span></div>'
-        : '<div class="ld">Is din ka menu abhi set nahi hua hai.</div>');
+        ? '<div class="ld">Ordering has closed for ' + (isToday ? 'today' : 'this day') + '\'s meals.<br>' +
+          '<span style="font-weight:600;">Try another day.</span></div>'
+        : '<div class="ld">This kitchen hasn\'t set a menu for this day yet.</div>');
     }
 
     // Day picker — aaj se shuru karke agle 6 din. Vendor ka menu weekly
@@ -493,7 +496,7 @@
       var dt = dateForDay(dayKey);
       var opt = document.createElement('option');
       opt.value = dayKey;
-      opt.textContent = (i === 0 ? 'Aaj · ' : i === 1 ? 'Kal · ' : '') +
+      opt.textContent = (i === 0 ? 'Today · ' : i === 1 ? 'Tomorrow · ' : '') +
         dt.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
       sel.appendChild(opt);
     }
@@ -534,17 +537,17 @@
   fetch(SCRIPT_URL + '?action=bootstrap&vendorId=' + encodeURIComponent(VID))
     .then(function(r){ return r.json(); })
     .then(function(j){
-      if (!j || j.status !== 'success') { fail('Ye kitchen mili nahi.', 'Link dobara check karo.'); return; }
+      if (!j || j.status !== 'success') { fail('Kitchen not found.', 'Please check the link again.'); return; }
       render(j);
     })
-    .catch(function(){ fail('Menu load nahi hua.', 'Internet check karke page refresh karo.'); });
+    .catch(function(){ fail('Could not load the menu.', 'Check your internet and refresh the page.'); });
 
-  // Header ka 🔗 icon aur bottom ka "Menu Share Karo" — dono isi ek function
-  // se chalte hain, taaki menu link kahin se bhi, kisi ko bhi bheja ja sake.
+  // Header ka 🔗 icon aur bottom ka "Share Menu" — dono isi ek function se
+  // chalte hain, taaki menu link kahin se bhi, kisi ko bhi bheja ja sake.
   function doShare(){
     var url = location.origin + '/' + VID + '/menu';
     var title = document.getElementById('vname').textContent;
-    if (navigator.share) { navigator.share({ title: title, text: 'Aaj ka menu dekho', url: url }).catch(function(){}); return; }
+    if (navigator.share) { navigator.share({ title: title, text: 'Check out today\'s menu', url: url }).catch(function(){}); return; }
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(function(){ this.textContent = '✓'; }.bind(this)).catch(function(){});
     }
