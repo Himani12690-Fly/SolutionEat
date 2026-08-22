@@ -603,6 +603,20 @@
     document.getElementById('addrModal').classList.add('hidden');
   };
 
+  // body's bottom padding reserves space for the fixed .cta bar so page
+  // content (like the township footer line) doesn't end up underneath it.
+  // That reserved amount was a hardcoded guess — .cta's real height moves
+  // (the "Order Now" row hides when a WhatsApp number exists, text can
+  // wrap on narrow phones), so a fixed number silently drifts wrong and
+  // the bar starts covering whatever content sits just above it. Measure
+  // and set it instead.
+  function syncCtaPadding(){
+    var cta = document.getElementById('cta');
+    if (!cta || cta.classList.contains('hidden')) return;
+    document.body.style.paddingBottom = (cta.offsetHeight + 8) + 'px';
+  }
+  window.addEventListener('resize', syncCtaPadding);
+
   function render(d){
     var cfg = d.config || {}, menu = d.menu || {}, vendor = d.vendor || {};
     revealPage();
@@ -855,6 +869,7 @@
     // load ho chuka hai aur sahi state me hai.
     document.getElementById('daysel').classList.remove('hidden');
     document.getElementById('cta').classList.remove('hidden');
+    requestAnimationFrame(syncCtaPadding);
   }
 
   // Cached menu ho to WAIT kiye bina turant dikha dete hain — customer ko
