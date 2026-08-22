@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Today's Menu</title>
 <meta name="description" content="Today's menu — no login needed.">
+<!-- Backend hit ke liye DNS/TLS pehle se shuru — index.html me bhi yahi hai.
+     Fetch call se pehle isko na lagana, connection setup ka pura time
+     us pehli fetch() request me jud jaata hai. -->
+<link rel="preconnect" href="https://script.google.com">
 <!--
   PUBLIC MENU PAGE — login ki zaroorat nahi.
 
@@ -51,6 +55,16 @@
   .hd img { width:52px; height:52px; border-radius:50%; object-fit:cover;
     border:1px solid var(--line); background:var(--card); flex:0 0 auto; }
   .hd .nm { font-size:19px; font-weight:900; letter-spacing:-.2px; }
+  /* Vendor ka naam/logo load hone tak khaali "Today's Menu" placeholder
+     dikhna, phir asli naam se badal jaana — customer ko lagta tha kuch
+     galat ho gaya. Ab tak kuch bhi pata nahi to shimmer dikhate hain
+     (spasht "load ho raha hai"), ready-made text kabhi flash nahi hoti.
+     Cache se turant sahi naam mile to ye kabhi dikhta hi nahi. */
+  .skel { background:linear-gradient(90deg, var(--line) 25%, #efe9db 37%, var(--line) 63%);
+    background-size:400% 100%; animation:shimmer 1.4s ease-in-out infinite; }
+  .hd .nm.skel { color:transparent; border-radius:6px; width:150px; height:19px; }
+  @keyframes shimmer { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skel { animation:none; } }
 
   /* ── Day picker ── */
   .daysel { margin-bottom:14px; }
@@ -164,10 +178,14 @@
 <body>
 <div class="wrap">
   <div class="hd">
-    <img id="logo" alt="" src="assets/icons/logo-round.webp"
-         onerror="this.onerror=null;this.src='assets/icons/logo-round.png'">
+    <!-- Blank pixel + shimmer tak koi real src nahi — cache/fetch se jo bhi
+         pehle mile wahi lagta hai (render() me), tab tak "wrong" logo nahi
+         dikhta jo baad me badalta dikhe. -->
+    <img id="logo" alt="" class="skel"
+         src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+         onerror="this.onerror=null;this.src='/assets/icons/logo-round.webp'">
     <div class="hd-tx">
-      <div class="nm" id="vname">Today's Menu</div>
+      <div class="nm skel" id="vname"></div>
     </div>
     <button class="hd-share" id="shareBtn" type="button" title="Share" aria-label="Share">🔗</button>
   </div>
@@ -305,6 +323,31 @@
       '<div class="ld">' + esc(msg) + (sub ? '<br><span style="font-weight:600;">' + esc(sub) + '</span>' : '') + '</div>';
   }
 
+  // render() cache se ek baar aur fetch se ek baar — dono baar chal sakta
+  // hai (stale-while-revalidate, neeche). Timer/ping sirf pehli baar shuru
+  // hone chahiye.
+  var __initialized = false;
+  // Cache render turant dikhta hai, fresh data thodi der baad dobara render
+  // karta hai — beech me customer ne din badla ho to fresh render use
+  // "today" par wapas reset nahi karna chahiye.
+  var __lastSelectedDay = null;
+
+  // Apps Script cold start par kaafi slow ho sakta hai (kabhi kabhi kai
+  // second). Pehli visit ke baad menu/config/vendor localStorage me rakhte
+  // hain, taaki agli baar page turant (network ke bina hi) dikh jaaye, aur
+  // fresh data background me load hoke chup-chaap update kar de. Vendor ke
+  // apne slug se namespaced — alag kitchen ka data kabhi mix nahi hota.
+  var CACHE_KEY = 'mt_menu_cache_' + VID;
+  function readCache(){
+    try {
+      var j = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      return (j && j.status === 'success') ? j : null;
+    } catch (e) { return null; }
+  }
+  function writeCache(j){
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(j)); } catch (e) {}
+  }
+
   // "Live ordering" / "Already Order" — asli page-visit counts, backend ke
   // naye trackvisit action se (docs/apps-script-live-visits.md). Sirf tab
   // dikhte hain jab wo action jawaab de — backend abhi update nahi hua to
@@ -391,8 +434,18 @@
     var now = istNow();
     var todayKey = DAYS[now.getDay()];
 
-    if (vendor.name) { document.getElementById('vname').textContent = vendor.name; document.title = vendor.name + ' — Menu'; }
-    if (vendor.logo) document.getElementById('logo').src = vendor.logo;
+    // Naam/logo jo bhi pehli baar mile (cache ya fetch) turant laga dete
+    // hain, aur shimmer hata dete hain — dono baar (cache render, phir fresh
+    // render) chalta hai, dusri baar bhi harmless hai (wahi ya updated value).
+    var vnameEl = document.getElementById('vname'), logoEl = document.getElementById('logo');
+    vnameEl.textContent = vendor.name || 'Menu';
+    vnameEl.classList.remove('skel');
+    document.title = (vendor.name ? vendor.name + ' — ' : '') + 'Menu';
+    // Absolute path (leading /) — address bar ab tak /<vendor>/menu par
+    // rewrite ho chuka hai (history.replaceState), relative path us NAYE
+    // URL se resolve hota to /<vendor>/assets/... jaisi galat jagah 404 deta.
+    logoEl.src = vendor.logo || '/assets/icons/logo-round.webp';
+    logoEl.classList.remove('skel');
 
     var wa = waNumber(vendor.whatsapp);
     CURRENT_WA = wa;
@@ -523,25 +576,32 @@
         dt.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
       sel.appendChild(opt);
     }
-    sel.value = todayKey;
-    sel.onchange = function(){ renderDay(sel.value); };
-    renderDay(todayKey);
-    pingVisit(true);
+    var initialDay = (__lastSelectedDay && DAYS.indexOf(__lastSelectedDay) >= 0) ? __lastSelectedDay : todayKey;
+    sel.value = initialDay;
+    sel.onchange = function(){ __lastSelectedDay = sel.value; renderDay(sel.value); };
+    renderDay(initialDay);
 
-    // Page khuli chhodi ho aur beech me kisi meal ka cutoff nikal jaaye,
-    // to customer ko manually refresh nahi karna padna chahiye — jo ab
-    // order nahi ho sakta wo khud hi hat jaana chahiye. "now"/"todayKey"
-    // dono taaza karte hain (raat 12 baje ke aage bhi sahi rahe), phir
-    // currently jo din dikh raha hai (sel.value) usi ko dobara render karte hain.
-    // Isi tick ke saath heartbeat bhi bhej dete hain — "Live ordering" ko
-    // backend par stale hone se pehle taaza rakhne ke liye alag timer nahi
-    // chahiye.
-    setInterval(function(){
-      now = istNow();
-      todayKey = DAYS[now.getDay()];
-      renderDay(sel.value);
-      pingVisit(false);
-    }, 60000);
+    // Cache se turant render() ho jaata hai, phir fresh data aane par
+    // DOBARA — timer/ping sirf ek hi baar shuru hone chahiye, warna do
+    // setInterval chal padte aur "first" visit ping dobara jaata.
+    if (!__initialized) {
+      __initialized = true;
+      pingVisit(true);
+      // Page khuli chhodi ho aur beech me kisi meal ka cutoff nikal jaaye,
+      // to customer ko manually refresh nahi karna padna chahiye — jo ab
+      // order nahi ho sakta wo khud hi hat jaana chahiye. "now"/"todayKey"
+      // dono taaza karte hain (raat 12 baje ke aage bhi sahi rahe), phir
+      // currently jo din dikh raha hai (sel.value) usi ko dobara render
+      // karte hain. Isi tick ke saath heartbeat bhi bhej dete hain — "Live
+      // ordering" ko backend par stale hone se pehle taaza rakhne ke liye
+      // alag timer nahi chahiye.
+      setInterval(function(){
+        now = istNow();
+        todayKey = DAYS[now.getDay()];
+        renderDay(sel.value);
+        pingVisit(false);
+      }, 60000);
+    }
 
     // WhatsApp number ho to har item ka apna order button hai (upar) — is
     // bottom "Order Now" (app/login) ki zaroorat nahi rehti, share hi bachta
@@ -562,13 +622,22 @@
     document.getElementById('cta').classList.remove('hidden');
   }
 
+  // Cached menu ho to WAIT kiye bina turant dikha dete hain — customer ko
+  // spinner nahi, poora menu milta hai. Fresh data background me load hoke
+  // chup-chaap dobara render kar deta hai agar kuch badla ho. Fetch fail ho
+  // jaaye (ya bahut slow ho) to bhi cache dikh raha hoga, error kabhi nahi
+  // dikhana jab tak customer ke paas dikhane ko kuch ho.
+  var cached = readCache();
+  if (cached) render(cached);
+
   fetch(SCRIPT_URL + '?action=bootstrap&vendorId=' + encodeURIComponent(VID))
     .then(function(r){ return r.json(); })
     .then(function(j){
-      if (!j || j.status !== 'success') { fail('Kitchen not found.', 'Please check the link again.'); return; }
+      if (!j || j.status !== 'success') { if (!cached) fail('Kitchen not found.', 'Please check the link again.'); return; }
+      writeCache(j);
       render(j);
     })
-    .catch(function(){ fail('Could not load the menu.', 'Check your internet and refresh the page.'); });
+    .catch(function(){ if (!cached) fail('Could not load the menu.', 'Check your internet and refresh the page.'); });
 
   // Header ka 🔗 icon aur bottom ka "Share Menu" — dono isi ek function se
   // chalte hain, taaki menu link kahin se bhi, kisi ko bhi bheja ja sake.

@@ -86,6 +86,10 @@ test.describe('Public menu page', () => {
     body.menu[otherDay] = Object.assign({}, body.menu[otherDay], {
       lunch: { sabziOptions: ['Distinct Day Sabzi'] },
     });
+    // menu.html ab bootstrap response cache karta hai (stale-while-revalidate)
+    // — pehle wale openMenu() call ka data isi navigation par "cached render"
+    // ban kar dikh sakta hai. Yahan hume sirf naya body chahiye, cache nahi.
+    await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} });
     await openMenu(page, { body });
     await page.waitForSelector('.mc', { timeout: 15000 });
 
@@ -337,6 +341,29 @@ test.describe('Public menu page', () => {
     expect(firsts).toEqual(['1', null]);
   });
 
+  test('doosri visit par cached menu turant dikhta hai, network ka wait nahi', async ({ page }) => {
+    // Apps Script cold start slow ho sakta hai — pehli visit ke baad
+    // localStorage me cache ho jaata hai, taaki agli baar spinner na dikhe.
+    await openMenu(page);
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    await expect(page.locator('#vname')).toHaveText('Nest & Nosh');
+
+    // Doosri visit (reload) — fetch ko jaan-bujh kar atka dete hain, dekhne
+    // ke liye ki menu network complete hue bina, cache se hi turant dikhta hai.
+    let release;
+    const held = new Promise(r => { release = r; });
+    await page.unroute('**/script.google.com/**');
+    await page.route('**/script.google.com/**', async r => {
+      await held;
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(bootstrap()) });
+    });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    // Fetch abhi hold hai, fir bhi menu poora dikhna chahiye — cache se aaya.
+    await expect(page.locator('.mc').first()).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('#vname')).toHaveText('Nest & Nosh');
+    release();
+  });
+
   test('menu aane se pehle "Loading Today\'s Menu" dikhta hai', async ({ page }) => {
     // Pehle do khaali grey dabbe the — ajnabi ko "page toot gaya" jaisa lagta hai.
     let release;
@@ -352,8 +379,14 @@ test.describe('Public menu page', () => {
     // dikhte the — ab tak hidden rehte hain.
     await expect(page.locator('#daysel')).toBeHidden();
     await expect(page.locator('#cta')).toBeHidden();
+    // Vendor ka naam/logo load hone tak "Today's Menu" jaisa galat placeholder
+    // nahi dikhna chahiye jo baad me badal jaaye — khaali shimmer dikhta hai.
+    await expect(page.locator('#vname')).toBeEmpty();
+    await expect(page.locator('#vname')).toHaveClass(/skel/);
     release();
     await page.waitForSelector('.mc', { timeout: 15000 });
+    await expect(page.locator('#vname')).toHaveText('Nest & Nosh');
+    await expect(page.locator('#vname')).not.toHaveClass(/skel/);
     await expect(page.locator('#daysel')).toBeVisible();
     await expect(page.locator('#cta')).toBeVisible();
   });
