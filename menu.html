@@ -117,15 +117,19 @@
   .vr img { width:54px; height:54px; border-radius:10px; object-fit:cover;
     flex:0 0 auto; background:var(--accent-soft); }
   .vr .vb { flex:1; min-width:0; }
+  /* Price seedha naam ke baju me — pehle ek alag right-aligned column tha,
+     par "Mini Tiffin — ₹100" ek hi nazar me padhna aasan hai. */
   .vr .vn { font-size:13.5px; font-weight:900; }
+  .vr .vn .vp { font-weight:900; color:var(--accent-dark); }
   .vr .vi { font-size:11.5px; color:var(--muted); font-weight:600; margin-top:2px; }
-  .vr .vp { font-size:13.5px; font-weight:900; color:var(--accent-dark); white-space:nowrap; }
   /* Ek-tap order button — is item ka apna WhatsApp message, poora menu
-     retype/reply kiye bina. */
-  .vr .vo { flex:0 0 auto; align-self:center; width:34px; height:34px; border-radius:50%;
-    background:#25D366; display:flex; align-items:center; justify-content:center;
-    text-decoration:none; }
-  .vr .vo svg { width:17px; height:17px; }
+     retype/reply kiye bina. Ek khaali gol icon "click karne se kya hoga"
+     saaf nahi karta tha — ab ek pill hai jisme icon ke saath "Order" likha
+     hai, taaki clickable/actionable dikhe. */
+  .vr .vo { flex:0 0 auto; align-self:center; height:34px; padding:0 14px; border-radius:20px;
+    background:#25D366; display:flex; align-items:center; justify-content:center; gap:6px;
+    text-decoration:none; color:#fff; font-size:12.5px; font-weight:900; white-space:nowrap; }
+  .vr .vo svg { width:15px; height:15px; flex:0 0 auto; }
 
   /* ── Bottom CTA (thumb zone) ── */
   .cta { position:fixed; left:0; right:0; bottom:0; background:var(--card);
@@ -158,9 +162,13 @@
   .modal-fld { margin-bottom:12px; }
   .modal-fld label { display:block; font-size:11px; font-weight:900; color:var(--muted);
     text-transform:uppercase; letter-spacing:.3px; margin-bottom:6px; }
-  .modal-fld input { width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--line);
-    font-size:14.5px; font-family:inherit; color:var(--ink); background:var(--card); }
-  .modal-fld input:focus { outline:none; border-color:var(--accent); }
+  .modal-fld input, .modal-fld select { width:100%; padding:12px 14px; border-radius:12px;
+    border:1.5px solid var(--line); font-size:14.5px; font-family:inherit; color:var(--ink);
+    background:var(--card); }
+  .modal-fld input:focus, .modal-fld select:focus { outline:none; border-color:var(--accent); }
+  .modal-fld select { appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:36px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%236b7280' d='M5.25 7.5 10 12.25 14.75 7.5Z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center; }
   .modal-err { font-size:12px; color:#b91c1c; font-weight:700; margin:-4px 0 12px; }
   .modal-actions { display:flex; gap:10px; margin-top:6px; }
   .modal-actions .btn { margin:0; padding:13px; font-size:14.5px; }
@@ -215,6 +223,11 @@
 <div class="cta hidden" id="cta"><div class="cta-in">
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
   <button class="btn sub" id="shareBtn2" type="button">🔗 Share Menu</button>
+  <!-- Regular per-item ordering (upar) sirf ek din/meal ke liye hai — roz
+       ke liye ya bade order ke liye login-wale app me jaana padta hai
+       (Bulk Requests / Subscription). Isliye seedha login page par
+       bhejte hain, na ki khud ye page us feature ko dobara banaye. -->
+  <a class="btn sub" id="bulkBtn" href="/">🎉 Bulk Order / Subscribe</a>
 </div></div>
 
 <!-- Delivery address before the order goes out — without this the vendor
@@ -225,15 +238,27 @@
   <div class="modal-box">
     <div class="modal-ti">📍 Delivery Address</div>
     <div class="modal-sub">Before your order goes out, tell us where to deliver it.</div>
-    <div class="modal-fld">
-      <label for="addrTownship">Township / Building Name</label>
-      <input type="text" id="addrTownship" placeholder="e.g. Godrej Garden City">
+    <!-- Township aata hai vendor ke apne Setup se (ek hi hai, fixed) — dropdown
+         isliye taaki dono field ek jaisi dikhein, par customer ko kuch chunna
+         nahi padta. Society/building vendor ki apni list se (jo unhone Setup
+         me daali) — wahi index.html ka order form bhi use karta hai. -->
+    <div class="modal-fld hidden" id="addrTownshipRow">
+      <label for="addrTownship">Township</label>
+      <select id="addrTownship"></select>
+    </div>
+    <div class="modal-fld hidden" id="addrSocietyRow">
+      <label for="addrSociety">Building / Society</label>
+      <select id="addrSociety"></select>
+    </div>
+    <div class="modal-fld" id="addrSocietyOtherRow">
+      <label for="addrSocietyOther">Building / Society Name</label>
+      <input type="text" id="addrSocietyOther" placeholder="e.g. Vrindavan">
     </div>
     <div class="modal-fld">
       <label for="addrFlat">Flat / House No.</label>
       <input type="text" id="addrFlat" placeholder="e.g. A-1204">
     </div>
-    <div class="modal-err hidden" id="addrErr">Please fill in both fields.</div>
+    <div class="modal-err hidden" id="addrErr">Please fill in your building and flat number.</div>
     <div class="modal-actions">
       <button type="button" class="btn sub" onclick="mtCloseAddrModal()">Cancel</button>
       <button type="button" class="btn" onclick="mtConfirmAddr()">Place Order</button>
@@ -267,6 +292,7 @@
   }
   var VID = slug();
   document.getElementById('orderBtn').href = '/?v=' + encodeURIComponent(VID);
+  document.getElementById('bulkBtn').href = '/?v=' + encodeURIComponent(VID) + '&bulk=1';
 
   // Address bar saaf rakhte hain. GitHub Pages jaisi static hosting par
   // /<vendor>/menu ka koi real file nahi hota — 404.html isi wajah se
@@ -402,11 +428,36 @@
   // ko in tak pahunchna hota hai.
   var CURRENT_WA = '', CURRENT_VENDOR_NAME = '', mtPendingMsg = '';
   var ADDR_KEY = 'mt_customer_addr';
+  // Society select ka "Other" sentinel — index.html ke apne order form
+  // (society/societyOther) jaisa hi, taaki ek hi convention rahe.
+  var OTHER = '__other__';
   window.mtOpenAddrModal = function(el){
     mtPendingMsg = el.getAttribute('data-msg') || '';
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem(ADDR_KEY) || 'null'); } catch (e) {}
-    document.getElementById('addrTownship').value = (saved && saved.township) || '';
+    var societyRow = document.getElementById('addrSocietyRow');
+    var societySel = document.getElementById('addrSociety');
+    var otherRow = document.getElementById('addrSocietyOtherRow');
+    var otherInput = document.getElementById('addrSocietyOther');
+    var savedSociety = (saved && saved.society) || '';
+    if (!societyRow.classList.contains('hidden')) {
+      var known = Array.prototype.some.call(societySel.options, function(o){ return o.value === savedSociety; });
+      if (savedSociety && known) {
+        societySel.value = savedSociety;
+        otherRow.classList.add('hidden');
+        otherInput.value = '';
+      } else if (savedSociety) {
+        societySel.value = OTHER;
+        otherRow.classList.remove('hidden');
+        otherInput.value = savedSociety;
+      } else {
+        societySel.selectedIndex = 0;
+        otherRow.classList.toggle('hidden', societySel.value !== OTHER);
+        otherInput.value = '';
+      }
+    } else {
+      otherInput.value = savedSociety;
+    }
     document.getElementById('addrFlat').value = (saved && saved.flat) || '';
     document.getElementById('addrErr').classList.add('hidden');
     document.getElementById('addrModal').classList.remove('hidden');
@@ -416,13 +467,19 @@
   };
   window.mtConfirmAddr = function(){
     var township = document.getElementById('addrTownship').value.trim();
+    var societyRow = document.getElementById('addrSocietyRow');
+    var societySel = document.getElementById('addrSociety');
+    var society = (!societyRow.classList.contains('hidden') && societySel.value !== OTHER)
+      ? societySel.value.trim()
+      : document.getElementById('addrSocietyOther').value.trim();
     var flat = document.getElementById('addrFlat').value.trim();
-    if (!township || !flat) { document.getElementById('addrErr').classList.remove('hidden'); return; }
-    try { localStorage.setItem(ADDR_KEY, JSON.stringify({ township: township, flat: flat })); } catch (e) {}
+    if (!society || !flat) { document.getElementById('addrErr').classList.remove('hidden'); return; }
+    try { localStorage.setItem(ADDR_KEY, JSON.stringify({ township: township, society: society, flat: flat })); } catch (e) {}
     // Yahan bhi koi astral-plane emoji nahi (📍 jaisa) — wahi wa.me?text=
     // deep-link "�" wala issue, itemMsgLine() ke comment me upar note kiya hai.
+    var addrTxt = (township ? township + ', ' : '') + society + ', ' + flat;
     var full = 'Hello *' + (CURRENT_VENDOR_NAME || 'Kitchen') + '*\n\n' + mtPendingMsg +
-               '\n\nAddress: ' + township + ', ' + flat;
+               '\n\nAddress: ' + addrTxt;
     // Modal ke button click se seedha chalta hai — user-gesture chain
     // toota nahi, isliye popup blocker isse rokta nahi.
     window.open('https://wa.me/' + CURRENT_WA + '?text=' + encodeURIComponent(full), '_blank');
@@ -450,6 +507,38 @@
     var wa = waNumber(vendor.whatsapp);
     CURRENT_WA = wa;
     CURRENT_VENDOR_NAME = vendor.name || 'Kitchen';
+
+    // Delivery-address modal's dropdowns — township is the vendor's own
+    // fixed value from Setup (one dropdown just for a consistent look, not
+    // a real choice), societies come from the vendor's own list (same
+    // source index.html's own order form reads). "Other" falls back to
+    // free text for a building the vendor hasn't added to that list yet.
+    var township = String(cfg.township || '').trim();
+    var townshipRow = document.getElementById('addrTownshipRow');
+    var townshipSel = document.getElementById('addrTownship');
+    if (township) {
+      townshipSel.innerHTML = '<option value="' + esc(township) + '">' + esc(township) + '</option>';
+      townshipRow.classList.remove('hidden');
+    } else {
+      townshipSel.innerHTML = '';
+      townshipRow.classList.add('hidden');
+    }
+    var societies = (Array.isArray(cfg.societies) ? cfg.societies : []).filter(Boolean);
+    var societyRow = document.getElementById('addrSocietyRow');
+    var societySel = document.getElementById('addrSociety');
+    var otherRow = document.getElementById('addrSocietyOtherRow');
+    if (societies.length) {
+      societySel.innerHTML = societies.map(function(s){
+        return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
+      }).join('') + '<option value="__other__">Other</option>';
+      societyRow.classList.remove('hidden');
+      otherRow.classList.add('hidden');
+      societySel.onchange = function(){ otherRow.classList.toggle('hidden', societySel.value !== '__other__'); };
+    } else {
+      societySel.innerHTML = '';
+      societyRow.classList.add('hidden');
+      otherRow.classList.remove('hidden');
+    }
     // A clear "place order" glyph (shopping bag) — WhatsApp's own logo made
     // the button read as a chat/share action, not an order. The order
     // itself still goes out over WhatsApp; that's just the delivery
@@ -544,12 +633,12 @@
               // Vendor ki photo Drive par hoti hai. Link toot jaaye to khaali dabba
               // dikhne se accha hai ki image hi hat jaaye.
               (v.img ? '<img src="' + esc(v.img) + '" alt="" loading="lazy" onerror="this.remove()">' : '') +
-              '<div class="vb"><div class="vn">' + esc(v.name || '') + '</div>' +
+              '<div class="vb"><div class="vn">' + esc(v.name || '') +
+              (v.price ? ' <span class="vp">— ₹' + v.price + '</span>' : '') + '</div>' +
               '<div class="vi">' + esc((v.items || []).join(' · ')) + '</div></div>' +
-              (v.price ? '<div class="vp">₹' + v.price + '</div>' : '') +
               (wa ? '<a class="vo" href="#" onclick="mtOpenAddrModal(this);return false;" data-msg="' +
                     esc(itemMsgLine(mt, v, dateTxt)) + '" aria-label="' +
-                    esc('Order ' + (v.name || 'this item')) + '">' + ORDER_ICON + '</a>' : '') +
+                    esc('Order ' + (v.name || 'this item')) + '">' + ORDER_ICON + '<span>Order</span></a>' : '') +
               '</div>';
           }).join('');
         }
