@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Order Fresh Tiffin — Cloud Kitchen, Home Delivered</title>
+<meta name="description" content="Fresh home-style meals near you — cooked today, delivered on time. Order in under a minute, no app needed.">
+<!--
+  AD LANDING PAGE — built for paid traffic (Meta/Google/WhatsApp ads), not
+  for the in-app nav. One job: convert a cold click into either a menu
+  visit or a WhatsApp order, fast, on a slow connection.
+
+  Vendor-aware like menu.html: reads ?v=<slug>, fetches the same public
+  'bootstrap' endpoint, fills in real name/logo/WhatsApp/today's menu.
+  Self-contained (no styles.css/shared.js) for the same reason menu.html
+  is — this is the first thing a stranger from an ad sees, it can't wait
+  on extra requests.
+
+  PRICING PLANS BELOW ARE PLACEHOLDERS — see PRICING_PLANS in the script
+  at the bottom. Nobody has told this page what your Weekly/Monthly plan
+  actually costs or includes; edit those three lines before running ads
+  to this page, or the page will show "Contact us for pricing" instead of
+  a wrong number.
+-->
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#e35c2b; --accent-dark:#c74a1e; --accent-soft:#fde9df;
+    --ink:#2b2118; --muted:#8a7f6c; --bg:#fdf6ec; --card:#ffffff;
+    --line:#efe4d3; --dark:#241c14; --dark-card:#2f2519;
+    --blob-purple:#e3ddf3; --blob-yellow:#fbdfa0;
+    --ic-blue:#4a90d9; --ic-red:#e0503a; --ic-gold:#e0a83c;
+    --ok:#3a9d5c; --radius:20px;
+  }
+  *{box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  h1,h2{font-family:'Baloo 2',system-ui,sans-serif;font-weight:700;margin:0;}
+  p{margin:0;}
+  img,svg{display:block;max-width:100%;}
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;}
+  .wrap{max-width:480px;margin:0 auto;padding:0 20px;position:relative;}
+
+  .skel{background:linear-gradient(90deg,var(--line) 25%,#f7efe0 37%,var(--line) 63%);background-size:400% 100%;animation:skel 1.4s ease infinite;border-radius:8px;color:transparent!important;}
+  @keyframes skel{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+
+  /* ── Hero ── */
+  .hero{position:relative;padding:36px 0 28px;text-align:center;overflow:hidden;}
+  .blob{position:absolute;border-radius:50%;z-index:0;}
+  .blob-p{width:220px;height:220px;background:var(--blob-purple);top:-60px;right:-70px;}
+  .blob-y{width:150px;height:150px;background:var(--blob-yellow);bottom:10px;left:-60px;}
+  .hero-in{position:relative;z-index:1;}
+  .logo-wrap{width:120px;height:120px;border-radius:50%;background:var(--card);box-shadow:0 14px 30px -12px rgba(43,33,24,.25);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;}
+  .logo-wrap img{width:100%;height:100%;object-fit:cover;}
+  .eyebrow{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .hero h1{font-size:clamp(28px,7vw,38px);line-height:1.12;margin-bottom:14px;}
+  .hero-sub{font-size:15px;color:var(--muted);font-weight:600;max-width:38ch;margin:0 auto 22px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:15px;padding:16px 30px;border-radius:50px;border:none;cursor:pointer;font-family:inherit;width:100%;}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 14px 26px -10px rgba(227,92,43,.55);}
+  .btn-dark{background:var(--dark);color:#fff;}
+  .microcopy{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:10px;}
+
+  /* ── Feature badges ── */
+  .feat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0;}
+  .feat{background:var(--card);border-radius:16px;padding:16px 8px;text-align:center;box-shadow:0 6px 16px -10px rgba(43,33,24,.18);}
+  .feat-ic{width:40px;height:40px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+  .feat-ic svg{width:19px;height:19px;}
+  .feat-ic.blue{background:#e5f0fb;} .feat-ic.blue svg{color:var(--ic-blue);}
+  .feat-ic.red{background:#fbe7e2;} .feat-ic.red svg{color:var(--ic-red);}
+  .feat-ic.gold{background:#faf0da;} .feat-ic.gold svg{color:var(--ic-gold);}
+  .feat span{display:block;font-size:12px;font-weight:800;line-height:1.3;}
+
+  /* ── Today's thali card ── */
+  .thali{background:var(--dark-card);color:#f4ede0;border-radius:24px;padding:26px;display:flex;gap:16px;align-items:flex-start;margin-bottom:30px;}
+  .thali-lbl{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#d8b98a;margin-bottom:10px;}
+  .thali-plate{width:56px;height:56px;border-radius:50%;border:3px solid #7a5a2e;flex:none;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:8px;}
+  .thali-plate span{border-radius:50%;}
+  .thali-plate span:nth-child(1){background:#e0503a;} .thali-plate span:nth-child(2){background:#4a90d9;}
+  .thali-plate span:nth-child(3){background:#3a9d5c;} .thali-plate span:nth-child(4){background:#e0a83c;}
+  .thali-items{list-style:none;margin:0;padding:0;font-size:13.5px;font-weight:600;}
+  .thali-items li{margin-bottom:5px;padding-left:14px;position:relative;}
+  .thali-items li::before{content:'';position:absolute;left:0;top:8px;width:4px;height:4px;border-radius:50%;background:#d8b98a;}
+  .thali-empty{font-size:13px;color:#c9bfa9;font-weight:600;}
+
+  /* ── Pricing ── */
+  .sec-t{font-size:21px;text-align:center;margin-bottom:16px;}
+  .price-list{display:grid;gap:10px;margin-bottom:30px;}
+  .price-card{background:var(--card);border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 16px -10px rgba(43,33,24,.14);}
+  .price-card.pop{background:var(--accent);color:#fff;}
+  .price-name{font-size:14.5px;font-weight:800;}
+  .price-sub{font-size:12px;font-weight:600;opacity:.75;margin-top:2px;}
+  .price-amt{font-size:16px;font-weight:800;white-space:nowrap;}
+
+  /* ── Bottom CTA ── */
+  .cta-band{background:var(--blob-purple);border-radius:28px 28px 0 0;padding:34px 20px 30px;text-align:center;margin-top:10px;}
+  .cta-band h2{font-size:19px;margin-bottom:16px;}
+  .social-row{display:flex;justify-content:center;gap:16px;margin-top:18px;}
+  .social-row a{width:38px;height:38px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px -4px rgba(43,33,24,.25);}
+  .social-row svg{width:18px;height:18px;color:var(--ink);}
+  .social-sub{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:12px;}
+</style>
+</head>
+<body>
+
+<div class="wrap hero">
+  <div class="blob blob-p"></div>
+  <div class="blob blob-y"></div>
+  <div class="hero-in">
+    <div class="logo-wrap" id="logoWrap">🍱</div>
+    <span class="eyebrow">Cloud Kitchen · Home Delivered</span>
+    <h1 id="vname" class="skel">Loading&hellip;</h1>
+    <p class="hero-sub">Fresh home-style meals near you — cooked today, delivered on time.</p>
+    <a class="btn btn-primary" id="menuBtn" href="#">Check Our Menu</a>
+    <div class="microcopy">Order in under a minute · No app needed</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="feat-row">
+    <div class="feat">
+      <div class="feat-ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+      <span>On-time, every day</span>
+    </div>
+    <div class="feat">
+      <div class="feat-ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg></div>
+      <span>WhatsApp ordering</span>
+    </div>
+    <div class="feat">
+      <div class="feat-ic gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></div>
+      <span>Weekly subscriptions</span>
+    </div>
+  </div>
+
+  <div class="thali" id="thaliCard">
+    <div class="thali-plate"><span></span><span></span><span></span><span></span></div>
+    <div style="flex:1;min-width:0;">
+      <div class="thali-lbl">Today's Thali · Sample</div>
+      <div id="thaliBody"><ul class="thali-items"><li class="skel">Loading today's menu&hellip;</li></ul></div>
+    </div>
+  </div>
+
+  <h2 class="sec-t">Simple, honest pricing</h2>
+  <div class="price-list" id="priceList"></div>
+</div>
+
+<div class="cta-band">
+  <h2>Order today's tiffin</h2>
+  <a class="btn btn-dark" id="orderBtn" href="#">Order Now</a>
+  <div class="social-row">
+    <a id="waIcon" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
+    </a>
+    <a id="igIcon" href="#" target="_blank" rel="noopener" aria-label="Instagram" class="hidden" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+    </a>
+    <a id="phIcon" href="#" aria-label="Call" class="hidden" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    </a>
+  </div>
+  <div class="social-sub" id="socialSub">Order directly on WhatsApp</div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdMXlSwNdqO84OspsUe2jAEeDL-hbwjwLcKL-fo6YObB6Se-dvTxX2iS5BMz2t8bV6/exec';
+  var DEFAULT_VENDOR = 'nestandnosh';
+
+  // ⚠️ EDIT THESE THREE LINES before pointing ads at this page — nobody
+  // configured real subscription pricing for you, and a made-up number on
+  // a page you're paying to advertise is worse than an honest placeholder.
+  // trial/weekly/monthly = rupee amounts, or null to show "Contact us".
+  var PRICING_PLANS = [
+    { name: 'Single Trial',  sub: 'Try one tiffin',      amount: null },
+    { name: 'Weekly Plan',   sub: '6 meals, skip anytime', amount: null, popular: true },
+    { name: 'Monthly Plan',  sub: '26 meals, best value', amount: null }
+  ];
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function slug(){
+    try {
+      var q = new URLSearchParams(location.search);
+      var v = (q.get('v') || q.get('vendorId') || '').trim().toLowerCase();
+      if (v) return v;
+      var p = location.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+      if (p.length > 1 && p[p.length - 1].indexOf('land') === 0) return p[0].toLowerCase();
+      return DEFAULT_VENDOR;
+    } catch (e) { return DEFAULT_VENDOR; }
+  }
+  var VID = slug();
+  document.getElementById('menuBtn').href = '/menu.html?v=' + encodeURIComponent(VID);
+  document.getElementById('orderBtn').href = '/menu.html?v=' + encodeURIComponent(VID);
+
+  try {
+    var cleanPath = '/' + encodeURIComponent(VID) + '/land';
+    if (location.pathname !== cleanPath) history.replaceState(null, '', cleanPath + location.search.replace(/[?&]v=[^&]*/, '').replace(/^&/, '?') + location.hash);
+  } catch (e) {}
+
+  function waNumber(raw){
+    var d = String(raw || '').replace(/\D/g, '');
+    if (d.length === 10) d = '91' + d;
+    if (d.length === 13 && d.slice(0,3) === '910') d = '91' + d.slice(3);
+    return (d.length === 12 && d.slice(0,2) === '91') ? d : '';
+  }
+
+  function renderPricing(){
+    var box = document.getElementById('priceList');
+    box.innerHTML = PRICING_PLANS.map(function(p){
+      return '<div class="price-card' + (p.popular ? ' pop' : '') + '">' +
+        '<div><div class="price-name">' + esc(p.name) + (p.popular ? ' · Popular' : '') + '</div>' +
+        '<div class="price-sub">' + esc(p.sub) + '</div></div>' +
+        '<div class="price-amt">' + (p.amount != null ? '₹' + p.amount : 'Contact us') + '</div></div>';
+    }).join('');
+  }
+
+  function istNow(){
+    if (window.__TEST_IST_OVERRIDE) return new Date(window.__TEST_IST_OVERRIDE);
+    return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kolkata' }));
+  }
+  var DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+  function renderThali(d){
+    var box = document.getElementById('thaliBody');
+    var menu = (d && d.menu) || {};
+    var cfg = (d && d.config) || {};
+    var today = menu[DAYS[istNow().getDay()]] || {};
+    var enabled = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; });
+    var items = [];
+    for (var i = 0; i < enabled.length && !items.length; i++) {
+      var rec = today[enabled[i].key];
+      var sabzi = Array.isArray(rec) ? rec : ((rec && rec.sabziOptions) || []);
+      if (sabzi.length) { items = sabzi; break; }
+      var vs = ((cfg.variants || {})[enabled[i].key]) || [];
+      if (vs.length && vs[0].items && vs[0].items.length) items = vs[0].items;
+    }
+    if (!items.length) {
+      box.innerHTML = '<div class="thali-empty">Ask us on WhatsApp for today\'s full menu.</div>';
+      return;
+    }
+    box.innerHTML = '<ul class="thali-items">' + items.slice(0, 5).map(function(x){
+      return '<li>' + esc(x) + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function render(d){
+    var vendor = (d && d.vendor) || {};
+    var vnameEl = document.getElementById('vname');
+    vnameEl.textContent = vendor.name ? vendor.name + ' Tiffin' : 'Order Fresh Tiffin';
+    vnameEl.classList.remove('skel');
+    document.title = (vendor.name ? vendor.name + ' — ' : '') + 'Order Fresh Tiffin';
+
+    var logoWrap = document.getElementById('logoWrap');
+    if (vendor.logo) logoWrap.innerHTML = '<img src="' + esc(vendor.logo) + '" alt="" onerror="this.parentElement.textContent=\'🍱\';">';
+
+    var wa = waNumber(vendor.whatsapp);
+    var waIcon = document.getElementById('waIcon');
+    if (wa) {
+      waIcon.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hi! I saw your ad — can I see today\'s tiffin menu?');
+    } else {
+      waIcon.style.display = 'none';
+      document.getElementById('socialSub').textContent = 'Tap "Order Now" to see the menu';
+    }
+
+    renderThali(d);
+  }
+
+  renderPricing();
+  // fetch() has no built-in timeout — a dead-zone/captive-portal connection
+  // (very real for cold ad traffic on mobile) can leave the request neither
+  // resolving nor rejecting, which would otherwise leave this page stuck on
+  // its loading skeleton forever. Force a fallback after 8s either way.
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timedOut = false;
+  var timer = setTimeout(function(){ timedOut = true; if (ctrl) ctrl.abort(); }, 8000);
+  fetch(SCRIPT_URL + '?action=bootstrap&vendorId=' + encodeURIComponent(VID), ctrl ? { signal: ctrl.signal } : {})
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      clearTimeout(timer);
+      if (!j || j.status !== 'success') { render({}); return; }
+      render(j);
+    })
+    .catch(function(){ render({}); });
+})();
+</script>
+
+</body>
+</html>
