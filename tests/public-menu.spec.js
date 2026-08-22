@@ -263,9 +263,11 @@ test.describe('Public menu page', () => {
     expect(msg).not.toContain('Mujhe chahiye');
     expect(msg).toMatch(/x 1 \(\d{1,2} \w+\)/);
     // WhatsApp se seedha order ho sakta hai, isliye "Order Now" (app/login)
-    // yahan chhup jaata hai — sirf share bachta hai, wahi asli button ban jaata hai.
+    // yahan chhup jaata hai — Bulk Order/Subscription Plan alag flow hai,
+    // WhatsApp number ho ya na ho, hamesha dikhte hain.
     await expect(page.locator('#orderBtn')).toBeHidden();
-    await expect(page.locator('#shareBtn2')).not.toHaveClass(/sub/);
+    await expect(page.locator('#bulkBtn')).toBeVisible();
+    await expect(page.locator('#subBtn')).toBeVisible();
   });
 
   test('order button par icon ke saath "Order" likha hota hai, aur price naam ke baju me hi hai', async ({ page }) => {
@@ -331,7 +333,8 @@ test.describe('Public menu page', () => {
     await page.waitForSelector('.mc', { timeout: 15000 });
     await expect(page.locator('.vr .vo')).toHaveCount(0);
     await expect(page.locator('#orderBtn')).toBeVisible();
-    await expect(page.locator('#shareBtn2')).toHaveClass(/sub/);
+    await expect(page.locator('#bulkBtn')).toBeVisible();
+    await expect(page.locator('#subBtn')).toBeVisible();
   });
 
   test('adhoora WhatsApp number bhi per-item button nahi dikhata', async ({ page }) => {

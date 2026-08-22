@@ -47,8 +47,8 @@
   /* ── Header ── */
   .hd { display:flex; align-items:center; gap:12px; padding:18px 0 14px; }
   .hd .hd-tx { flex:1; min-width:0; }
-  /* Share yahan bhi hai (jaldi milta hai) aur bottom CTA me bhi (thumb-zone,
-     jab poora attention wahi ho). Dono ek hi doShare() se chalte hain. */
+  /* Header me hi — jaldi milta hai, aur bottom CTA ab Order/Bulk/Subscribe
+     se bhara hua hai, share ke liye alag row ki zaroorat nahi. */
   .hd-share { flex:0 0 auto; width:38px; height:38px; border-radius:50%;
     border:1.5px solid var(--line); background:transparent; color:var(--muted);
     font-size:15px; cursor:pointer; font-family:inherit; }
@@ -140,12 +140,15 @@
     background:var(--accent); color:#fff; border:0; border-radius:14px; padding:15px;
     font-size:15px; font-weight:900; text-decoration:none; cursor:pointer;
     font-family:inherit; white-space:nowrap; }
-  /* Do barabar ke button ek dusre se ladte hain. WhatsApp number ho to har
-     item ka apna order button hai (upar); yahan neeche sirf share bachta hai,
-     aur wahi asli/pura button ban jaata hai. WhatsApp na ho to "Order Now"
-     hi asli raasta hai, share uske neeche ek chhoti line ban jaata hai. */
+  /* Muted text-only variant — modal ka Cancel isse use karta hai. */
   .btn.sub { background:transparent; color:var(--muted); font-size:12.5px;
     font-weight:800; padding:6px; text-decoration:underline; }
+  /* Bulk Order aur Subscription Plan — dono login-wale app ke feature hain,
+     is page ka kaam bas seedha wahan pahunchana hai, isliye "Order Now" se
+     halka (soft fill), par phir bhi ek pukka button jaisa dikhta hai. */
+  .cta-row { display:flex; gap:8px; }
+  .btn.soft { background:var(--accent-soft); color:var(--accent-dark); padding:12px;
+    font-size:13px; }
 
   .ft { text-align:center; color:var(--muted); font-size:11px; font-weight:600;
     padding:16px 0 4px; line-height:1.7; }
@@ -218,16 +221,18 @@
   <div class="ft" id="foot"></div>
 </div>
 
-<!-- Also hidden until data arrives — order/share are both useless before
-     the menu has loaded. -->
+<!-- Also hidden until data arrives — order/bulk/subscribe are all useless
+     before the menu has loaded. -->
 <div class="cta hidden" id="cta"><div class="cta-in">
   <a class="btn" id="orderBtn" href="/">🛒 Order Now</a>
-  <button class="btn sub" id="shareBtn2" type="button">🔗 Share Menu</button>
   <!-- Regular per-item ordering (upar) sirf ek din/meal ke liye hai — roz
        ke liye ya bade order ke liye login-wale app me jaana padta hai
-       (Bulk Requests / Subscription). Isliye seedha login page par
-       bhejte hain, na ki khud ye page us feature ko dobara banaye. -->
-  <a class="btn sub" id="bulkBtn" href="/">🎉 Bulk Order / Subscribe</a>
+       (Bulk Requests / Subscription — dono alag flows hain). Isliye seedha
+       login page par bhejte hain, na ki khud ye page unhe dobara banaye. -->
+  <div class="cta-row">
+    <a class="btn soft" id="bulkBtn" href="/">🎉 Bulk Order</a>
+    <a class="btn soft" id="subBtn" href="/">💳 Subscription Plan</a>
+  </div>
 </div></div>
 
 <!-- Delivery address before the order goes out — without this the vendor
@@ -293,6 +298,7 @@
   var VID = slug();
   document.getElementById('orderBtn').href = '/?v=' + encodeURIComponent(VID);
   document.getElementById('bulkBtn').href = '/?v=' + encodeURIComponent(VID) + '&bulk=1';
+  document.getElementById('subBtn').href = '/?v=' + encodeURIComponent(VID) + '&sub=1';
 
   // Address bar saaf rakhte hain. GitHub Pages jaisi static hosting par
   // /<vendor>/menu ka koi real file nahi hota — 404.html isi wajah se
@@ -693,20 +699,17 @@
     }
 
     // WhatsApp number ho to har item ka apna order button hai (upar) — is
-    // bottom "Order Now" (app/login) ki zaroorat nahi rehti, share hi bachta
-    // hai aur wahi asli button ban jaata hai. Number na ho to "Order Now" hi
-    // ek matra raasta hai, share uske neeche chhoti line rehti hai.
-    var ob = document.getElementById('orderBtn'), sb = document.getElementById('shareBtn2');
-    ob.classList.toggle('hidden', !!wa);
-    sb.classList.toggle('sub', !wa);
+    // bottom "Order Now" (app/login) ki zaroorat nahi rehti. Number na ho
+    // to "Order Now" hi ek matra raasta hai.
+    document.getElementById('orderBtn').classList.toggle('hidden', !!wa);
 
     var ft = [];
     if (cfg.fssai) ft.push('FSSAI: ' + esc(cfg.fssai));
     if (cfg.township) ft.push(esc(cfg.township));
     document.getElementById('foot').innerHTML = ft.join(' · ');
 
-    // Sab kuch (day picker, order/share) ab hi dikhao — data poora load ho
-    // chuka hai aur sahi state me hai.
+    // Sab kuch (day picker, order/bulk/subscribe) ab hi dikhao — data poora
+    // load ho chuka hai aur sahi state me hai.
     document.getElementById('daysel').classList.remove('hidden');
     document.getElementById('cta').classList.remove('hidden');
   }
@@ -728,8 +731,7 @@
     })
     .catch(function(){ if (!cached) fail('Could not load the menu.', 'Check your internet and refresh the page.'); });
 
-  // Header ka 🔗 icon aur bottom ka "Share Menu" — dono isi ek function se
-  // chalte hain, taaki menu link kahin se bhi, kisi ko bhi bheja ja sake.
+  // Header ka 🔗 icon — menu link kahin se bhi, kisi ko bhi bheja ja sake.
   function doShare(){
     var url = location.origin + '/' + VID + '/menu';
     var title = document.getElementById('vname').textContent;
@@ -739,7 +741,6 @@
     }
   }
   document.getElementById('shareBtn').onclick = doShare;
-  document.getElementById('shareBtn2').onclick = doShare;
 })();
 </script>
 </body>
