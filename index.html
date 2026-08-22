@@ -55,7 +55,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="assets/styles.css?v=37f245d762">
+  <link rel="stylesheet" href="assets/styles.css?v=f8e8a33596">
   <style>
     /* Serif display font for headings only — Manrope stays for body/labels.
        Scoped here (not assets/styles.css) so admin.html/superadmin.html,
@@ -689,6 +689,17 @@
             <input type="hidden" id="ppQrUrl">
           </div>
           <button class="admin-btn" id="ppSaveBtn" onclick="savePlatformPaymentFE()">💾 Save Payment Settings</button>
+        </div>
+      </div>
+
+      <div class="pf-box" id="svpTheme" style="margin-bottom:14px;">
+        <div style="font-size:14px;font-weight:900;margin-bottom:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="document.getElementById('svpThemeBody').classList.toggle('hidden')">
+          <span>🎨 Platform Theme <span style="font-size:10.5px;color:var(--muted);font-weight:600;">— sab customers/vendors ko yahi color dikhega</span></span>
+          <span style="font-size:11px;color:var(--muted);">▾</span>
+        </div>
+        <div id="svpThemeBody">
+          <div id="platformThemeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:8px;margin:10px 0 4px;"></div>
+          <div id="platformThemeStatus" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
         </div>
       </div>
 
@@ -1451,7 +1462,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=37f245d762"></script>
+  <script src="assets/shared.js?v=f8e8a33596"></script>
 <script>
   (function(){
     try{
@@ -5186,6 +5197,7 @@
   let superCreds=null, superCredsValidated=false, superVendors=[];
   let __svCurId=null, __svCurName='';
   let superPlatformPayment={upiId:'',upiName:'',qrImageUrl:''};
+  let superPlatformTheme='orange';
   function superLogin(){
     const u=document.getElementById('superUser').value.trim(), p=document.getElementById('superPass').value;
     if(!u||!p){ showToast('⚠️ Username/password daalo.','warning'); return; }
@@ -5195,6 +5207,7 @@
       if(j.status!=='success'){ showToast('❌ Invalid username or password.','error'); return; }
       superCreds={user:u,pass:p}; storeSet('fbt_super',superCreds); superCredsValidated=true;
       superVendors=j.vendors||[]; superPlatformPayment=j.platformPayment||superPlatformPayment;
+      superPlatformTheme=j.platformTheme||superPlatformTheme; setPlatformAccent(superPlatformTheme);
       showView('superPanel'); superGoList();
     }).catch(()=>{ btn.textContent='🔓 Login'; btn.disabled=false; showToast(t('errNetwork'),'error'); });
   }
@@ -5206,6 +5219,7 @@
       if(j.status!=='success'){ superCreds=null; superCredsValidated=false; storeDel('fbt_super'); return; }
       superCredsValidated=true;
       superVendors=j.vendors||[]; superPlatformPayment=j.platformPayment||superPlatformPayment;
+      superPlatformTheme=j.platformTheme||superPlatformTheme; setPlatformAccent(superPlatformTheme);
       showView('superPanel'); superGoList();
     }).catch(()=>{ superCredsValidated=true; showView('superPanel'); superGoList(); });
     return true;
@@ -5216,6 +5230,7 @@
     document.getElementById('superTopTitle').textContent='🏢 Manage Vendors';
     renderSuperVendorList();
     fillPlatformPaymentForm();
+    renderPlatformThemePicker();
   }
   function subStatusChip(v){
     const map={ active:{t:'✅ Paid',bg:'var(--okbg)',c:'var(--ok)'}, pending:{t:'🟡 Payment Pending',bg:'var(--warnbg)',c:'var(--warn)'}, overdue:{t:'🔴 Overdue',bg:'var(--dangerbg)',c:'var(--danger)'} };
@@ -5514,6 +5529,39 @@
       if(j.status==='success'){ superPlatformPayment=j.platformPayment||superPlatformPayment; showToast('✅ Payment settings saved','success'); }
       else showToast('❌ '+(j.message||'Failed'),'error');
     }).catch(()=>{ btn.disabled=false; btn.textContent=old; showToast(t('errNetwork'),'error'); });
+  }
+  function renderPlatformThemePicker(){
+    const grid=document.getElementById('platformThemeGrid'); if(!grid) return;
+    grid.innerHTML = PLATFORM_THEMES.map(p=>{
+      const active = p.id===superPlatformTheme;
+      return '<button type="button" title="'+esc(p.name)+'" onclick="savePlatformThemeFE(\''+p.id+'\')" '
+        +'style="width:38px;height:38px;border-radius:50%;background:'+p.hex+';cursor:pointer;'
+        +'border:'+(active?'3px solid var(--ink)':'2px solid var(--line)')+';'
+        +'box-shadow:'+(active?'0 0 0 2px '+p.hex+'55':'none')+';display:flex;align-items:center;justify-content:center;padding:0;">'
+        +(active?'<span style="color:#fff;font-size:15px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,.4);">✓</span>':'')
+        +'</button>';
+    }).join('');
+  }
+  function savePlatformThemeFE(themeId){
+    if(!superCreds || themeId===superPlatformTheme) return;
+    const prev=superPlatformTheme;
+    superPlatformTheme=themeId; setPlatformAccent(themeId); renderPlatformThemePicker();
+    const status=document.getElementById('platformThemeStatus'); if(status) status.textContent='⏳ Saving…';
+    apiPost({action:'saveplatformtheme',user:superCreds.user,pass:superCreds.pass,theme:themeId}).then(j=>{
+      if(j.status==='success'){
+        superPlatformTheme=j.platformTheme||themeId;
+        if(status) status.textContent='✅ Saved — sab users ko live dikhega';
+        showToast('✅ Platform theme updated','success');
+      } else {
+        superPlatformTheme=prev; setPlatformAccent(prev); renderPlatformThemePicker();
+        if(status) status.textContent='';
+        showToast('❌ '+(j.message||'Could not save theme'),'error');
+      }
+    }).catch(()=>{
+      superPlatformTheme=prev; setPlatformAccent(prev); renderPlatformThemePicker();
+      if(status) status.textContent='';
+      showToast(t('errNetwork'),'error');
+    });
   }
   function pickPlatformQr(){
     const inp=document.createElement('input');
