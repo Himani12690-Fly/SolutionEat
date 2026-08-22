@@ -15,12 +15,12 @@
      kaam sirf redirect karna hai; ek bhi extra request us redirect ko slow
      karti hai. Palette styles.css ke :root se copy ki hai. */
   :root {
-    --accent:#6366f1; --accent-soft:#eef0ff;
+    --accent:#e35c2b; --accent-soft:#fde9df;
     --ink:#1e2233; --muted:#6b7280; --bg:#f5eee0;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --accent:#818cf8; --accent-soft:#282a42;
-            --ink:#e7e9f5; --muted:#9ca0b5; --bg:#14151f; }
+    :root { --accent:#f0743d; --accent-soft:#3a2418;
+            --ink:#e7e9f5; --muted:#9ca0b5; --bg:#17140f; }
   }
   * { box-sizing:border-box; }
   body { margin:0; min-height:100vh; display:flex; flex-direction:column;
@@ -58,9 +58,9 @@
     if (saved === 'dark' || (saved === 'system' &&
         window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)) {
       var r = document.documentElement.style;
-      r.setProperty('--bg', '#14151f');   r.setProperty('--ink', '#e7e9f5');
-      r.setProperty('--muted', '#9ca0b5');r.setProperty('--accent', '#818cf8');
-      r.setProperty('--accent-soft', '#282a42');
+      r.setProperty('--bg', '#17140f');   r.setProperty('--ink', '#e7e9f5');
+      r.setProperty('--muted', '#9ca0b5');r.setProperty('--accent', '#f0743d');
+      r.setProperty('--accent-soft', '#3a2418');
     }
   } catch (e) {}
 

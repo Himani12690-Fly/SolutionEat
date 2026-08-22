@@ -27,23 +27,23 @@
   {"@type":"Question","name":"Is there any commission on orders?","acceptedAnswer":{"@type":"Answer","text":"No. Just a flat ₹499/month — whether the order is small or big, you keep the full amount."}}
 ]}
 </script>
-<meta name="theme-color" content="#6366f1">
+<meta name="theme-color" content="#e35c2b">
 <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#211f38; --ink-soft:#5b587a; --paper:#f6f5fb; --card:#ffffff;
-    --line:#e6e4f2; --accent:#6366f1; --accent-dark:#4338ca; --accent-soft:#ececff;
+    --ink:#2b2118; --ink-soft:#8a7f6c; --paper:#fdf6ec; --card:#ffffff;
+    --line:#efe4d3; --accent:#e35c2b; --accent-dark:#c74a1e; --accent-soft:#fde9df;
     --gold:#c8912c; --gold-soft:#faf1de; --ok:#1a8a52; --ok-soft:#e7f6ee;
-    --shadow:0 20px 50px -20px rgba(33,31,56,.25);
+    --shadow:0 20px 50px -20px rgba(43,33,24,.25);
     --radius:20px;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --ink:#f1f0fb; --ink-soft:#b3b0cf; --paper:#15131f; --card:#1d1b2c;
-      --line:#312e46; --accent:#818cf8; --accent-dark:#a5b4fc; --accent-soft:#26243b;
+      --ink:#f4ede0; --ink-soft:#c9bfa9; --paper:#17140f; --card:#241c14;
+      --line:#3a2e1f; --accent:#f0743d; --accent-dark:#f7a06c; --accent-soft:#3a2418;
       --gold:#e0ac52; --gold-soft:#2a2314; --ok:#4ade80; --ok-soft:#152a1f;
       --shadow:0 20px 50px -20px rgba(0,0,0,.6);
     }
@@ -51,7 +51,7 @@
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
-  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.01em;text-wrap:balance;margin:0;}
+  h1,h2,h3{font-family:'Baloo 2',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;text-wrap:balance;margin:0;}
   p{margin:0;}
   img,svg{display:block;max-width:100%;}
   a{color:inherit;}
@@ -62,7 +62,7 @@
   /* ── Nav ── */
   .nav{position:sticky;top:0;z-index:40;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
   .nav-in{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
-  .brand{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-weight:700;font-size:19px;text-decoration:none;color:var(--ink);}
+  .brand{display:flex;align-items:center;gap:9px;font-family:'Baloo 2',system-ui,sans-serif;font-weight:700;font-size:19px;text-decoration:none;color:var(--ink);}
   .brand-mark{width:32px;height:32px;border-radius:10px;background:linear-gradient(155deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;flex:none;}
   .brand-mark svg{width:18px;height:18px;}
   .nav-cta{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:var(--paper);font-weight:700;font-size:13px;padding:9px 16px;border-radius:50px;text-decoration:none;white-space:nowrap;flex:none;}
@@ -80,11 +80,11 @@
   .hero-sub{font-size:16px;color:var(--ink-soft);max-width:46ch;margin-bottom:26px;}
   .hero-ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:22px;}
   .btn{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:14.5px;padding:14px 22px;border-radius:50px;text-decoration:none;border:none;cursor:pointer;font-family:inherit;}
-  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 12px 24px -10px rgba(99,102,241,.55);}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 12px 24px -10px rgba(227,92,43,.55);}
   .btn-primary:hover{background:var(--accent-dark);}
   .btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);}
   .price-pill{display:inline-flex;align-items:baseline;gap:6px;font-size:13.5px;font-weight:700;color:var(--ink-soft);}
-  .price-pill b{font-family:'Fraunces',serif;font-size:19px;font-weight:700;color:var(--ink);}
+  .price-pill b{font-family:'Baloo 2',system-ui,sans-serif;font-size:19px;font-weight:700;color:var(--ink);}
 
   .hero-art{position:relative;display:flex;align-items:center;justify-content:center;height:360px;}
   .tiffin{position:relative;width:190px;}
@@ -131,29 +131,29 @@
   .steps{background:var(--card);border:1px solid var(--line);border-radius:28px;padding:44px 36px;}
   .step-row{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;}
   .step{position:relative;padding-left:2px;}
-  .step-n{font-family:'Fraunces',serif;font-size:34px;font-weight:600;color:var(--accent-soft);-webkit-text-stroke:1.5px var(--accent);color:transparent;margin-bottom:10px;display:block;}
+  .step-n{font-family:'Baloo 2',system-ui,sans-serif;font-size:34px;font-weight:600;color:var(--accent-soft);-webkit-text-stroke:1.5px var(--accent);color:transparent;margin-bottom:10px;display:block;}
   .step h3{font-size:15.5px;font-weight:700;margin-bottom:7px;}
   .step p{font-size:13.5px;color:var(--ink-soft);line-height:1.55;}
   @media(max-width:760px){.step-row{grid-template-columns:1fr;gap:26px;}}
 
   /* ── Pricing ── */
   .price-card{background:linear-gradient(165deg,var(--ink),#000);color:#f4f3fc;border-radius:28px;padding:44px 40px;display:grid;grid-template-columns:1fr auto;gap:36px;align-items:center;}
-  .price-card .eyebrow{background:rgba(255,255,255,.12);color:#c7c5f5;}
-  .price-card .eyebrow::before{background:#a5b4fc;}
+  .price-card .eyebrow{background:rgba(255,255,255,.12);color:#f0d4c4;}
+  .price-card .eyebrow::before{background:#f2905a;}
   .price-big{display:flex;align-items:baseline;gap:8px;margin:16px 0 6px;}
-  .price-big .amt{font-family:'Fraunces',serif;font-size:56px;font-weight:600;}
-  .price-big .per{font-size:15px;color:#a9a6cc;font-weight:700;}
-  .price-approx{font-size:13.5px;color:#c7c5f5;font-weight:700;margin-bottom:20px;}
+  .price-big .amt{font-family:'Baloo 2',system-ui,sans-serif;font-size:56px;font-weight:600;}
+  .price-big .per{font-size:15px;color:#c9ab8f;font-weight:700;}
+  .price-approx{font-size:13.5px;color:#f0d4c4;font-weight:700;margin-bottom:20px;}
   .price-list{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
-  .price-list li{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#dcdaf2;}
+  .price-list li{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#f0e4d5;}
   .price-list svg{width:16px;height:16px;color:#86efac;flex:none;margin-top:2px;}
   .price-cta{display:flex;flex-direction:column;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:26px 30px;text-align:center;}
-  .price-cta small{font-size:11px;color:#a9a6cc;font-weight:700;}
+  .price-cta small{font-size:11px;color:#c9ab8f;font-weight:700;}
   @media(max-width:760px){.price-card{grid-template-columns:1fr;padding:32px 24px;}}
 
   /* ── Founder note ── */
   .note{max-width:64ch;margin:0 auto;text-align:center;}
-  .note blockquote{font-family:'Fraunces',serif;font-size:clamp(19px,2.3vw,25px);font-weight:500;line-height:1.5;margin:0 0 18px;text-wrap:balance;}
+  .note blockquote{font-family:'Baloo 2',system-ui,sans-serif;font-size:clamp(19px,2.3vw,25px);font-weight:500;line-height:1.5;margin:0 0 18px;text-wrap:balance;}
   .note cite{font-style:normal;font-size:13px;font-weight:700;color:var(--ink-soft);}
 
   /* ── FAQ ── */
