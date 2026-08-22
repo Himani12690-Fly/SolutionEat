@@ -73,7 +73,7 @@
   }
 
   /* ── Hero ── */
-  .hero{padding:56px 0 40px;}
+  .hero{padding-top:56px;padding-bottom:40px;}
   .hero-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:center;}
   .hero h1{font-size:clamp(30px,4.2vw,46px);line-height:1.1;margin:16px 0 18px;}
   .hero h1 em{font-style:normal;color:var(--accent-dark);}
@@ -93,7 +93,7 @@
   .tiffin-tier:nth-child(2){background:linear-gradient(155deg,var(--accent),var(--accent-dark));}
   .tiffin-tier:nth-child(3){background:var(--gold);}
   .tiffin-tier:nth-child(4){background:var(--card);border:1.5px solid var(--line);}
-  .float-card{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 13px;box-shadow:var(--shadow);font-size:11.5px;font-weight:800;display:flex;align-items:center;gap:7px;}
+  .float-card{position:absolute;z-index:1;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 13px;box-shadow:var(--shadow);font-size:11.5px;font-weight:800;display:flex;align-items:center;gap:7px;}
   .float-card svg{width:15px;height:15px;color:var(--accent);flex:none;}
   .fc1{top:6px;left:-18px;color:var(--ok);}
   .fc1 svg{color:var(--ok);}
@@ -101,6 +101,8 @@
   @media(max-width:760px){
     .hero-grid{grid-template-columns:1fr;}
     .hero-art{height:260px;order:-1;}
+    .fc1{left:0;}
+    .fc2{right:0;}
   }
 
   /* ── Trust strip ── */
