@@ -71,11 +71,11 @@
   // pal ke liye hi dikhta hai (redirect se pehle), isliye bas cached value
   // laga dete hain — koi naya network call nahi.
   try {
-    var ACCENT_IDS = { orange:'#e35c2b', red:'#dc2626', rose:'#e11d5f', pink:'#ec4899',
-      fuchsia:'#c026d3', purple:'#9333ea', violet:'#7c3aed', indigo:'#4f46e5', blue:'#2563eb',
-      sky:'#0284c7', cyan:'#0891b2', teal:'#0d9488', emerald:'#059669', green:'#16a34a',
-      lime:'#65a30d', yellow:'#ca8a04', amber:'#d97706', terracotta:'#c1502e', brown:'#8a5a3b',
-      maroon:'#9f1d3d', slate:'#475569', gray:'#57534e' };
+    var ACCENT_IDS = { orange:'#e35c2b', red:'#cf6b5c', rose:'#cc7480', pink:'#d98a9c',
+      fuchsia:'#b87aa0', purple:'#9678c2', violet:'#8a7bd6', indigo:'#7b83c9', blue:'#6690c9',
+      sky:'#71a8cf', cyan:'#5fb0b0', teal:'#4f9a8d', emerald:'#5c9f7f', green:'#6fa76f',
+      lime:'#9aad55', yellow:'#cba64c', amber:'#cf9752', terracotta:'#bd7a52', brown:'#9c7a5a',
+      maroon:'#a35a6a', slate:'#7a8ba3', gray:'#8f8778' };
     var idOrHex = localStorage.getItem('fbt_platform_theme');
     var hex = idOrHex ? (ACCENT_IDS[idOrHex] || idOrHex) : null;
     if (hex && /^#[0-9a-fA-F]{6}$/.test(hex)) {
