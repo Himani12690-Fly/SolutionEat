@@ -39,10 +39,19 @@
      tarah dikhna chahiye (jaise ek printed menu card). Isliye na dark media
      query, na localStorage se theme padhna. */
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  /* html par bhi bg — warna short menu (jaise sirf ek meal bacha ho) par
+     page viewport se chhota reh jaata hai aur neeche browser ka default
+     white "canvas" jhalakta hai, aadha cream aadha white jaisa dikhta hai. */
+  html { background:var(--bg); }
   body { margin:0; background:var(--bg); color:var(--ink); padding:0 0 108px;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    font-size:14px; line-height:1.5; }
-  .wrap { max-width:520px; margin:0 auto; padding:0 14px; }
+    font-size:14px; line-height:1.5; min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column; }
+  /* flex:1 + #meals ka apna flex:1 (neeche) — footer hamesha content ke
+     turant baad, page ke bilkul end (CTA bar ke upar) tak khinch jaata hai,
+     beech me khaali jagah chhod kar "alag se" tairta hua nahi dikhta. */
+  .wrap { max-width:520px; margin:0 auto; padding:0 14px; width:100%;
+    flex:1; display:flex; flex-direction:column; }
 
   /* ── Header ── */
   .hd { display:flex; align-items:center; gap:12px; padding:18px 0 14px; }
@@ -89,6 +98,10 @@
 
   .note { background:var(--warnbg); color:var(--warn); border-radius:12px;
     padding:12px 14px; font-size:12.5px; font-weight:800; margin-bottom:14px; }
+
+  /* Kam meals bache hon (cutoff ke baad) to bhi footer neeche hi rahe,
+     beech me akela na tairta rahe — ye hi grow karke bachi jagah le leta hai. */
+  #meals { flex:1; }
 
   /* ── Meal card ── */
   .mc { background:var(--card); border:1px solid var(--line); border-radius:16px;
