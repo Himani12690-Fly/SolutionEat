@@ -491,7 +491,10 @@
         if (isFirst) { try { sessionStorage.setItem('mt_visit_counted', '1'); } catch (e) {} }
         document.getElementById('statLive').textContent = j.live;
         document.getElementById('statDone').textContent = j.total;
-        document.getElementById('statsBar').classList.remove('hidden');
+        // "0 · 0" backfires — a stranger from an ad/forward reads it as
+        // "nobody uses this kitchen" and trusts it less, not more. Only
+        // show the bar once there's an actual number worth showing.
+        document.getElementById('statsBar').classList.toggle('hidden', j.live < 1 && j.total < 3);
       })
       .catch(function(){});
   }
