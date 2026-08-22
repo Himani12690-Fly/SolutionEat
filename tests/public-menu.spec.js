@@ -270,12 +270,13 @@ test.describe('Public menu page', () => {
     await expect(page.locator('#subBtn')).toBeVisible();
   });
 
-  test('order button par icon ke saath "Order" likha hota hai, aur price naam ke baju me hi hai', async ({ page }) => {
+  test('order button par sirf "Order" text hai (koi icon nahi), price naam ke baju me hi hai', async ({ page }) => {
     await openMenu(page, { body: bootstrap({ vendor: { whatsapp: '9876543210' } }) });
     await page.waitForSelector('.mc', { timeout: 15000 });
     // Khaali gol icon dekh kar "click karne se order hoga" samajh nahi aata
-    // tha — ab button khud "Order" bolta hai.
-    await expect(page.locator('.vr .vo').first()).toContainText('Order');
+    // tha — ab button khud seedha "Order" bolta hai, koi icon nahi.
+    await expect(page.locator('.vr .vo').first()).toHaveText('Order');
+    await expect(page.locator('.vr .vo svg')).toHaveCount(0);
     // "Mini Tiffin — ₹60" ek hi jagah, alag right-aligned column nahi.
     await expect(page.locator('.vr .vn').filter({ hasText: 'Mini Tiffin' }).first()).toContainText('₹60');
   });
@@ -439,6 +440,26 @@ test.describe('Public menu page', () => {
     await expect(page.locator('#vname')).not.toHaveClass(/skel/);
     await expect(page.locator('#daysel')).toBeVisible();
     await expect(page.locator('#cta')).toBeVisible();
+  });
+
+  test('data aane tak poora page ek branded splash ke peeche chhupa rehta hai', async ({ page }) => {
+    let release;
+    const held = new Promise(r => { release = r; });
+    await page.addInitScript((v) => { window.__TEST_IST_OVERRIDE = v; }, DEFAULT_IST);
+    await page.route('**/script.google.com/**', async r => {
+      await held;
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(bootstrap()) });
+    });
+    await page.goto(PAGE + '?v=nestandnosh', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('#pageLoad')).toBeVisible();
+    await expect(page.locator('#pageLoad')).not.toHaveClass(/gone/);
+    await expect(page.locator('body')).not.toHaveClass(/ready/);
+    release();
+    await page.waitForSelector('.mc', { timeout: 15000 });
+    // Menu ready hote hi splash fade-out ho jaata hai, real page reveal hota hai.
+    await expect(page.locator('#pageLoad')).toHaveClass(/gone/);
+    await expect(page.locator('body')).toHaveClass(/ready/);
+    await expect(page.locator('#pageLoad')).toHaveCount(0);
   });
 
   test('page mobile par sideways scroll nahi karta', async ({ page }) => {
