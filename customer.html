@@ -40,7 +40,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="assets/styles.css?v=bf9386ea8a">
+  <link rel="stylesheet" href="assets/styles.css?v=eebb3ee338">
   <style>
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
@@ -781,7 +781,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=bf9386ea8a"></script>
+  <script src="assets/shared.js?v=eebb3ee338"></script>
 <script>
   (function(){
     try{
@@ -932,13 +932,6 @@
       { icon:'🧼', title:'Cleaned After Every Meal', body:'Our kitchen is cleaned after every service — after breakfast, after lunch, and after dinner. A fresh, hygienic start, three times a day.' },
       { icon:'📦', title:'Food-Grade Packaging Only', body:'Every meal is packed only in certified food-grade containers — never cheap or low-quality plastic. Your health matters more than saving a few rupees.' },
       { icon:'⏱️', title:'Real Fresh Takes Time', body:'Proper cooking takes time — that\'s simply how it works. We\'d rather take a little longer and send out food we\'re happy to eat ourselves.' }
-    ],
-    hinglish: [
-      { icon:'🍲', title:'Har Din Taaze Batches', body:'Hum roz subah ke ingredients se chhote batches mein pakate hain — na frozen stock, na kal ka bacha hua khana. Aapka tiffin banne ke kuch hi minute mein kitchen se nikal jaata hai.' },
-      { icon:'🌿', title:'Packet Masala Nahi', body:'Hum sirf taaza, ghar jaise pise hue spices use karte hain — kabhi bhi ready packet masala nahi. Asli ingredients, asli swaad, har din.' },
-      { icon:'🧼', title:'Har Meal Ke Baad Safai', body:'Hamari kitchen har service ke baad saaf hoti hai — breakfast ke baad, lunch ke baad, aur dinner ke baad. Din mein teen baar ek fresh, hygienic shuruaat.' },
-      { icon:'📦', title:'Sirf Food-Grade Packaging', body:'Har khana hum sirf certified food-grade containers mein pack karte hain — kabhi cheap ya low-quality plastic nahi. Aapki health hamare liye kuch rupaye bachane se zyada important hai.' },
-      { icon:'⏱️', title:'Asli Fresh Khana Time Leta Hai', body:'Achha khana banne mein time lagta hai — bas itni si baat hai. Hum thoda zyada time lete hain, taaki wahi khana bhejein jo hum khud khayein.' }
     ],
     hi: [
       { icon:'🍲', title:'हर दिन ताज़े बैच', body:'हम रोज़ सुबह की सामग्री से छोटे बैच में पकाते हैं — न फ़्रोज़न स्टॉक, न कल का बचा खाना। आपका टिफ़िन बनने के कुछ ही मिनट में किचन से निकल जाता है।' },
@@ -2556,7 +2549,7 @@
   }
   function renderDateSelector(){
     const sel=document.getElementById('dateSelect'); if(!sel)return;
-    const names={ en:['Today','Tomorrow','Day After Tomorrow'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
+    const names={ en:['Today','Tomorrow','Day After Tomorrow'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
     const nm=names[LANG]||names.en; let html='';
     for(let o=0;o<=2;o++){ const d=dateWithOffset(o); const open=anyAvail(o); html+=`<option value="${o}" ${o===dateOffset?'selected':''} ${open?'':'disabled'}> ${fmtLabel(d)}${open?'':' (Closed)'}</option>`; }
     sel.innerHTML=html;
@@ -2626,7 +2619,7 @@
     const box=document.getElementById('menuDateTime'); if(!box)return;
     const maxAdv=advanceDaysAllowed();
     if(maxAdv<=0){ box.innerHTML=''; return; }   // sirf aaj — chunne ko kuch hai hi nahi
-    const dayNames={ en:['Today','Tomorrow','Day After'], hinglish:['Aaj','Kal','Parso'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
+    const dayNames={ en:['Today','Tomorrow','Day After'], hi:['आज','कल','परसों'], gu:['આજે','આવતીકાલે','પરમ દિવસે'] };
     const dn=dayNames[LANG]||dayNames.en;
     let html='<div class="dt-chips">';
     for(let o=0;o<=maxAdv;o++){
@@ -3625,7 +3618,7 @@
   }
 
   let subState={ meals:{}, days:[], time:{}, startDate:'', endDate:'', society:'', flat:'', payment:'COD' };
-  const SUB_DAY_LABEL={ en:{monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat',sunday:'Sun'}, hinglish:{monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat',sunday:'Sun'}, hi:{monday:'सोम',tuesday:'मंगल',wednesday:'बुध',thursday:'गुरु',friday:'शुक्र',saturday:'शनि',sunday:'रवि'}, gu:{monday:'સોમ',tuesday:'મંગળ',wednesday:'બુધ',thursday:'ગુરુ',friday:'શુક્ર',saturday:'શનિ',sunday:'રવિ'} };
+  const SUB_DAY_LABEL={ en:{monday:'Mon',tuesday:'Tue',wednesday:'Wed',thursday:'Thu',friday:'Fri',saturday:'Sat',sunday:'Sun'}, hi:{monday:'सोम',tuesday:'मंगल',wednesday:'बुध',thursday:'गुरु',friday:'शुक्र',saturday:'शनि',sunday:'रवि'}, gu:{monday:'સોમ',tuesday:'મંગળ',wednesday:'બુધ',thursday:'ગુરુ',friday:'શુક્ર',saturday:'શનિ',sunday:'રવિ'} };
   function subDayLabel(d){ return (SUB_DAY_LABEL[LANG]||SUB_DAY_LABEL.en)[d]; }
 
   let subCache=null, subCacheAt=0, subCacheValid=false;
