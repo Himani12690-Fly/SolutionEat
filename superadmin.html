@@ -31,9 +31,14 @@
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAABEklEQVR42u2ZLQ/CMBRF22USjwWDR5MMBJ8CUCgSfhwJCodBYAgJEvAImEHg8UUsLMH1JVtZ2Xmq4q273dm9ecv0[...]">
   <link rel="preconnect" href="https://script.google.com">
   <link rel="preconnect" href="https://accounts.google.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="assets/styles.css?v=dd27c23087">
+  <link rel="stylesheet" href="assets/styles.css?v=bf83516b18">
   <style>
+    /* Headings only — body text stays on assets/styles.css's default. */
+    h1,h2,h3{font-family:'Baloo 2',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;}
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
     @keyframes tiffinPop{0%{transform:scale(0) rotate(-15deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
@@ -1046,7 +1051,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=dd27c23087"></script>
+  <script src="assets/shared.js?v=bf83516b18"></script>
 <script>
   const APP_ROLE = 'superadmin';
   (function(){
