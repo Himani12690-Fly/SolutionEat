@@ -53,10 +53,14 @@
   <link rel="preconnect" href="https://accounts.google.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="assets/styles.css?v=eebb3ee338">
+  <link rel="stylesheet" href="assets/styles.css?v=dd27c23087">
   <style>
+    /* Serif display font for headings only — Manrope stays for body/labels.
+       Scoped here (not assets/styles.css) so admin.html/superadmin.html,
+       which don't load the Fraunces webfont, are unaffected. */
+    h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.01em;}
     /* Order-confirmation: simple tiffin animation + compact WhatsApp icon (replaces old big text link/buttons) */
     .tiffin-anim{font-size:56px;line-height:1;text-align:center;margin:6px 0 2px;animation:tiffinPop .55s cubic-bezier(.34,1.56,.64,1) both, tiffinBounce 1.6s ease-in-out .55s infinite;}
     @keyframes tiffinPop{0%{transform:scale(0) rotate(-15deg);opacity:0;}100%{transform:scale(1) rotate(0);opacity:1;}}
@@ -1447,7 +1451,7 @@
   <div class="demo-bar hidden" id="demoBar" data-i="demoGlobalBanner">🎬 DEMO — jo chahe kar sakte ho, data roz raat ko reset ho jaata hai</div>
   <div class="toast" id="toast"></div>
 
-  <script src="assets/shared.js?v=eebb3ee338"></script>
+  <script src="assets/shared.js?v=dd27c23087"></script>
 <script>
   (function(){
     try{
