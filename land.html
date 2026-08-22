@@ -12,13 +12,9 @@
 
   Vendor-aware like menu.html: reads ?v=<slug>, fetches the same public
   'bootstrap' endpoint, fills in real name/logo/WhatsApp/today's menu.
-  Self-contained (no styles.css/shared.js, no external hero photo) for the
-  same reason menu.html is — this is the first thing a stranger from an ad
-  sees, it can't wait on extra requests.
-
-  Visual language here is deliberately its own thing (serif headlines,
-  terracotta/forest palette, sharp corners) — scoped to this one page only,
-  not the app-wide rounded/playful look used everywhere else.
+  Self-contained (no styles.css/shared.js) for the same reason menu.html
+  is — this is the first thing a stranger from an ad sees, it can't wait
+  on extra requests.
 
   PRICING PLANS BELOW ARE PLACEHOLDERS — see PRICING_PLANS in the script
   at the bottom. Nobody has told this page what your Weekly/Monthly plan
@@ -29,187 +25,144 @@
 <link rel="preconnect" href="https://script.google.com">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --accent:#d96b43; --accent-dark:#c25833; --accent-soft:#f5e7df;
-    --forest:#2c4a3e; --gold:#e7b174; --live:#6c9b67;
-    --ink:#1f1a17; --muted:#786e68; --bone:#fafaf8; --sand:#f4efea;
-    --line:#e8e1da; --line-soft:#e4ddd6; --card-line:#e7dfd8;
-    --green-soft:#d9e7d4;
+    --accent:#e35c2b; --accent-dark:#c74a1e; --accent-soft:#fde9df;
+    --ink:#2b2118; --muted:#8a7f6c; --bg:#fdf6ec; --card:#ffffff;
+    --line:#efe4d3; --dark:#241c14; --dark-card:#2f2519;
+    --blob-purple:#e3ddf3; --blob-yellow:#fbdfa0;
+    --ic-blue:#4a90d9; --ic-red:#e0503a; --ic-gold:#e0a83c;
+    --ok:#3a9d5c; --radius:20px;
   }
   *{box-sizing:border-box;}
-  html{background:var(--bone);}
-  body{margin:0;background:var(--bone);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
-  h1,h2{font-family:'Playfair Display',Georgia,serif;font-weight:700;margin:0;}
-  em{font-style:italic;color:var(--accent);}
+  html{background:var(--bg);}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Manrope',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+  h1,h2{font-family:'Baloo 2',system-ui,sans-serif;font-weight:700;margin:0;}
   p{margin:0;}
   img,svg{display:block;max-width:100%;}
   a{color:inherit;text-decoration:none;}
   button{font:inherit;}
   .wrap{max-width:480px;margin:0 auto;padding:0 20px;position:relative;}
 
-  .skel{background:linear-gradient(90deg,var(--line) 25%,#f2ece2 37%,var(--line) 63%);background-size:400% 100%;animation:skel 1.4s ease infinite;border-radius:4px;color:transparent!important;}
+  .skel{background:linear-gradient(90deg,var(--line) 25%,#f7efe0 37%,var(--line) 63%);background-size:400% 100%;animation:skel 1.4s ease infinite;border-radius:8px;color:transparent!important;}
   @keyframes skel{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
 
-  /* ── Nav ── */
-  .nav-wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line);}
-  .brand{display:flex;align-items:center;gap:10px;min-width:0;}
-  .brand-mark{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font:700 13px 'Plus Jakarta Sans';flex:none;overflow:hidden;}
-  .brand-mark img{width:100%;height:100%;object-fit:cover;}
-  .brand-name{font:20px/1.1 'Playfair Display',serif;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .brand-name small{display:block;font:500 8px 'DM Mono',monospace;letter-spacing:1.7px;color:var(--accent);margin-top:5px;}
-  .nav-order{flex:none;display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border-radius:3px;padding:10px 13px;font-weight:700;font-size:11px;white-space:nowrap;}
-  .nav-order svg{width:14px;height:14px;}
-
   /* ── Hero ── */
-  .hero{padding:38px 0 34px;}
-  .eyebrow{display:block;font:500 10px 'DM Mono',monospace;letter-spacing:1.8px;text-transform:uppercase;color:var(--accent);margin:0 0 14px;}
-  .hero h1{font-size:clamp(34px,9vw,44px);line-height:1.05;letter-spacing:-1px;margin-bottom:16px;}
-  .hero-sub{font-size:14.5px;color:var(--muted);line-height:1.7;max-width:40ch;margin-bottom:26px;}
-  .primary-button,.light-button,.text-button{font-family:inherit;border:0;cursor:pointer;}
-  .primary-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;background:var(--accent);color:#fff;border-radius:3px;padding:16px 20px;font-weight:700;font-size:14px;box-shadow:0 10px 22px -8px rgba(0,0,0,.28);}
-  .primary-button svg{width:17px;height:17px;}
-  .micro-note{display:flex;align-items:center;font:11px 'DM Mono',monospace;color:var(--muted);margin-top:14px;}
-  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--live);margin-right:8px;flex:none;}
+  .hero{position:relative;padding:36px 0 28px;text-align:center;overflow:hidden;}
+  .blob{position:absolute;border-radius:50%;z-index:0;}
+  .blob-p{width:220px;height:220px;background:var(--blob-purple);top:-60px;right:-70px;}
+  .blob-y{width:150px;height:150px;background:var(--blob-yellow);bottom:10px;left:-60px;}
+  .hero-in{position:relative;z-index:1;}
+  .logo-wrap{width:120px;height:120px;border-radius:50%;background:var(--card);box-shadow:0 14px 30px -12px rgba(43,33,24,.25);margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;}
+  .logo-wrap img{width:100%;height:100%;object-fit:cover;}
+  .eyebrow{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .hero h1{font-size:clamp(28px,7vw,38px);line-height:1.12;margin-bottom:14px;}
+  .hero-sub{font-size:15px;color:var(--muted);font-weight:600;max-width:38ch;margin:0 auto 22px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:15px;padding:16px 30px;border-radius:50px;border:none;cursor:pointer;font-family:inherit;width:100%;}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 14px 26px -10px rgba(227,92,43,.55);}
+  .btn-dark{background:var(--dark);color:#fff;}
+  .microcopy{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:10px;}
 
-  /* ── Menu preview card (hero visual) ── */
-  .menu-card-wrap{position:relative;margin-top:32px;}
-  .menu-card{background:var(--forest);color:#fff;border-radius:3px;padding:26px 24px;}
-  .menu-card .eyebrow{color:var(--gold);}
-  .menu-card h2{font-size:22px;color:#fff;margin-bottom:6px;}
-  .menu-date{font-size:11.5px;color:#cfc3ba;line-height:1.7;margin-bottom:18px;}
-  .menu-date span{display:block;font:10px 'DM Mono';color:var(--gold);}
-  .menu-list{list-style:none;margin:0;padding:0;}
-  .menu-list li{display:flex;align-items:baseline;gap:13px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.14);}
-  .menu-list li:last-child{border-bottom:0;padding-bottom:0;}
-  .menu-num{font:11px 'DM Mono';color:var(--gold);flex:none;}
-  .menu-name{font:600 15px 'Playfair Display',serif;flex:1;min-width:0;}
-  .menu-tag{margin-left:auto;flex:none;font:10px 'DM Mono';color:var(--gold);}
-  .menu-empty{font-size:12.5px;color:#d8cfc7;}
-  .stamp{position:absolute;top:-16px;right:6px;width:74px;height:74px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-content:center;text-align:center;font:700 16px 'Playfair Display',serif;line-height:1;box-shadow:0 8px 18px -6px rgba(0,0,0,.35);}
-  .stamp small{display:block;font:6px 'DM Mono';letter-spacing:.8px;margin-top:3px;}
+  /* ── Feature badges ── */
+  .feat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0;}
+  .feat{background:var(--card);border-radius:16px;padding:16px 8px;text-align:center;box-shadow:0 6px 16px -10px rgba(43,33,24,.18);}
+  .feat-ic{width:40px;height:40px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;}
+  .feat-ic svg{width:19px;height:19px;}
+  .feat-ic.blue{background:#e5f0fb;} .feat-ic.blue svg{color:var(--ic-blue);}
+  .feat-ic.red{background:#fbe7e2;} .feat-ic.red svg{color:var(--ic-red);}
+  .feat-ic.gold{background:#faf0da;} .feat-ic.gold svg{color:var(--ic-gold);}
+  .feat span{display:block;font-size:12px;font-weight:800;line-height:1.3;}
 
-  /* ── Promise strip ── */
-  .promise-strip{background:var(--forest);color:#fff;padding:26px 20px;display:grid;gap:18px;margin:34px 0;}
-  .promise-row{display:flex;align-items:center;gap:13px;}
-  .promise-row svg{width:20px;height:20px;color:var(--gold);flex:none;}
-  .promise-row b{display:block;font:600 13px 'Plus Jakarta Sans';}
-  .promise-row small{display:block;font-size:11px;color:#b7c6bf;margin-top:3px;}
+  /* ── Today's thali card ── */
+  .thali{background:var(--dark-card);color:#f4ede0;border-radius:24px;padding:26px;display:flex;gap:16px;align-items:flex-start;margin-bottom:30px;}
+  .thali-lbl{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#d8b98a;margin-bottom:10px;}
+  .thali-plate{width:56px;height:56px;border-radius:50%;border:3px solid #7a5a2e;flex:none;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:8px;}
+  .thali-plate span{border-radius:50%;}
+  .thali-plate span:nth-child(1){background:#e0503a;} .thali-plate span:nth-child(2){background:#4a90d9;}
+  .thali-plate span:nth-child(3){background:#3a9d5c;} .thali-plate span:nth-child(4){background:#e0a83c;}
+  .thali-items{list-style:none;margin:0;padding:0;font-size:13.5px;font-weight:600;}
+  .thali-items li{margin-bottom:5px;padding-left:14px;position:relative;}
+  .thali-items li::before{content:'';position:absolute;left:0;top:8px;width:4px;height:4px;border-radius:50%;background:#d8b98a;}
+  .thali-empty{font-size:13px;color:#c9bfa9;font-weight:600;}
 
-  /* ── Section heading ── */
-  .page-section{padding:6px 0 40px;}
-  .section-heading{margin-bottom:24px;}
-  .section-heading h2{font-size:30px;letter-spacing:-.5px;}
-  .section-note{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:12px;max-width:36ch;}
+  /* ── Pricing ── */
+  .sec-t{font-size:21px;text-align:center;margin-bottom:16px;}
+  .price-list{display:grid;gap:10px;margin-bottom:30px;}
+  .price-card{background:var(--card);border-radius:16px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 6px 16px -10px rgba(43,33,24,.14);}
+  .price-card.pop{background:var(--accent);color:#fff;}
+  .price-name{font-size:14.5px;font-weight:800;}
+  .price-sub{font-size:12px;font-weight:600;opacity:.75;margin-top:2px;}
+  .price-amt{font-size:16px;font-weight:800;white-space:nowrap;}
 
-  /* ── Plans ── */
-  .plan-grid{display:grid;gap:12px;}
-  .plan-card{position:relative;background:#fff;border:1px solid var(--card-line);border-radius:3px;padding:22px;}
-  .plan-card.popular{border-color:var(--accent);background:#fffaf7;}
-  .popular-label{position:absolute;right:0;top:0;background:var(--accent);color:#fff;font:9px 'DM Mono';letter-spacing:.5px;padding:6px 10px;}
-  .plan-name{display:block;font:500 10px 'DM Mono';letter-spacing:1.2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
-  .plan-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
-  .plan-price{font:600 26px 'Playfair Display',serif;}
-  .plan-meals{font-size:11px;color:var(--muted);font-weight:600;}
-  .plan-note{display:block;color:var(--muted);font-size:11.5px;margin-top:4px;}
-  .plan-cta{display:flex;align-items:center;gap:7px;color:var(--accent);font-size:12px;font-weight:700;margin-top:16px;}
-  .plan-cta svg{width:14px;height:14px;}
-
-  /* ── Closing ── */
-  .closing{background:var(--forest);color:#fff;text-align:center;padding:52px 24px;}
-  .closing .eyebrow{color:var(--gold);}
-  .closing h2{color:#fff;font-size:30px;line-height:1.15;margin-bottom:24px;}
-  .closing h2 em{color:var(--accent);}
-  .light-button{display:inline-flex;align-items:center;gap:9px;background:var(--accent-soft);color:var(--forest);border-radius:3px;padding:15px 22px;font-weight:700;font-size:13px;}
-  .light-button svg{width:16px;height:16px;}
-  .social-links{display:flex;justify-content:center;gap:22px;margin-top:30px;}
-  .social-links a{color:#b7c6bf;font-size:11.5px;font-weight:600;}
-  .social-links a.is-hidden{display:none;}
-
-  /* ── Footer ── */
-  footer{padding:24px 0 32px;text-align:center;color:#a49b95;font-size:10.5px;line-height:1.8;}
+  /* ── Bottom CTA ── */
+  .cta-band{background:var(--blob-purple);border-radius:28px 28px 0 0;padding:34px 20px 30px;text-align:center;margin-top:10px;}
+  .cta-band h2{font-size:19px;margin-bottom:16px;}
+  .social-row{display:flex;justify-content:center;gap:16px;margin-top:18px;}
+  .social-row a{width:38px;height:38px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px -4px rgba(43,33,24,.25);}
+  .social-row svg{width:18px;height:18px;color:var(--ink);}
+  .social-sub{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:12px;}
 </style>
 </head>
 <body>
 
-<nav class="nav-wrap">
-  <a class="brand" href="#top">
-    <span class="brand-mark" id="brandMark">🍱</span>
-    <span class="brand-name" id="vname">
-      <span class="skel">Loading kitchen</span>
-    </span>
-  </a>
-  <a class="nav-order" id="navOrderBtn" href="#" target="_blank" rel="noopener">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
-    Order
-  </a>
-</nav>
-
-<main class="wrap" id="top">
-  <div class="hero">
+<div class="wrap hero">
+  <div class="blob blob-p"></div>
+  <div class="blob blob-y"></div>
+  <div class="hero-in">
+    <div class="logo-wrap" id="logoWrap">🍱</div>
     <span class="eyebrow">Cloud Kitchen · Home Delivered</span>
-    <h1>A little bit<br><em>of home,</em><br>every day.</h1>
-    <p class="hero-sub">Fresh home-style meals near you — cooked today, delivered on time. Order in under a minute, no app needed.</p>
-    <a class="primary-button" id="menuBtn" href="#">
-      Check today&rsquo;s menu
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </a>
-    <div class="micro-note"><span class="live-dot"></span>Order in under a minute · No app needed</div>
-
-    <div class="menu-card-wrap">
-      <div class="stamp">100%<small>HOME STYLE</small></div>
-      <div class="menu-card">
-        <span class="eyebrow">What&rsquo;s in the box</span>
-        <h2>Today&rsquo;s thali</h2>
-        <p class="menu-date" id="menuDate"><span class="skel">Loading&hellip;</span></p>
-        <ul class="menu-list" id="menuList"><li><span class="menu-name skel">Loading today&rsquo;s menu&hellip;</span></li></ul>
-      </div>
-    </div>
-  </div>
-
-  <div class="promise-strip">
-    <div class="promise-row">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-      <span><b>On-time, every day</b><small>We respect your meal time.</small></span>
-    </div>
-    <div class="promise-row">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Z"/></svg>
-      <span><b>WhatsApp ordering</b><small>Simple, human, no downloads.</small></span>
-    </div>
-    <div class="promise-row">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 20A7 7 0 0 1 4 13V4a1 1 0 0 1 1-1h8a7 7 0 0 1 0 14H4"/><path d="M4 9h11"/></svg>
-      <span><b>Weekly subscriptions</b><small>Pause or skip anytime.</small></span>
-    </div>
-  </div>
-
-  <div class="page-section" id="plans">
-    <div class="section-heading">
-      <span class="eyebrow">Find your rhythm</span>
-      <h2>One less thing<br><em>to think about.</em></h2>
-      <p class="section-note">Whether you&rsquo;re trying us once or settling in for the month, there&rsquo;s a plate with your name on it.</p>
-    </div>
-    <div class="plan-grid" id="priceList"></div>
-  </div>
-</main>
-
-<div class="closing">
-  <span class="eyebrow">Your lunch, sorted</span>
-  <h2>Good food should<br><em>feel this easy.</em></h2>
-  <a class="light-button" id="orderBtn" href="#">
-    Order today&rsquo;s tiffin
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-  </a>
-  <div class="social-links">
-    <a id="waIcon" href="#" target="_blank" rel="noopener">WhatsApp</a>
-    <a id="igIcon" href="#" target="_blank" rel="noopener" class="is-hidden">Instagram</a>
-    <a id="phIcon" href="#" class="is-hidden">Call us</a>
+    <h1 id="vname" class="skel">Loading&hellip;</h1>
+    <p class="hero-sub">Fresh home-style meals near you — cooked today, delivered on time.</p>
+    <a class="btn btn-primary" id="menuBtn" href="#">Check Our Menu</a>
+    <div class="microcopy">Order in under a minute · No app needed</div>
   </div>
 </div>
 
-<footer class="wrap">
-  <p id="footerLine">Made with care, delivered with warmth.</p>
-</footer>
+<div class="wrap">
+  <div class="feat-row">
+    <div class="feat">
+      <div class="feat-ic blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+      <span>On-time, every day</span>
+    </div>
+    <div class="feat">
+      <div class="feat-ic red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg></div>
+      <span>WhatsApp ordering</span>
+    </div>
+    <div class="feat">
+      <div class="feat-ic gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></div>
+      <span>Weekly subscriptions</span>
+    </div>
+  </div>
+
+  <div class="thali" id="thaliCard">
+    <div class="thali-plate"><span></span><span></span><span></span><span></span></div>
+    <div style="flex:1;min-width:0;">
+      <div class="thali-lbl">Today's Thali · Sample</div>
+      <div id="thaliBody"><ul class="thali-items"><li class="skel">Loading today's menu&hellip;</li></ul></div>
+    </div>
+  </div>
+
+  <h2 class="sec-t">Simple, honest pricing</h2>
+  <div class="price-list" id="priceList"></div>
+</div>
+
+<div class="cta-band">
+  <h2>Order today's tiffin</h2>
+  <a class="btn btn-dark" id="orderBtn" href="#">Order Now</a>
+  <div class="social-row">
+    <a id="waIcon" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.6 14.3c-.2.7-1.4 1.3-2 1.4-.5.1-1.2.2-3.5-.7-2.9-1.2-4.8-4.1-5-4.3-.1-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.2.1.3 0 .5-.1.2-.1.3-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.7 1.7.3.1.5.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.6Z"/></svg>
+    </a>
+    <a id="igIcon" href="#" target="_blank" rel="noopener" aria-label="Instagram" class="hidden" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+    </a>
+    <a id="phIcon" href="#" aria-label="Call" class="hidden" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    </a>
+  </div>
+  <div class="social-sub" id="socialSub">Order directly on WhatsApp</div>
+</div>
 
 <script>
 (function(){
@@ -219,14 +172,11 @@
 
   // Super admin ka platform-wide accent color (superadmin.html me set hota
   // hai, shared.js ka PLATFORM_THEMES yahi ids use karta hai). Ye page
-  // hamesha light hai, isliye sirf light shades derive karte hain. Forest
-  // green yahan is page ka apna structural color hai (promise strip/closing
-  // section/stamp) — platform theme ke saath badalta nahi, sirf accent
-  // (terracotta) badalta hai.
+  // hamesha light hai, isliye sirf light shades derive karte hain.
   var ACCENT_IDS = { orange:'#e35c2b', red:'#cf6b5c', rose:'#cc7480', pink:'#d98a9c',
     fuchsia:'#b87aa0', purple:'#9678c2', violet:'#8a7bd6', indigo:'#7b83c9', blue:'#6690c9',
     sky:'#71a8cf', cyan:'#5fb0b0', teal:'#4f9a8d', emerald:'#5c9f7f', green:'#6fa76f',
-    lime:'#9aad55', yellow:'#cba64c', amber:'#cf9752', terracotta:'#d96b43', brown:'#9c7a5a',
+    lime:'#9aad55', yellow:'#cba64c', amber:'#cf9752', terracotta:'#bd7a52', brown:'#9c7a5a',
     maroon:'#a35a6a', slate:'#7a8ba3', gray:'#8f8778' };
   function mixHex(hex, toward, amt){
     var hv = parseInt(hex.replace('#',''),16), tv = parseInt(toward.replace('#',''),16);
@@ -252,9 +202,9 @@
   // a page you're paying to advertise is worse than an honest placeholder.
   // trial/weekly/monthly = rupee amounts, or null to show "Contact us".
   var PRICING_PLANS = [
-    { name: 'Single Trial',  meals: '1 meal',  sub: 'Try one tiffin',        amount: null },
-    { name: 'Weekly Plan',   meals: '6 meals', sub: 'Skip anytime',          amount: null, popular: true },
-    { name: 'Monthly Plan',  meals: '26 meals',sub: 'Best value',            amount: null }
+    { name: 'Single Trial',  sub: 'Try one tiffin',      amount: null },
+    { name: 'Weekly Plan',   sub: '6 meals, skip anytime', amount: null, popular: true },
+    { name: 'Monthly Plan',  sub: '26 meals, best value', amount: null }
   ];
 
   function esc(s){
@@ -291,20 +241,11 @@
   function renderPricing(){
     var box = document.getElementById('priceList');
     box.innerHTML = PRICING_PLANS.map(function(p){
-      return '<div class="plan-card' + (p.popular ? ' popular' : '') + '">'
-        + (p.popular ? '<div class="popular-label">Most loved</div>' : '')
-        + '<span class="plan-name">' + esc(p.name) + '</span>'
-        + '<div class="plan-row"><span class="plan-price">' + (p.amount != null ? '₹' + p.amount : 'Contact us') + '</span>'
-        + '<span class="plan-meals">' + esc(p.meals) + '</span></div>'
-        + '<span class="plan-note">' + esc(p.sub) + '</span>'
-        + '<span class="plan-cta">Choose this plan '
-        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>'
-        + '</div>';
+      return '<div class="price-card' + (p.popular ? ' pop' : '') + '">' +
+        '<div><div class="price-name">' + esc(p.name) + (p.popular ? ' · Popular' : '') + '</div>' +
+        '<div class="price-sub">' + esc(p.sub) + '</div></div>' +
+        '<div class="price-amt">' + (p.amount != null ? '₹' + p.amount : 'Contact us') + '</div></div>';
     }).join('');
-    Array.prototype.forEach.call(box.querySelectorAll('.plan-card'), function(el){
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', function(){ location.href = document.getElementById('menuBtn').href; });
-    });
   }
 
   function istNow(){
@@ -312,15 +253,12 @@
     return new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Kolkata' }));
   }
   var DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-  var DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-  function renderMenu(d){
-    var listBox = document.getElementById('menuList');
-    var dateBox = document.getElementById('menuDate');
+  function renderThali(d){
+    var box = document.getElementById('thaliBody');
     var menu = (d && d.menu) || {};
     var cfg = (d && d.config) || {};
-    var dayIdx = istNow().getDay();
-    var today = menu[DAYS[dayIdx]] || {};
+    var today = menu[DAYS[istNow().getDay()]] || {};
     var enabled = (cfg.mealTypes || []).filter(function(mt){ return mt && mt.enabled !== false; });
     var items = [];
     for (var i = 0; i < enabled.length && !items.length; i++) {
@@ -342,50 +280,35 @@
         items = sabziToday;
       }
     }
-    dateBox.innerHTML = 'Today&rsquo;s Thali &middot; ' + DAY_NAMES[dayIdx] + '<span>Homestyle &middot; Fresh &middot; Made to order</span>';
     if (!items.length) {
-      listBox.innerHTML = '<li><span class="menu-empty">Ask us on WhatsApp for today\'s full menu.</span></li>';
+      box.innerHTML = '<div class="thali-empty">Ask us on WhatsApp for today\'s full menu.</div>';
       return;
     }
-    listBox.innerHTML = items.slice(0, 5).map(function(x, i){
-      return '<li><span class="menu-num">' + String(i + 1).padStart(2, '0') + '</span>'
-        + '<span class="menu-name">' + esc(x) + '</span>'
-        + '<span class="menu-tag">Fresh</span></li>';
-    }).join('');
-  }
-
-  function initials(name){
-    var words = String(name || '').trim().split(/\s+/).filter(Boolean);
-    if (!words.length) return '';
-    return (words[0][0] + (words[1] ? words[1][0] : '')).toUpperCase();
+    box.innerHTML = '<ul class="thali-items">' + items.slice(0, 5).map(function(x){
+      return '<li>' + esc(x) + '</li>';
+    }).join('') + '</ul>';
   }
 
   function render(d){
     var vendor = (d && d.vendor) || {};
     var vnameEl = document.getElementById('vname');
-    vnameEl.innerHTML = vendor.name ? esc(vendor.name) + '<small>Tiffin Kitchen</small>' : 'myTiffin<small>Tiffin Kitchen</small>';
+    vnameEl.textContent = vendor.name ? vendor.name + ' Tiffin' : 'Order Fresh Tiffin';
+    vnameEl.classList.remove('skel');
     document.title = (vendor.name ? vendor.name + ' — ' : '') + 'Order Fresh Tiffin';
 
-    var mark = document.getElementById('brandMark');
-    if (vendor.logo) mark.innerHTML = '<img src="' + esc(vendor.logo) + '" alt="" onerror="this.parentElement.textContent=\'' + esc(initials(vendor.name) || '🍱') + '\';">';
-    else mark.textContent = initials(vendor.name) || '🍱';
+    var logoWrap = document.getElementById('logoWrap');
+    if (vendor.logo) logoWrap.innerHTML = '<img src="' + esc(vendor.logo) + '" alt="" onerror="this.parentElement.textContent=\'🍱\';">';
 
     var wa = waNumber(vendor.whatsapp);
     var waIcon = document.getElementById('waIcon');
-    var navOrder = document.getElementById('navOrderBtn');
     if (wa) {
-      var waHref = 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hi! I saw your ad — can I see today\'s tiffin menu?');
-      waIcon.href = waHref;
-      navOrder.href = waHref;
+      waIcon.href = 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hi! I saw your ad — can I see today\'s tiffin menu?');
     } else {
-      waIcon.classList.add('is-hidden');
-      navOrder.href = document.getElementById('menuBtn').href;
+      waIcon.style.display = 'none';
+      document.getElementById('socialSub').textContent = 'Tap "Order Now" to see the menu';
     }
 
-    document.getElementById('footerLine').textContent =
-      '© ' + new Date().getFullYear() + ' ' + (vendor.name || 'myTiffin') + ' — Made with care, delivered with warmth.';
-
-    renderMenu(d);
+    renderThali(d);
   }
 
   renderPricing();
