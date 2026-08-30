@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: indiaquant-mcp
+    runtime: python
+    plan: free
+    rootDir: integrations/IndiaQuant-MCP/indiaquant_mcp
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: NEWSAPI_KEY
+        sync: false
+      - key: ALPHA_VANTAGE_KEY
+        sync: false
