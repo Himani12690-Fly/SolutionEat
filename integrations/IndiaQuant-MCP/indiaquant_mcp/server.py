@@ -50,7 +50,7 @@ from modules.portfolio import (
 )
 from modules.sentiment import analyze_sentiment
 
-mcp = FastMCP("indiaquant_mcp")
+mcp = FastMCP("indiaquant_mcp", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
 
 def _json(data: dict | list) -> str:
     return json.dumps(data, indent=2, default=str)
@@ -520,4 +520,8 @@ async def get_sector_heatmap_tool() -> str:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    # Render (and other PaaS hosts) set RENDER/PORT for web services; Claude Desktop
+    # launches this over stdio locally with neither set, so stdio stays the default.
+    default_transport = "streamable-http" if os.environ.get("RENDER") else "stdio"
+    transport = os.environ.get("MCP_TRANSPORT", default_transport)
+    mcp.run(transport=transport)

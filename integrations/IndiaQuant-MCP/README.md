@@ -2,6 +2,25 @@
 
 > Mirrored from [g-kalani/IndiaQuant-MCP](https://github.com/g-kalani/IndiaQuant-MCP) (commit `2e87bc6`) into this repo under `integrations/IndiaQuant-MCP`. Unrelated to the SolutionEat food-ordering app in the rest of this repo — kept separate intentionally.
 
+## Deploying as a remote connector (mobile/web Claude)
+
+The upstream server only runs over stdio (Claude Desktop only). This copy also supports
+Streamable HTTP so it can run as a hosted service and be added as a **Custom Connector**
+in Claude (Settings → Connectors), which then works on web, desktop, and mobile.
+
+1. Push this repo to GitHub (already done if you're reading this from the repo).
+2. On [render.com](https://render.com): **New +** → **Blueprint** → pick this repo. Render
+   reads `render.yaml` and creates the `indiaquant-mcp` web service automatically.
+3. In the Render dashboard, set the `NEWSAPI_KEY` and `ALPHA_VANTAGE_KEY` env vars
+   (optional — only needed for `analyze_sentiment`).
+4. Once deployed, Render gives you a URL like `https://indiaquant-mcp-xxxx.onrender.com`.
+   The MCP endpoint is `https://indiaquant-mcp-xxxx.onrender.com/mcp`.
+5. In Claude → Settings → Connectors → Add custom connector, paste that `/mcp` URL.
+   It'll sync to your mobile app automatically.
+
+Note: Render's free tier spins down after inactivity, so the first request after a
+while can take ~30-60s to wake up.
+
 An MCP server that connects Claude to live Indian stock market data.
 
 Once connected, you can ask Claude things like:
