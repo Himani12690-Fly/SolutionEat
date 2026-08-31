@@ -1,0 +1,15 @@
+diff --git a/node_modules/supergateway/dist/gateways/stdioToStatefulStreamableHttp.js b/node_modules/supergateway/dist/gateways/stdioToStatefulStreamableHttp.js
+index c40ee47..b51ec7b 100644
+--- a/node_modules/supergateway/dist/gateways/stdioToStatefulStreamableHttp.js
++++ b/node_modules/supergateway/dist/gateways/stdioToStatefulStreamableHttp.js
+@@ -93,7 +93,9 @@ export async function stdioToStatefulStreamableHttp(args) {
+                         const jsonMsg = JSON.parse(line);
+                         logger.info('Child → StreamableHttp:', line);
+                         try {
+-                            transport.send(jsonMsg);
++                            Promise.resolve(transport.send(jsonMsg)).catch((e) => {
++                                logger.error(`Failed to send to StreamableHttp`, e);
++                            });
+                         }
+                         catch (e) {
+                             logger.error(`Failed to send to StreamableHttp`, e);
