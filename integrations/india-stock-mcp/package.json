@@ -5,7 +5,7 @@
   "description": "Runs india-stock-mcp (NSE/BSE quotes, options chain, fundamentals) as a remote Streamable HTTP MCP server via supergateway, for use as a Claude custom connector.",
   "type": "module",
   "scripts": {
-    "start": "supergateway --stdio \"npx -y india-stock-mcp\" --outputTransport streamableHttp --port $PORT"
+    "start": "supergateway --stdio \"npx -y india-stock-mcp\" --outputTransport streamableHttp --port $PORT --stateful --sessionTimeout 1800000"
   },
   "dependencies": {
     "india-stock-mcp": "^1.0.1",
